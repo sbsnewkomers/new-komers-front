@@ -39,11 +39,19 @@ export default function Home() {
           )}
         </nav>
       </header>
-      <main className="flex flex-1 flex-col items-center justify-center p-8">
+      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
         {user ? (
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Bienvenue, {user.firstName || user.email}.
-          </p>
+          <>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              Bienvenue, {user.firstName || user.email}.
+            </p>
+            <Link
+              href="/structure"
+              className="rounded-lg bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+            >
+              Structure (groupes, entreprises, BU)
+            </Link>
+          </>
         ) : (
           <p className="text-zinc-600 dark:text-zinc-400">
             <Link href="/login" className="text-blue-600 hover:underline dark:text-blue-400">
