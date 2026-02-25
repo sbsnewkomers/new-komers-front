@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Building2, Upload, LayoutDashboard, FileText, PieChart, ShieldCheck } from "lucide-react";
 
 type AppLayoutProps = {
   title: string;
@@ -32,39 +33,56 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [userMenuOpen]);
 
+  const pathname = router.pathname;
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(href + "/");
+  };
+  const navLinkClass = (href: string) =>
+    "flex items-center gap-3 rounded-lg px-3 py-2 transition-all " +
+    (isActive(href)
+      ? "bg-primary/10 text-primary font-medium"
+      : "text-muted-foreground hover:bg-muted/60 hover:text-primary");
+
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       {/* Sidebar */}
-      <div className="hidden border-r bg-muted/40 md:block">
+      <div className="hidden border-r border-border bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+          <div className="flex h-14 items-center border-b border-border px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="font-semibold text-foreground">
               NEWKOMERS
             </Link>
           </div>
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-            >
+            <Link href="/dashboard" className={navLinkClass("/dashboard")}>
+              <LayoutDashboard className="w-5 h-5" />
               Dashboard
             </Link>
-            <Link
-              href="/structure"
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-            >
+            <Link href="/structure" className={navLinkClass("/structure")}>
+              <Building2 className="w-5 h-5" />
               Structure
             </Link>
+            <Link href="/import" className={navLinkClass("/import")}>
+              <Upload className="w-5 h-5" />
+              Import
+            </Link>
+            <Link href="/reporting" className={navLinkClass("/reporting")}>
+              <FileText className="w-5 h-5" />
+              Reporting
+            </Link>
+            <Link href="/budget" className={navLinkClass("/budget")}>
+              <PieChart className="w-5 h-5" />
+              Budget
+            </Link>
             {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
-              <Link
-                href="/permissions-assign"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-              >
+              <Link href="/permissions-assign" className={navLinkClass("/permissions-assign")}>
+                <ShieldCheck className="w-5 h-5" />
                 Permissions
               </Link>
             )}
           </nav>
-          <div className="mt-auto border-t p-4" ref={menuRef}>
+          <div className="mt-auto border-t border-border p-4" ref={menuRef}>
             <div className="relative">
               <button
                 type="button"
@@ -103,7 +121,7 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
 
       {/* Main */}
       <div className="flex flex-col">
-        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+        <header className="flex h-14 items-center gap-4 border-b border-border bg-muted/40 px-4 lg:h-[60px] lg:px-6">
           <h1 className="text-lg font-semibold">{title}</h1>
           <div className="ml-auto flex items-center gap-2">
             {companies.length > 0 && (
@@ -124,7 +142,7 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
             </Button>
           </div>
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-[#f6f7f8]">
           {children}
         </main>
       </div>
