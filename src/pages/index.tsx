@@ -45,12 +45,22 @@ export default function Home() {
             <p className="text-zinc-600 dark:text-zinc-400">
               Bienvenue, {user.firstName || user.email}.
             </p>
-            <Link
-              href="/structure"
-              className="rounded-lg bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
-            >
-              Structure (groupes, entreprises, BU)
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/structure"
+                className="rounded-lg bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+              >
+                Structure (groupes, entreprises, BU)
+              </Link>
+              {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
+                <Link
+                  href="/permissions-assign"
+                  className="rounded-lg bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                >
+                  Attribution des permissions
+                </Link>
+              )}
+            </div>
           </>
         ) : (
           <p className="text-zinc-600 dark:text-zinc-400">

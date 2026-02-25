@@ -11,6 +11,12 @@ export function usePermissions() {
   const role = user?.role ?? null;
 
   const api = useMemo(() => {
+    /**
+     * Check if the current user can perform the given action.
+     * Supports both item-level grants (g.nodeId set) and entity-level grants (g.nodeId omitted = all items of that type).
+     * - can("companies", "CREATE") → true if user has CREATE on any company or on the whole COMPANY entity.
+     * - can("companies", "UPDATE", companyId) → true if user has UPDATE on that company or on the whole COMPANY entity.
+     */
     function can(entityOrNodeType: string | NodeType, action: CRUD_ACTION | PermissionAction, nodeId?: string) {
       if (role && (role === "SUPER_ADMIN" || role === "ADMIN")) return true;
 
@@ -31,7 +37,7 @@ export function usePermissions() {
         if (g.nodeType !== nodeType) return false;
         if (!actions.includes(g.action)) return false;
         if (!nodeId) return true;
-        if (!g.nodeId) return true;
+        if (!g.nodeId) return true; // entity-level grant: allows action on any node of this type
         return g.nodeId === nodeId;
       });
     }

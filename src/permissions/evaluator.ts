@@ -44,7 +44,7 @@ function hasGrant(
     if (g.nodeType !== nodeType) continue;
     if (!actions.includes(g.action)) continue;
     if (!nodeId) return true;
-    if (!g.nodeId) return true;
+    if (!g.nodeId) return true; // entity-level grant: allows action on any node of this type
     if (g.nodeId === nodeId) return true;
   }
   return false;

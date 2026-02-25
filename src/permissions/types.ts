@@ -1,9 +1,15 @@
 import type { CRUD_ACTION, NodeType, PermissionAction } from "@/permissions/actions";
 
+/**
+ * A single permission grant (from GET /auth/me permissions).
+ * - With nodeId: permission on that specific node (item-level).
+ * - Without nodeId (omitted): permission on the whole entity (all groups, all companies, or all business units).
+ *   This is the "entity-level" permission from UserEntityPermission on the backend.
+ */
 export type PermissionGrant = {
   nodeType: NodeType;
   action: PermissionAction;
-  nodeId?: string; // if omitted, treated as "any node of this type"
+  nodeId?: string;
 };
 
 // Accept both "entity" (doc wording) and "nodeType" (backend wording)
