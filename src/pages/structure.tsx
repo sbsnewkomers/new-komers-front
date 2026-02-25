@@ -1,35 +1,49 @@
-import { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
 import Head from "next/head";
 import Link from "next/link";
-import { useGroups, useCompanies, useBusinessUnits } from "@/hooks";
+import { useGroups, useCompanies } from "@/hooks";
+import { apiFetch } from "@/lib/apiClient";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Button } from "@/components/ui/Button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetClose,
+  SheetBody,
+} from "@/components/ui/Sheet";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/DropdownMenu";
+import { CompanyCreateWizard, type CompanyWizardForm } from "@/components/structure/CompanyCreateWizard";
+
+type BusinessUnit = {
+  id: string;
+  name: string;
+  code: string;
+  activity: string;
+  siret: string;
+  company_id?: string;
+};
+
+type TreeNode =
+  | { type: "group"; id: string; name: string }
+  | { type: "company"; id: string; name: string; groupId: string }
+  | { type: "bu"; id: string; name: string; companyId: string; code?: string };
 
 export default function StructurePage() {
   const groups = useGroups();
   const companies = useCompanies();
-  const [selectedGroupId, setSelectedGroupId] = useState<string>("");
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
-  const businessUnits = useBusinessUnits(selectedCompanyId);
-
-  const [showGroupForm, setShowGroupForm] = useState(false);
-  const [showCompanyForm, setShowCompanyForm] = useState(false);
-  const [showBUForm, setShowBUForm] = useState(false);
-
-  const [groupForm, setGroupForm] = useState({
-    name: "",
-    fiscal_year_start: "2025-01-01",
-    fiscal_year_end: "2025-12-31",
-    siret: "",
-    mainActivity: "",
-  });
-  const [companyForm, setCompanyForm] = useState({
-    groupId: "",
-    name: "",
-    fiscal_year_start: "2025-01-01",
-    fiscal_year_end: "2025-12-31",
-    siret: "",
-    address: "",
-  });
-  const [buForm, setBUForm] = useState({ name: "", code: "", activity: "", siret: "" });
+  const [busByCompany, setBusByCompany] = useState<Record<string, BusinessUnit[]>>({});
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   useEffect(() => {
     groups.fetchList();
@@ -37,433 +51,409 @@ export default function StructurePage() {
   useEffect(() => {
     companies.fetchList();
   }, []);
-  useEffect(() => {
-    if (selectedGroupId) companies.fetchListByGroup(selectedGroupId);
-    else companies.fetchList();
-  }, [selectedGroupId]);
-  useEffect(() => {
-    if (selectedCompanyId) businessUnits.fetchList();
-  }, [selectedCompanyId]);
 
-  const handleCreateGroup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await groups.create({
-      name: groupForm.name,
-      fiscal_year_start: groupForm.fiscal_year_start,
-      fiscal_year_end: groupForm.fiscal_year_end,
-      siret: groupForm.siret,
-      mainActivity: groupForm.mainActivity || undefined,
-    });
-    setGroupForm({ name: "", fiscal_year_start: "2025-01-01", fiscal_year_end: "2025-12-31", siret: "", mainActivity: "" });
-    setShowGroupForm(false);
-  };
-  const handleCreateCompany = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!companyForm.groupId) return;
-    await companies.create({
-      groupId: companyForm.groupId,
-      name: companyForm.name,
-      fiscal_year_start: companyForm.fiscal_year_start,
-      fiscal_year_end: companyForm.fiscal_year_end,
-      siret: companyForm.siret,
-      address: companyForm.address || undefined,
-    });
-    setCompanyForm({ groupId: "", name: "", fiscal_year_start: "2025-01-01", fiscal_year_end: "2025-12-31", siret: "", address: "" });
-    setShowCompanyForm(false);
-    companies.fetchList();
-  };
-  const handleCreateBU = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await businessUnits.create(buForm);
-    setBUForm({ name: "", code: "", activity: "", siret: "" });
-    setShowBUForm(false);
-  };
+  const loadBUsForCompany = useCallback(async (companyId: string) => {
+    try {
+      const data = await apiFetch<BusinessUnit[]>(
+        `/companies/${companyId}/business-units`,
+        { snackbar: { showSuccess: false, showError: true } }
+      );
+      setBusByCompany((prev) => ({ ...prev, [companyId]: data }));
+    } catch {
+      setBusByCompany((prev) => ({ ...prev, [companyId]: [] }));
+    }
+  }, []);
+
+  const handleRowClick = useCallback(
+    (node: TreeNode) => {
+      setSelectedNode(node);
+      if (node.type === "company") loadBUsForCompany(node.id);
+      setSheetOpen(true);
+    },
+    [loadBUsForCompany]
+  );
+
+  const handleCreateCompany = useCallback(
+    async (form: CompanyWizardForm) => {
+      const size =
+        form.size === "MEDIUM_ETI" ? "MEDIUM" : (form.size as "SMALL" | "MEDIUM" | "LARGE");
+      const model =
+        form.model === "INDEPENDANT" ? "SUBSIDIARY" : (form.model as "HOLDING" | "SUBSIDIARY");
+      await companies.create({
+        groupId: form.groupId,
+        name: form.name,
+        fiscal_year_start: form.fiscal_year_start,
+        fiscal_year_end: form.fiscal_year_end,
+        siret: form.siret,
+        address: form.address || undefined,
+        ape_code: form.ape_code || undefined,
+        main_activity: form.main_activity || undefined,
+        size,
+        model,
+      });
+      companies.fetchList();
+    },
+    [companies]
+  );
 
   const handleUpdateGroup = async (id: string) => {
     const g = groups.list?.find((x) => x.id === id);
     if (!g) return;
-    const name = prompt("Nom", g.name);
+    const name = window.prompt("Nom", g.name);
     if (name == null) return;
     await groups.update(id, { name });
+    setSheetOpen(false);
   };
   const handleUpdateCompany = async (id: string) => {
     const c = companies.list?.find((x) => x.id === id);
     if (!c) return;
-    const name = prompt("Nom", c.name);
+    const name = window.prompt("Nom", c.name);
     if (name == null) return;
     await companies.update(id, { name });
+    setSheetOpen(false);
   };
-  const handleUpdateBU = async (id: string) => {
-    const b = businessUnits.list?.find((x) => x.id === id);
-    if (!b) return;
-    const name = prompt("Nom", b.name);
-    if (name == null) return;
-    await businessUnits.update(id, { name });
-  };
-
   const handleDeleteGroup = async (id: string) => {
-    if (!confirm("Supprimer ce groupe ?")) return;
+    if (!window.confirm("Supprimer ce groupe ?")) return;
     await groups.remove(id);
+    setSheetOpen(false);
   };
   const handleDeleteCompany = async (id: string) => {
-    if (!confirm("Supprimer cette entreprise ?")) return;
+    if (!window.confirm("Supprimer cette entreprise ?")) return;
     await companies.remove(id);
-  };
-  const handleDeleteBU = async (id: string) => {
-    if (!confirm("Supprimer cette business unit ?")) return;
-    await businessUnits.remove(id);
+    setSheetOpen(false);
   };
 
-  const loading = groups.loading || companies.loading || businessUnits.loading;
+  const groupList = groups.list ?? [];
+  const companyList = companies.list ?? [];
+  const treeRows: TreeNode[] = [];
+  groupList.forEach((g) => {
+    treeRows.push({ type: "group", id: g.id, name: g.name });
+    companyList
+      .filter((c) => c.group_id === g.id)
+      .forEach((c) => {
+        treeRows.push({ type: "company", id: c.id, name: c.name, groupId: g.id });
+        (busByCompany[c.id] ?? []).forEach((b) => {
+          treeRows.push({
+            type: "bu",
+            id: b.id,
+            name: b.name,
+            companyId: c.id,
+            code: b.code,
+          });
+        });
+      });
+  });
 
   return (
-    <>
+    <AppLayout title="Structure" companies={companyList} selectedCompanyId="" onCompanyChange={() => {}}>
       <Head>
-        <title>Structure — Groupes, Entreprises, BU</title>
+        <title>Structure de l'organisation</title>
       </Head>
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-        <header className="border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-700 dark:bg-zinc-800">
-          <div className="flex items-center justify-between">
-            <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              Structure
-            </h1>
+      <div className="mx-auto max-w-4xl space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-xl font-semibold text-foreground">
+            Structure de l'organisation
+          </h1>
+          <div className="flex gap-2">
             <Link
-              href="/dashboard"
-              className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+              href="/structure/import/upload"
+              className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted/60"
             >
-              Accueil
+              Importer
             </Link>
+            <Button onClick={() => setWizardOpen(true)}>Nouvelle Entreprise</Button>
           </div>
-        </header>
+        </div>
 
-        <main className="mx-auto max-w-4xl space-y-8 p-6">
-          {/* --- Groupes --- */}
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-            <div className="mb-4 flex flex-wrap items-center gap-3">
-              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-                Groupes
-              </h2>
-              <button
-                type="button"
-                onClick={() => groups.fetchList()}
-                disabled={loading}
-                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-700"
-              >
-                Charger
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowGroupForm((v) => !v)}
-                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
-              >
-                {showGroupForm ? "Annuler" : "Ajouter un groupe"}
-              </button>
-            </div>
-            {showGroupForm && (
-              <form onSubmit={handleCreateGroup} className="mb-4 grid gap-2 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-900">
-                <input
-                  required
-                  placeholder="Nom"
-                  value={groupForm.name}
-                  onChange={(e) => setGroupForm((f) => ({ ...f, name: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <input
-                  required
-                  type="date"
-                  value={groupForm.fiscal_year_start}
-                  onChange={(e) => setGroupForm((f) => ({ ...f, fiscal_year_start: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <input
-                  required
-                  type="date"
-                  value={groupForm.fiscal_year_end}
-                  onChange={(e) => setGroupForm((f) => ({ ...f, fiscal_year_end: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <input
-                  required
-                  placeholder="SIRET (14 chiffres)"
-                  maxLength={14}
-                  value={groupForm.siret}
-                  onChange={(e) => setGroupForm((f) => ({ ...f, siret: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <input
-                  placeholder="Activité principale"
-                  value={groupForm.mainActivity}
-                  onChange={(e) => setGroupForm((f) => ({ ...f, mainActivity: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <button type="submit" className="rounded bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700">
-                  Créer
-                </button>
-              </form>
-            )}
-            {groups.error && <p className="mb-2 text-sm text-red-600 dark:text-red-400">{groups.error}</p>}
-            <ul className="space-y-2">
-              {groups.list?.map((g) => (
-                <li
-                  key={g.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 py-2 px-3 dark:border-zinc-600"
-                >
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">{g.name}</span>
-                  <span className="text-sm text-zinc-500 dark:text-zinc-400">{g.siret}</span>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateGroup(g.id)}
-                      className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          {groups.error && (
+            <p className="mb-2 text-sm text-destructive">{groups.error}</p>
+          )}
+          {companies.error && (
+            <p className="mb-2 text-sm text-destructive">{companies.error}</p>
+          )}
+          {groups.loading && !groupList.length ? (
+            <p className="py-8 text-center text-muted-foreground">
+              Chargement…
+            </p>
+          ) : (
+            <ul className="space-y-0">
+              {treeRows.map((node) => {
+                const indent =
+                  node.type === "group" ? 0 : node.type === "company" ? 1 : 2;
+                const icon =
+                  node.type === "group"
+                    ? "📁"
+                    : node.type === "company"
+                    ? "🏢"
+                    : "📦";
+                return (
+                  <li key={`${node.type}-${node.id}`} className="list-none">
+                    <div
+                      className="flex cursor-pointer items-center gap-2 rounded-md py-2 px-2 hover:bg-muted/60"
+                      style={{ paddingLeft: 8 + indent * 24 }}
+                      onClick={() => handleRowClick(node)}
                     >
-                      Modifier
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteGroup(g.id)}
-                      className="rounded border border-red-400 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-950/40"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
-                </li>
-              ))}
-              {groups.list?.length === 0 && !groups.loading && (
-                <li className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">Aucun groupe</li>
-              )}
-            </ul>
-          </section>
-
-          {/* --- Entreprises --- */}
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-            <div className="mb-4 flex flex-wrap items-center gap-3">
-              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-                Entreprises
-              </h2>
-              <select
-                value={selectedGroupId}
-                onChange={(e) => setSelectedGroupId(e.target.value)}
-                className="rounded border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
-              >
-                <option value="">Tous les groupes</option>
-                {groups.list?.map((g) => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => selectedGroupId ? companies.fetchListByGroup(selectedGroupId) : companies.fetchList()}
-                disabled={loading}
-                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-700"
-              >
-                Charger
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCompanyForm((v) => !v)}
-                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
-              >
-                {showCompanyForm ? "Annuler" : "Ajouter une entreprise"}
-              </button>
-            </div>
-            {showCompanyForm && (
-              <form onSubmit={handleCreateCompany} className="mb-4 grid gap-2 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-900">
-                <select
-                  required
-                  value={companyForm.groupId}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, groupId: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                >
-                  <option value="">Choisir un groupe</option>
-                  {groups.list?.map((g) => (
-                    <option key={g.id} value={g.id}>{g.name}</option>
-                  ))}
-                </select>
-                <input
-                  required
-                  placeholder="Nom"
-                  value={companyForm.name}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, name: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <input
-                  required
-                  type="date"
-                  value={companyForm.fiscal_year_start}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, fiscal_year_start: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <input
-                  required
-                  type="date"
-                  value={companyForm.fiscal_year_end}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, fiscal_year_end: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <input
-                  required
-                  placeholder="SIRET"
-                  value={companyForm.siret}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, siret: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <input
-                  placeholder="Adresse"
-                  value={companyForm.address}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, address: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <button type="submit" className="rounded bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700">
-                  Créer
-                </button>
-              </form>
-            )}
-            {companies.error && <p className="mb-2 text-sm text-red-600 dark:text-red-400">{companies.error}</p>}
-            <ul className="space-y-2">
-              {companies.list?.map((c) => (
-                <li
-                  key={c.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 py-2 px-3 dark:border-zinc-600"
-                >
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">{c.name}</span>
-                  <span className="text-sm text-zinc-500 dark:text-zinc-400">{c.siret}</span>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateCompany(c.id)}
-                      className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteCompany(c.id)}
-                      className="rounded border border-red-400 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-950/40"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
-                </li>
-              ))}
-              {companies.list?.length === 0 && !companies.loading && (
-                <li className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">Aucune entreprise</li>
-              )}
-            </ul>
-          </section>
-
-          {/* --- Business Units --- */}
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-            <div className="mb-4 flex flex-wrap items-center gap-3">
-              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-                Business Units
-              </h2>
-              <select
-                value={selectedCompanyId}
-                onChange={(e) => setSelectedCompanyId(e.target.value)}
-                className="rounded border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
-              >
-                <option value="">Choisir une entreprise</option>
-                {companies.list?.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-              {selectedCompanyId && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => businessUnits.fetchList()}
-                    disabled={loading}
-                    className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                  >
-                    Charger
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowBUForm((v) => !v)}
-                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
-                  >
-                    {showBUForm ? "Annuler" : "Ajouter une BU"}
-                  </button>
-                </>
-              )}
-            </div>
-            {showBUForm && selectedCompanyId && (
-              <form onSubmit={handleCreateBU} className="mb-4 grid gap-2 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-900">
-                <input
-                  required
-                  placeholder="Nom"
-                  value={buForm.name}
-                  onChange={(e) => setBUForm((f) => ({ ...f, name: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <input
-                  required
-                  placeholder="Code"
-                  value={buForm.code}
-                  onChange={(e) => setBUForm((f) => ({ ...f, code: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <input
-                  required
-                  placeholder="Activité"
-                  value={buForm.activity}
-                  onChange={(e) => setBUForm((f) => ({ ...f, activity: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <input
-                  required
-                  placeholder="SIRET (14 chiffres)"
-                  maxLength={14}
-                  value={buForm.siret}
-                  onChange={(e) => setBUForm((f) => ({ ...f, siret: e.target.value }))}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <button type="submit" className="rounded bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700">
-                  Créer
-                </button>
-              </form>
-            )}
-            {businessUnits.error && <p className="mb-2 text-sm text-red-600 dark:text-red-400">{businessUnits.error}</p>}
-            {!selectedCompanyId && (
-              <p className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                Sélectionnez une entreprise pour afficher ses business units.
-              </p>
-            )}
-            {selectedCompanyId && (
-              <ul className="space-y-2">
-                {businessUnits.list?.map((b) => (
-                  <li
-                    key={b.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 py-2 px-3 dark:border-zinc-600"
-                  >
-                    <span className="font-medium text-zinc-900 dark:text-zinc-100">{b.name}</span>
-                    <span className="text-sm text-zinc-500 dark:text-zinc-400">{b.code} — {b.siret}</span>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateBU(b.id)}
-                        className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                      >
-                        Modifier
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteBU(b.id)}
-                        className="rounded border border-red-400 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-950/40"
-                      >
-                        Supprimer
-                      </button>
+                      <span className="text-lg" aria-hidden>
+                        {icon}
+                      </span>
+                      <span className="flex-1 truncate font-medium text-foreground">
+                        {node.name}
+                      </span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          asChild
+                          className="rounded p-1 hover:bg-muted"
+                        >
+                          <button
+                            type="button"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-muted-foreground"
+                            aria-label="Menu"
+                          >
+                            ⋮
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (node.type === "group") handleUpdateGroup(node.id);
+                              else if (node.type === "company")
+                                handleUpdateCompany(node.id);
+                            }}
+                          >
+                            Modifier
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (node.type === "group") handleDeleteGroup(node.id);
+                              else if (node.type === "company")
+                                handleDeleteCompany(node.id);
+                            }}
+                            className="text-destructive"
+                          >
+                            Supprimer
+                          </DropdownMenuItem>
+                          {node.type === "company" && (
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSheetOpen(false);
+                                window.location.href = `/structure/${node.id}`;
+                              }}
+                            >
+                              Ajouter une BU
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </li>
-                ))}
-                {businessUnits.list?.length === 0 && !businessUnits.loading && (
-                  <li className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">Aucune business unit</li>
-                )}
-              </ul>
-            )}
-          </section>
-        </main>
+                );
+              })}
+              {treeRows.length === 0 && !groups.loading && (
+                <li className="py-8 text-center text-muted-foreground">
+                  Aucun groupe. Créez une entreprise pour commencer.
+                </li>
+              )}
+            </ul>
+          )}
+        </div>
       </div>
-    </>
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent>
+          {selectedNode && (
+            <>
+              <SheetHeader>
+                <SheetTitle>{selectedNode.name}</SheetTitle>
+                <SheetClose className="absolute right-4 top-4 rounded p-1 hover:bg-muted">
+                  ✕
+                </SheetClose>
+              </SheetHeader>
+              <SheetBody>
+                {selectedNode.type === "group" && (
+                  <GroupDetail
+                    node={selectedNode}
+                    onModifier={() => handleUpdateGroup(selectedNode.id)}
+                    onSupprimer={() => handleDeleteGroup(selectedNode.id)}
+                    group={groups.list?.find((g) => g.id === selectedNode.id)}
+                  />
+                )}
+                {selectedNode.type === "company" && (
+                  <CompanyDetail
+                    node={selectedNode}
+                    onModifier={() => handleUpdateCompany(selectedNode.id)}
+                    onSupprimer={() => handleDeleteCompany(selectedNode.id)}
+                    company={companies.list?.find((c) => c.id === selectedNode.id)}
+                    bus={busByCompany[selectedNode.id] ?? []}
+                    onOpenFiche={() => {
+                      setSheetOpen(false);
+                      window.location.href = `/structure/${selectedNode.id}`;
+                    }}
+                  />
+                )}
+                {selectedNode.type === "bu" && (
+                  <BUDetail
+                    node={selectedNode}
+                    bus={busByCompany[selectedNode.companyId] ?? []}
+                  />
+                )}
+              </SheetBody>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <CompanyCreateWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        groups={groupList.map((g) => ({ id: g.id, name: g.name }))}
+        onSubmit={handleCreateCompany}
+      />
+    </AppLayout>
+  );
+}
+
+function GroupDetail({
+  node,
+  group,
+  onModifier,
+  onSupprimer,
+}: {
+  node: TreeNode;
+  group?: { name: string; siret?: string };
+  onModifier: () => void;
+  onSupprimer: () => void;
+}) {
+  if (node.type !== "group") return null;
+  return (
+    <div className="space-y-4">
+      <dl className="space-y-2 text-sm">
+        <dt className="text-muted-foreground">Nom</dt>
+        <dd className="font-medium">{group?.name ?? node.name}</dd>
+        {group?.siret && (
+          <>
+            <dt className="text-muted-foreground">SIRET</dt>
+            <dd>{group.siret}</dd>
+          </>
+        )}
+      </dl>
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={onModifier}>
+          Modifier
+        </Button>
+        <Button variant="outline" size="sm" className="text-destructive" onClick={onSupprimer}>
+          Supprimer
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function CompanyDetail({
+  node,
+  company,
+  bus,
+  onModifier,
+  onSupprimer,
+  onOpenFiche,
+}: {
+  node: TreeNode;
+  company?: { name: string; siret?: string; address?: string };
+  bus: BusinessUnit[];
+  onModifier: () => void;
+  onSupprimer: () => void;
+  onOpenFiche: () => void;
+}) {
+  if (node.type !== "company") return null;
+  return (
+    <div className="space-y-4">
+      <dl className="space-y-2 text-sm">
+        <dt className="text-muted-foreground">Nom</dt>
+        <dd className="font-medium">{company?.name ?? node.name}</dd>
+        {company?.siret && (
+          <>
+            <dt className="text-muted-foreground">SIRET</dt>
+            <dd>{company.siret}</dd>
+          </>
+        )}
+        {company?.address && (
+          <>
+            <dt className="text-muted-foreground">Adresse</dt>
+            <dd className="whitespace-pre-wrap">{company.address}</dd>
+          </>
+        )}
+      </dl>
+      {bus.length > 0 && (
+        <div>
+          <p className="mb-2 text-sm font-medium text-muted-foreground">
+            Business Units ({bus.length})
+          </p>
+          <ul className="space-y-1">
+            {bus.map((b) => (
+              <li key={b.id} className="text-sm">
+                {b.name} {b.code && `— ${b.code}`}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={onModifier}>
+          Modifier
+        </Button>
+        <Button variant="outline" size="sm" onClick={onOpenFiche}>
+          Fiche entreprise
+        </Button>
+        <Button variant="outline" size="sm" className="text-destructive" onClick={onSupprimer}>
+          Supprimer
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function BUDetail({
+  node,
+  bus,
+}: {
+  node: TreeNode;
+  bus: BusinessUnit[];
+}) {
+  if (node.type !== "bu") return null;
+  const bu = bus.find((b) => b.id === node.id);
+  return (
+    <div className="space-y-4">
+      <dl className="space-y-2 text-sm">
+        <dt className="text-muted-foreground">Nom</dt>
+        <dd className="font-medium">{bu?.name ?? node.name}</dd>
+        {(bu?.code ?? node.code) && (
+          <>
+            <dt className="text-muted-foreground">Code</dt>
+            <dd>{bu?.code ?? node.code}</dd>
+          </>
+        )}
+        {bu?.siret && (
+          <>
+            <dt className="text-muted-foreground">SIRET</dt>
+            <dd>{bu.siret}</dd>
+          </>
+        )}
+        {bu?.activity && (
+          <>
+            <dt className="text-muted-foreground">Activité</dt>
+            <dd>{bu.activity}</dd>
+          </>
+        )}
+      </dl>
+      <Link href={`/structure/${node.companyId}`}>
+        <span className="inline-flex h-9 items-center rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-muted/60">
+          Voir la fiche entreprise
+        </span>
+      </Link>
+    </div>
   );
 }

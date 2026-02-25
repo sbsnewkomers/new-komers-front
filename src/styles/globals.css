@@ -1,31 +1,47 @@
 @import "tailwindcss";
 
+/* =============================================================================
+   Prompt 3 : Layout & Dashboard – Theme tokens
+   Used by: AppLayout (sidebar bg-muted/40, header bg-muted/40),
+            nav links (text-muted-foreground, hover:text-primary),
+            Dashboard Cards, Skeleton, Dialog, Button, Input, Select.
+   ============================================================================= */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+  --border: #e4e4e7;
+  --radius: 0.5rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-border: var(--border);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: ui-sans-serif, system-ui, sans-serif, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* Landing page (NEWKOMERS marketing) */
+/* =============================================================================
+   Landing page (NEWKOMERS marketing) – scoped, does not affect app layout
+   ============================================================================= */
 .landing {
   --primary: #0a192f;
   --primary-light: #112240;

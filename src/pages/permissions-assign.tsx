@@ -23,6 +23,7 @@ import {
   actionLabel,
   nodeTypeLabel,
 } from "@/lib/permissionsAdminApi";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function PermissionsAssignPage() {
   const router = useRouter();
@@ -142,26 +143,11 @@ export default function PermissionsAssignPage() {
   if (!isAdmin) return null;
 
   return (
-    <>
+    <AppLayout title="Attribution des permissions" companies={[]} selectedCompanyId="" onCompanyChange={() => {}}>
       <Head>
         <title>Attribution des permissions</title>
       </Head>
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-        <header className="border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-700 dark:bg-zinc-800">
-          <div className="flex items-center justify-between">
-            <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              Attribution des permissions
-            </h1>
-            <Link
-              href="/"
-              className="text-sm text-blue-600 hover:underline dark:text-blue-400"
-            >
-              Accueil
-            </Link>
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-4xl space-y-6 p-6">
+      <div className="mx-auto max-w-4xl space-y-6">
           {/* User selector */}
           <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
             <h2 className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-50">
@@ -282,9 +268,8 @@ export default function PermissionsAssignPage() {
               Impossible de charger les permissions.
             </p>
           )}
-        </main>
       </div>
-    </>
+    </AppLayout>
   );
 }
 
