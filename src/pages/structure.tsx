@@ -128,7 +128,7 @@ export default function StructurePage() {
               Structure
             </h1>
             <Link
-              href="/"
+              href="/dashboard"
               className="text-sm text-blue-600 hover:underline dark:text-blue-400"
             >
               Accueil

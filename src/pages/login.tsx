@@ -18,7 +18,7 @@ export default function LoginPage() {
     try {
       await login({ email, password });
       await refreshMe();
-      router.push("/");
+      router.push("/dashboard");
     } catch {
       // Error already shown by apiFetch snackbar
     } finally {
@@ -84,7 +84,7 @@ export default function LoginPage() {
           </form>
           <p className="mt-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
             <Link
-              href="/"
+              href="/dashboard"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Retour à l&apos;accueil
