@@ -6,22 +6,22 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants = {
-  default: "bg-primary text-primary-foreground hover:opacity-90",
-  ghost: "hover:bg-muted/60 hover:text-primary",
-  outline: "border border-border bg-background hover:bg-muted/60",
+  default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
+  ghost: "hover:bg-slate-100 hover:text-slate-900",
+  outline: "border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900",
 };
 
 const sizes = {
   default: "h-10 px-4 py-2",
-  sm: "h-9 rounded-md px-3",
-  lg: "h-11 rounded-md px-8",
+  sm: "h-9 rounded-lg px-3 text-xs",
+  lg: "h-11 rounded-lg px-8",
   icon: "h-10 w-10",
 };
 
 export function Button({ className, variant = "default", size = "default", ...props }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className ?? ""}`}
+      className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:pointer-events-none disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className ?? ""}`}
       {...props}
     />
   );

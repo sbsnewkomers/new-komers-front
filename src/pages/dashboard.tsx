@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { useCompanies } from "@/hooks";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
@@ -33,6 +33,7 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import { Building2, TrendingUp, Euro, Activity, Calendar } from "lucide-react";
 
 type WidgetType = "kpi" | "chart";
 type Widget = {
@@ -44,6 +45,9 @@ type Widget = {
   scope?: string;
   value?: string;
   description?: string;
+  trend?: string;
+  trendUp?: boolean;
+  icon?: React.ElementType;
   data?: { name: string; value: number }[];
 };
 
@@ -53,13 +57,6 @@ const AVAILABLE_WIDGETS: { id: string; title: string; type: WidgetType }[] = [
   { id: "tréso", title: "Trésorerie", type: "kpi" },
   { id: "evol", title: "Évolution CA", type: "chart" },
   { id: "repartition", title: "Répartition par entité", type: "chart" },
-];
-
-const DEMO_KPI_WIDGETS: Widget[] = [
-  { id: "1", type: "kpi", title: "Chiffre d'affaires", value: "2,4 M€", description: "vs 2,1 M€ le mois dernier" },
-  { id: "2", type: "kpi", title: "Marge brute", value: "34 %", description: "Objectif 32 %" },
-  { id: "3", type: "kpi", title: "Trésorerie", value: "1,2 M€", description: "Seuil critique 500 k€" },
-  { id: "4", type: "kpi", title: "Dettes fournisseurs", value: "380 k€", description: "Échéance 30j" },
 ];
 
 const DEMO_CHART_DATA = [
@@ -87,11 +84,93 @@ export default function DashboardPage() {
     companies.fetchList();
   }, []);
 
-  // Simulate initial loading
+  // Simulate initial loading then rely on real data
   React.useEffect(() => {
     const t = setTimeout(() => setLoading(false), 500);
     return () => clearTimeout(t);
   }, []);
+
+  // Initialize default widgets with real data once companies are loaded
+  React.useEffect(() => {
+    if (companies.loading) return;
+    const list = companies.list ?? [];
+    if (!list.length) return;
+    if (widgets.length > 0 || chartWidgets.length > 0) return;
+
+    const today = new Date();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const activeFiscalYears = list.filter((c: any) => {
+      if (!c.fiscal_year_start || !c.fiscal_year_end) return false;
+      const start = new Date(c.fiscal_year_start);
+      const end = new Date(c.fiscal_year_end);
+      return start <= today && end >= today;
+    }).length;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const latestCompany = [...list].sort((a: any, b: any) => {
+      const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return db - da;
+    })[0];
+
+    const byYearMap = new Map<string, number>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    list.forEach((c: any) => {
+      if (!c.fiscal_year_start) return;
+      const year = new Date(c.fiscal_year_start).getFullYear().toString();
+      byYearMap.set(year, (byYearMap.get(year) ?? 0) + 1);
+    });
+    const byYearData = Array.from(byYearMap.entries())
+      .sort(([a], [b]) => Number(a) - Number(b))
+      .map(([year, count]) => ({ name: year, value: count }));
+
+    setWidgets(
+      [
+        {
+          id: "k-total-companies",
+          type: "kpi",
+          title: "ENTREPRISES",
+          value: list.length.toString(),
+          description: "Total périmètre",
+          trend: "+1 ce mois",
+          trendUp: true,
+          icon: Building2,
+        },
+        {
+          id: "k-active-fiscal",
+          type: "kpi",
+          title: "EXERCICES EN COURS",
+          value: activeFiscalYears.toString(),
+          description: "Clôture prochaine",
+          trend: "Stable",
+          trendUp: true,
+          icon: Calendar,
+        },
+        latestCompany && {
+          id: "k-latest-company",
+          type: "kpi",
+          title: "DERNIÈRE CRÉATION",
+          value: latestCompany.name ?? "—",
+          description: latestCompany.siret
+            ? `SIRET ${latestCompany.siret}`
+            : "",
+          icon: Activity,
+        },
+      ].filter(Boolean) as Widget[],
+    );
+
+    if (byYearData.length) {
+      setChartWidgets([
+        {
+          id: "c-companies-by-year",
+          type: "chart",
+          title: "Entreprises par année d'exercice",
+          chartType: "bar",
+          data: byYearData,
+        },
+      ]);
+    }
+  }, [companies.loading, companies.list, widgets.length, chartWidgets.length]);
 
   const allWidgets = [...widgets, ...chartWidgets];
   const isEmpty = allWidgets.length === 0 && !loading;
@@ -102,7 +181,7 @@ export default function DashboardPage() {
     const def = AVAILABLE_WIDGETS.find((w) => w.id === widgetId);
     if (!def) return;
     if (def.type === "kpi") {
-      setWidgets((prev) => [...prev, { id: `k-${Date.now()}`, type: "kpi", title: def.title, value: "—", description: "" }]);
+      setWidgets((prev) => [...prev, { id: `k-${Date.now()}`, type: "kpi", title: def.title.toUpperCase(), value: "—", description: "", icon: Euro }]);
     } else {
       setChartWidgets((prev) => [...prev, { id: `c-${Date.now()}`, type: "chart", title: def.title, chartType: "bar", data: DEMO_CHART_DATA }]);
     }
@@ -126,9 +205,9 @@ export default function DashboardPage() {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-50 dark:bg-zinc-900">
-        <p className="text-zinc-600 dark:text-zinc-400">
-          <Link href="/login" className="text-blue-600 hover:underline dark:text-blue-400">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50">
+        <p className="text-slate-600">
+          <Link href="/login" className="text-slate-900 hover:underline font-medium">
             Connectez-vous
           </Link>{" "}
           pour accéder au dashboard.
@@ -145,77 +224,146 @@ export default function DashboardPage() {
       onCompanyChange={() => {}}
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Dashboard</h2>
-        <Button onClick={() => setAddModalOpen(true)}>Ajouter un widget</Button>
+        <h2 className="text-xl font-bold text-slate-900">Vue d&apos;ensemble</h2>
+        <Button onClick={() => setAddModalOpen(true)} className="bg-slate-900 text-white hover:bg-slate-800">
+          Ajouter un widget
+        </Button>
       </div>
 
       {loading && (
-        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i}>
-              <CardHeader><Skeleton className="h-4 w-24" /></CardHeader>
-              <CardContent><Skeleton className="h-8 w-20" /><Skeleton className="mt-2 h-3 w-32" /></CardContent>
+            <Card key={i} className="h-32">
+              <CardContent className="p-6">
+                <Skeleton className="h-4 w-24 mb-4" />
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
             </Card>
           ))}
         </div>
       )}
 
       {isEmpty && !loading && (
-        <Card className="flex flex-col items-center justify-center py-16">
-          <div className="mb-4 text-6xl">📊</div>
-          <h3 className="text-lg font-semibold">Votre dashboard est vide</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Ajoutez des widgets pour suivre vos indicateurs.</p>
-          <Button className="mt-6" onClick={() => setAddModalOpen(true)}>Ajouter votre premier widget</Button>
+        <Card className="flex flex-col items-center justify-center py-24 border-dashed border-2 border-slate-200 bg-slate-50/50">
+          <div className="mb-4 rounded-full bg-slate-100 p-4">
+            <Activity className="h-8 w-8 text-slate-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900">Votre dashboard est vide</h3>
+          <p className="mt-1 text-sm text-slate-500">Ajoutez des widgets pour suivre vos indicateurs clés.</p>
+          <Button className="mt-6 bg-slate-900 text-white hover:bg-slate-800" onClick={() => setAddModalOpen(true)}>
+            Ajouter votre premier widget
+          </Button>
         </Card>
       )}
 
       {!loading && !isEmpty && (
         <>
-          <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {widgets.map((w) => (
-              <Card key={w.id}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{w.title}</CardTitle>
-                  <span className="text-lg">📈</span>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{w.value}</div>
-                  <p className="text-xs text-muted-foreground">{w.description}</p>
+              <Card key={w.id} className="relative overflow-hidden transition-all hover:shadow-md bg-white">
+                <CardContent className="p-6!">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        {w.title}
+                      </p>
+                      <div className="text-2xl font-bold text-slate-900 mt-2">
+                        {w.value}
+                      </div>
+                    </div>
+                    <div className="rounded-full bg-slate-50 p-2.5">
+                      {w.icon ? <w.icon className="h-5 w-5 text-slate-700" /> : <Activity className="h-5 w-5 text-slate-700" />}
+                    </div>
+                  </div>
+                  {(w.trend || w.description) && (
+                    <div className="mt-4 flex items-center gap-2 text-xs">
+                      {w.trend && (
+                        <span className={`font-medium ${w.trendUp ? "text-emerald-600" : "text-rose-600"}`}>
+                          {w.trend}
+                        </span>
+                      )}
+                      {w.description && (
+                        <span className="text-slate-400">
+                          {w.description}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+          
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
             {chartWidgets.map((w) => (
-              <Card key={w.id}>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">{w.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
+              <Card key={w.id} className="flex flex-col bg-white">
+                <div className="border-b border-slate-100 px-6 py-4">
+                  <h3 className="font-semibold text-slate-900">{w.title}</h3>
+                </div>
+                <CardContent className="flex-1 p-6!">
+                  <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       {w.chartType === "line" ? (
-                        <LineChart data={w.data ?? []}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-zinc-200 dark:stroke-zinc-800" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip />
-                          <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} />
+                        <LineChart data={w.data ?? []} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                          <XAxis 
+                            dataKey="name" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fill: '#64748b', fontSize: 12 }} 
+                            dy={10}
+                          />
+                          <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fill: '#64748b', fontSize: 12 }} 
+                          />
+                          <Tooltip 
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="value" 
+                            stroke="#0f172a" 
+                            strokeWidth={3} 
+                            dot={{ fill: '#0f172a', strokeWidth: 2, r: 4, stroke: '#fff' }}
+                            activeDot={{ r: 6, strokeWidth: 0 }}
+                          />
                         </LineChart>
                       ) : (
-                        <BarChart data={w.data ?? []}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-zinc-200 dark:stroke-zinc-800" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip />
-                          <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        <BarChart data={w.data ?? []} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                          <XAxis 
+                            dataKey="name" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fill: '#64748b', fontSize: 12 }} 
+                            dy={10}
+                          />
+                          <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fill: '#64748b', fontSize: 12 }} 
+                          />
+                          <Tooltip 
+                            cursor={{ fill: '#f1f5f9' }}
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                          />
+                          <Bar 
+                            dataKey="value" 
+                            fill="#0f172a" 
+                            radius={[4, 4, 0, 0]} 
+                            barSize={40}
+                          />
                         </BarChart>
                       )}
                     </ResponsiveContainer>
                   </div>
-                  <Button variant="ghost" size="sm" className="mt-2" onClick={() => setDrillDownOpen(true)}>
-                    Voir le détail
-                  </Button>
+                  <div className="mt-4 flex justify-end">
+                    <Button variant="ghost" size="sm" className="text-xs text-slate-500 hover:text-slate-900" onClick={() => setDrillDownOpen(true)}>
+                      Voir le détail →
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -234,13 +382,14 @@ export default function DashboardPage() {
               <li key={w.id}>
                 <button
                   type="button"
-                  className="w-full rounded-lg border border-zinc-200 px-4 py-3 text-left text-sm hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-left text-sm hover:bg-slate-50 hover:border-slate-300 transition-colors"
                   onClick={() => {
                     setSelectedWidgetToAdd(w.id);
                     handleOpenConfig();
                   }}
                 >
-                  {w.title} <span className="text-zinc-400">({w.type === "kpi" ? "KPI" : "Graphique"})</span>
+                  <div className="font-medium text-slate-900">{w.title}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">{w.type === "kpi" ? "Indicateur clé" : "Graphique d'évolution"}</div>
                 </button>
               </li>
             ))}
@@ -259,7 +408,7 @@ export default function DashboardPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div>
-              <label className="mb-2 block text-sm font-medium">Indicateur</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Indicateur</label>
               <Select
                 value={configForm.indicator}
                 onValueChange={(v) => setConfigForm((f) => ({ ...f, indicator: v }))}
@@ -271,7 +420,7 @@ export default function DashboardPage() {
               </Select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium">Type de graphique</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Type de graphique</label>
               <Select
                 value={configForm.chartType}
                 onValueChange={(v) => setConfigForm((f) => ({ ...f, chartType: v }))}
@@ -281,7 +430,7 @@ export default function DashboardPage() {
               </Select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium">Périmètre</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Périmètre</label>
               <Select
                 value={configForm.scope}
                 onValueChange={(v) => setConfigForm((f) => ({ ...f, scope: v }))}
@@ -295,7 +444,7 @@ export default function DashboardPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfigModalOpen(false)}>Annuler</Button>
-            <Button onClick={() => { if (selectedWidgetToAdd) handleAddWidget(selectedWidgetToAdd); setConfigModalOpen(false); }}>Ajouter</Button>
+            <Button className="bg-slate-900 text-white hover:bg-slate-800" onClick={() => { if (selectedWidgetToAdd) handleAddWidget(selectedWidgetToAdd); setConfigModalOpen(false); }}>Ajouter</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -335,13 +484,13 @@ function DrillDownDialog({
         <DialogHeader>
           <DialogTitle>Détail des données</DialogTitle>
         </DialogHeader>
-        <div className="overflow-auto">
+        <div className="overflow-auto rounded-lg border border-slate-200">
           <table className="w-full border-collapse text-sm">
             <thead>
               {table.getHeaderGroups().map((hg) => (
-                <tr key={hg.id}>
+                <tr key={hg.id} className="bg-slate-50">
                   {hg.headers.map((h) => (
-                    <th key={h.id} className="border-b border-zinc-200 px-4 py-2 text-left font-medium dark:border-zinc-800">
+                    <th key={h.id} className="border-b border-slate-200 px-4 py-3 text-left font-semibold text-slate-700">
                       {flexRender(h.column.columnDef.header, h.getContext())}
                     </th>
                   ))}
@@ -350,9 +499,9 @@ function DrillDownDialog({
             </thead>
             <tbody>
               {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="border-b border-zinc-100 dark:border-zinc-800">
+                <tr key={row.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-2">
+                    <td key={cell.id} className="px-4 py-3 text-slate-700">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}

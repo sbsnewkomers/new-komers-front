@@ -4,11 +4,23 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
-import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { Building2, Upload, LayoutDashboard, FileText, PieChart, ShieldCheck } from "lucide-react";
+import { 
+  Building2, 
+  LayoutDashboard, 
+  BarChart3, 
+  Settings, 
+  BookOpen, 
+  Network,
+  Search,
+  Bell,
+  HelpCircle,
+  ChevronRight,
+  Upload
+} from "lucide-react";
 
 type AppLayoutProps = {
   title: string;
@@ -39,75 +51,90 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
     return pathname === href || pathname.startsWith(href + "/");
   };
   const navLinkClass = (href: string) =>
-    "flex items-center gap-3 rounded-lg px-3 py-2 transition-all " +
+    "group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-sm font-medium " +
     (isActive(href)
-      ? "bg-primary/10 text-primary font-medium"
-      : "text-muted-foreground hover:bg-muted/60 hover:text-primary");
+      ? "bg-slate-100 text-slate-900"
+      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900");
 
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+    <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr]">
       {/* Sidebar */}
-      <div className="hidden border-r border-border bg-muted/40 md:block">
+      <div className="hidden border-r border-slate-100 bg-white md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-14 items-center border-b border-border px-4 lg:h-[60px] lg:px-6">
-            <Link href="/" className="font-semibold text-foreground">
-              NEWKOMERS
+          <div className="flex h-20 items-center px-6">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
+                <span className="text-xl font-bold">N</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-slate-900 uppercase tracking-wide">NEWKOMERS</span>
+                <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">B2B SaaS Platform</span>
+              </div>
             </Link>
           </div>
-          <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+          
+          <nav className="flex-1 space-y-1 px-4 py-4">
             <Link href="/dashboard" className={navLinkClass("/dashboard")}>
-              <LayoutDashboard className="w-5 h-5" />
+              <LayoutDashboard className="h-5 w-5" />
               Dashboard
             </Link>
             <Link href="/structure" className={navLinkClass("/structure")}>
-              <Building2 className="w-5 h-5" />
+              <Network className="h-5 w-5" />
               Structure
             </Link>
+            <Link href="/budget" className={navLinkClass("/budget")}>
+              <BookOpen className="h-5 w-5" />
+              Accounting
+            </Link>
             <Link href="/import" className={navLinkClass("/import")}>
-              <Upload className="w-5 h-5" />
-              Import
+              <Upload className="h-5 w-5" />
+              Mapping
             </Link>
             <Link href="/reporting" className={navLinkClass("/reporting")}>
-              <FileText className="w-5 h-5" />
+              <BarChart3 className="h-5 w-5" />
               Reporting
             </Link>
-            <Link href="/budget" className={navLinkClass("/budget")}>
-              <PieChart className="w-5 h-5" />
-              Budget
-            </Link>
-            {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
-              <Link href="/permissions-assign" className={navLinkClass("/permissions-assign")}>
-                <ShieldCheck className="w-5 h-5" />
-                Permissions
-              </Link>
-            )}
           </nav>
-          <div className="mt-auto border-t border-border p-4" ref={menuRef}>
-            <div className="relative">
+
+          <div className="mt-auto border-t border-slate-100 p-4 space-y-4" ref={menuRef}>
+            <Link href="/settings" className={navLinkClass("/settings")}>
+              <Settings className="h-5 w-5" />
+              Settings
+            </Link>
+
+            <div className="relative pt-2">
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((o) => !o)}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-muted-foreground transition-all hover:bg-muted/60 hover:text-primary"
+                className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-all hover:bg-slate-50"
               >
-                <Avatar>
-                  <AvatarFallback>
-                    {(user?.email ?? "?").slice(0, 2).toUpperCase()}
+                <Avatar className="h-10 w-10 border border-slate-100 bg-emerald-100">
+                  <AvatarImage src="" />
+                  <AvatarFallback className="bg-emerald-100 text-emerald-700 font-semibold">
+                    {(user?.email ?? "JW").slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="truncate text-sm">{user?.email ?? "Invité"}</span>
+                <div className="flex flex-col overflow-hidden">
+                  <span className="truncate text-sm font-semibold text-slate-900">
+                    {user?.email?.split('@')[0] || "James Wilson"}
+                  </span>
+                  <span className="truncate text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                    {user?.role?.replace('_', ' ') || "CFO ADMIN"}
+                  </span>
+                </div>
               </button>
               {userMenuOpen && (
-                <div className="absolute bottom-full left-0 right-0 mb-1 rounded-md border border-border bg-background py-1 shadow-lg">
+                <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-slate-100 bg-white p-1 shadow-lg z-50">
                   <button
                     type="button"
-                    className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted/60"
+                    className="w-full rounded-lg px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                     onClick={() => { setUserMenuOpen(false); }}
                   >
                     Mon Profil
                   </button>
                   <button
                     type="button"
-                    className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted/60"
+                    className="w-full rounded-lg px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
                     onClick={() => { setUserMenuOpen(false); logout(); void router.push("/"); }}
                   >
                     Déconnexion
@@ -120,29 +147,51 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
       </div>
 
       {/* Main */}
-      <div className="flex flex-col">
-        <header className="flex h-14 items-center gap-4 border-b border-border bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-          <h1 className="text-lg font-semibold">{title}</h1>
-          <div className="ml-auto flex items-center gap-2">
+      <div className="flex flex-col bg-background">
+        <header className="flex h-16 items-center justify-between border-b border-slate-100 bg-white px-6">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <span className="cursor-pointer hover:text-slate-900 transition-colors">NewKomers</span>
+            <ChevronRight className="h-4 w-4 text-slate-300" />
+            <span className="font-medium text-slate-900">{title}</span>
+          </div>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-4">
             {companies.length > 0 && (
               <Select
                 value={selectedCompanyId}
                 onValueChange={onCompanyChange}
                 placeholder="Entreprise"
-                className="w-[200px]"
+                className="w-[180px] border-none bg-slate-50 text-sm font-medium text-slate-700 shadow-none focus:ring-0"
               >
                 {companies.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </Select>
             )}
-            <Input type="search" placeholder="Rechercher..." className="w-[180px]" />
-            <Button variant="ghost" size="icon" aria-label="Notifications">
-              <span className="text-lg">🔔</span>
-            </Button>
+
+            <div className="relative hidden md:block">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="search"
+                placeholder="Global search..."
+                className="h-10 w-[240px] rounded-lg border-none bg-slate-50 pl-10 text-sm placeholder:text-slate-400 focus-visible:ring-0 lg:w-[320px]"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 border-l border-slate-100 pl-4">
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:bg-slate-50 hover:text-slate-900">
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:bg-slate-50 hover:text-slate-900">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+              </Button>
+            </div>
           </div>
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-[#f6f7f8]">
+        <main className="flex flex-1 flex-col gap-6 p-6 lg:p-8 bg-slate-50">
           {children}
         </main>
       </div>

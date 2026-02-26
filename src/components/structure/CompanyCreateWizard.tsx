@@ -12,8 +12,6 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Select } from "@/components/ui/Select";
-import { Progress } from "@/components/ui/Progress";
-
 const STEPS = [
   { id: 1, title: "Informations Générales" },
   { id: 2, title: "Détails Administratifs" },
@@ -71,8 +69,6 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
   const [form, setForm] = React.useState<CompanyWizardForm>(defaultForm);
   const [loading, setLoading] = React.useState(false);
 
-  const progress = (step / 3) * 100;
-
   const reset = React.useCallback(() => {
     setStep(1);
     setForm(defaultForm);
@@ -111,11 +107,58 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
         <DialogHeader>
           <DialogTitle>Nouvelle entreprise</DialogTitle>
         </DialogHeader>
-        <Progress value={progress} max={100} className="mb-4" />
+
+        <nav aria-label="Progression" className="mb-6">
+          <ol className="flex items-center">
+            {STEPS.map((s, i) => {
+              const isCompleted = step > s.id;
+              const isCurrent = step === s.id;
+              return (
+                <li key={s.id} className="flex flex-1 items-center">
+                  <div className="flex flex-col items-center gap-1.5 flex-1">
+                    <div
+                      className={
+                        "flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-colors " +
+                        (isCompleted
+                          ? "bg-emerald-500 text-white"
+                          : isCurrent
+                            ? "bg-slate-900 text-white ring-4 ring-slate-900/10"
+                            : "bg-slate-100 text-slate-400")
+                      }
+                    >
+                      {isCompleted ? (
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        s.id
+                      )}
+                    </div>
+                    <span
+                      className={
+                        "text-[11px] font-medium text-center leading-tight " +
+                        (isCurrent ? "text-slate-900" : isCompleted ? "text-emerald-600" : "text-slate-400")
+                      }
+                    >
+                      {s.title}
+                    </span>
+                  </div>
+                  {i < STEPS.length - 1 && (
+                    <div
+                      className={
+                        "h-0.5 flex-1 -mt-5 mx-1 rounded-full transition-colors " +
+                        (step > s.id ? "bg-emerald-500" : "bg-slate-200")
+                      }
+                    />
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
 
         {step === 1 && (
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">Étape 1 — Informations Générales</p>
             <Input
               placeholder="Nom de l'entreprise"
               value={form.name}
@@ -145,7 +188,6 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
 
         {step === 2 && (
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">Étape 2 — Détails Administratifs</p>
             <Input
               placeholder="SIRET"
               value={form.siret}
@@ -173,7 +215,6 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
 
         {step === 3 && (
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">Étape 3 — Classification</p>
             <Input
               placeholder="Code APE"
               value={form.ape_code}

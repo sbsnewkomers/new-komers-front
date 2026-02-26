@@ -34,6 +34,21 @@ export async function apiFetch<T>(
   });
 
   if (!res.ok) {
+    // Handle auth expiration / 401 globally: store current location and redirect to login.
+    if (res.status === 401 && typeof window !== "undefined") {
+      const currentPath = window.location.pathname + window.location.search + window.location.hash;
+      // Avoid loops when already on login
+      if (!currentPath.startsWith("/login")) {
+        try {
+          window.localStorage.setItem("nk-return-to", currentPath);
+        } catch {
+          // ignore storage errors
+        }
+        window.location.href = "/login";
+      }
+      throw new Error("Unauthorized");
+    }
+
     const text = await res.text().catch(() => "");
     const defaultMessage = `Request failed (${res.status} ${res.statusText})`;
     const message = snackbar?.errorMessage ?? (text || defaultMessage);
