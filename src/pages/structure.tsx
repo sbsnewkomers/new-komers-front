@@ -23,6 +23,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/DropdownMenu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
+import { Folder, Building2, Package, MoreHorizontal, Plus, Upload, Play } from "lucide-react";
 import { CompanyCreateWizard, type CompanyWizardForm } from "@/components/structure/CompanyCreateWizard";
 
 type BusinessUnit = {
@@ -51,6 +52,17 @@ export default function StructurePage() {
   const [ficheOpen, setFicheOpen] = useState(false);
   const [ficheCompanyId, setFicheCompanyId] = useState<string | null>(null);
   const [ficheTab, setFicheTab] = useState("informations");
+  const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(new Set());
+
+  const [addCompanyOpen, setAddCompanyOpen] = useState(false);
+  const [addCompanyGroupId, setAddCompanyGroupId] = useState<string | null>(null);
+  const [addCompanyForm, setAddCompanyForm] = useState({ name: "", siret: "", fiscal_year_start: "", fiscal_year_end: "" });
+  const [addCompanyLoading, setAddCompanyLoading] = useState(false);
+
+  const [addBUOpen, setAddBUOpen] = useState(false);
+  const [addBUCompanyId, setAddBUCompanyId] = useState<string | null>(null);
+  const [addBUForm, setAddBUForm] = useState({ name: "", code: "", activity: "", siret: "" });
+  const [addBULoading, setAddBULoading] = useState(false);
 
   // Editable form state
   const [editGroup, setEditGroup] = useState({ name: "", siret: "", fiscal_year_start: "", fiscal_year_end: "", mainActivity: "" });
@@ -177,6 +189,58 @@ export default function StructurePage() {
     [companies]
   );
 
+  const handleAddCompanyToGroup = async () => {
+    if (!addCompanyGroupId || !addCompanyForm.name.trim()) return;
+    setAddCompanyLoading(true);
+    try {
+      await companies.create({
+        groupId: addCompanyGroupId!,
+        name: addCompanyForm.name,
+        siret: addCompanyForm.siret,
+        fiscal_year_start: addCompanyForm.fiscal_year_start,
+        fiscal_year_end: addCompanyForm.fiscal_year_end,
+      });
+      companies.fetchList();
+      setAddCompanyOpen(false);
+      setAddCompanyForm({ name: "", siret: "", fiscal_year_start: "", fiscal_year_end: "" });
+    } catch { /* snackbar handles */ } finally {
+      setAddCompanyLoading(false);
+    }
+  };
+
+  const handleAddBUToCompany = async () => {
+    if (!addBUCompanyId || !addBUForm.name.trim()) return;
+    setAddBULoading(true);
+    try {
+      await apiFetch(`/companies/${addBUCompanyId}/business-units`, {
+        method: "POST",
+        body: JSON.stringify(addBUForm),
+        snackbar: { showSuccess: true, successMessage: "Business unit cr\u00e9\u00e9e" },
+      });
+      loadBUsForCompany(addBUCompanyId);
+      setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
+      setAddBUOpen(false);
+      setAddBUForm({ name: "", code: "", activity: "", siret: "" });
+    } catch { /* snackbar handles */ } finally {
+      setAddBULoading(false);
+    }
+  };
+
+  const toggleExpand = (companyId: string) => {
+    setExpandedCompanyIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(companyId)) {
+        next.delete(companyId);
+      } else {
+        next.add(companyId);
+        if (!busByCompany[companyId]) {
+          loadBUsForCompany(companyId);
+        }
+      }
+      return next;
+    });
+  };
+
   const groupList = groups.list ?? [];
   const companyList = companies.list ?? [];
   const treeRows: TreeNode[] = [];
@@ -186,9 +250,11 @@ export default function StructurePage() {
       .filter((c) => c.group_id === g.id)
       .forEach((c) => {
         treeRows.push({ type: "company", id: c.id, name: c.name, groupId: g.id });
-        (busByCompany[c.id] ?? []).forEach((b) => {
-          treeRows.push({ type: "bu", id: b.id, name: b.name, companyId: c.id, code: b.code });
-        });
+        if (expandedCompanyIds.has(c.id)) {
+          (busByCompany[c.id] ?? []).forEach((b) => {
+            treeRows.push({ type: "bu", id: b.id, name: b.name, companyId: c.id, code: b.code });
+          });
+        }
       });
   });
 
@@ -196,74 +262,154 @@ export default function StructurePage() {
 
   return (
     <AppLayout title="Structure" companies={companyList} selectedCompanyId="" onCompanyChange={() => {}}>
-      <Head><title>Structure de l'organisation</title></Head>
-      <div className="mx-auto max-w-4xl space-y-6">
+      <Head><title>Structure de l&apos;organisation</title></Head>
+      <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-xl font-bold text-slate-900">Structure de l'organisation</h1>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-lg font-semibold text-primary">Organisation</h2>
+            <p className="text-sm text-slate-500">Gérez la structure hiérarchique de vos entités.</p>
+          </div>
+          <div className="flex gap-3">
             <Link
               href="/structure/import/upload"
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50"
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-primary"
             >
+              <Upload className="h-4 w-4" />
               Importer
             </Link>
-            <Button onClick={() => setWizardOpen(true)}>Nouvelle Entreprise</Button>
+            <Button onClick={() => setWizardOpen(true)} className="h-9 gap-2 bg-primary text-white hover:bg-slate-800">
+              <Plus className="h-4 w-4" />
+              Nouvelle Entreprise
+            </Button>
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          {groups.error && <p className="mb-2 text-sm text-red-600">{groups.error}</p>}
-          {companies.error && <p className="mb-2 text-sm text-red-600">{companies.error}</p>}
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          {groups.error && <p className="p-4 text-sm text-red-600">{groups.error}</p>}
+          {companies.error && <p className="p-4 text-sm text-red-600">{companies.error}</p>}
           {groups.loading && !groupList.length ? (
-            <p className="py-8 text-center text-slate-400">Chargement…</p>
+            <div className="flex items-center justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-primary"></div>
+            </div>
           ) : (
-            <ul className="space-y-0">
-              {treeRows.map((node) => {
-                const indent = node.type === "group" ? 0 : node.type === "company" ? 1 : 2;
-                const icon = node.type === "group" ? "📁" : node.type === "company" ? "🏢" : "📦";
-                return (
-                  <li key={`${node.type}-${node.id}`} className="list-none">
-                    <div
-                      className="flex cursor-pointer items-center gap-2 rounded-xl py-2.5 px-3 hover:bg-slate-50 transition-colors"
-                      style={{ paddingLeft: 12 + indent * 24 }}
-                      onClick={() => openDetail(node)}
-                    >
-                      <span className="text-lg" aria-hidden>{icon}</span>
-                      <span className="flex-1 truncate font-medium text-slate-900">{node.name}</span>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                        {node.type === "group" ? "Groupe" : node.type === "company" ? "Entreprise" : "BU"}
-                      </span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild className="rounded p-1 hover:bg-slate-100">
-                          <button type="button" onClick={(e) => e.stopPropagation()} className="text-slate-400" aria-label="Menu">⋮</button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openDetail(node); }}>
-                            Voir / Modifier
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => { e.stopPropagation(); setSelectedNode(node); setConfirmDeleteOpen(true); }}
-                            className="text-red-600"
-                          >
-                            Supprimer
-                          </DropdownMenuItem>
+            <div className="min-w-full">
+              {/* Header Row */}
+              <div className="grid grid-cols-[1fr_120px_60px] gap-4 border-b border-slate-100 bg-slate-50/50 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <div>Nom</div>
+                <div>Type</div>
+                <div className="text-right">Actions</div>
+              </div>
+              
+              <ul className="divide-y divide-slate-100">
+                {treeRows.map((node) => {
+                  const indent = node.type === "group" ? 0 : node.type === "company" ? 1 : 2;
+                  const Icon = node.type === "group" ? Folder : node.type === "company" ? Building2 : Package;
+                  const iconColor = node.type === "group" ? "text-blue-500" : node.type === "company" ? "text-slate-700" : "text-slate-400";
+                  const typeText = node.type === "group" ? "Groupe" : node.type === "company" ? "Entreprise" : "BU";
+                  const typeBadgeColor = node.type === "group" 
+                    ? "bg-blue-50 text-blue-700 border-blue-100" 
+                    : node.type === "company" 
+                      ? "bg-slate-100 text-slate-700 border-slate-200" 
+                      : "bg-slate-50 text-slate-500 border-slate-100";
+
+                  return (
+                    <li key={`${node.type}-${node.id}`} className="group/row transition-colors hover:bg-slate-50/50">
+                      <div
+                        className="grid cursor-pointer grid-cols-[1fr_120px_60px] items-center gap-4 px-6 py-3"
+                        onClick={() => openDetail(node)}
+                      >
+                        <div className="flex items-center gap-3" style={{ paddingLeft: indent * 24 }}>
                           {node.type === "company" && (
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setFicheCompanyId(node.id); loadBUsForCompany(node.id); setFicheTab("informations"); setFicheOpen(true); }}>
-                              Fiche entreprise
-                            </DropdownMenuItem>
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpand(node.id);
+                              }}
+                              className="cursor-pointer p-0.5 hover:bg-slate-200 rounded transition-colors mr-1"
+                            >
+                              <Play
+                                className={`h-3 w-3 text-slate-400 fill-slate-500 transition-transform ${
+                                  expandedCompanyIds.has(node.id) ? "rotate-90" : ""
+                                }`}
+                              />
+                            </div>
                           )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                          <Icon className={`h-5 w-5 ${iconColor}`} />
+                          <span className={`truncate font-medium ${node.type === "group" ? "text-primary" : "text-slate-700"}`}>
+                            {node.name}
+                          </span>
+                        </div>
+                        
+                        <div>
+                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${typeBadgeColor}`}>
+                            {typeText}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button 
+                                type="button" 
+                                onClick={(e) => e.stopPropagation()} 
+                                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-primary hover:shadow-sm group-hover/row:opacity-100"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-52">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openDetail(node); }}>
+                                Voir / Modifier
+                              </DropdownMenuItem>
+                              {node.type === "group" && (
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation();
+                                  setAddCompanyGroupId(node.id);
+                                  setAddCompanyForm({ name: "", siret: "", fiscal_year_start: "", fiscal_year_end: "" });
+                                  setAddCompanyOpen(true);
+                                }}>
+                                  <Plus className="mr-2 h-4 w-4" /> Ajouter une entreprise
+                                </DropdownMenuItem>
+                              )}
+                              {node.type === "company" && (
+                                <>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setFicheCompanyId(node.id); loadBUsForCompany(node.id); setFicheTab("informations"); setFicheOpen(true); }}>
+                                    Fiche entreprise
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAddBUCompanyId(node.id);
+                                    setAddBUForm({ name: "", code: "", activity: "", siret: "" });
+                                    setAddBUOpen(true);
+                                  }}>
+                                    <Plus className="mr-2 h-4 w-4" /> Ajouter une BU
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              <DropdownMenuItem
+                                onClick={(e) => { e.stopPropagation(); setSelectedNode(node); setConfirmDeleteOpen(true); }}
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                              >
+                                Supprimer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+                {treeRows.length === 0 && !groups.loading && (
+                  <li className="py-16 text-center">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50">
+                      <Building2 className="h-6 w-6 text-slate-300" />
                     </div>
+                    <h3 className="text-sm font-medium text-primary">Aucune structure</h3>
+                    <p className="mt-1 text-sm text-slate-500">Commencez par créer votre première entreprise.</p>
                   </li>
-                );
-              })}
-              {treeRows.length === 0 && !groups.loading && (
-                <li className="py-12 text-center text-slate-400">
-                  Aucun groupe. Créez une entreprise pour commencer.
-                </li>
-              )}
-            </ul>
+                )}
+              </ul>
+            </div>
           )}
         </div>
       </div>
@@ -399,39 +545,39 @@ export default function StructurePage() {
                   <div className="rounded-xl border border-slate-100 bg-slate-50 p-5">
                     <dl className="grid gap-3 text-sm sm:grid-cols-2">
                       <dt className="text-slate-500">SIRET</dt>
-                      <dd className="text-slate-900 font-medium">{company.siret || "—"}</dd>
-                      <dt className="text-slate-500">Début d'exercice</dt>
-                      <dd className="text-slate-900 font-medium">{company.fiscal_year_start || "—"}</dd>
-                      <dt className="text-slate-500">Fin d'exercice</dt>
-                      <dd className="text-slate-900 font-medium">{company.fiscal_year_end || "—"}</dd>
+                      <dd className="text-primary font-medium">{company.siret || "—"}</dd>
+                      <dt className="text-slate-500">Début d&apos;exercice</dt>
+                      <dd className="text-primary font-medium">{company.fiscal_year_start || "—"}</dd>
+                      <dt className="text-slate-500">Fin d&apos;exercice</dt>
+                      <dd className="text-primary font-medium">{company.fiscal_year_end || "—"}</dd>
                       {company.address && (
                         <>
                           <dt className="text-slate-500">Adresse</dt>
-                          <dd className="whitespace-pre-wrap text-slate-900 font-medium">{company.address}</dd>
+                          <dd className="whitespace-pre-wrap text-primary font-medium">{company.address}</dd>
                         </>
                       )}
                       {company.ape_code && (
                         <>
                           <dt className="text-slate-500">Code APE</dt>
-                          <dd className="text-slate-900 font-medium">{company.ape_code}</dd>
+                          <dd className="text-primary font-medium">{company.ape_code}</dd>
                         </>
                       )}
                       {company.main_activity && (
                         <>
                           <dt className="text-slate-500">Activité principale</dt>
-                          <dd className="text-slate-900 font-medium">{company.main_activity}</dd>
+                          <dd className="text-primary font-medium">{company.main_activity}</dd>
                         </>
                       )}
                       {company.size && (
                         <>
                           <dt className="text-slate-500">Taille</dt>
-                          <dd className="text-slate-900 font-medium">{company.size}</dd>
+                          <dd className="text-primary font-medium">{company.size}</dd>
                         </>
                       )}
                       {company.model && (
                         <>
                           <dt className="text-slate-500">Modèle</dt>
-                          <dd className="text-slate-900 font-medium">{company.model}</dd>
+                          <dd className="text-primary font-medium">{company.model}</dd>
                         </>
                       )}
                     </dl>
@@ -449,7 +595,7 @@ export default function StructurePage() {
                             openDetail({ type: "bu", id: b.id, name: b.name, companyId: company.id, code: b.code });
                           }}
                         >
-                          <span className="font-medium text-slate-900">{b.name}</span>
+                          <span className="font-medium text-primary">{b.name}</span>
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-slate-500">{b.code}{b.code && b.siret ? " — " : ""}{b.siret}</span>
                             <span className="text-slate-400">›</span>
@@ -472,6 +618,86 @@ export default function StructurePage() {
           })()}
           <DialogFooter>
             <Button variant="outline" onClick={() => setFicheOpen(false)}>Fermer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Company to Group Modal */}
+      <Dialog open={addCompanyOpen} onOpenChange={setAddCompanyOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-slate-700" />
+              Ajouter une entreprise
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-500">
+            Dans le groupe : <strong>{groupList.find((g) => g.id === addCompanyGroupId)?.name}</strong>
+          </p>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Nom *</label>
+              <Input value={addCompanyForm.name} onChange={(e) => setAddCompanyForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nom de l&apos;entreprise" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">SIRET</label>
+              <Input value={addCompanyForm.siret} onChange={(e) => setAddCompanyForm((f) => ({ ...f, siret: e.target.value }))} placeholder="123 456 789 00012" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">D&eacute;but exercice</label>
+                <Input type="date" value={addCompanyForm.fiscal_year_start} onChange={(e) => setAddCompanyForm((f) => ({ ...f, fiscal_year_start: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Fin exercice</label>
+                <Input type="date" value={addCompanyForm.fiscal_year_end} onChange={(e) => setAddCompanyForm((f) => ({ ...f, fiscal_year_end: e.target.value }))} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddCompanyOpen(false)}>Annuler</Button>
+            <Button onClick={handleAddCompanyToGroup} disabled={addCompanyLoading || !addCompanyForm.name.trim()}>
+              {addCompanyLoading ? "Cr\u00e9ation..." : "Cr\u00e9er"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add BU to Company Modal */}
+      <Dialog open={addBUOpen} onOpenChange={setAddBUOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-slate-500" />
+              Ajouter une Business Unit
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-500">
+            Dans l&apos;entreprise : <strong>{companyList.find((c) => c.id === addBUCompanyId)?.name}</strong>
+          </p>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Nom *</label>
+              <Input value={addBUForm.name} onChange={(e) => setAddBUForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nom de la BU" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Code</label>
+              <Input value={addBUForm.code} onChange={(e) => setAddBUForm((f) => ({ ...f, code: e.target.value }))} placeholder="BU-001" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Activit&eacute;</label>
+              <Input value={addBUForm.activity} onChange={(e) => setAddBUForm((f) => ({ ...f, activity: e.target.value }))} placeholder="Activit&eacute; principale" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">SIRET</label>
+              <Input value={addBUForm.siret} onChange={(e) => setAddBUForm((f) => ({ ...f, siret: e.target.value }))} placeholder="123 456 789 00012" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddBUOpen(false)}>Annuler</Button>
+            <Button onClick={handleAddBUToCompany} disabled={addBULoading || !addBUForm.name.trim()}>
+              {addBULoading ? "Cr\u00e9ation..." : "Cr\u00e9er"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -507,7 +733,7 @@ function Field({
       {editing ? (
         <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} />
       ) : (
-        <p className="text-sm font-medium text-slate-900">{value || "—"}</p>
+        <p className="text-sm font-medium text-primary">{value || "—"}</p>
       )}
     </div>
   );
@@ -532,7 +758,7 @@ function FieldTextarea({
       {editing ? (
         <Textarea value={value} onChange={(e) => onChange(e.target.value)} rows={2} />
       ) : (
-        <p className="whitespace-pre-wrap text-sm font-medium text-slate-900">{value || "—"}</p>
+        <p className="whitespace-pre-wrap text-sm font-medium text-primary">{value || "—"}</p>
       )}
     </div>
   );
