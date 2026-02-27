@@ -156,6 +156,16 @@ export default function DashboardPage() {
             : "",
           icon: Activity,
         },
+        {
+          id: "k-latest-company",
+          type: "kpi",
+          title: "DERNIÈRE CRÉATION",
+          value: latestCompany.name ?? "—",
+          description: latestCompany.siret
+            ? `SIRET ${latestCompany.siret}`
+            : "",
+          icon: Activity,
+        },
       ].filter(Boolean) as Widget[],
     );
 
@@ -207,7 +217,7 @@ export default function DashboardPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50">
         <p className="text-slate-600">
-          <Link href="/login" className="text-slate-900 hover:underline font-medium">
+          <Link href="/login" className="text-primary hover:underline font-medium">
             Connectez-vous
           </Link>{" "}
           pour accéder au dashboard.
@@ -224,8 +234,11 @@ export default function DashboardPage() {
       onCompanyChange={() => {}}
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-900">Vue d&apos;ensemble</h2>
-        <Button onClick={() => setAddModalOpen(true)} className="bg-slate-900 text-white hover:bg-slate-800">
+        <h2 className="text-xl font-bold text-primary">Vue d&apos;ensemble</h2>
+        <Button
+          onClick={() => setAddModalOpen(true)}
+          className="bg-primary text-white hover:bg-slate-800"
+        >
           Ajouter un widget
         </Button>
       </div>
@@ -234,7 +247,7 @@ export default function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="h-32">
-              <CardContent className="p-6">
+              <CardContent className="p-6!">
                 <Skeleton className="h-4 w-24 mb-4" />
                 <Skeleton className="h-8 w-16" />
               </CardContent>
@@ -248,9 +261,16 @@ export default function DashboardPage() {
           <div className="mb-4 rounded-full bg-slate-100 p-4">
             <Activity className="h-8 w-8 text-slate-400" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900">Votre dashboard est vide</h3>
-          <p className="mt-1 text-sm text-slate-500">Ajoutez des widgets pour suivre vos indicateurs clés.</p>
-          <Button className="mt-6 bg-slate-900 text-white hover:bg-slate-800" onClick={() => setAddModalOpen(true)}>
+          <h3 className="text-lg font-semibold text-primary">
+            Votre dashboard est vide
+          </h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Ajoutez des widgets pour suivre vos indicateurs clés.
+          </p>
+          <Button
+            className="mt-6 bg-primary text-white hover:bg-slate-800"
+            onClick={() => setAddModalOpen(true)}
+          >
             Ajouter votre premier widget
           </Button>
         </Card>
@@ -260,32 +280,39 @@ export default function DashboardPage() {
         <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {widgets.map((w) => (
-              <Card key={w.id} className="relative overflow-hidden transition-all hover:shadow-md bg-white">
+              <Card
+                key={w.id}
+                className="relative overflow-hidden transition-all hover:shadow-md bg-white"
+              >
                 <CardContent className="p-6!">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                         {w.title}
                       </p>
-                      <div className="text-2xl font-bold text-slate-900 mt-2">
+                      <div className="text-2xl font-bold text-primary mt-2">
                         {w.value}
                       </div>
                     </div>
                     <div className="rounded-full bg-slate-50 p-2.5">
-                      {w.icon ? <w.icon className="h-5 w-5 text-slate-700" /> : <Activity className="h-5 w-5 text-slate-700" />}
+                      {w.icon ? (
+                        <w.icon className="h-5 w-5 text-slate-700" />
+                      ) : (
+                        <Activity className="h-5 w-5 text-slate-700" />
+                      )}
                     </div>
                   </div>
                   {(w.trend || w.description) && (
                     <div className="mt-4 flex items-center gap-2 text-xs">
                       {w.trend && (
-                        <span className={`font-medium ${w.trendUp ? "text-emerald-600" : "text-rose-600"}`}>
+                        <span
+                          className={`font-medium ${w.trendUp ? "text-emerald-600" : "text-rose-600"}`}
+                        >
                           {w.trend}
                         </span>
                       )}
                       {w.description && (
-                        <span className="text-slate-400">
-                          {w.description}
-                        </span>
+                        <span className="text-slate-400">{w.description}</span>
                       )}
                     </div>
                   )}
@@ -293,79 +320,215 @@ export default function DashboardPage() {
               </Card>
             ))}
           </div>
-          
+
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
             {chartWidgets.map((w) => (
-              <Card key={w.id} className="flex flex-col bg-white">
-                <div className="border-b border-slate-100 px-6 py-4">
-                  <h3 className="font-semibold text-slate-900">{w.title}</h3>
-                </div>
-                <CardContent className="flex-1 p-6!">
-                  <div className="h-[300px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      {w.chartType === "line" ? (
-                        <LineChart data={w.data ?? []} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis 
-                            dataKey="name" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fill: '#64748b', fontSize: 12 }} 
-                            dy={10}
-                          />
-                          <YAxis 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fill: '#64748b', fontSize: 12 }} 
-                          />
-                          <Tooltip 
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="value" 
-                            stroke="#0f172a" 
-                            strokeWidth={3} 
-                            dot={{ fill: '#0f172a', strokeWidth: 2, r: 4, stroke: '#fff' }}
-                            activeDot={{ r: 6, strokeWidth: 0 }}
-                          />
-                        </LineChart>
-                      ) : (
-                        <BarChart data={w.data ?? []} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis 
-                            dataKey="name" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fill: '#64748b', fontSize: 12 }} 
-                            dy={10}
-                          />
-                          <YAxis 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fill: '#64748b', fontSize: 12 }} 
-                          />
-                          <Tooltip 
-                            cursor={{ fill: '#f1f5f9' }}
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                          />
-                          <Bar 
-                            dataKey="value" 
-                            fill="#0f172a" 
-                            radius={[4, 4, 0, 0]} 
-                            barSize={40}
-                          />
-                        </BarChart>
-                      )}
-                    </ResponsiveContainer>
+              <>
+                <Card key={w.id} className="flex flex-col bg-white">
+                  <div className="border-b border-slate-100 px-6 py-4">
+                    <h3 className="font-semibold text-primary">{w.title}</h3>
                   </div>
-                  <div className="mt-4 flex justify-end">
-                    <Button variant="ghost" size="sm" className="text-xs text-slate-500 hover:text-slate-900" onClick={() => setDrillDownOpen(true)}>
-                      Voir le détail →
-                    </Button>
+                  <CardContent className="flex-1 p-6!">
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        {w.chartType === "line" ? (
+                          <LineChart
+                            data={w.data?.map((d, i) => ({ ...d, value: i !== 2 ? d.value : d.value - (25 * i)  })) ?? []}
+                            margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                          >
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              vertical={false}
+                              stroke="#e2e8f0"
+                            />
+                            <XAxis
+                              dataKey="name"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: "#64748b", fontSize: 12 }}
+                              dy={10}
+                            />
+                            <YAxis
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: "#64748b", fontSize: 12 }}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                borderRadius: "8px",
+                                border: "none",
+                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                              }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="value"
+                              stroke="#0f172a"
+                              strokeWidth={3}
+                              dot={{
+                                fill: "#0f172a",
+                                strokeWidth: 2,
+                                r: 4,
+                                stroke: "#fff",
+                              }}
+                              activeDot={{ r: 6, strokeWidth: 0 }}
+                            />
+                          </LineChart>
+                        ) : (
+                          <BarChart
+                            data={w.data?.map((d, i) => ({ ...d, value: i === 2 ? d.value : d.value - ((25 * (i+1)) * d.value/100) })) ?? []}
+                            margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                          >
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              vertical={false}
+                              stroke="#e2e8f0"
+                            />
+                            <XAxis
+                              dataKey="name"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: "#64748b", fontSize: 12 }}
+                              dy={10}
+                            />
+                            <YAxis
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: "#64748b", fontSize: 12 }}
+                            />
+                            <Tooltip
+                              cursor={{ fill: "#f1f5f9" }}
+                              contentStyle={{
+                                borderRadius: "8px",
+                                border: "none",
+                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                              }}
+                            />
+                            <Bar
+                              dataKey="value"
+                              fill="#2967bc"
+                              radius={[4, 4, 0, 0]}
+                              barSize={40}
+                            />
+                          </BarChart>
+                        )}
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-slate-500 hover:text-primary"
+                        onClick={() => setDrillDownOpen(true)}
+                      >
+                        Voir le détail →
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card key={w.id} className="flex flex-col bg-white">
+                  <div className="border-b border-slate-100 px-6 py-4">
+                    <h3 className="font-semibold text-primary">{w.title}</h3>
                   </div>
-                </CardContent>
-              </Card>
+                  <CardContent className="flex-1 p-6!">
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        {w.chartType === "line" ? (
+                          <LineChart
+                            data={w.data?.map((d, i) => ({ ...d, value: i % 2 === 0 ? d.value : d.value * 2 })) ?? []}
+                            margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                          >
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              vertical={false}
+                              stroke="#e2e8f0"
+                            />
+                            <XAxis
+                              dataKey="name"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: "#64748b", fontSize: 12 }}
+                              dy={10}
+                            />
+                            <YAxis
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: "#64748b", fontSize: 12 }}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                borderRadius: "8px",
+                                border: "none",
+                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                              }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="value"
+                              stroke="#0f172a"
+                              strokeWidth={3}
+                              dot={{
+                                fill: "#0f172a",
+                                strokeWidth: 2,
+                                r: 4,
+                                stroke: "#fff",
+                              }}
+                              activeDot={{ r: 6, strokeWidth: 0 }}
+                            />
+                          </LineChart>
+                        ) : (
+                          <BarChart
+                            data={w.data?.map((d, i) => ({ ...d, value: i % 2 === 0 ? d.value : d.value * 2 })) ?? []}
+                            margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                          >
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              vertical={false}
+                              stroke="#e2e8f0"
+                            />
+                            <XAxis
+                              dataKey="name"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: "#64748b", fontSize: 12 }}
+                              dy={10}
+                            />
+                            <YAxis
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: "#64748b", fontSize: 12 }}
+                            />
+                            <Tooltip
+                              cursor={{ fill: "#f1f5f9" }}
+                              contentStyle={{
+                                borderRadius: "8px",
+                                border: "none",
+                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                              }}
+                            />
+                            <Bar
+                              dataKey="value"
+                              fill="#2967bc"
+                              radius={[4, 4, 0, 0]}
+                              barSize={40}
+                            />
+                          </BarChart>
+                        )}
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-slate-500 hover:text-primary"
+                        onClick={() => setDrillDownOpen(true)}
+                      >
+                        Voir le détail →
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
             ))}
           </div>
         </>
@@ -388,14 +551,20 @@ export default function DashboardPage() {
                     handleOpenConfig();
                   }}
                 >
-                  <div className="font-medium text-slate-900">{w.title}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">{w.type === "kpi" ? "Indicateur clé" : "Graphique d'évolution"}</div>
+                  <div className="font-medium text-primary">{w.title}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">
+                    {w.type === "kpi"
+                      ? "Indicateur clé"
+                      : "Graphique d'évolution"}
+                  </div>
                 </button>
               </li>
             ))}
           </ul>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddModalOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setAddModalOpen(false)}>
+              Annuler
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -408,10 +577,14 @@ export default function DashboardPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">Indicateur</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Indicateur
+              </label>
               <Select
                 value={configForm.indicator}
-                onValueChange={(v) => setConfigForm((f) => ({ ...f, indicator: v }))}
+                onValueChange={(v) =>
+                  setConfigForm((f) => ({ ...f, indicator: v }))
+                }
                 placeholder="Choisir un indicateur"
               >
                 <option value="ca">Chiffre d&apos;affaires</option>
@@ -420,37 +593,61 @@ export default function DashboardPage() {
               </Select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">Type de graphique</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Type de graphique
+              </label>
               <Select
                 value={configForm.chartType}
-                onValueChange={(v) => setConfigForm((f) => ({ ...f, chartType: v }))}
+                onValueChange={(v) =>
+                  setConfigForm((f) => ({ ...f, chartType: v }))
+                }
               >
                 <option value="bar">Barres</option>
                 <option value="line">Lignes</option>
               </Select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">Périmètre</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Périmètre
+              </label>
               <Select
                 value={configForm.scope}
-                onValueChange={(v) => setConfigForm((f) => ({ ...f, scope: v }))}
+                onValueChange={(v) =>
+                  setConfigForm((f) => ({ ...f, scope: v }))
+                }
                 placeholder="Choisir un périmètre"
               >
                 {companyList.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfigModalOpen(false)}>Annuler</Button>
-            <Button className="bg-slate-900 text-white hover:bg-slate-800" onClick={() => { if (selectedWidgetToAdd) handleAddWidget(selectedWidgetToAdd); setConfigModalOpen(false); }}>Ajouter</Button>
+            <Button variant="outline" onClick={() => setConfigModalOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              className="bg-primary text-white hover:bg-slate-800"
+              onClick={() => {
+                if (selectedWidgetToAdd) handleAddWidget(selectedWidgetToAdd);
+                setConfigModalOpen(false);
+              }}
+            >
+              Ajouter
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Modale Drill-down */}
-      <DrillDownDialog open={drillDownOpen} onOpenChange={setDrillDownOpen} data={drillDownData} />
+      <DrillDownDialog
+        open={drillDownOpen}
+        onOpenChange={setDrillDownOpen}
+        data={drillDownData}
+      />
     </AppLayout>
   );
 }
