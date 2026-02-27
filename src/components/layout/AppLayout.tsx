@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { 
-  Building2, 
   LayoutDashboard, 
   BarChart3, 
   Settings, 
@@ -19,7 +18,9 @@ import {
   Bell,
   HelpCircle,
   ChevronRight,
-  Upload
+  Upload,
+  Users,
+  ScrollText
 } from "lucide-react";
 
 type AppLayoutProps = {
@@ -67,12 +68,16 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
                 <span className="text-xl font-bold">N</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-900 uppercase tracking-wide">NEWKOMERS</span>
-                <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">B2B SaaS Platform</span>
+                <span className="text-sm font-bold text-slate-900 uppercase tracking-wide">
+                  NEWKOMERS
+                </span>
+                <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                  B2B SaaS Platform
+                </span>
               </div>
             </Link>
           </div>
-          
+
           <nav className="flex-1 space-y-1 px-4 py-4">
             <Link href="/dashboard" className={navLinkClass("/dashboard")}>
               <LayoutDashboard className="h-5 w-5" />
@@ -94,15 +99,28 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
               <BarChart3 className="h-5 w-5" />
               Reporting
             </Link>
+            <Link href="/audit" className={navLinkClass("/audit")}>
+              <ScrollText className="h-5 w-5" />
+              Audit
+            </Link>
           </nav>
 
-          <div className="mt-auto border-t border-slate-100 p-4 space-y-4" ref={menuRef}>
-            <Link href="/settings" className={navLinkClass("/settings")}>
+          <div
+            className="mt-auto border-t border-slate-100 p-4 space-y-2"
+            ref={menuRef}
+          >
+            {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
+              <Link href="/settings/users" className={navLinkClass("/settings")}>
+                <Users className="h-5 w-5" />
+                Users
+              </Link>
+            )}
+            <Link href="/permissions-assign" className={navLinkClass("/permissions-assign")}>
               <Settings className="h-5 w-5" />
               Settings
             </Link>
 
-            <div className="relative pt-2">
+            <div className="relative">
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((o) => !o)}
@@ -116,10 +134,10 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
                 </Avatar>
                 <div className="flex flex-col overflow-hidden">
                   <span className="truncate text-sm font-semibold text-slate-900">
-                    {user?.email?.split('@')[0] || "James Wilson"}
+                    {user?.email?.split("@")[0] || "James Wilson"}
                   </span>
                   <span className="truncate text-[10px] font-medium text-slate-500 uppercase tracking-wider">
-                    {user?.role?.replace('_', ' ') || "CFO ADMIN"}
+                    {user?.role?.replace("_", " ") || "CFO ADMIN"}
                   </span>
                 </div>
               </button>
@@ -128,14 +146,20 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
                   <button
                     type="button"
                     className="w-full rounded-lg px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                    onClick={() => { setUserMenuOpen(false); }}
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                    }}
                   >
                     Mon Profil
                   </button>
                   <button
                     type="button"
                     className="w-full rounded-lg px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                    onClick={() => { setUserMenuOpen(false); logout(); void router.push("/"); }}
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      logout();
+                      void router.push("/");
+                    }}
                   >
                     Déconnexion
                   </button>
@@ -151,7 +175,9 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
         <header className="flex h-16 items-center justify-between border-b border-slate-100 bg-white px-6">
           {/* Breadcrumbs */}
           <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span className="cursor-pointer hover:text-slate-900 transition-colors">NewKomers</span>
+            <span className="cursor-pointer hover:text-slate-900 transition-colors">
+              NewKomers
+            </span>
             <ChevronRight className="h-4 w-4 text-slate-300" />
             <span className="font-medium text-slate-900">{title}</span>
           </div>
@@ -163,10 +189,12 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
                 value={selectedCompanyId}
                 onValueChange={onCompanyChange}
                 placeholder="Entreprise"
-                className="w-[180px] border-none bg-slate-50 text-sm font-medium text-slate-700 shadow-none focus:ring-0"
+                className="border-none bg-slate-100 text-sm font-medium text-slate-700 shadow-none focus:ring-0"
               >
                 {companies.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </Select>
             )}
@@ -176,22 +204,30 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
               <Input
                 type="search"
                 placeholder="Global search..."
-                className="h-10 w-[240px] rounded-lg border-none bg-slate-50 pl-10 text-sm placeholder:text-slate-400 focus-visible:ring-0 lg:w-[320px]"
+                className="h-10 w-[240px] rounded-lg border-none bg-slate-100 pl-10 text-sm placeholder:text-slate-400 focus-visible:ring-0 lg:w-[320px]"
               />
             </div>
 
             <div className="flex items-center gap-1 border-l border-slate-100 pl-4">
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:bg-slate-50 hover:text-slate-900">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-slate-400 hover:bg-slate-50 hover:text-slate-900 border border-slate-300!"
+              >
                 <HelpCircle className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:bg-slate-50 hover:text-slate-900">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-slate-400 hover:bg-slate-50 hover:text-slate-900 relative border border-slate-300!"
+              >
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
               </Button>
             </div>
           </div>
         </header>
-        <main className="flex flex-1 flex-col gap-6 p-6 lg:p-8 bg-slate-50">
+        <main className="flex flex-1 flex-col gap-6 p-6 bg-slate-50 max-h-[calc(100vh-64px)] overflow-y-auto">
           {children}
         </main>
       </div>
