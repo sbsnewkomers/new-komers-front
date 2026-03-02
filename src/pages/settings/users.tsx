@@ -26,7 +26,23 @@ import {
   type UserRole,
   type UserStatus,
 } from "@/lib/usersApi";
+import {
+  fetchUserPermissionDetail,
+  addOrUpdateNodeAccess,
+  setNodeAccessActions,
+  removeNodeAccess,
+  grantEntityPermission,
+  revokeEntityPermission,
+  type UserPermissionDetail,
+  type PermissionAction,
+  type NodeType,
+  ALL_ACTIONS,
+  NODE_TYPES,
+  actionLabel,
+  nodeTypeLabel,
+} from "@/lib/permissionsAdminApi";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
+import { useGroups, useCompanies, useBusinessUnits } from "@/hooks";
 import {
   Plus,
   Search,
@@ -37,6 +53,8 @@ import {
   Pencil,
   Trash2,
   Users,
+  KeyRound,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -79,6 +97,20 @@ export default function UsersPage() {
   const [deleteTarget, setDeleteTarget] = useState<UserItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  const [permOpen, setPermOpen] = useState(false);
+  const [permUser, setPermUser] = useState<UserItem | null>(null);
+  const [permDetail, setPermDetail] = useState<UserPermissionDetail | null>(null);
+  const [permLoading, setPermLoading] = useState(false);
+
+  const [addNodeType, setAddNodeType] = useState<NodeType>("GROUP");
+  const [addNodeId, setAddNodeId] = useState("");
+  const [addActions, setAddActions] = useState<PermissionAction[]>([]);
+  const [companyIdForBU, setCompanyIdForBU] = useState("");
+
+  const groupsHook = useGroups();
+  const companiesHook = useCompanies();
+  const busHook = useBusinessUnits(companyIdForBU || null);
+
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
@@ -90,6 +122,10 @@ export default function UsersPage() {
   }, []);
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
+
+  useEffect(() => {
+    if (companyIdForBU && permOpen) busHook.fetchList();
+  }, [companyIdForBU, permOpen]);
 
   const handleInvite = async () => {
     setInviteLoading(true);
@@ -148,6 +184,69 @@ export default function UsersPage() {
       setDeleteLoading(false);
     }
   };
+
+  const openPermissions = async (u: UserItem) => {
+    setPermUser(u);
+    setPermOpen(true);
+    setPermLoading(true);
+    setAddNodeType("GROUP");
+    setAddNodeId("");
+    setAddActions([]);
+    setCompanyIdForBU("");
+    groupsHook.fetchList();
+    companiesHook.fetchList();
+    try {
+      const d = await fetchUserPermissionDetail(u.id);
+      setPermDetail(d);
+    } catch { setPermDetail(null); }
+    finally { setPermLoading(false); }
+  };
+
+  const refreshPerm = async () => {
+    if (!permUser) return;
+    try {
+      const d = await fetchUserPermissionDetail(permUser.id);
+      setPermDetail(d);
+    } catch { setPermDetail(null); }
+  };
+
+  const handleGrantEntity = async (nodeType: NodeType, action: PermissionAction) => {
+    if (!permUser) return;
+    await grantEntityPermission(permUser.id, nodeType, action);
+    refreshPerm();
+  };
+
+  const handleRevokeEntity = async (nodeType: NodeType, action: PermissionAction) => {
+    if (!permUser) return;
+    await revokeEntityPermission(permUser.id, nodeType, action);
+    refreshPerm();
+  };
+
+  const handleAddNodeAccess = async () => {
+    if (!permUser || !addNodeId || addActions.length === 0) return;
+    await addOrUpdateNodeAccess(permUser.id, addNodeType, addNodeId, addActions);
+    setAddNodeId("");
+    setAddActions([]);
+    refreshPerm();
+  };
+
+  const handleRemoveNode = async (accessId: string) => {
+    if (!permUser) return;
+    await removeNodeAccess(permUser.id, accessId);
+    refreshPerm();
+  };
+
+  const hasEntityPerm = (nodeType: NodeType, action: PermissionAction) =>
+    permDetail?.entityPermissions?.some(
+      (p) => p.nodeType === nodeType && p.action === action
+    ) ?? false;
+
+  const nodeOptions =
+    addNodeType === "GROUP"
+      ? (groupsHook.list ?? [])
+      : addNodeType === "COMPANY"
+        ? (companiesHook.list ?? [])
+        : (busHook.list ?? []);
 
   const filtered = users.filter((u) => {
     const q = search.toLowerCase();
@@ -292,6 +391,9 @@ export default function UsersPage() {
                               <DropdownMenuItem onClick={() => openEdit(u)}>
                                 <Pencil className="mr-2 h-4 w-4" /> Modifier
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openPermissions(u)}>
+                                <KeyRound className="mr-2 h-4 w-4" /> Permissions
+                              </DropdownMenuItem>
                               {u.status === "ACTIVE" && (
                                 <DropdownMenuItem onClick={async () => { await updateUser(u.id, { status: "SUSPENDED" }); loadUsers(); }}>
                                   <UserX className="mr-2 h-4 w-4" /> Suspendre
@@ -413,6 +515,177 @@ export default function UsersPage() {
             <Button className="bg-red-600 text-white hover:bg-red-700" onClick={handleDelete} disabled={deleteLoading}>
               {deleteLoading ? "Suppression..." : "Supprimer"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Permissions Modal */}
+      <Dialog open={permOpen} onOpenChange={setPermOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-slate-700" />
+              Permissions &mdash; {permUser?.email}
+            </DialogTitle>
+          </DialogHeader>
+
+          {permLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
+            </div>
+          ) : !permDetail ? (
+            <p className="py-6 text-center text-sm text-slate-400">Impossible de charger les permissions.</p>
+          ) : (
+            <div className="space-y-6 py-2">
+              {/* Entity-level permissions */}
+              <div>
+                <h3 className="mb-3 text-sm font-semibold text-slate-900">Permissions par entit&eacute;</h3>
+                <p className="mb-4 text-xs text-slate-500">Accorder des droits sur tous les &eacute;l&eacute;ments d&apos;un type.</p>
+                <div className="space-y-3">
+                  {NODE_TYPES.map((nodeType) => (
+                    <div key={nodeType} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        {nodeTypeLabel(nodeType)}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {ALL_ACTIONS.map((action) => {
+                          const granted = hasEntityPerm(nodeType, action);
+                          return (
+                            <button
+                              key={action}
+                              type="button"
+                              onClick={() => granted ? handleRevokeEntity(nodeType, action) : handleGrantEntity(nodeType, action)}
+                              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide transition-colors ${
+                                granted
+                                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                                  : "border-slate-200 bg-white text-slate-400 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
+                              }`}
+                            >
+                              {granted && <span className="text-emerald-500">&#10003;</span>}
+                              {actionLabel(action)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Node-level accesses */}
+              <div>
+                <h3 className="mb-3 text-sm font-semibold text-slate-900">Acc&egrave;s par n&oelig;ud</h3>
+                <p className="mb-4 text-xs text-slate-500">Acc&egrave;s &agrave; un groupe, une entreprise ou une BU sp&eacute;cifique.</p>
+
+                {(permDetail.nodeAccesses?.length ?? 0) > 0 ? (
+                  <ul className="mb-4 space-y-2">
+                    {permDetail.nodeAccesses.map((na) => {
+                      const nodeName =
+                        na.nodeType === "GROUP"
+                          ? (groupsHook.list ?? []).find((g) => g.id === na.nodeId)?.name
+                          : na.nodeType === "COMPANY"
+                            ? (companiesHook.list ?? []).find((c) => c.id === na.nodeId)?.name
+                            : (busHook.list ?? []).find((b) => b.id === na.nodeId)?.name;
+                      return (
+                        <li key={na.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
+                          <div>
+                            <span className="text-xs font-semibold uppercase text-slate-500">{nodeTypeLabel(na.nodeType)}</span>
+                            <span className="mx-1.5 text-slate-300">|</span>
+                            <span className="text-sm font-medium text-slate-900">{nodeName ?? na.nodeId.slice(0, 8)}</span>
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {na.actions.map((a) => (
+                                <span key={a} className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                                  {actionLabel(a)}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveNode(na.id)}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="mb-4 rounded-lg border border-dashed border-slate-200 py-4 text-center text-xs text-slate-400">
+                    Aucun acc&egrave;s n&oelig;ud configur&eacute;.
+                  </p>
+                )}
+
+                {/* Add node access form */}
+                <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Ajouter un acc&egrave;s</p>
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div>
+                      <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Type</label>
+                      <select
+                        value={addNodeType}
+                        onChange={(e) => { setAddNodeType(e.target.value as NodeType); setAddNodeId(""); if (e.target.value !== "BUSINESS_UNIT") setCompanyIdForBU(""); }}
+                        className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700"
+                      >
+                        {NODE_TYPES.map((n) => <option key={n} value={n}>{nodeTypeLabel(n)}</option>)}
+                      </select>
+                    </div>
+                    {addNodeType === "BUSINESS_UNIT" && (
+                      <div>
+                        <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Entreprise</label>
+                        <select
+                          value={companyIdForBU}
+                          onChange={(e) => { setCompanyIdForBU(e.target.value); setAddNodeId(""); }}
+                          className="h-9 min-w-[160px] rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700"
+                        >
+                          <option value="">Choisir&hellip;</option>
+                          {(companiesHook.list ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </div>
+                    )}
+                    <div>
+                      <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">&Eacute;l&eacute;ment</label>
+                      <select
+                        value={addNodeId}
+                        onChange={(e) => setAddNodeId(e.target.value)}
+                        disabled={addNodeType === "BUSINESS_UNIT" && !companyIdForBU}
+                        className="h-9 min-w-[160px] rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:opacity-50"
+                      >
+                        <option value="">Choisir&hellip;</option>
+                        {nodeOptions.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Actions</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {ALL_ACTIONS.map((a) => (
+                          <label key={a} className="flex cursor-pointer items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[10px] font-medium text-slate-600 has-checked:border-blue-300 has-checked:bg-blue-50 has-checked:text-blue-700">
+                            <input
+                              type="checkbox"
+                              checked={addActions.includes(a)}
+                              onChange={() => setAddActions((prev) => prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a])}
+                              className="sr-only"
+                            />
+                            {actionLabel(a)}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleAddNodeAccess}
+                      disabled={!addNodeId || addActions.length === 0}
+                      className="h-9"
+                    >
+                      Ajouter
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPermOpen(false)}>Fermer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
