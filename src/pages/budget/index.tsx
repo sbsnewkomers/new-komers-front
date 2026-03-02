@@ -77,12 +77,12 @@ export default function BudgetPage() {
           Saisissez les montants prévisionnels par ligne et par mois.
         </p>
         <div className="overflow-auto rounded-xl border border-border">
-          <Table>
+          <Table className="bg-white">
             <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-[180px] bg-muted/50">Ligne / Mois</TableHead>
+              <TableRow className="bg-black!">
+                <TableHead className="min-w-[180px] bg-primary/80 text-white">Ligne / Mois</TableHead>
                 {MONTHS.map((m) => (
-                  <TableHead key={m} className="w-28 text-center">
+                  <TableHead key={m} className="w-28 text-right bg-slate-100">
                     {m}
                   </TableHead>
                 ))}
@@ -91,7 +91,7 @@ export default function BudgetPage() {
             <TableBody>
               {BUDGET_LINES.map((line) => (
                 <TableRow key={line}>
-                  <TableCell className="font-medium bg-muted/30 min-w-[180px]">
+                  <TableCell className="font-medium bg-primary/80 text-white min-w-[180px]">
                     {line}
                   </TableCell>
                   {MONTHS.map((month) => (

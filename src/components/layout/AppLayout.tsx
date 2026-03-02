@@ -54,8 +54,8 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
   const navLinkClass = (href: string) =>
     "group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-sm font-medium " +
     (isActive(href)
-      ? "bg-slate-100 text-slate-900"
-      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900");
+      ? "bg-slate-100 text-primary"
+      : "text-slate-500 hover:bg-slate-50 hover:text-primary");
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr]">
@@ -64,11 +64,11 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-20 items-center px-6">
             <Link href="/" className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
                 <span className="text-xl font-bold">N</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-900 uppercase tracking-wide">
+                <span className="text-sm font-bold text-primary uppercase tracking-wide">
                   NEWKOMERS
                 </span>
                 <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
@@ -133,7 +133,7 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col overflow-hidden">
-                  <span className="truncate text-sm font-semibold text-slate-900">
+                  <span className="truncate text-sm font-semibold text-primary">
                     {user?.email?.split("@")[0] || "James Wilson"}
                   </span>
                   <span className="truncate text-[10px] font-medium text-slate-500 uppercase tracking-wider">
@@ -175,11 +175,11 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
         <header className="flex h-16 items-center justify-between border-b border-slate-100 bg-white px-6">
           {/* Breadcrumbs */}
           <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span className="cursor-pointer hover:text-slate-900 transition-colors">
+            <span className="cursor-pointer hover:text-primary transition-colors">
               NewKomers
             </span>
             <ChevronRight className="h-4 w-4 text-slate-300" />
-            <span className="font-medium text-slate-900">{title}</span>
+            <span className="font-medium text-primary">{title}</span>
           </div>
 
           {/* Right Actions */}
@@ -212,14 +212,14 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-slate-400 hover:bg-slate-50 hover:text-slate-900 border border-slate-300!"
+                className="h-9 w-9 text-slate-400 hover:bg-slate-50 hover:text-primary border border-slate-300!"
               >
                 <HelpCircle className="h-5 w-5" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-slate-400 hover:bg-slate-50 hover:text-slate-900 relative border border-slate-300!"
+                className="h-9 w-9 text-slate-400 hover:bg-slate-50 hover:text-primary relative border border-slate-300!"
               >
                 <Bell className="h-5 w-5" />
                 <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
