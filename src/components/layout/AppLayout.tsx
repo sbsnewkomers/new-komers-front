@@ -109,7 +109,7 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
             className="mt-auto border-t border-slate-100 p-4 space-y-2"
             ref={menuRef}
           >
-            {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
+            {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER") && (
               <Link href="/settings/users" className={navLinkClass("/settings")}>
                 <Users className="h-5 w-5" />
                 Users

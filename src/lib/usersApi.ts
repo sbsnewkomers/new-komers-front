@@ -27,19 +27,6 @@ export async function fetchUser(id: string): Promise<UserItem> {
   });
 }
 
-export async function inviteUser(data: {
-  email: string;
-  role: UserRole;
-  firstName?: string;
-  lastName?: string;
-}): Promise<UserItem> {
-  return apiFetch<UserItem>("/users/invite", {
-    method: "POST",
-    body: JSON.stringify(data),
-    snackbar: { successMessage: "Utilisateur invité avec succès." },
-  });
-}
-
 export async function updateUser(
   id: string,
   data: {
