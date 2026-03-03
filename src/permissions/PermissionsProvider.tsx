@@ -8,7 +8,7 @@ type PermissionsContextValue = {
   grants: PermissionGrant[];
   isLoading: boolean;
   setGrants: (next: PermissionGrant[]) => void;
-  refreshMe: () => Promise<void>;
+  refreshMe: (options?: { silent?: boolean }) => Promise<PermissionsUser | null>;
   logout: () => Promise<void>;
 };
 
@@ -22,20 +22,25 @@ export function PermissionsProvider(props: {
   const [grants, setGrants] = useState<PermissionGrant[]>(props.bootstrap?.grants ?? []);
   const [isLoading, setIsLoading] = useState(false);
 
-  const refreshMe = useCallback(async (options?: { silent?: boolean }) => {
-    setIsLoading(true);
-    try {
-      const me = await apiFetch<PermissionsUser>("/auth/me", {
-        snackbar: options?.silent ? { showError: false } : undefined,
-      });
-      setUser(me);
-      setGrants(me.permissions ?? []);
-    } catch {
-      if (!options?.silent) setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const refreshMe = useCallback(
+    async (options?: { silent?: boolean }): Promise<PermissionsUser | null> => {
+      setIsLoading(true);
+      try {
+        const me = await apiFetch<PermissionsUser>("/auth/me", {
+          snackbar: options?.silent ? { showError: false } : undefined,
+        });
+        setUser(me);
+        setGrants(me.permissions ?? []);
+        return me;
+      } catch {
+        if (!options?.silent) setUser(null);
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     refreshMe({ silent: true });

@@ -38,7 +38,7 @@ export async function apiFetch<T>(
     if (res.status === 401 && typeof window !== "undefined") {
       const currentPath = window.location.pathname + window.location.search + window.location.hash;
       // Avoid loops when already on login
-      if (!currentPath.startsWith("/login")) {
+      if (!currentPath.startsWith("/login") && !currentPath.startsWith("/invitations/")) {
         try {
           window.localStorage.setItem("nk-return-to", currentPath);
         } catch {
@@ -46,15 +46,34 @@ export async function apiFetch<T>(
         }
         window.location.href = "/login";
       }
-      throw new Error("Unauthorized");
+      // Let callers see the backend 401 body when possible
+      const text401 = await res.text().catch(() => "");
+      throw new Error(text401 || "Unauthorized");
     }
 
     const text = await res.text().catch(() => "");
     const defaultMessage = `Request failed (${res.status} ${res.statusText})`;
-    const message = snackbar?.errorMessage ?? (text || defaultMessage);
+
+    // Try to parse standard NestJS error JSON to extract message
+    let parsed: unknown;
+    let backendMessage: string | undefined;
+    try {
+      parsed = text ? JSON.parse(text) : undefined;
+      const m = (parsed as { message?: string | string[] } | undefined)?.message;
+      backendMessage = Array.isArray(m) ? m.join(", ") : m;
+    } catch {
+      parsed = undefined;
+    }
+
+    const displayMessage = snackbar?.errorMessage ?? backendMessage ?? (text || defaultMessage);
 
     if (snackbar?.showError !== false) {
-      emitSnackbar({ message, variant: "error" });
+      emitSnackbar({ message: displayMessage, variant: "error" });
+    }
+
+    // Throw the raw backend payload when available so callers can inspect it
+    if (parsed) {
+      throw new Error(JSON.stringify(parsed));
     }
 
     throw new Error(text || defaultMessage);

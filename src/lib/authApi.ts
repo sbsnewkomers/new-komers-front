@@ -10,7 +10,7 @@ export async function login(payload: LoginPayload) {
     snackbar: {
       showSuccess: true,
       successMessage: "Connexion réussie",
-      errorMessage: "Identifiants invalides",
+      showError: false,
     },
   });
 }
