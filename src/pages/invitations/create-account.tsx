@@ -36,7 +36,16 @@ export default function CreateAccountPage() {
     }
   }, [router.isReady, token]);
 
-  const passwordValid = form.password.length >= 8;
+  const strengthEnabled =
+    process.env.NEXT_PUBLIC_PASSWORD_STRENGTH_ENABLED !== "false";
+
+  const hasMinLength = form.password.length >= 8;
+  const hasUpper = /[A-Z]/.test(form.password);
+  const hasDigit = /[0-9]/.test(form.password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(form.password);
+  const passwordValid = strengthEnabled
+    ? hasMinLength && hasUpper && hasDigit && hasSpecial
+    : hasMinLength;
   const passwordsMatch = form.password === form.confirmPassword;
   const canSubmit =
     token &&
@@ -84,7 +93,7 @@ export default function CreateAccountPage() {
   return (
     <>
       <Head>
-        <title>Cr\u00e9er mon compte - NewKomers</title>
+        <title>Créer mon compte - NewKomers</title>
       </Head>
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#F8FAFC] px-4 font-sans text-slate-900">
         {/* Logo */}
@@ -180,7 +189,11 @@ export default function CreateAccountPage() {
                     </button>
                   </div>
                   {form.password && !passwordValid && (
-                    <p className="text-xs text-amber-600">Minimum 8 caract&egrave;res requis.</p>
+                    <p className="text-xs text-amber-600">
+                      {strengthEnabled
+                        ? "Le mot de passe doit respecter tous les crit\u00e8res de s\u00e9curit\u00e9 ci-dessous."
+                        : "Minimum 8 caract\u00e8res requis."}
+                    </p>
                   )}
                 </div>
 
@@ -223,12 +236,12 @@ export default function CreateAccountPage() {
                 </div>
 
                 {/* Password strength hints */}
-                {form.password && (
+                {form.password && strengthEnabled && (
                   <div className="space-y-1.5">
-                    <StrengthCheck ok={form.password.length >= 8} label="Au moins 8 caract\u00e8res" />
-                    <StrengthCheck ok={/[A-Z]/.test(form.password)} label="Une lettre majuscule" />
-                    <StrengthCheck ok={/[0-9]/.test(form.password)} label="Un chiffre" />
-                    <StrengthCheck ok={/[^A-Za-z0-9]/.test(form.password)} label="Un caract\u00e8re sp\u00e9cial" />
+                    <StrengthCheck ok={hasMinLength} label="Au moins 8 caract\u00e8res" />
+                    <StrengthCheck ok={hasUpper} label="Une lettre majuscule" />
+                    <StrengthCheck ok={hasDigit} label="Un chiffre" />
+                    <StrengthCheck ok={hasSpecial} label="Un caract\u00e8re sp\u00e9cial" />
                   </div>
                 )}
 

@@ -160,6 +160,9 @@ export default function UsersPage() {
   }, []);
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
+  // Load invitations once on mount so the tab counter is accurate,
+  // and reload when switching to the invitations tab to ensure freshness.
+  useEffect(() => { loadInvitations(); }, [loadInvitations]);
   useEffect(() => { if (activeTab === "invitations") loadInvitations(); }, [activeTab, loadInvitations]);
   useEffect(() => { if (companyIdForBU && permOpen) busHook.fetchList(); }, [companyIdForBU, permOpen]);
   useEffect(() => { if (perimCompanyId && inviteOpen) perimBusHook.fetchList(); }, [perimCompanyId, inviteOpen]);
@@ -307,6 +310,9 @@ export default function UsersPage() {
     return matchesSearch && (!invStatusFilter || inv.status === invStatusFilter);
   });
 
+  const pendingInv = filteredInv.filter((inv) => inv.status === "PENDING");
+  const archivedInv = filteredInv.filter((inv) => inv.status !== "PENDING");
+
   const stats = {
     total: users.length,
     active: users.filter((u) => u.status === "ACTIVE").length,
@@ -391,11 +397,11 @@ export default function UsersPage() {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input placeholder="Rechercher un utilisateur..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
               </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-[160px] border-slate-200 bg-white text-sm">
+              <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-fit! border-slate-200 bg-white text-sm">
                 <option value="">Tous les r&ocirc;les</option>
                 {ALL_ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
               </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-[160px] border-slate-200 bg-white text-sm">
+              <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-fit! border-slate-200 bg-white text-sm">
                 <option value="">Tous les statuts</option>
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
               </Select>
@@ -514,23 +520,23 @@ export default function UsersPage() {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input placeholder="Rechercher par email..." value={invSearch} onChange={(e) => setInvSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
               </div>
-              <Select value={invStatusFilter} onValueChange={(v) => setInvStatusFilter(v as InvitationStatus | "")} className="h-9 w-[160px] border-slate-200 bg-white text-sm">
+              <Select value={invStatusFilter} onValueChange={(v) => setInvStatusFilter(v as InvitationStatus | "")} className="h-9 w-fit! border-slate-200 bg-white text-sm">
                 <option value="">Tous les statuts</option>
                 {INVITATION_STATUSES.map((s) => <option key={s} value={s}>{invitationStatusLabel(s)}</option>)}
               </Select>
             </div>
 
-            {/* Invitations Table */}
+            {/* Pending Invitations Table */}
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
               {invLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
                 </div>
-              ) : filteredInv.length === 0 ? (
+              ) : pendingInv.length === 0 ? (
                 <div className="py-16 text-center">
                   <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50"><Send className="h-6 w-6 text-slate-300" /></div>
-                  <h3 className="text-sm font-medium text-slate-900">Aucune invitation</h3>
-                  <p className="mt-1 text-sm text-slate-500">{invSearch || invStatusFilter ? "Essayez de modifier vos filtres." : "Envoyez votre premi\u00e8re invitation."}</p>
+                  <h3 className="text-sm font-medium text-slate-900">Aucune invitation en attente</h3>
+                  <p className="mt-1 text-sm text-slate-500">{invSearch || invStatusFilter ? "Essayez de modifier vos filtres." : "Toutes les invitations ont \u00e9t\u00e9 trait\u00e9es."}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -546,7 +552,14 @@ export default function UsersPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {filteredInv.map((inv) => (
+                      {pendingInv.map((inv) => {
+                        const invitedUser = users.find(
+                          (u) => u.email.toLowerCase() === inv.email.toLowerCase(),
+                        );
+                        const canModerate =
+                          invitedUser && invitedUser.status === "PENDING";
+
+                        return (
                         <tr key={inv.id} className="group transition-colors hover:bg-slate-50/50">
                           <td className="px-6 py-4">
                             <p className="text-sm font-medium text-slate-900">{inv.email}</p>
@@ -588,7 +601,7 @@ export default function UsersPage() {
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-end gap-2">
-                              {inv.status === "PENDING" && !isExpired(inv) && (
+                              {canModerate && !isExpired(inv) ? (
                                 <>
                                   <button
                                     type="button"
@@ -605,22 +618,68 @@ export default function UsersPage() {
                                     <XCircle className="h-3.5 w-3.5" /> Rejeter
                                   </button>
                                 </>
-                              )}
-                              {inv.status === "ACCEPTED" && inv.acceptedBy && (
-                                <span className="text-xs text-slate-400">par {inv.acceptedBy.email?.split("@")[0]}</span>
-                              )}
-                              {inv.status === "REJECTED" && inv.rejectedBy && (
-                                <span className="text-xs text-slate-400">par {inv.rejectedBy.email?.split("@")[0]}</span>
+                              ) : (
+                                <span className="text-xs text-slate-400">
+                                  {invitedUser
+                                    ? `Utilisateur déjà ${statusLabel(invitedUser.status)}`
+                                    : "L'utilisateur n'a pas encore utilis\u00e9 l'invitation"}
+                                </span>
                               )}
                             </div>
+                          </td>
+                        </tr>
+                      )})}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Archived Invitations (non-pending) */}
+            {archivedInv.length > 0 && (
+              <div className="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+                <h4 className="mb-3 text-sm font-semibold text-slate-800">Invitations archivées</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/70">
+                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-slate-500">Email</th>
+                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le</th>
+                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-slate-500">Statut</th>
+                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-slate-500">Expire le</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {archivedInv.map((inv) => (
+                        <tr key={inv.id} className="bg-white/60">
+                          <td className="px-4 py-2">
+                            <p className="text-sm font-medium text-slate-900">{inv.email}</p>
+                            <p className="text-[11px] text-slate-400">Envoy\u00e9 le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
+                          </td>
+                          <td className="px-4 py-2">
+                            {inv.role && (
+                              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${roleBadgeColor[inv.role]}`}>
+                                <Shield className="h-3 w-3" />{roleLabel(inv.role)}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2">
+                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${invitationStatusColor(inv.status)}`}>
+                              {inv.status === "ACCEPTED" && <Check className="h-3 w-3" />}
+                              {inv.status === "REJECTED" && <XCircle className="h-3 w-3" />}
+                              {invitationStatusLabel(inv.status)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2 text-sm text-slate-500">
+                            {new Date(inv.expiresAt).toLocaleDateString("fr-FR")}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -632,7 +691,7 @@ export default function UsersPage() {
             <DialogTitle className="flex items-center gap-2"><Send className="h-5 w-5 text-slate-700" /> Inviter un utilisateur</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-3">
+            {/* <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Pr&eacute;nom</label>
                 <Input value={inviteForm.firstName} onChange={(e) => setInviteForm((f) => ({ ...f, firstName: e.target.value }))} placeholder="John" />
@@ -641,7 +700,7 @@ export default function UsersPage() {
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Nom</label>
                 <Input value={inviteForm.lastName} onChange={(e) => setInviteForm((f) => ({ ...f, lastName: e.target.value }))} placeholder="Doe" />
               </div>
-            </div>
+            </div> */}
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Email *</label>
               <Input type="email" value={inviteForm.email} onChange={(e) => setInviteForm((f) => ({ ...f, email: e.target.value }))} placeholder="john@exemple.com" required />
