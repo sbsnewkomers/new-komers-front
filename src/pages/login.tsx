@@ -7,7 +7,7 @@ import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { refreshMe } = usePermissionsContext();
+  const { refreshMe, setTokens } = usePermissionsContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,7 +20,8 @@ export default function LoginPage() {
     setErrorMessage(null);
     setStatusMessage(null);
     try {
-      await login({ email, password });
+      const res = await login({ email, password });
+      setTokens(res.tokens);
       await refreshMe();
       let redirectTo: string | null = null;
       if (typeof window !== "undefined") {

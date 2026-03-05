@@ -15,6 +15,12 @@ export type ApiFetchSnackbarOptions = {
   errorMessage?: string;
 };
 
+let accessTokenGetter: (() => string | null) | null = null;
+
+export function setAccessTokenGetter(getter: () => string | null) {
+  accessTokenGetter = getter;
+}
+
 export async function apiFetch<T>(
   path: string,
   init?: RequestInit & { baseUrl?: string; snackbar?: ApiFetchSnackbarOptions },
@@ -24,11 +30,15 @@ export async function apiFetch<T>(
 
   const { snackbar, ...fetchInit } = init ?? {};
 
+  const token = accessTokenGetter ? accessTokenGetter() : null;
+
   const res = await fetch(url, {
     ...fetchInit,
-    credentials: "include",
+    // We rely on Authorization header tokens now; cookies are not needed.
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(fetchInit.headers ?? {}),
     },
   });
