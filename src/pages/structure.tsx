@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Head from "next/head";
 import Link from "next/link";
-import { useGroups, useCompanies } from "@/hooks";
 import { apiFetch } from "@/lib/apiClient";
+import {
+  fetchStructureTree,
+  type StructureTree,
+  type TreeCompany,
+} from "@/lib/structureApi";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -35,14 +39,38 @@ type BusinessUnit = {
   company_id?: string;
 };
 
+type GroupFull = {
+  id: string;
+  name: string;
+  siret: string;
+  fiscal_year_start: string;
+  fiscal_year_end: string;
+  mainActivity?: string;
+};
+
+type CompanyFull = {
+  id: string;
+  name: string;
+  siret: string;
+  fiscal_year_start: string;
+  fiscal_year_end: string;
+  address?: string;
+  ape_code?: string;
+  main_activity?: string;
+  size?: string;
+  model?: string;
+  group_id: string;
+};
+
 type TreeNode =
   | { type: "group"; id: string; name: string }
-  | { type: "company"; id: string; name: string; groupId: string }
-  | { type: "bu"; id: string; name: string; companyId: string; code?: string };
+  | { type: "company"; id: string; name: string; groupId: string | null; completionPercentage: number }
+  | { type: "bu"; id: string; name: string; companyId: string; code: string };
 
 export default function StructurePage() {
-  const groups = useGroups();
-  const companies = useCompanies();
+  const [tree, setTree] = useState<StructureTree | null>(null);
+  const [treeLoading, setTreeLoading] = useState(false);
+  const [treeError, setTreeError] = useState<string | null>(null);
   const [busByCompany, setBusByCompany] = useState<Record<string, BusinessUnit[]>>({});
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
@@ -51,6 +79,7 @@ export default function StructurePage() {
   const [editing, setEditing] = useState(false);
   const [ficheOpen, setFicheOpen] = useState(false);
   const [ficheCompanyId, setFicheCompanyId] = useState<string | null>(null);
+  const [ficheCompany, setFicheCompany] = useState<CompanyFull | null>(null);
   const [ficheTab, setFicheTab] = useState("informations");
   const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(new Set());
 
@@ -64,13 +93,24 @@ export default function StructurePage() {
   const [addBUForm, setAddBUForm] = useState({ name: "", code: "", activity: "", siret: "" });
   const [addBULoading, setAddBULoading] = useState(false);
 
-  // Editable form state
   const [editGroup, setEditGroup] = useState({ name: "", siret: "", fiscal_year_start: "", fiscal_year_end: "", mainActivity: "" });
   const [editCompany, setEditCompany] = useState({ name: "", siret: "", address: "", ape_code: "", main_activity: "" });
   const [editBU, setEditBU] = useState({ name: "", code: "", activity: "", siret: "" });
 
-  useEffect(() => { groups.fetchList(); }, []);
-  useEffect(() => { companies.fetchList(); }, []);
+  const loadTree = useCallback(async () => {
+    setTreeLoading(true);
+    setTreeError(null);
+    try {
+      const data = await fetchStructureTree();
+      setTree(data);
+    } catch (e) {
+      setTreeError(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setTreeLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadTree(); }, [loadTree]);
 
   const loadBUsForCompany = useCallback(async (companyId: string) => {
     try {
@@ -79,65 +119,112 @@ export default function StructurePage() {
         { snackbar: { showSuccess: false, showError: true } }
       );
       setBusByCompany((prev) => ({ ...prev, [companyId]: data }));
+      return data;
     } catch {
       setBusByCompany((prev) => ({ ...prev, [companyId]: [] }));
+      return [];
     }
   }, []);
 
-  const openDetail = useCallback((node: TreeNode) => {
+  const groupList = useMemo(() => tree?.groups ?? [], [tree]);
+
+  const allTreeCompanies = useMemo<(TreeCompany & { groupId: string | null })[]>(() => [
+    ...(tree?.groups ?? []).flatMap((g) =>
+      g.companies.map((c) => ({ ...c, groupId: g.id as string | null }))
+    ),
+    ...(tree?.standaloneCompanies ?? []).map((c) => ({ ...c, groupId: null as string | null })),
+  ], [tree]);
+
+  const companyListForLayout = useMemo(
+    () => allTreeCompanies.map((c) => ({ id: c.id, name: c.name })),
+    [allTreeCompanies],
+  );
+
+  const treeRows = useMemo(() => {
+    const rows: TreeNode[] = [];
+    (tree?.groups ?? []).forEach((g) => {
+      rows.push({ type: "group", id: g.id, name: g.name });
+      g.companies.forEach((c) => {
+        rows.push({ type: "company", id: c.id, name: c.name, groupId: g.id, completionPercentage: c.completionPercentage });
+        if (expandedCompanyIds.has(c.id)) {
+          c.businessUnits.forEach((bu) => {
+            rows.push({ type: "bu", id: bu.id, name: bu.name, companyId: c.id, code: bu.code });
+          });
+        }
+      });
+    });
+    (tree?.standaloneCompanies ?? []).forEach((c) => {
+      rows.push({ type: "company", id: c.id, name: c.name, groupId: null, completionPercentage: c.completionPercentage });
+      if (expandedCompanyIds.has(c.id)) {
+        c.businessUnits.forEach((bu) => {
+          rows.push({ type: "bu", id: bu.id, name: bu.name, companyId: c.id, code: bu.code });
+        });
+      }
+    });
+    return rows;
+  }, [tree, expandedCompanyIds]);
+
+  const openDetail = useCallback(async (node: TreeNode) => {
     setSelectedNode(node);
     setEditing(false);
 
     if (node.type === "group") {
-      const g = groups.list?.find((x) => x.id === node.id);
-      setEditGroup({
-        name: g?.name ?? node.name,
-        siret: g?.siret ?? "",
-        fiscal_year_start: g?.fiscal_year_start ?? "",
-        fiscal_year_end: g?.fiscal_year_end ?? "",
-        mainActivity: g?.mainActivity ?? "",
-      });
+      try {
+        const g = await apiFetch<GroupFull>(`/groups/${node.id}`, { snackbar: { showSuccess: false, showError: true } });
+        setEditGroup({ name: g.name, siret: g.siret ?? "", fiscal_year_start: g.fiscal_year_start ?? "", fiscal_year_end: g.fiscal_year_end ?? "", mainActivity: g.mainActivity ?? "" });
+      } catch {
+        setEditGroup({ name: node.name, siret: "", fiscal_year_start: "", fiscal_year_end: "", mainActivity: "" });
+      }
     } else if (node.type === "company") {
-      const c = companies.list?.find((x) => x.id === node.id);
-      setEditCompany({
-        name: c?.name ?? node.name,
-        siret: c?.siret ?? "",
-        address: c?.address ?? "",
-        ape_code: c?.ape_code ?? "",
-        main_activity: c?.main_activity ?? "",
-      });
+      try {
+        const c = await apiFetch<CompanyFull>(`/companies/${node.id}`, { snackbar: { showSuccess: false, showError: true } });
+        setEditCompany({ name: c.name, siret: c.siret ?? "", address: c.address ?? "", ape_code: c.ape_code ?? "", main_activity: c.main_activity ?? "" });
+      } catch {
+        setEditCompany({ name: node.name, siret: "", address: "", ape_code: "", main_activity: "" });
+      }
       loadBUsForCompany(node.id);
     } else if (node.type === "bu") {
-      const bus = busByCompany[node.companyId] ?? [];
-      const bu = bus.find((b) => b.id === node.id);
-      setEditBU({
-        name: bu?.name ?? node.name,
-        code: bu?.code ?? node.code ?? "",
-        activity: bu?.activity ?? "",
-        siret: bu?.siret ?? "",
-      });
+      const cached = busByCompany[node.companyId]?.find((b) => b.id === node.id);
+      if (cached) {
+        setEditBU({ name: cached.name, code: cached.code, activity: cached.activity, siret: cached.siret });
+      } else {
+        setEditBU({ name: node.name, code: node.code, activity: "", siret: "" });
+        const freshBUs = await loadBUsForCompany(node.companyId);
+        const bu = freshBUs.find((b) => b.id === node.id);
+        if (bu) {
+          setEditBU({ name: bu.name, code: bu.code, activity: bu.activity, siret: bu.siret });
+        }
+      }
     }
 
     setDetailOpen(true);
-  }, [groups.list, companies.list, busByCompany, loadBUsForCompany]);
+  }, [busByCompany, loadBUsForCompany]);
 
   const handleSave = async () => {
     if (!selectedNode) return;
     if (selectedNode.type === "group") {
-      await groups.update(selectedNode.id, {
-        name: editGroup.name,
-        siret: editGroup.siret,
-        fiscal_year_start: editGroup.fiscal_year_start,
-        fiscal_year_end: editGroup.fiscal_year_end,
-        mainActivity: editGroup.mainActivity || undefined,
+      await apiFetch(`/groups/${selectedNode.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          name: editGroup.name,
+          siret: editGroup.siret,
+          fiscal_year_start: editGroup.fiscal_year_start,
+          fiscal_year_end: editGroup.fiscal_year_end,
+          mainActivity: editGroup.mainActivity || undefined,
+        }),
+        snackbar: { showSuccess: true, successMessage: "Groupe mis à jour" },
       });
     } else if (selectedNode.type === "company") {
-      await companies.update(selectedNode.id, {
-        name: editCompany.name,
-        siret: editCompany.siret,
-        address: editCompany.address || undefined,
-        ape_code: editCompany.ape_code || undefined,
-        main_activity: editCompany.main_activity || undefined,
+      await apiFetch(`/companies/${selectedNode.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          name: editCompany.name,
+          siret: editCompany.siret,
+          address: editCompany.address || undefined,
+          ape_code: editCompany.ape_code || undefined,
+          main_activity: editCompany.main_activity || undefined,
+        }),
+        snackbar: { showSuccess: true, successMessage: "Entreprise mise à jour" },
       });
     } else if (selectedNode.type === "bu") {
       await apiFetch(`/companies/${selectedNode.companyId}/business-units/${selectedNode.id}`, {
@@ -145,62 +232,76 @@ export default function StructurePage() {
         body: JSON.stringify(editBU),
         snackbar: { showSuccess: true, successMessage: "Business unit mise à jour" },
       });
-      loadBUsForCompany(selectedNode.companyId);
     }
     setEditing(false);
     setDetailOpen(false);
+    loadTree();
   };
 
   const handleDelete = async () => {
     if (!selectedNode) return;
     if (selectedNode.type === "group") {
-      await groups.remove(selectedNode.id);
+      await apiFetch(`/groups/${selectedNode.id}`, {
+        method: "DELETE",
+        snackbar: { showSuccess: true, successMessage: "Groupe supprimé" },
+      });
     } else if (selectedNode.type === "company") {
-      await companies.remove(selectedNode.id);
+      await apiFetch(`/companies/${selectedNode.id}`, {
+        method: "DELETE",
+        snackbar: { showSuccess: true, successMessage: "Entreprise supprimée" },
+      });
     } else if (selectedNode.type === "bu") {
       await apiFetch(`/companies/${selectedNode.companyId}/business-units/${selectedNode.id}`, {
         method: "DELETE",
         snackbar: { showSuccess: true, successMessage: "Business unit supprimée" },
       });
-      loadBUsForCompany(selectedNode.companyId);
     }
     setConfirmDeleteOpen(false);
     setDetailOpen(false);
+    loadTree();
   };
 
   const handleCreateCompany = useCallback(
     async (form: CompanyWizardForm) => {
       const size = form.size === "MEDIUM_ETI" ? "MEDIUM" : (form.size as "SMALL" | "MEDIUM" | "LARGE");
       const model = form.model === "INDEPENDANT" ? "SUBSIDIARY" : (form.model as "HOLDING" | "SUBSIDIARY");
-      await companies.create({
-        groupId: form.groupId,
-        name: form.name,
-        fiscal_year_start: form.fiscal_year_start,
-        fiscal_year_end: form.fiscal_year_end,
-        siret: form.siret,
-        address: form.address || undefined,
-        ape_code: form.ape_code || undefined,
-        main_activity: form.main_activity || undefined,
-        size,
-        model,
+      await apiFetch("/companies", {
+        method: "POST",
+        body: JSON.stringify({
+          groupId: form.groupId,
+          name: form.name,
+          fiscal_year_start: form.fiscal_year_start,
+          fiscal_year_end: form.fiscal_year_end,
+          siret: form.siret,
+          address: form.address || undefined,
+          ape_code: form.ape_code || undefined,
+          main_activity: form.main_activity || undefined,
+          size,
+          model,
+        }),
+        snackbar: { showSuccess: true, successMessage: "Entreprise créée" },
       });
-      companies.fetchList();
+      loadTree();
     },
-    [companies]
+    [loadTree],
   );
 
   const handleAddCompanyToGroup = async () => {
     if (!addCompanyGroupId || !addCompanyForm.name.trim()) return;
     setAddCompanyLoading(true);
     try {
-      await companies.create({
-        groupId: addCompanyGroupId!,
-        name: addCompanyForm.name,
-        siret: addCompanyForm.siret,
-        fiscal_year_start: addCompanyForm.fiscal_year_start,
-        fiscal_year_end: addCompanyForm.fiscal_year_end,
+      await apiFetch("/companies", {
+        method: "POST",
+        body: JSON.stringify({
+          groupId: addCompanyGroupId,
+          name: addCompanyForm.name,
+          siret: addCompanyForm.siret,
+          fiscal_year_start: addCompanyForm.fiscal_year_start,
+          fiscal_year_end: addCompanyForm.fiscal_year_end,
+        }),
+        snackbar: { showSuccess: true, successMessage: "Entreprise créée" },
       });
-      companies.fetchList();
+      loadTree();
       setAddCompanyOpen(false);
       setAddCompanyForm({ name: "", siret: "", fiscal_year_start: "", fiscal_year_end: "" });
     } catch { /* snackbar handles */ } finally {
@@ -215,9 +316,9 @@ export default function StructurePage() {
       await apiFetch(`/companies/${addBUCompanyId}/business-units`, {
         method: "POST",
         body: JSON.stringify(addBUForm),
-        snackbar: { showSuccess: true, successMessage: "Business unit cr\u00e9\u00e9e" },
+        snackbar: { showSuccess: true, successMessage: "Business unit créée" },
       });
-      loadBUsForCompany(addBUCompanyId);
+      loadTree();
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
       setAddBUForm({ name: "", code: "", activity: "", siret: "" });
@@ -229,39 +330,28 @@ export default function StructurePage() {
   const toggleExpand = (companyId: string) => {
     setExpandedCompanyIds((prev) => {
       const next = new Set(prev);
-      if (next.has(companyId)) {
-        next.delete(companyId);
-      } else {
-        next.add(companyId);
-        if (!busByCompany[companyId]) {
-          loadBUsForCompany(companyId);
-        }
-      }
+      if (next.has(companyId)) next.delete(companyId);
+      else next.add(companyId);
       return next;
     });
   };
 
-  const groupList = groups.list ?? [];
-  const companyList = companies.list ?? [];
-  const treeRows: TreeNode[] = [];
-  groupList.forEach((g) => {
-    treeRows.push({ type: "group", id: g.id, name: g.name });
-    companyList
-      .filter((c) => c.group_id === g.id)
-      .forEach((c) => {
-        treeRows.push({ type: "company", id: c.id, name: c.name, groupId: g.id });
-        if (expandedCompanyIds.has(c.id)) {
-          (busByCompany[c.id] ?? []).forEach((b) => {
-            treeRows.push({ type: "bu", id: b.id, name: b.name, companyId: c.id, code: b.code });
-          });
-        }
-      });
-  });
+  const openFiche = async (companyId: string) => {
+    setFicheCompanyId(companyId);
+    setFicheTab("informations");
+    setFicheOpen(true);
+    setFicheCompany(null);
+    try {
+      const c = await apiFetch<CompanyFull>(`/companies/${companyId}`, { snackbar: { showSuccess: false, showError: true } });
+      setFicheCompany(c);
+    } catch { /* snackbar handles */ }
+    loadBUsForCompany(companyId);
+  };
 
   const typeLabel = selectedNode?.type === "group" ? "Groupe" : selectedNode?.type === "company" ? "Entreprise" : "Business Unit";
 
   return (
-    <AppLayout title="Structure" companies={companyList} selectedCompanyId="" onCompanyChange={() => {}}>
+    <AppLayout title="Structure" companies={companyListForLayout} selectedCompanyId="" onCompanyChange={() => {}}>
       <Head><title>Structure de l&apos;organisation</title></Head>
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -285,50 +375,47 @@ export default function StructurePage() {
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          {groups.error && <p className="p-4 text-sm text-red-600">{groups.error}</p>}
-          {companies.error && <p className="p-4 text-sm text-red-600">{companies.error}</p>}
-          {groups.loading && !groupList.length ? (
+          {treeError && <p className="p-4 text-sm text-red-600">{treeError}</p>}
+          {treeLoading && !treeRows.length ? (
             <div className="flex items-center justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-primary"></div>
             </div>
           ) : (
             <div className="min-w-full">
-              {/* Header Row */}
-              <div className="grid grid-cols-[1fr_120px_60px] gap-4 border-b border-slate-100 bg-slate-50/50 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-100 bg-slate-50/50 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 <div>Nom</div>
                 <div>Type</div>
+                <div>Complétion</div>
                 <div className="text-right">Actions</div>
               </div>
-              
+
               <ul className="divide-y divide-slate-100">
                 {treeRows.map((node) => {
                   const indent = node.type === "group" ? 0 : node.type === "company" ? 1 : 2;
                   const Icon = node.type === "group" ? Folder : node.type === "company" ? Building2 : Package;
                   const iconColor = node.type === "group" ? "text-blue-500" : node.type === "company" ? "text-slate-700" : "text-slate-400";
                   const typeText = node.type === "group" ? "Groupe" : node.type === "company" ? "Entreprise" : "BU";
-                  const typeBadgeColor = node.type === "group" 
-                    ? "bg-blue-50 text-blue-700 border-blue-100" 
-                    : node.type === "company" 
-                      ? "bg-slate-100 text-slate-700 border-slate-200" 
+                  const typeBadgeColor = node.type === "group"
+                    ? "bg-blue-50 text-blue-700 border-blue-100"
+                    : node.type === "company"
+                      ? "bg-slate-100 text-slate-700 border-slate-200"
                       : "bg-slate-50 text-slate-500 border-slate-100";
+                  const completion = node.type === "company" ? node.completionPercentage : null;
 
                   return (
                     <li key={`${node.type}-${node.id}`} className="group/row transition-colors hover:bg-slate-50/50">
                       <div
-                        className="grid cursor-pointer grid-cols-[1fr_120px_60px] items-center gap-4 px-6 py-3"
+                        className="grid cursor-pointer grid-cols-[1fr_120px_100px_60px] items-center gap-4 px-6 py-3"
                         onClick={() => openDetail(node)}
                       >
                         <div className="flex items-center gap-3" style={{ paddingLeft: indent * 24 }}>
                           {node.type === "company" && (
                             <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleExpand(node.id);
-                              }}
-                              className="cursor-pointer p-0.5 hover:bg-slate-200 rounded transition-colors mr-1"
+                              onClick={(e) => { e.stopPropagation(); toggleExpand(node.id); }}
+                              className="cursor-pointer rounded p-0.5 transition-colors hover:bg-slate-200 mr-1"
                             >
                               <Play
-                                className={`h-3 w-3 text-slate-400 fill-slate-500 transition-transform ${
+                                className={`h-3 w-3 fill-slate-500 text-slate-400 transition-transform ${
                                   expandedCompanyIds.has(node.id) ? "rotate-90" : ""
                                 }`}
                               />
@@ -339,19 +426,35 @@ export default function StructurePage() {
                             {node.name}
                           </span>
                         </div>
-                        
+
                         <div>
                           <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${typeBadgeColor}`}>
                             {typeText}
                           </span>
                         </div>
 
+                        <div>
+                          {completion !== null && (
+                            <div className="flex items-center gap-2">
+                              <div className="h-1.5 flex-1 rounded-full bg-slate-100">
+                                <div
+                                  className={`h-1.5 rounded-full transition-all ${
+                                    completion === 100 ? "bg-green-500" : completion >= 50 ? "bg-amber-400" : "bg-slate-300"
+                                  }`}
+                                  style={{ width: `${completion}%` }}
+                                />
+                              </div>
+                              <span className="text-[10px] tabular-nums text-slate-400">{completion}%</span>
+                            </div>
+                          )}
+                        </div>
+
                         <div className="flex justify-end">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <button 
-                                type="button" 
-                                onClick={(e) => e.stopPropagation()} 
+                              <button
+                                type="button"
+                                onClick={(e) => e.stopPropagation()}
                                 className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-primary hover:shadow-sm group-hover/row:opacity-100"
                               >
                                 <MoreHorizontal className="h-4 w-4" />
@@ -373,7 +476,7 @@ export default function StructurePage() {
                               )}
                               {node.type === "company" && (
                                 <>
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setFicheCompanyId(node.id); loadBUsForCompany(node.id); setFicheTab("informations"); setFicheOpen(true); }}>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openFiche(node.id); }}>
                                     Fiche entreprise
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={(e) => {
@@ -388,7 +491,7 @@ export default function StructurePage() {
                               )}
                               <DropdownMenuItem
                                 onClick={(e) => { e.stopPropagation(); setSelectedNode(node); setConfirmDeleteOpen(true); }}
-                                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                className="text-red-600 focus:bg-red-50 focus:text-red-600"
                               >
                                 Supprimer
                               </DropdownMenuItem>
@@ -399,7 +502,7 @@ export default function StructurePage() {
                     </li>
                   );
                 })}
-                {treeRows.length === 0 && !groups.loading && (
+                {treeRows.length === 0 && !treeLoading && (
                   <li className="py-16 text-center">
                     <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50">
                       <Building2 className="h-6 w-6 text-slate-300" />
@@ -476,14 +579,14 @@ export default function StructurePage() {
               <>
                 <Button
                   variant="outline"
-                  className="text-red-600 border-red-200 hover:bg-red-50"
+                  className="border-red-200 text-red-600 hover:bg-red-50"
                   onClick={() => setConfirmDeleteOpen(true)}
                 >
                   Supprimer
                 </Button>
                 <div className="flex-1" />
                 {selectedNode?.type === "company" && (
-                  <Button variant="outline" onClick={() => { setDetailOpen(false); setFicheCompanyId(selectedNode.id); loadBUsForCompany(selectedNode.id); setFicheTab("informations"); setFicheOpen(true); }}>
+                  <Button variant="outline" onClick={() => { setDetailOpen(false); openFiche(selectedNode.id); }}>
                     Fiche
                   </Button>
                 )}
@@ -523,17 +626,22 @@ export default function StructurePage() {
 
       {/* Fiche Entreprise Modal */}
       <Dialog open={ficheOpen} onOpenChange={setFicheOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-lg">🏢</span>
-              {(() => { const c = companyList.find((x) => x.id === ficheCompanyId); return c?.name ?? "Fiche entreprise"; })()}
+              {ficheCompany?.name ?? allTreeCompanies.find((x) => x.id === ficheCompanyId)?.name ?? "Fiche entreprise"}
             </DialogTitle>
           </DialogHeader>
           {(() => {
-            const company = companyList.find((x) => x.id === ficheCompanyId);
-            if (!company) return <p className="py-4 text-center text-slate-400">Entreprise introuvable.</p>;
-            const bus = busByCompany[company.id] ?? [];
+            if (!ficheCompany) {
+              return (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                </div>
+              );
+            }
+            const bus = busByCompany[ficheCompany.id] ?? [];
             return (
               <Tabs value={ficheTab} onValueChange={setFicheTab}>
                 <TabsList>
@@ -545,39 +653,39 @@ export default function StructurePage() {
                   <div className="rounded-xl border border-slate-100 bg-slate-50 p-5">
                     <dl className="grid gap-3 text-sm sm:grid-cols-2">
                       <dt className="text-slate-500">SIRET</dt>
-                      <dd className="text-primary font-medium">{company.siret || "—"}</dd>
+                      <dd className="font-medium text-primary">{ficheCompany.siret || "—"}</dd>
                       <dt className="text-slate-500">Début d&apos;exercice</dt>
-                      <dd className="text-primary font-medium">{company.fiscal_year_start || "—"}</dd>
+                      <dd className="font-medium text-primary">{ficheCompany.fiscal_year_start || "—"}</dd>
                       <dt className="text-slate-500">Fin d&apos;exercice</dt>
-                      <dd className="text-primary font-medium">{company.fiscal_year_end || "—"}</dd>
-                      {company.address && (
+                      <dd className="font-medium text-primary">{ficheCompany.fiscal_year_end || "—"}</dd>
+                      {ficheCompany.address && (
                         <>
                           <dt className="text-slate-500">Adresse</dt>
-                          <dd className="whitespace-pre-wrap text-primary font-medium">{company.address}</dd>
+                          <dd className="whitespace-pre-wrap font-medium text-primary">{ficheCompany.address}</dd>
                         </>
                       )}
-                      {company.ape_code && (
+                      {ficheCompany.ape_code && (
                         <>
                           <dt className="text-slate-500">Code APE</dt>
-                          <dd className="text-primary font-medium">{company.ape_code}</dd>
+                          <dd className="font-medium text-primary">{ficheCompany.ape_code}</dd>
                         </>
                       )}
-                      {company.main_activity && (
+                      {ficheCompany.main_activity && (
                         <>
                           <dt className="text-slate-500">Activité principale</dt>
-                          <dd className="text-primary font-medium">{company.main_activity}</dd>
+                          <dd className="font-medium text-primary">{ficheCompany.main_activity}</dd>
                         </>
                       )}
-                      {company.size && (
+                      {ficheCompany.size && (
                         <>
                           <dt className="text-slate-500">Taille</dt>
-                          <dd className="text-primary font-medium">{company.size}</dd>
+                          <dd className="font-medium text-primary">{ficheCompany.size}</dd>
                         </>
                       )}
-                      {company.model && (
+                      {ficheCompany.model && (
                         <>
                           <dt className="text-slate-500">Modèle</dt>
-                          <dd className="text-primary font-medium">{company.model}</dd>
+                          <dd className="font-medium text-primary">{ficheCompany.model}</dd>
                         </>
                       )}
                     </dl>
@@ -589,10 +697,10 @@ export default function StructurePage() {
                       {bus.map((b) => (
                         <li
                           key={b.id}
-                          className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white py-2 px-3 transition-colors hover:bg-slate-50"
+                          className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 transition-colors hover:bg-slate-50"
                           onClick={() => {
                             setFicheOpen(false);
-                            openDetail({ type: "bu", id: b.id, name: b.name, companyId: company.id, code: b.code });
+                            openDetail({ type: "bu", id: b.id, name: b.name, companyId: ficheCompany.id, code: b.code });
                           }}
                         >
                           <span className="font-medium text-primary">{b.name}</span>
@@ -645,7 +753,7 @@ export default function StructurePage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">D&eacute;but exercice</label>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Début exercice</label>
                 <Input type="date" value={addCompanyForm.fiscal_year_start} onChange={(e) => setAddCompanyForm((f) => ({ ...f, fiscal_year_start: e.target.value }))} />
               </div>
               <div>
@@ -657,7 +765,7 @@ export default function StructurePage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddCompanyOpen(false)}>Annuler</Button>
             <Button onClick={handleAddCompanyToGroup} disabled={addCompanyLoading || !addCompanyForm.name.trim()}>
-              {addCompanyLoading ? "Cr\u00e9ation..." : "Cr\u00e9er"}
+              {addCompanyLoading ? "Création..." : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -673,7 +781,7 @@ export default function StructurePage() {
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-slate-500">
-            Dans l&apos;entreprise : <strong>{companyList.find((c) => c.id === addBUCompanyId)?.name}</strong>
+            Dans l&apos;entreprise : <strong>{allTreeCompanies.find((c) => c.id === addBUCompanyId)?.name}</strong>
           </p>
           <div className="space-y-4 py-2">
             <div>
@@ -685,8 +793,8 @@ export default function StructurePage() {
               <Input value={addBUForm.code} onChange={(e) => setAddBUForm((f) => ({ ...f, code: e.target.value }))} placeholder="BU-001" />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Activit&eacute;</label>
-              <Input value={addBUForm.activity} onChange={(e) => setAddBUForm((f) => ({ ...f, activity: e.target.value }))} placeholder="Activit&eacute; principale" />
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Activité</label>
+              <Input value={addBUForm.activity} onChange={(e) => setAddBUForm((f) => ({ ...f, activity: e.target.value }))} placeholder="Activité principale" />
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">SIRET</label>
@@ -696,7 +804,7 @@ export default function StructurePage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddBUOpen(false)}>Annuler</Button>
             <Button onClick={handleAddBUToCompany} disabled={addBULoading || !addBUForm.name.trim()}>
-              {addBULoading ? "Cr\u00e9ation..." : "Cr\u00e9er"}
+              {addBULoading ? "Création..." : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>
