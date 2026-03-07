@@ -238,10 +238,10 @@ export default function CreateAccountPage() {
                 {/* Password strength hints */}
                 {form.password && strengthEnabled && (
                   <div className="space-y-1.5">
-                    <StrengthCheck ok={hasMinLength} label="Au moins 8 caract\u00e8res" />
+                    <StrengthCheck ok={hasMinLength} label="Au moins 8 caractéres" />
                     <StrengthCheck ok={hasUpper} label="Une lettre majuscule" />
                     <StrengthCheck ok={hasDigit} label="Un chiffre" />
-                    <StrengthCheck ok={hasSpecial} label="Un caract\u00e8re sp\u00e9cial" />
+                    <StrengthCheck ok={hasSpecial} label="Un caractére spécial" />
                   </div>
                 )}
 
@@ -250,12 +250,12 @@ export default function CreateAccountPage() {
                   disabled={!canSubmit}
                   className="w-full rounded-lg bg-[#1e293b] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
                 >
-                  {loading ? "Cr\u00e9ation du compte\u2026" : "Cr\u00e9er mon compte"}
+                  {loading ? "Création du compte…" : "Créer mon compte"}
                 </button>
               </form>
 
               <p className="mt-6 text-center text-xs text-slate-400">
-                L&rsquo;invitation expire 72h apr&egrave;s son envoi.
+                L&rsquo;invitation expire 72h après son envoi.
               </p>
             </>
           )}
@@ -264,7 +264,7 @@ export default function CreateAccountPage() {
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-slate-500">
           <Link href="/login" className="hover:text-slate-700">
-            D&eacute;j&agrave; un compte ? Se connecter
+            Déjà un compte ? Se connecter
           </Link>
         </div>
       </div>
