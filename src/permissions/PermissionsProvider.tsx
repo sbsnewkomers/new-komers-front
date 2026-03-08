@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, setAccessTokenGetter } from "@/lib/apiClient";
 import { logout as authLogout, type TokenPair } from "@/lib/authApi";
 import type { PermissionGrant, PermissionsUser } from "@/permissions/types";
@@ -28,7 +28,13 @@ export function PermissionsProvider(props: {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
 
+  // Ref updated synchronously so apiFetch sees the new token before the next React render/effect.
+  // Fixes /me being called without Authorization right after login (setState is async).
+  const tokensRef = useRef<TokenPair | null>(null);
+
   const setTokens = useCallback((tokens: TokenPair | null) => {
+    tokensRef.current = tokens ?? null;
+
     if (typeof window === "undefined") {
       setAccessToken(tokens ? tokens.accessToken : null);
       setRefreshToken(tokens ? tokens.refreshToken : null);
@@ -58,9 +64,10 @@ export function PermissionsProvider(props: {
     }
   }, []);
 
+  // Single getter that reads from ref so it always sees the latest token (including right after setTokens).
   useEffect(() => {
-    setAccessTokenGetter(() => accessToken);
-  }, [accessToken]);
+    setAccessTokenGetter(() => tokensRef.current?.accessToken ?? null);
+  }, []);
 
   const refreshMe = useCallback(
     async (options?: { silent?: boolean }): Promise<PermissionsUser | null> => {
