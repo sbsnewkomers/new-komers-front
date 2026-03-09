@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { login } from "@/lib/authApi";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
+import { getApiBaseUrl } from "@/lib/apiClient";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,6 +14,32 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<null | "PENDING" | "SUSPENDED">(null);
+
+  // Handle OAuth callback: backend redirects to /login#access_token=...&refresh_token=...
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash?.slice(1) || "";
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    if (accessToken && refreshToken) {
+      setTokens({ accessToken, refreshToken });
+      refreshMe()
+        .then(() => {
+          const returnTo = window.localStorage.getItem("nk-return-to");
+          if (returnTo) window.localStorage.removeItem("nk-return-to");
+          const queryReturnTo = typeof router.query.returnTo === "string" ? router.query.returnTo : null;
+          router.replace(returnTo || queryReturnTo || "/dashboard");
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        })
+        .catch(() => setErrorMessage("Erreur lors de la connexion Google."));
+      return;
+    }
+    const qMessage = typeof router.query.message === "string" ? decodeURIComponent(router.query.message) : null;
+    if (router.query.error === "oauth" && qMessage) {
+      setErrorMessage(qMessage);
+    }
+  }, [router.query.error, router.query.message, router.query.returnTo, setTokens, refreshMe, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,9 +196,9 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
+          <div className="grid grid-cols-1 gap-3">
+            <a
+              href={`${getApiBaseUrl()}/auth/google`}
               className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-1"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -193,8 +220,8 @@ export default function LoginPage() {
                 />
               </svg>
               Google
-            </button>
-            <button
+            </a>
+            {/* <button
               type="button"
               className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-1"
             >
@@ -205,7 +232,7 @@ export default function LoginPage() {
                 <path fill="#ffba08" d="M12 12h10v10H12z" />
               </svg>
               Microsoft
-            </button>
+            </button> */}
           </div>
         </div>
 
