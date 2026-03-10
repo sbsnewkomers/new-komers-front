@@ -3,28 +3,42 @@
 import { useState, useCallback } from "react";
 import Head from "next/head";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
-
-const CSV_TEMPLATE = "name,fiscal_year_start,fiscal_year_end,siret,address,group_id\nExemple SA,2025-01-01,2025-12-31,12345678901234,\"1 rue Example\",";
+import { usePermissionsContext } from "@/permissions/PermissionsProvider";
+import {
+  downloadStructureTemplate,
+  executeStructureImport,
+  ImportReport,
+  ImportExecuteResult,
+  validateStructureFile,
+} from "@/lib/structureImportApi";
 
 export default function StructureImportUploadPage() {
-  const router = useRouter();
+  const { accessToken } = usePermissionsContext();
   const [dragOver, setDragOver] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [report, setReport] = useState<ImportReport | null>(null);
+  const [executeResult, setExecuteResult] = useState<ImportExecuteResult | null>(null);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
     const f = e.dataTransfer.files[0];
     if (!f) return;
-    if (!f.name.endsWith(".csv")) {
-      setError("Veuillez déposer un fichier CSV.");
+    if (!f.name.endsWith(".xlsx")) {
+      setError("Veuillez déposer un fichier Excel (.xlsx).");
+      setFile(null);
+      setReport(null);
+      setExecuteResult(null);
       return;
     }
     setFile(f);
+    setReport(null);
+    setExecuteResult(null);
     setError(null);
   }, []);
 
@@ -41,64 +55,129 @@ export default function StructureImportUploadPage() {
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!f.name.endsWith(".csv")) {
-      setError("Veuillez sélectionner un fichier CSV.");
+    if (!f.name.endsWith(".xlsx")) {
+      setError("Veuillez sélectionner un fichier Excel (.xlsx).");
+      setFile(null);
+      setReport(null);
+      setExecuteResult(null);
       return;
     }
     setFile(f);
+    setReport(null);
+    setExecuteResult(null);
     setError(null);
   }, []);
 
-  const handleNext = () => {
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const text = reader.result as string;
-        sessionStorage.setItem("structure-import-csv", text);
-        sessionStorage.setItem("structure-import-filename", file.name);
-        router.push("/structure/import/mapping");
-      };
-      reader.readAsText(file, "UTF-8");
+  const handleDownloadTemplate = async () => {
+    try {
+      setError(null);
+      await downloadStructureTemplate(accessToken);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Échec du téléchargement du modèle.";
+      setError(msg);
     }
   };
 
-  const downloadTemplate = () => {
-    const blob = new Blob([CSV_TEMPLATE], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "modele-structure.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleValidate = async () => {
+    if (!file) return;
+    try {
+      setIsValidating(true);
+      setError(null);
+      setExecuteResult(null);
+      const rep = await validateStructureFile(file, accessToken);
+      setReport(rep);
+      if (rep.errors.length > 0) {
+        // Marquer clairement qu'il y a des erreurs
+        setError("Le fichier contient des erreurs. Corrigez-les puis réimportez si nécessaire.");
+        // Réinitialiser le fichier pour forcer un nouveau choix après correction
+        setFile(null);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erreur lors de la validation.";
+      setError(msg);
+      setReport(null);
+    } finally {
+      setIsValidating(false);
+    }
   };
 
+  const handleExecute = async () => {
+    if (!file) return;
+    try {
+      setIsExecuting(true);
+      setError(null);
+      const rep = await executeStructureImport(file, accessToken);
+      setExecuteResult(rep);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erreur lors de l'import.";
+      setError(msg);
+      setExecuteResult(null);
+      setReport(null);
+      setFile(null);
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
+  const hasNoErrors = report && report.errors.length === 0;
+
   return (
-    <AppLayout title="Structure" companies={[]} selectedCompanyId="" onCompanyChange={() => {}}>
+    <AppLayout
+      title="Structure"
+      companies={[]}
+      selectedCompanyId=""
+      onCompanyChange={() => {}}
+    >
       <Head>
-        <title>Import — Téléversement</title>
+        <title>Import structure — Fichier Excel</title>
       </Head>
-      <div className="mx-auto max-w-2xl space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/structure" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link
+            href="/structure"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
             ← Structure
           </Link>
-          <Link href="/structure/import/upload" className="text-sm font-medium text-foreground">
+          <Link
+            href="/structure/import/upload"
+            className="text-sm font-medium text-foreground"
+          >
             Import
           </Link>
         </div>
-        <h1 className="text-xl font-semibold">Import en masse</h1>
+        <h1 className="text-xl font-semibold">
+          Import en masse de la structure
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Étape 1 : déposez votre fichier CSV ou téléchargez le modèle.
+          Utilisez le modèle Excel pour créer ou mettre à jour groupes,
+          entreprises et business units.
         </p>
+
+        <div className="flex flex-wrap gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleDownloadTemplate}
+          >
+            Télécharger le modèle Excel
+          </Button>
+        </div>
+
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          className={"rounded-xl border-2 border-dashed p-12 text-center " + (dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/30")}
+          className={
+            "rounded-xl border-2 border-dashed p-12 text-center " +
+            (dragOver
+              ? "border-primary bg-primary/5"
+              : "border-border bg-muted/30")
+          }
         >
           <input
             type="file"
-            accept=".csv"
+            accept=".xlsx"
             onChange={handleFileInput}
             className="hidden"
             id="file-upload"
@@ -108,20 +187,130 @@ export default function StructureImportUploadPage() {
               <p className="font-medium text-foreground">{file.name}</p>
             ) : (
               <p className="text-muted-foreground">
-                Glissez-déposez un fichier CSV ici ou cliquez pour parcourir.
+                Glissez-déposez un fichier Excel (.xlsx) ici ou cliquez pour
+                parcourir.
               </p>
             )}
           </label>
         </div>
+
         {error && <p className="text-sm text-destructive">{error}</p>}
+
         <div className="flex flex-wrap gap-4">
-          <Button type="button" variant="outline" onClick={downloadTemplate}>
-            Télécharger le modèle CSV
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleValidate}
+            disabled={!file || isValidating}
+          >
+            {isValidating ? "Validation en cours…" : "Valider le fichier"}
           </Button>
-          <Button type="button" onClick={handleNext} disabled={!file}>
-            Suivant
+          <Button
+            type="button"
+            onClick={handleExecute}
+            disabled={!file || !hasNoErrors || isExecuting}
+          >
+            {isExecuting ? "Import en cours…" : "Lancer l'import"}
           </Button>
         </div>
+
+        {executeResult && (
+          <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
+            <p className="font-semibold mb-1">Import terminé avec succès.</p>
+            <p>
+              Groupes créés : <strong>{executeResult.created.groups}</strong>,{" "}
+              Entreprises créées :{" "}
+              <strong>{executeResult.created.companies}</strong>, Business units
+              créées : <strong>{executeResult.created.businessUnits}</strong>.
+            </p>
+          </div>
+        )}
+
+        {report && (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <h2 className="text-sm font-semibold mb-2">
+                Résumé de la validation
+              </h2>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>
+                  <span className="font-medium text-foreground">
+                    Lignes totales :
+                  </span>{" "}
+                  {report.summary.totalRows}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Lignes valides :
+                  </span>{" "}
+                  {report.summary.validRows}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Lignes en erreur :
+                  </span>{" "}
+                  {report.summary.errorRows}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Groupes à créer :
+                  </span>{" "}
+                  {report.summary.entitiesToCreate.groups}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Entreprises à créer :
+                  </span>{" "}
+                  {report.summary.entitiesToCreate.companies}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Business units à créer :
+                  </span>{" "}
+                  {report.summary.entitiesToCreate.businessUnits}
+                </li>
+              </ul>
+            </div>
+
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="p-3 text-left font-medium">Feuille</th>
+                    <th className="p-3 text-left font-medium">Ligne</th>
+                    <th className="p-3 text-left font-medium">Colonne</th>
+                    <th className="p-3 text-left font-medium">Valeur</th>
+                    <th className="p-3 text-left font-medium">Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.errors.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="p-6 text-center text-muted-foreground"
+                      >
+                        Aucune erreur détectée.
+                      </td>
+                    </tr>
+                  ) : (
+                    report.errors.map((err, idx) => (
+                      <tr key={idx} className="border-b border-border">
+                        <td className="p-3">{err.sheet}</td>
+                        <td className="p-3 font-mono">{err.row}</td>
+                        <td className="p-3">{err.column}</td>
+                        <td className="p-3 text-xs text-muted-foreground">
+                          {err.value !== undefined ? String(err.value) : ""}
+                        </td>
+                        <td className="p-3 text-destructive">{err.message}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
   );
