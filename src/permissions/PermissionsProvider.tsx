@@ -1,12 +1,14 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, setAccessTokenGetter } from "@/lib/apiClient";
-import { logout as authLogout, type TokenPair } from "@/lib/authApi";
+import { logout as authLogout, refreshTokens, type TokenPair } from "@/lib/authApi";
 import type { PermissionGrant, PermissionsUser } from "@/permissions/types";
 
 type PermissionsContextValue = {
   user: PermissionsUser | null;
   grants: PermissionGrant[];
   isLoading: boolean;
+  /** True once the initial auth bootstrap (localStorage + /auth/me attempt) has completed. */
+  isAuthReady: boolean;
   accessToken: string | null;
   refreshToken: string | null;
   setTokens: (tokens: TokenPair | null) => void;
@@ -24,6 +26,9 @@ export function PermissionsProvider(props: {
   const [user, setUser] = useState<PermissionsUser | null>(props.bootstrap?.user ?? null);
   const [grants, setGrants] = useState<PermissionGrant[]>(props.bootstrap?.grants ?? []);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Indicates that we've finished the initial token load + /auth/me attempt.
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
@@ -73,13 +78,48 @@ export function PermissionsProvider(props: {
     async (options?: { silent?: boolean }): Promise<PermissionsUser | null> => {
       setIsLoading(true);
       try {
+        // First attempt: call /auth/me without forcing a redirect on 401.
         const me = await apiFetch<PermissionsUser>("/auth/me", {
           snackbar: options?.silent ? { showError: false } : undefined,
+          authRedirect: false,
         });
         setUser(me);
         setGrants(me.permissions ?? []);
         return me;
-      } catch {
+      } catch (err) {
+        // Detect explicit 401 from apiFetch when authRedirect === false
+        const message = err instanceof Error ? err.message : "";
+        let is401 = false;
+        try {
+          const parsed = JSON.parse(message) as { status?: number } | undefined;
+          if (parsed?.status === 401) is401 = true;
+        } catch {
+          if (message.toLowerCase().includes("unauthorized")) is401 = true;
+        }
+
+        // If we have a refresh token and got a 401, try to refresh tokens once.
+        if (is401 && refreshToken) {
+          try {
+            const newTokens = await refreshTokens(refreshToken);
+            setTokens(newTokens);
+            const meAfterRefresh = await apiFetch<PermissionsUser>("/auth/me", {
+              snackbar: options?.silent ? { showError: false } : undefined,
+            });
+            setUser(meAfterRefresh);
+            setGrants(meAfterRefresh.permissions ?? []);
+            return meAfterRefresh;
+          } catch {
+            // Refresh failed: clear session and optionally redirect.
+            setUser(null);
+            setGrants([]);
+            setTokens(null);
+            if (!options?.silent && typeof window !== "undefined") {
+              window.location.href = "/login";
+            }
+            return null;
+          }
+        }
+
         if (!options?.silent) setUser(null);
         return null;
       } finally {
@@ -91,19 +131,22 @@ export function PermissionsProvider(props: {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem("nk-auth-tokens");
-      if (raw) {
-        const parsed = JSON.parse(raw) as { accessToken?: string; refreshToken?: string };
-        if (parsed.accessToken && parsed.refreshToken) {
-          setTokens({ accessToken: parsed.accessToken, refreshToken: parsed.refreshToken });
+    (async () => {
+      try {
+        const raw = window.localStorage.getItem("nk-auth-tokens");
+        if (raw) {
+          const parsed = JSON.parse(raw) as { accessToken?: string; refreshToken?: string };
+          if (parsed.accessToken && parsed.refreshToken) {
+            setTokens({ accessToken: parsed.accessToken, refreshToken: parsed.refreshToken });
+          }
         }
+      } catch {
+        // ignore parse/storage errors
       }
-    } catch {
-      // ignore parse/storage errors
-    }
-    // Always try to refresh current user once on startup (will fail gracefully if no/invalid token)
-    void refreshMe({ silent: true });
+      // Always try to refresh current user once on startup (will fail gracefully if no/invalid token)
+      await refreshMe({ silent: true });
+      setIsAuthReady(true);
+    })();
   }, [setTokens, refreshMe]);
 
   const logout = useCallback(async () => {
@@ -121,6 +164,7 @@ export function PermissionsProvider(props: {
       user,
       grants,
       isLoading,
+      isAuthReady,
       accessToken,
       refreshToken,
       setTokens,
@@ -128,7 +172,7 @@ export function PermissionsProvider(props: {
       refreshMe,
       logout,
     }),
-    [user, grants, isLoading, accessToken, refreshToken, setTokens, refreshMe, logout],
+    [user, grants, isLoading, isAuthReady, accessToken, refreshToken, setTokens, refreshMe, logout],
   );
 
   return <PermissionsContext.Provider value={value}>{props.children}</PermissionsContext.Provider>;

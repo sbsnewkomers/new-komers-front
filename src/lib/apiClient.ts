@@ -23,12 +23,17 @@ export function setAccessTokenGetter(getter: () => string | null) {
 
 export async function apiFetch<T>(
   path: string,
-  init?: RequestInit & { baseUrl?: string; snackbar?: ApiFetchSnackbarOptions },
+  init?: RequestInit & {
+    baseUrl?: string;
+    snackbar?: ApiFetchSnackbarOptions;
+    /** When false, do not auto-redirect to /login on 401. Caller is responsible for handling auth errors. */
+    authRedirect?: boolean;
+  },
 ): Promise<T> {
   const baseUrl = init?.baseUrl ?? getApiBaseUrl();
   const url = `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
 
-  const { snackbar, ...fetchInit } = init ?? {};
+  const { snackbar, authRedirect, ...fetchInit } = init ?? {};
 
   const token = accessTokenGetter ? accessTokenGetter() : null;
 
@@ -44,20 +49,30 @@ export async function apiFetch<T>(
   });
 
   if (!res.ok) {
-    // Handle auth expiration / 401 globally: store current location and redirect to login.
-    if (res.status === 401 && typeof window !== "undefined") {
-      const currentPath = window.location.pathname + window.location.search + window.location.hash;
-      // Avoid loops when already on login
-      if (!currentPath.startsWith("/login") && !currentPath.startsWith("/invitations/")) {
-        try {
-          window.localStorage.setItem("nk-return-to", currentPath);
-        } catch {
-          // ignore storage errors
-        }
-        window.location.href = "/login";
-      }
-      // Let callers see the backend 401 body when possible
+    // Handle auth expiration / 401 globally: store current location and redirect to login
+    // unless the caller explicitly disabled it (authRedirect === false).
+    if (res.status === 401) {
       const text401 = await res.text().catch(() => "");
+
+      if (authRedirect === false) {
+        // Let callers know it's specifically a 401 without forcing navigation.
+        // We encode the status so higher-level code can distinguish it.
+        throw new Error(JSON.stringify({ status: 401, body: text401 || null }));
+      }
+
+      if (typeof window !== "undefined") {
+        const currentPath = window.location.pathname + window.location.search + window.location.hash;
+        // Avoid loops when already on login
+        if (!currentPath.startsWith("/login") && !currentPath.startsWith("/invitations/")) {
+          try {
+            window.localStorage.setItem("nk-return-to", currentPath);
+          } catch {
+            // ignore storage errors
+          }
+          window.location.href = "/login";
+        }
+      }
+
       throw new Error(text401 || "Unauthorized");
     }
 

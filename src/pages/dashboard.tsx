@@ -69,7 +69,7 @@ const DEMO_CHART_DATA = [
 ];
 
 export default function DashboardPage() {
-  const { user } = usePermissionsContext();
+  const { user, isAuthReady } = usePermissionsContext();
   const companies = useCompanies();
   const [widgets, setWidgets] = React.useState<Widget[]>([]);
   const [chartWidgets, setChartWidgets] = React.useState<Widget[]>([]);
@@ -80,9 +80,12 @@ export default function DashboardPage() {
   const [selectedWidgetToAdd, setSelectedWidgetToAdd] = React.useState<string | null>(null);
   const [configForm, setConfigForm] = React.useState({ indicator: "", chartType: "bar", scope: "" });
 
+  // Load companies only after auth bootstrap is done and we have a user,
+  // so that /companies does not run before /auth/me on initial load.
   React.useEffect(() => {
-    companies.fetchList();
-  }, []);
+    if (!isAuthReady || !user) return;
+    void companies.fetchList();
+  }, [companies, isAuthReady, user]);
 
   // Simulate initial loading then rely on real data
   React.useEffect(() => {

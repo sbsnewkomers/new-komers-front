@@ -10,6 +10,7 @@ import {
   type TreeCompany,
 } from "@/lib/structureApi";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -68,6 +69,7 @@ type TreeNode =
   | { type: "bu"; id: string; name: string; companyId: string; code: string };
 
 export default function StructurePage() {
+  const { user, isAuthReady } = usePermissionsContext();
   const [tree, setTree] = useState<StructureTree | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeError, setTreeError] = useState<string | null>(null);
@@ -110,7 +112,11 @@ export default function StructurePage() {
     }
   }, []);
 
-  useEffect(() => { loadTree(); }, [loadTree]);
+  // Only load the structure tree once auth bootstrap is done and we have a user.
+  useEffect(() => {
+    if (!isAuthReady || !user) return;
+    void loadTree();
+  }, [isAuthReady, user, loadTree]);
 
   const loadBUsForCompany = useCallback(async (companyId: string) => {
     try {
