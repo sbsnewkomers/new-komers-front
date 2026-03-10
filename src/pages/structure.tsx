@@ -70,6 +70,8 @@ type TreeNode =
 
 export default function StructurePage() {
   const { user, isAuthReady } = usePermissionsContext();
+  const canImportStructure =
+    user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER";
   const [tree, setTree] = useState<StructureTree | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeError, setTreeError] = useState<string | null>(null);
@@ -366,13 +368,15 @@ export default function StructurePage() {
             <p className="text-sm text-slate-500">Gérez la structure hiérarchique de vos entités.</p>
           </div>
           <div className="flex gap-3">
-            <Link
-              href="/structure/import/upload"
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-primary"
-            >
-              <Upload className="h-4 w-4" />
-              Importer
-            </Link>
+            {canImportStructure && (
+              <Link
+                href="/structure/import/upload"
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-primary"
+              >
+                <Upload className="h-4 w-4" />
+                Importer
+              </Link>
+            )}
             <Button onClick={() => setWizardOpen(true)} className="h-9 gap-2 bg-primary text-white hover:bg-slate-800">
               <Plus className="h-4 w-4" />
               Nouvelle Entreprise
