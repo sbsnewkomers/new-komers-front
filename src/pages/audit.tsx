@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import Head from "next/head";
+import { useRouter } from "next/router";
+import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -14,7 +16,6 @@ import {
   ChevronRight,
   Shield,
   Users,
-  FileText,
   Upload,
   Trash2,
   Pencil,
@@ -149,7 +150,11 @@ function mapLogToEntry(log: AuditLogDto): AuditEntry {
   };
 }
 
+const ALLOWED_AUDIT_ROLES = ["SUPER_ADMIN", "ADMIN"] as const;
+
 export default function AuditPage() {
+  const router = useRouter();
+  const { user, isAuthReady } = usePermissionsContext();
   const [logs, setLogs] = useState<AuditLogDto[]>([]);
   const [total, setTotal] = useState(0);
   const [lastPage, setLastPage] = useState(1);
@@ -161,6 +166,16 @@ export default function AuditPage() {
   const [actionFilter, setActionFilter] = useState<AuditActionUi | "">("");
   const [categoryFilter, setCategoryFilter] = useState<AuditCategory | "">("");
   const [statusFilter, setStatusFilter] = useState<"" | "success" | "failure">("");
+
+  useEffect(() => {
+    if (!isAuthReady) return;
+    const allowed = user?.role && ALLOWED_AUDIT_ROLES.includes(user.role as (typeof ALLOWED_AUDIT_ROLES)[number]);
+    if (!allowed) {
+      router.replace("/403");
+    }
+  }, [isAuthReady, user?.role, router]);
+
+  const canAccessAudit = user?.role && ALLOWED_AUDIT_ROLES.includes(user.role as (typeof ALLOWED_AUDIT_ROLES)[number]);
 
   const loadLogs = useCallback(
     async (pageToLoad: number) => {
@@ -237,6 +252,10 @@ export default function AuditPage() {
 
   const totalPages = Math.max(1, lastPage);
 
+  if (isAuthReady && !canAccessAudit) {
+    return null;
+  }
+
   return (
     <AppLayout title="Audit" companies={[]} selectedCompanyId="" onCompanyChange={() => {}}>
       <Head>
@@ -303,7 +322,7 @@ export default function AuditPage() {
             onValueChange={(v) => {
               setCategoryFilter(v as AuditCategory | "");
             }}
-            className="h-9 w-[160px] border-slate-200 bg-white text-sm"
+            className="h-9 flex-1 border-slate-200 bg-white text-sm"
           >
             <option value="">Toutes catégories</option>
             {(Object.keys(categoryLabels) as AuditCategory[]).map((c) => (
@@ -317,7 +336,7 @@ export default function AuditPage() {
             onValueChange={(v) => {
               setActionFilter(v as AuditActionUi | "");
             }}
-            className="h-9 w-[160px] border-slate-200 bg-white text-sm"
+            className="h-9 flex-1 border-slate-200 bg-white text-sm"
           >
             <option value="">Toutes actions</option>
             {(Object.keys(actionConfig) as AuditActionUi[]).map((a) => (
@@ -331,7 +350,7 @@ export default function AuditPage() {
             onValueChange={(v) => {
               setStatusFilter(v as "" | "success" | "failure");
             }}
-            className="h-9 w-[140px] border-slate-200 bg-white text-sm"
+            className="h-9 flex-1 border-slate-200 bg-white text-sm"
           >
             <option value="">Tous statuts</option>
             <option value="success">Succès</option>

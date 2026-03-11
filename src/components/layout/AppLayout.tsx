@@ -99,10 +99,12 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
               <BarChart3 className="h-5 w-5" />
               Reporting
             </Link>
-            <Link href="/audit" className={navLinkClass("/audit")}>
-              <ScrollText className="h-5 w-5" />
-              Audit
-            </Link>
+            {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
+              <Link href="/audit" className={navLinkClass("/audit")}>
+                <ScrollText className="h-5 w-5" />
+                Audit
+              </Link>
+            )}
           </nav>
 
           <div
