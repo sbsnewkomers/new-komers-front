@@ -8,11 +8,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { 
-  LayoutDashboard, 
-  BarChart3, 
-  Settings, 
-  BookOpen, 
+import {
+  LayoutDashboard,
+  BarChart3,
+  Settings,
+  BookOpen,
   Network,
   Search,
   Bell,
@@ -20,7 +20,7 @@ import {
   ChevronRight,
   Upload,
   Users,
-  ScrollText
+  ScrollText,
 } from "lucide-react";
 
 type AppLayoutProps = {
@@ -87,6 +87,12 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
               <Network className="h-5 w-5" />
               Structure
             </Link>
+            {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER") && (
+              <Link href="/shareholders" className={navLinkClass("/shareholders")}>
+                <Users className="h-5 w-5" />
+                Shareholders
+              </Link>
+            )}
             <Link href="/budget" className={navLinkClass("/budget")}>
               <BookOpen className="h-5 w-5" />
               Accounting

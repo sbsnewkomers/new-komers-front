@@ -173,10 +173,14 @@ export default function UsersPage() {
     () => (currentRole ? allowedInviteRoles(currentRole) : []),
     [currentRole],
   );
+  const defaultInviteRole: UserRole = useMemo(() => {
+    if (invitableRoles.includes("END_USER" as UserRole)) return "END_USER";
+    return (invitableRoles[0] as UserRole | undefined) ?? ("END_USER" as UserRole);
+  }, [invitableRoles]);
 
   // ── Invite handlers ──
   const openInviteModal = () => {
-    setInviteForm({ email: "", firstName: "", lastName: "", role: invitableRoles[0] ?? "END_USER" });
+    setInviteForm({ email: "", firstName: "", lastName: "", role: defaultInviteRole });
     setInvitePerimeter([]);
     setPerimNodeType("GROUP");
     setPerimNodeId("");
@@ -707,77 +711,88 @@ export default function UsersPage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le *</label>
-              <Select value={inviteForm.role} onValueChange={(v) => setInviteForm((f) => ({ ...f, role: v as UserRole }))}>
+              <Select
+                value={inviteForm.role}
+                onValueChange={(v) => {
+                  const role = v as UserRole;
+                  setInviteForm((f) => ({ ...f, role }));
+                  if (role === "ADMIN") {
+                    setInvitePerimeter([]);
+                  }
+                }}
+              >
                 {invitableRoles.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
               </Select>
             </div>
 
             {/* Data Perimeter */}
-            <div>
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">P&eacute;rim&egrave;tre d&rsquo;acc&egrave;s</label>
-              <p className="mb-3 text-xs text-slate-400">D&eacute;finir les groupes, entreprises ou BU accessibles. L&rsquo;h&eacute;ritage hi&eacute;rarchique s&rsquo;applique automatiquement.</p>
+            {inviteForm.role !== "ADMIN" && (
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">P&eacute;rim&egrave;tre d&rsquo;acc&egrave;s</label>
+                <p className="mb-3 text-xs text-slate-400">D&eacute;finir les groupes, entreprises ou BU accessibles. L&rsquo;h&eacute;ritage hi&eacute;rarchique s&rsquo;applique automatiquement.</p>
 
-              {invitePerimeter.length > 0 && (
-                <ul className="mb-3 space-y-1.5">
-                  {invitePerimeter.map((item, idx) => (
-                    <li key={idx} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">{nodeTypeLabelFr(item.nodeType)}</span>
-                        <span className="text-sm text-slate-700">{perimNodeName(item)}</span>
-                      </div>
-                      <button type="button" onClick={() => removePerimeterItem(idx)} className="flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-600">
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                {invitePerimeter.length > 0 && (
+                  <ul className="mb-3 space-y-1.5">
+                    {invitePerimeter.map((item, idx) => (
+                      <li key={idx} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">{nodeTypeLabelFr(item.nodeType)}</span>
+                          <span className="text-sm text-slate-700">{perimNodeName(item)}</span>
+                        </div>
+                        <button type="button" onClick={() => removePerimeterItem(idx)} className="flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-600">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
-              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-3">
-                <div className="flex flex-wrap items-end gap-2">
-                  <div>
-                    <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Type</label>
-                    <select
-                      value={perimNodeType}
-                      onChange={(e) => { setPerimNodeType(e.target.value as NodeType); setPerimNodeId(""); if (e.target.value !== "BUSINESS_UNIT") setPerimCompanyId(""); }}
-                      className="h-8 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
-                    >
-                      <option value="GROUP">Groupe</option>
-                      <option value="COMPANY">Entreprise</option>
-                      <option value="BUSINESS_UNIT">Unit&eacute; d&rsquo;affaires</option>
-                    </select>
-                  </div>
-                  {perimNodeType === "BUSINESS_UNIT" && (
+                <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-3">
+                  <div className="flex flex-wrap items-end gap-2">
                     <div>
-                      <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Entreprise</label>
+                      <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Type</label>
                       <select
-                        value={perimCompanyId}
-                        onChange={(e) => { setPerimCompanyId(e.target.value); setPerimNodeId(""); }}
-                        className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
+                        value={perimNodeType}
+                        onChange={(e) => { setPerimNodeType(e.target.value as NodeType); setPerimNodeId(""); if (e.target.value !== "BUSINESS_UNIT") setPerimCompanyId(""); }}
+                        className="h-8 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
                       >
-                        <option value="">Choisir&hellip;</option>
-                        {(companiesHook.list ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        <option value="GROUP">Groupe</option>
+                        <option value="COMPANY">Entreprise</option>
+                        <option value="BUSINESS_UNIT">Unit&eacute; d&rsquo;affaires</option>
                       </select>
                     </div>
-                  )}
-                  <div>
-                    <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">&Eacute;l&eacute;ment</label>
-                    <select
-                      value={perimNodeId}
-                      onChange={(e) => setPerimNodeId(e.target.value)}
-                      disabled={perimNodeType === "BUSINESS_UNIT" && !perimCompanyId}
-                      className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 disabled:opacity-50"
-                    >
-                      <option value="">Choisir&hellip;</option>
-                      {perimNodeOptions.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
-                    </select>
+                    {perimNodeType === "BUSINESS_UNIT" && (
+                      <div>
+                        <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Entreprise</label>
+                        <select
+                          value={perimCompanyId}
+                          onChange={(e) => { setPerimCompanyId(e.target.value); setPerimNodeId(""); }}
+                          className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
+                        >
+                          <option value="">Choisir&hellip;</option>
+                          {(companiesHook.list ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </div>
+                    )}
+                    <div>
+                      <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">&Eacute;l&eacute;ment</label>
+                      <select
+                        value={perimNodeId}
+                        onChange={(e) => setPerimNodeId(e.target.value)}
+                        disabled={perimNodeType === "BUSINESS_UNIT" && !perimCompanyId}
+                        className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 disabled:opacity-50"
+                      >
+                        <option value="">Choisir&hellip;</option>
+                        {perimNodeOptions.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
+                      </select>
+                    </div>
+                    <Button onClick={addPerimeterItem} disabled={!perimNodeId} className="h-8 px-3 text-xs">
+                      <Plus className="mr-1 h-3 w-3" /> Ajouter
+                    </Button>
                   </div>
-                  <Button onClick={addPerimeterItem} disabled={!perimNodeId} className="h-8 px-3 text-xs">
-                    <Plus className="mr-1 h-3 w-3" /> Ajouter
-                  </Button>
                 </div>
               </div>
-            </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Annuler</Button>
