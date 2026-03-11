@@ -267,7 +267,7 @@ export default function AuditPage() {
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Journal d&apos;audit</h2>
             <p className="text-sm text-slate-500">
-              Historique complet des actions sur la plateforme (source : backend).
+              Historique complet des actions sur la plateforme.
             </p>
           </div>
           <Button
