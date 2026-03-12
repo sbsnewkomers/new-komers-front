@@ -85,7 +85,7 @@ export default function DashboardPage() {
   React.useEffect(() => {
     if (!isAuthReady || !user) return;
     void companies.fetchList();
-  }, [companies, isAuthReady, user]);
+  }, [isAuthReady, user, companies.fetchList]);
 
   // Simulate initial loading then rely on real data
   React.useEffect(() => {
