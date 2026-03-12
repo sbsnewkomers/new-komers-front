@@ -302,7 +302,7 @@ export default function ShareholdersPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                            <Percent className="h-3 w-3" />
+                            {/* <Percent className="h-3 w-3" /> */}
                             <span>{s.percentage}%</span>
                           </div>
                         </td>
@@ -518,7 +518,8 @@ export default function ShareholdersPage() {
               </Button>
               <Button
                 type="button"
-                variant="destructive"
+                variant="default"
+                className="bg-red-500 hover:bg-red-600"
                 onClick={confirmDelete}
                 disabled={deleteLoading}
               >
