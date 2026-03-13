@@ -150,6 +150,26 @@ export default function StructurePage() {
   });
   const [addBULoading, setAddBULoading] = useState(false);
 
+  const [addGroupOpen, setAddGroupOpen] = useState(false);
+  const [addGroupForm, setAddGroupForm] = useState({
+    name: "",
+    siret: "",
+    fiscal_year_start: "",
+    fiscal_year_end: "",
+    mainActivity: "",
+  });
+  const [addGroupLoading, setAddGroupLoading] = useState(false);
+
+  const [addBUStandaloneOpen, setAddBUStandaloneOpen] = useState(false);
+  const [addBUStandaloneForm, setAddBUStandaloneForm] = useState({
+    name: "",
+    code: "",
+    activity: "",
+    siret: "",
+    companyId: "",
+  });
+  const [addBUStandaloneLoading, setAddBUStandaloneLoading] = useState(false);
+
   const [editGroup, setEditGroup] = useState({
     name: "",
     siret: "",
@@ -555,6 +575,68 @@ export default function StructurePage() {
     }
   };
 
+  const handleCreateGroup = async () => {
+    if (!addGroupForm.name.trim()) return;
+    setAddGroupLoading(true);
+    try {
+      await apiFetch("/groups", {
+        method: "POST",
+        body: JSON.stringify({
+          name: addGroupForm.name,
+          siret: addGroupForm.siret || undefined,
+          fiscal_year_start: addGroupForm.fiscal_year_start || undefined,
+          fiscal_year_end: addGroupForm.fiscal_year_end || undefined,
+          mainActivity: addGroupForm.mainActivity || undefined,
+        }),
+        snackbar: { showSuccess: true, successMessage: "Groupe créé" },
+      });
+      loadTree();
+      setAddGroupOpen(false);
+      setAddGroupForm({
+        name: "",
+        siret: "",
+        fiscal_year_start: "",
+        fiscal_year_end: "",
+        mainActivity: "",
+      });
+    } catch {
+      /* snackbar handles */
+    } finally {
+      setAddGroupLoading(false);
+    }
+  };
+
+  const handleCreateBUStandalone = async () => {
+    if (!addBUStandaloneForm.name.trim() || !addBUStandaloneForm.companyId) return;
+    setAddBUStandaloneLoading(true);
+    try {
+      await apiFetch(`/companies/${addBUStandaloneForm.companyId}/business-units`, {
+        method: "POST",
+        body: JSON.stringify({
+          name: addBUStandaloneForm.name,
+          code: addBUStandaloneForm.code,
+          activity: addBUStandaloneForm.activity,
+          siret: addBUStandaloneForm.siret,
+        }),
+        snackbar: { showSuccess: true, successMessage: "Business unit créée" },
+      });
+      loadTree();
+      setExpandedCompanyIds((prev) => new Set(prev).add(addBUStandaloneForm.companyId));
+      setAddBUStandaloneOpen(false);
+      setAddBUStandaloneForm({
+        name: "",
+        code: "",
+        activity: "",
+        siret: "",
+        companyId: "",
+      });
+    } catch {
+      /* snackbar handles */
+    } finally {
+      setAddBUStandaloneLoading(false);
+    }
+  };
+
   const toggleExpand = (companyId: string) => {
     setExpandedCompanyIds((prev) => {
       const next = new Set(prev);
@@ -629,6 +711,17 @@ export default function StructurePage() {
                   Importer
                 </Link>
               )}
+              {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                <Button
+                  onClick={() => setAddGroupOpen(true)}
+                  className="h-9 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={!canCreateCompany}
+                >
+                  <Plus className="h-4 w-4" />
+                  Nouveau Groupe
+                </Button>
+              )}
+              {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
               <Button
                 onClick={() => setWizardOpen(true)}
                 className="h-9 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
@@ -637,6 +730,18 @@ export default function StructurePage() {
                 <Plus className="h-4 w-4" />
                 Nouvelle Entreprise
               </Button>
+              )}
+              {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                <Button
+                  onClick={() => setAddBUStandaloneOpen(true)}
+                  className="h-9 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={!canCreateCompany}
+                >
+                  <Plus className="h-4 w-4" />
+                  Nouvelle Business Unit
+                </Button>
+              )}
+              
             </div>
           </div>
 
@@ -1539,6 +1644,194 @@ export default function StructurePage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setFicheOpen(false)}>
               Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Group Modal */}
+      <Dialog open={addGroupOpen} onOpenChange={setAddGroupOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Folder className="h-5 w-5 text-blue-500" />
+              Nouveau Groupe
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Nom *
+              </label>
+              <Input
+                value={addGroupForm.name}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({ ...f, name: e.target.value }))
+                }
+                placeholder="Nom du groupe"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                SIRET
+              </label>
+              <Input
+                value={addGroupForm.siret}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({ ...f, siret: e.target.value }))
+                }
+                placeholder="123 456 789 00012"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Activité principale
+              </label>
+              <Input
+                value={addGroupForm.mainActivity}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({ ...f, mainActivity: e.target.value }))
+                }
+                placeholder="Activité principale"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Début exercice
+                </label>
+                <Input
+                  type="date"
+                  value={addGroupForm.fiscal_year_start}
+                  onChange={(e) =>
+                    setAddGroupForm((f) => ({
+                      ...f,
+                      fiscal_year_start: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Fin exercice
+                </label>
+                <Input
+                  type="date"
+                  value={addGroupForm.fiscal_year_end}
+                  onChange={(e) =>
+                    setAddGroupForm((f) => ({
+                      ...f,
+                      fiscal_year_end: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddGroupOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleCreateGroup}
+              disabled={addGroupLoading || !addGroupForm.name.trim()}
+            >
+              {addGroupLoading ? "Création..." : "Créer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add BU Standalone Modal */}
+      <Dialog open={addBUStandaloneOpen} onOpenChange={setAddBUStandaloneOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-slate-500" />
+              Nouvelle Business Unit
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Entreprise *
+              </label>
+              <Select
+                value={addBUStandaloneForm.companyId}
+                onValueChange={(value) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, companyId: value }))
+                }
+              >
+                <option value="">Sélectionner une entreprise</option>
+                {allTreeCompanies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Nom *
+              </label>
+              <Input
+                value={addBUStandaloneForm.name}
+                onChange={(e) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, name: e.target.value }))
+                }
+                placeholder="Nom de la BU"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Code
+              </label>
+              <Input
+                value={addBUStandaloneForm.code}
+                onChange={(e) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, code: e.target.value }))
+                }
+                placeholder="BU-001"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Activité
+              </label>
+              <Input
+                value={addBUStandaloneForm.activity}
+                onChange={(e) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, activity: e.target.value }))
+                }
+                placeholder="Activité principale"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                SIRET
+              </label>
+              <Input
+                value={addBUStandaloneForm.siret}
+                onChange={(e) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, siret: e.target.value }))
+                }
+                placeholder="123 456 789 00012"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddBUStandaloneOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleCreateBUStandalone}
+              disabled={
+                addBUStandaloneLoading ||
+                !addBUStandaloneForm.name.trim() ||
+                !addBUStandaloneForm.companyId.trim()
+              }
+            >
+              {addBUStandaloneLoading ? "Création..." : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>
