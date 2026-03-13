@@ -761,45 +761,105 @@ export default function StructurePage() {
                         </div>
 
                         <div className="flex justify-end">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
-                                onClick={(e) => e.stopPropagation()}
-                                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-primary hover:shadow-sm group-hover/row:opacity-100"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-52">
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openDetail(node);
-                                }}
-                              >
-                                Voir / Modifier
-                              </DropdownMenuItem>
-                              {node.type === "group" && (
+                          {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-primary hover:shadow-sm group-hover/row:opacity-100"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-52">
                                 <DropdownMenuItem
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setAddCompanyGroupId(node.id);
-                                    setAddCompanyForm({
-                                      name: "",
-                                      siret: "",
-                                      fiscal_year_start: "",
-                                      fiscal_year_end: "",
-                                    });
-                                    setAddCompanyOpen(true);
+                                    openDetail(node);
                                   }}
                                 >
-                                  <Plus className="mr-2 h-4 w-4" /> Ajouter une
-                                  entreprise
+                                  Voir / Modifier
                                 </DropdownMenuItem>
-                              )}
-                              {node.type === "company" && (
-                                <>
+                                {node.type === "group" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setAddCompanyGroupId(node.id);
+                                      setAddCompanyForm({
+                                        name: "",
+                                        siret: "",
+                                        fiscal_year_start: "",
+                                        fiscal_year_end: "",
+                                      });
+                                      setAddCompanyOpen(true);
+                                    }}
+                                  >
+                                    <Plus className="mr-2 h-4 w-4" /> Ajouter une
+                                    entreprise
+                                  </DropdownMenuItem>
+                                )}
+                                {node.type === "company" && (
+                                  <>
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openFiche(node.id);
+                                      }}
+                                    >
+                                      Fiche entreprise
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setAddBUCompanyId(node.id);
+                                        setAddBUForm({
+                                          name: "",
+                                          code: "",
+                                          activity: "",
+                                          siret: "",
+                                        });
+                                        setAddBUOpen(true);
+                                      }}
+                                    >
+                                      <Plus className="mr-2 h-4 w-4" /> Ajouter
+                                      une BU
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedNode(node);
+                                    setConfirmDeleteOpen(true);
+                                  }}
+                                  className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                                >
+                                  Supprimer
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-primary hover:shadow-sm group-hover/row:opacity-100"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-52">
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openDetail(node);
+                                  }}
+                                >
+                                  Voir les détails
+                                </DropdownMenuItem>
+                                {node.type === "company" && (
                                   <DropdownMenuItem
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -808,36 +868,10 @@ export default function StructurePage() {
                                   >
                                     Fiche entreprise
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setAddBUCompanyId(node.id);
-                                      setAddBUForm({
-                                        name: "",
-                                        code: "",
-                                        activity: "",
-                                        siret: "",
-                                      });
-                                      setAddBUOpen(true);
-                                    }}
-                                  >
-                                    <Plus className="mr-2 h-4 w-4" /> Ajouter
-                                    une BU
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedNode(node);
-                                  setConfirmDeleteOpen(true);
-                                }}
-                                className="text-red-600 focus:bg-red-50 focus:text-red-600"
-                              >
-                                Supprimer
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
                       </div>
                     </li>
@@ -1023,13 +1057,15 @@ export default function StructurePage() {
           <DialogFooter className="gap-2">
             {!editing ? (
               <>
-                <Button
-                  variant="outline"
-                  className="border-red-200 text-red-600 hover:bg-red-50"
-                  onClick={() => setConfirmDeleteOpen(true)}
-                >
-                  Supprimer
-                </Button>
+                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                  <Button
+                    variant="outline"
+                    className="border-red-200 text-red-600 hover:bg-red-50"
+                    onClick={() => setConfirmDeleteOpen(true)}
+                  >
+                    Supprimer
+                  </Button>
+                )}
                 <div className="flex-1" />
                 {selectedNode?.type === "company" && (
                   <Button
@@ -1042,9 +1078,11 @@ export default function StructurePage() {
                     Fiche
                   </Button>
                 )}
-                <Button variant="outline" onClick={() => setEditing(true)}>
-                  Modifier
-                </Button>
+                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                  <Button variant="outline" onClick={() => setEditing(true)}>
+                    Modifier
+                  </Button>
+                )}
               </>
             ) : (
               <>
