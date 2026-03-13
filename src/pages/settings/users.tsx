@@ -436,7 +436,10 @@ export default function UsersPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {filtered.map((u) => (
+                      {filtered.map((u) => {
+                        const isProtectedSuperAdmin =
+                          u.role === "SUPER_ADMIN" && currentUser?.role === "ADMIN";
+                        return (
                         <tr key={u.id} className="group transition-colors hover:bg-slate-50/50">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
@@ -468,22 +471,52 @@ export default function UsersPage() {
                                     <MoreHorizontal className="h-4 w-4" />
                                   </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem onClick={() => openEdit(u)}><Pencil className="mr-2 h-4 w-4" /> Modifier</DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => openPermissions(u)}><KeyRound className="mr-2 h-4 w-4" /> Permissions</DropdownMenuItem>
-                                  {u.status === "ACTIVE" && (
-                                    <DropdownMenuItem onClick={async () => { await updateUser(u.id, { status: "SUSPENDED" }); loadUsers(); }}>
-                                      <UserX className="mr-2 h-4 w-4" /> Suspendre
-                                    </DropdownMenuItem>
+                                <DropdownMenuContent align="end" className="w-52">
+                                  {!isProtectedSuperAdmin && (
+                                    <>
+                                      <DropdownMenuItem onClick={() => openEdit(u)}>
+                                        <Pencil className="mr-2 h-4 w-4" /> Modifier
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => openPermissions(u)}>
+                                        <KeyRound className="mr-2 h-4 w-4" /> Permissions
+                                      </DropdownMenuItem>
+                                      {u.status === "ACTIVE" && (
+                                        <DropdownMenuItem
+                                          onClick={async () => {
+                                            await updateUser(u.id, { status: "SUSPENDED" });
+                                            loadUsers();
+                                          }}
+                                        >
+                                          <UserX className="mr-2 h-4 w-4" /> Suspendre
+                                        </DropdownMenuItem>
+                                      )}
+                                      {u.status === "SUSPENDED" && (
+                                        <DropdownMenuItem
+                                          onClick={async () => {
+                                            await updateUser(u.id, { status: "ACTIVE" });
+                                            loadUsers();
+                                          }}
+                                        >
+                                          <Mail className="mr-2 h-4 w-4" /> R&eacute;activer
+                                        </DropdownMenuItem>
+                                      )}
+                                      {u.id !== currentUser?.id && (
+                                        <DropdownMenuItem
+                                          onClick={() => {
+                                            setDeleteTarget(u);
+                                            setDeleteOpen(true);
+                                          }}
+                                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                        >
+                                          <Trash2 className="mr-2 h-4 w-4" /> Supprimer
+                                        </DropdownMenuItem>
+                                      )}
+                                    </>
                                   )}
-                                  {u.status === "SUSPENDED" && (
-                                    <DropdownMenuItem onClick={async () => { await updateUser(u.id, { status: "ACTIVE" }); loadUsers(); }}>
-                                      <Mail className="mr-2 h-4 w-4" /> R&eacute;activer
-                                    </DropdownMenuItem>
-                                  )}
-                                  {u.id !== currentUser?.id && (
-                                    <DropdownMenuItem onClick={() => { setDeleteTarget(u); setDeleteOpen(true); }} className="text-red-600 focus:text-red-600 focus:bg-red-50">
-                                      <Trash2 className="mr-2 h-4 w-4" /> Supprimer
+                                  {isProtectedSuperAdmin && (
+                                    <DropdownMenuItem disabled>
+                                      <Shield className="mr-2 h-4 w-4" />
+                                      Super-admin g&eacute;r&eacute; uniquement par un super-admin
                                     </DropdownMenuItem>
                                   )}
                                 </DropdownMenuContent>
@@ -491,7 +524,7 @@ export default function UsersPage() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      );})}
                     </tbody>
                   </table>
                 </div>
@@ -796,7 +829,14 @@ export default function UsersPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Annuler</Button>
-            <Button onClick={handleInvite} disabled={inviteLoading || !inviteForm.email}>
+            <Button
+              onClick={handleInvite}
+              disabled={
+                inviteLoading ||
+                !inviteForm.email ||
+                (inviteForm.role === "END_USER" && invitePerimeter.length === 0)
+              }
+            >
               {inviteLoading ? "Envoi\u2026" : "Envoyer l\u2019invitation"}
             </Button>
           </DialogFooter>

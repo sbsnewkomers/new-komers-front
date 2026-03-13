@@ -79,7 +79,7 @@ export async function apiFetch<T>(
     const text = await res.text().catch(() => "");
     const defaultMessage = `Request failed (${res.status} ${res.statusText})`;
 
-    // Try to parse standard NestJS error JSON to extract message
+    // Try to parse backend JSON and extract a human message
     let parsed: unknown;
     let backendMessage: string | undefined;
     try {
@@ -96,12 +96,12 @@ export async function apiFetch<T>(
       emitSnackbar({ message: displayMessage, variant: "error" });
     }
 
-    // Throw the raw backend payload when available so callers can inspect it
-    if (parsed) {
-      throw new Error(JSON.stringify(parsed));
-    }
-
-    throw new Error(text || defaultMessage);
+    // Throw a richer error object, but with a clean .message for UI
+    const err = new Error(displayMessage);
+    (err as any).status = res.status;
+    (err as any).payload = parsed ?? null;
+    (err as any).rawBody = text;
+    throw err;
   }
 
   if (snackbar?.showSuccess) {
@@ -109,5 +109,20 @@ export async function apiFetch<T>(
     emitSnackbar({ message, variant: "success" });
   }
 
-  return (await res.json()) as T;
+  // Handle empty or no-content responses safely
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
+  const text = await res.text().catch(() => "");
+  if (!text) {
+    return undefined as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    // If backend returned non-JSON but 2xx, just return raw text
+    return text as unknown as T;
+  }
 }

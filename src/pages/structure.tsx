@@ -11,6 +11,8 @@ import {
 } from "@/lib/structureApi";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
+import { usePermissions } from "@/permissions/usePermissions";
+import { CRUD_ACTION } from "@/permissions/actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -101,10 +103,12 @@ type TreeNode =
 
 export default function StructurePage() {
   const { user, isAuthReady } = usePermissionsContext();
+  const { can } = usePermissions();
   const canImportStructure =
     user?.role === "SUPER_ADMIN" ||
     user?.role === "ADMIN" ||
     user?.role === "MANAGER";
+  const canCreateCompany = can("companies", CRUD_ACTION.CREATE);
   const [tree, setTree] = useState<StructureTree | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeError, setTreeError] = useState<string | null>(null);
@@ -185,7 +189,7 @@ export default function StructurePage() {
       const data = await fetchStructureTree();
       setTree(data);
     } catch (e) {
-      setTreeError(e instanceof Error ? e.message : "Erreur");
+      setTreeError(e instanceof Error ? JSON.parse(e.message).message : "Erreur");
     } finally {
       setTreeLoading(false);
     }
@@ -580,6 +584,9 @@ export default function StructurePage() {
     try {
       const sh = await fetchShareholdersByCompany(companyId);
       setFicheShareholders(sh);
+      // Load users so we can resolve shareholder user labels
+      const us = await fetchUsers();
+      setFicheShareholderUsers(us);
     } catch {
       setFicheShareholders([]);
     } finally {
@@ -605,35 +612,36 @@ export default function StructurePage() {
         <title>Structure de l&apos;organisation</title>
       </Head>
       <div className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold text-primary">Organisation</h2>
-            <p className="text-sm text-slate-500">
-              Gérez la structure hiérarchique de vos entités.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            {canImportStructure && (
-              <Link
-                href="/structure/import/upload"
-                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-primary"
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg font-semibold text-primary">Organisation</h2>
+              <p className="text-sm text-slate-500">
+                Gérez la structure hiérarchique de vos entités.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              {canImportStructure && (
+                <Link
+                  href="/structure/import/upload"
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-primary"
+                >
+                  <Upload className="h-4 w-4" />
+                  Importer
+                </Link>
+              )}
+              <Button
+                onClick={() => setWizardOpen(true)}
+                className="h-9 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={!canCreateCompany}
               >
-                <Upload className="h-4 w-4" />
-                Importer
-              </Link>
-            )}
-            <Button
-              onClick={() => setWizardOpen(true)}
-              className="h-9 gap-2 bg-primary text-white hover:bg-slate-800"
-            >
-              <Plus className="h-4 w-4" />
-              Nouvelle Entreprise
-            </Button>
+                <Plus className="h-4 w-4" />
+                Nouvelle Entreprise
+              </Button>
+            </div>
           </div>
-        </div>
 
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          {treeError && <p className="p-4 text-sm text-red-600">{treeError}</p>}
+          {treeError && <p className="p-2 m-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md w-fit mx-auto">{treeError}</p>}
           {treeLoading && !treeRows.length ? (
             <div className="flex items-center justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-primary"></div>
@@ -1061,28 +1069,62 @@ export default function StructurePage() {
           </DialogHeader>
           <div className="space-y-3 py-2">
             {nodeUsers && Object.keys(nodeUsers).length > 0 ? (
-              Object.entries(nodeUsers).map(([role, users]) => (
-                <div key={role}>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    {role}{" "}
-                    <span className="font-normal text-slate-400">
-                      ({users.length})
-                    </span>
-                  </p>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {users.map((u) => (
-                      <span
-                        key={u.id}
-                        className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700 border border-slate-200 cursor-default select-none"
-                      >
-                        {u.firstName || u.lastName
-                          ? `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()
-                          : u.email}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))
+              Object.entries(nodeUsers)
+                .sort(([roleA], [roleB]) => roleA.localeCompare(roleB))
+                .map(([role, users]) => {
+                  const sortedUsers = [...users].sort((a, b) => {
+                    const nameA =
+                      `${a.firstName ?? ""} ${a.lastName ?? ""}`.trim() ||
+                      a.email;
+                    const nameB =
+                      `${b.firstName ?? ""} ${b.lastName ?? ""}`.trim() ||
+                      b.email;
+                    return nameA.localeCompare(nameB);
+                  });
+                  const roleLabel =
+                    role === "SUPER_ADMIN"
+                      ? "Super admin"
+                      : role === "ADMIN"
+                        ? "Admin"
+                        : role === "MANAGER"
+                          ? "Manager"
+                          : role === "END_USER"
+                            ? "Utilisateur"
+                            : role;
+                  return (
+                    <div key={role}>
+                      <p className="pl-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        {roleLabel}{" "}
+                        <span className="font-normal text-slate-400">
+                          ({users.length}):
+                        </span>
+                      </p>
+                      <ul className="mt-2 space-y-0.5 text-xs text-slate-700">
+                        {sortedUsers.map((u) => {
+                          const fullName =
+                            `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+                          return (
+                            <li
+                              key={u.id}
+                              className="flex items-center justify-between rounded-md bg-slate-100 px-2 py-1 border border-slate-300"
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium">
+                                  {fullName || u.email}
+                                </span>
+                                {fullName && (
+                                  <span className="text-[11px] text-slate-400">
+                                    {u.email}
+                                  </span>
+                                )}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  );
+                })
             ) : (
               <p className="text-xs text-slate-400">
                 Aucun utilisateur lié à ce nœud.
@@ -1240,7 +1282,7 @@ export default function StructurePage() {
 
       {/* Fiche Entreprise Modal */}
       <Dialog open={ficheOpen} onOpenChange={setFicheOpen}>
-        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto gap-2!">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-lg">🏢</span>
@@ -1260,15 +1302,15 @@ export default function StructurePage() {
             const bus = busByCompany[ficheCompany.id] ?? [];
             return (
               <Tabs value={ficheTab} onValueChange={setFicheTab}>
-                <TabsList>
+                <TabsList className="gap-4">
                   <TabsTrigger value="informations">Informations</TabsTrigger>
                   <TabsTrigger value="business-units">
                     Business Units
                   </TabsTrigger>
                   <TabsTrigger value="actionnaires">Actionnaires</TabsTrigger>
                 </TabsList>
-                <TabsContent value="informations" className="mt-4">
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-5">
+                <TabsContent value="informations" className="">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 pt-0">
                     <dl className="grid gap-3 text-sm sm:grid-cols-2">
                       <dt className="text-slate-500">SIRET</dt>
                       <dd className="font-medium text-primary">
@@ -1327,8 +1369,8 @@ export default function StructurePage() {
                     </dl>
                   </div>
                 </TabsContent>
-                <TabsContent value="business-units" className="mt-4">
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-5">
+                <TabsContent value="business-units" className="">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-1">
                     <ul className="space-y-2">
                       {bus.map((b) => (
                         <li
@@ -1366,8 +1408,8 @@ export default function StructurePage() {
                     </ul>
                   </div>
                 </TabsContent>
-                <TabsContent value="actionnaires" className="mt-4">
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 space-y-3">
+                <TabsContent value="actionnaires" className="">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-1 space-y-3">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-slate-800">
                         Actionnaires de cette entreprise
@@ -1414,8 +1456,22 @@ export default function StructurePage() {
                         {ficheShareholders.map((s) => {
                           const ownerLabel =
                             s.ownerType === "USER"
-                              ? s.ownerId
-                              : s.companies?.[0]?.name ?? s.ownerId;
+                              ? (() => {
+                                  const u = ficheShareholderUsers.find(
+                                    (x) => x.id === s.ownerId,
+                                  );
+                                  if (!u) return s.ownerId;
+                                  const fullName = `${u.firstName ?? ""} ${
+                                    u.lastName ?? ""
+                                  }`.trim();
+                                  return fullName || u.email;
+                                })()
+                              : (() => {
+                                  const c = allTreeCompanies.find(
+                                    (x) => x.id === s.ownerId,
+                                  );
+                                  return c?.name ?? s.ownerId;
+                                })();
                           return (
                             <li
                               key={s.id}
@@ -1608,7 +1664,12 @@ export default function StructurePage() {
             </Button>
             <Button
               onClick={handleAddBUToCompany}
-              disabled={addBULoading || !addBUForm.name.trim()}
+              disabled={
+                addBULoading ||
+                !addBUForm.name.trim() ||
+                !can("business-units", CRUD_ACTION.CREATE)
+              }
+              className="disabled:cursor-not-allowed disabled:opacity-60"
             >
               {addBULoading ? "Création..." : "Créer"}
             </Button>
