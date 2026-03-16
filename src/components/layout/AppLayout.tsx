@@ -156,6 +156,7 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
                     className="w-full rounded-lg px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                     onClick={() => {
                       setUserMenuOpen(false);
+                      void router.push("/profile");
                     }}
                   >
                     Mon Profil
