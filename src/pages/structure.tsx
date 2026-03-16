@@ -15,7 +15,6 @@ import { usePermissions } from "@/permissions/usePermissions";
 import { CRUD_ACTION } from "@/permissions/actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import {
   Dialog,
@@ -48,10 +47,13 @@ import {
   fetchShareholdersByCompany,
   createShareholder,
   type ShareholderDto,
-  type ShareholderOwnerType,
   ownerTypeLabel,
 } from "@/lib/shareholdersApi";
 import { fetchUsers, type UserItem } from "@/lib/usersApi";
+import {
+  ShareholderFormDialog,
+  type ShareholderFormValues,
+} from "@/components/shareholders/ShareholderFormDialog";
 
 type BusinessUnit = {
   id: string;
@@ -177,10 +179,16 @@ export default function StructurePage() {
   const [ficheShareholderFormOpen, setFicheShareholderFormOpen] = useState(false);
   const [ficheShareholderSaving, setFicheShareholderSaving] = useState(false);
   const [ficheShareholderUsers, setFicheShareholderUsers] = useState<UserItem[]>([]);
-  const [ficheShareholderOwnerType, setFicheShareholderOwnerType] =
-    useState<ShareholderOwnerType>("USER");
-  const [ficheShareholderOwnerId, setFicheShareholderOwnerId] = useState("");
-  const [ficheShareholderPercentage, setFicheShareholderPercentage] = useState("");
+
+  const ficheShareholderUserOptions = useMemo(
+    () =>
+      ficheShareholderUsers.map((u) => ({
+        id: u.id,
+        label: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email,
+        secondary: u.email,
+      })),
+    [ficheShareholderUsers],
+  );
 
   const loadTree = useCallback(async () => {
     setTreeLoading(true);
@@ -189,7 +197,18 @@ export default function StructurePage() {
       const data = await fetchStructureTree();
       setTree(data);
     } catch (e) {
-      setTreeError(e instanceof Error ? JSON.parse(e.message).message : "Erreur");
+      if (e instanceof Error) {
+        try {
+          const parsed = JSON.parse(e.message) as { message?: string | string[] } | undefined;
+          const m = parsed?.message;
+          const msg = Array.isArray(m) ? m.join(", ") : m;
+          setTreeError(msg || e.message || "Erreur");
+        } catch {
+          setTreeError(e.message || "Erreur");
+        }
+      } else {
+        setTreeError("Erreur");
+      }
     } finally {
       setTreeLoading(false);
     }
@@ -1139,118 +1158,31 @@ export default function StructurePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add shareholder from fiche modal */}
-      <Dialog
+      <ShareholderFormDialog
         open={ficheShareholderFormOpen}
-        onOpenChange={(open) => !ficheShareholderSaving && setFicheShareholderFormOpen(open)}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ajouter un actionnaire</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">
-                Type d&apos;actionnaire
-              </label>
-              <Select
-                value={ficheShareholderOwnerType}
-                onValueChange={(v) =>
-                  setFicheShareholderOwnerType(v as ShareholderOwnerType)
-                }
-              >
-                <option value="USER">Personne (utilisateur)</option>
-                <option value="COMPANY">Entreprise</option>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">
-                {ficheShareholderOwnerType === "USER"
-                  ? "Utilisateur"
-                  : "Entreprise actionnaire"}
-              </label>
-              {ficheShareholderOwnerType === "USER" ? (
-                <Select
-                  value={ficheShareholderOwnerId}
-                  onValueChange={(v) => setFicheShareholderOwnerId(v)}
-                >
-                  <option value="">Sélectionner un utilisateur</option>
-                  {ficheShareholderUsers.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {`${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() ||
-                        u.email}
-                    </option>
-                  ))}
-                </Select>
-              ) : (
-                <Select
-                  value={ficheShareholderOwnerId}
-                  onValueChange={(v) => setFicheShareholderOwnerId(v)}
-                >
-                  <option value="">Sélectionner une entreprise</option>
-                  {allTreeCompanies.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">
-                Pourcentage de détention
-              </label>
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                step={0.01}
-                value={ficheShareholderPercentage}
-                onChange={(e) => setFicheShareholderPercentage(e.target.value)}
-                className="w-32"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => !ficheShareholderSaving && setFicheShareholderFormOpen(false)}
-            >
-              Annuler
-            </Button>
-            <Button
-              disabled={
-                ficheShareholderSaving ||
-                !ficheCompanyId ||
-                !ficheShareholderOwnerId ||
-                !ficheShareholderPercentage
-              }
-              onClick={async () => {
-                if (!ficheCompanyId) return;
-                const pct = Number(ficheShareholderPercentage);
-                if (Number.isNaN(pct)) return;
-                setFicheShareholderSaving(true);
-                try {
-                  const created = await createShareholder({
-                    ownerType: ficheShareholderOwnerType,
-                    ownerId: ficheShareholderOwnerId,
-                    percentage: pct,
-                    companyIds: [ficheCompanyId],
-                  });
-                  setFicheShareholders((prev) => [created, ...prev]);
-                  setFicheShareholderFormOpen(false);
-                  setFicheShareholderOwnerId("");
-                  setFicheShareholderPercentage("");
-                } finally {
-                  setFicheShareholderSaving(false);
-                }
-              }}
-            >
-              {ficheShareholderSaving ? "Enregistrement..." : "Créer"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setFicheShareholderFormOpen}
+        onSubmit={async (values: ShareholderFormValues) => {
+          if (!ficheCompanyId) return;
+          setFicheShareholderSaving(true);
+          try {
+            const created = await createShareholder({
+              ownerType: values.ownerType,
+              ownerId: values.ownerId,
+              percentage: values.percentage,
+              companyIds: [ficheCompanyId],
+            });
+            setFicheShareholders((prev) => [created, ...prev]);
+            setFicheShareholderFormOpen(false);
+          } finally {
+            setFicheShareholderSaving(false);
+          }
+        }}
+        saving={ficheShareholderSaving}
+        userOptions={ficheShareholderUserOptions}
+        companyOptions={companyListForLayout}
+        lockedCompanyId={ficheCompanyId ?? undefined}
+        title="Ajouter un actionnaire"
+      />
 
       {/* Confirm Delete Modal */}
       <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
@@ -1421,19 +1353,14 @@ export default function StructurePage() {
                           variant="outline"
                           size="sm"
                           onClick={async () => {
-                            setFicheShareholderOwnerType("USER");
-                            setFicheShareholderOwnerId("");
-                            setFicheShareholderPercentage("");
-                            // Close fiche so the shareholder modal appears on top
                             setFicheOpen(false);
                             setFicheShareholderFormOpen(true);
-                            // Lazy-load users list once when opening the form
                             if (!ficheShareholderUsers.length) {
                               try {
                                 const us = await fetchUsers();
                                 setFicheShareholderUsers(us);
                               } catch {
-                                // ignore, error toast handled globally
+                                /* handled globally */
                               }
                             }
                           }}

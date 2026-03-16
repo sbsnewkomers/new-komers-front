@@ -5,7 +5,6 @@ import Head from "next/head";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import {
   Dialog,
   DialogContent,
@@ -19,30 +18,16 @@ import {
   updateShareholder,
   deleteShareholder,
   type ShareholderDto,
-  type ShareholderOwnerType,
   ownerTypeLabel,
 } from "@/lib/shareholdersApi";
 import { fetchUsers, type UserItem } from "@/lib/usersApi";
 import { useCompanies } from "@/hooks";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
-import { Users, Building2, Percent, Plus, Pencil, Trash2, Search } from "lucide-react";
-
-type FormState = {
-  id?: string;
-  ownerType: ShareholderOwnerType;
-  ownerId: string;
-  percentage: string;
-  companyIds: string[];
-};
-
-const EMPTY_FORM: FormState = {
-  ownerType: "USER",
-  ownerId: "",
-  percentage: "",
-  companyIds: [],
-};
-
-const ALLOWED_SHAREHOLDER_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER"] as const;
+import {
+  ShareholderFormDialog,
+  type ShareholderFormValues,
+} from "@/components/shareholders/ShareholderFormDialog";
+import { Users, Building2, Plus, Pencil, Trash2, Search } from "lucide-react";
 
 export default function ShareholdersPage() {
   const { user } = usePermissionsContext();
@@ -55,13 +40,8 @@ export default function ShareholdersPage() {
   const companiesHook = useCompanies();
 
   const [formOpen, setFormOpen] = useState(false);
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [formInitial, setFormInitial] = useState<Partial<ShareholderFormValues> | undefined>();
   const [formSaving, setFormSaving] = useState(false);
-
-  // Local search inside selects
-  const [userSelectSearch, setUserSelectSearch] = useState("");
-  const [companySelectSearch, setCompanySelectSearch] = useState("");
-  const [linkedCompaniesSearch, setLinkedCompaniesSearch] = useState("");
 
   const [deleteTarget, setDeleteTarget] = useState<ShareholderDto | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -93,40 +73,20 @@ export default function ShareholdersPage() {
     [companiesHook.list],
   );
 
-  const userOptions = useMemo(
+  const userOptionsForDialog = useMemo(
     () =>
       users.map((u) => ({
         id: u.id,
         label: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email,
-        email: u.email,
+        secondary: u.email,
       })),
     [users],
   );
 
-  const filteredUserSelectOptions = useMemo(() => {
-    const q = userSelectSearch.toLowerCase();
-    if (!q) return userOptions;
-    return userOptions.filter(
-      (u) => u.label.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
-    );
-  }, [userOptions, userSelectSearch]);
-
-  const filteredCompanySelectOptions = useMemo(() => {
-    const q = companySelectSearch.toLowerCase();
-    if (!q) return companyOptions;
-    return companyOptions.filter((c) => c.name.toLowerCase().includes(q));
-  }, [companyOptions, companySelectSearch]);
-
-  const filteredLinkedCompanyOptions = useMemo(() => {
-    const q = linkedCompaniesSearch.toLowerCase();
-    if (!q) return companyOptions;
-    return companyOptions.filter((c) => c.name.toLowerCase().includes(q));
-  }, [companyOptions, linkedCompaniesSearch]);
-
   const findUserLabel = (id: string): string => {
-    const u = userOptions.find((x) => x.id === id);
+    const u = userOptionsForDialog.find((x) => x.id === id);
     if (!u) return id;
-    return `${u.label} (${u.email})`;
+    return `${u.label} (${u.secondary})`;
   };
 
   const findCompanyName = (id: string): string => {
@@ -149,47 +109,42 @@ export default function ShareholdersPage() {
   }, [shareholders, search]);
 
   const openCreate = () => {
-    setForm({ ...EMPTY_FORM });
+    setFormInitial(undefined);
     setFormOpen(true);
   };
 
   const openEdit = (s: ShareholderDto) => {
-    setForm({
+    setFormInitial({
       id: s.id,
       ownerType: s.ownerType,
       ownerId: s.ownerId,
-      percentage: s.percentage.toString(),
+      percentage: s.percentage,
       companyIds: (s.companies ?? []).map((c) => c.id),
     });
     setFormOpen(true);
   };
 
-  const handleSubmitForm = async () => {
-    if (!form.ownerId || !form.percentage) return;
-    const percentage = Number(form.percentage);
-    if (Number.isNaN(percentage)) return;
-
+  const handleSubmitForm = async (values: ShareholderFormValues) => {
     setFormSaving(true);
     try {
-      if (form.id) {
-        const updated = await updateShareholder(form.id, {
-          ownerType: form.ownerType,
-          ownerId: form.ownerId,
-          percentage,
-          companyIds: form.companyIds,
+      if (values.id) {
+        const updated = await updateShareholder(values.id, {
+          ownerType: values.ownerType,
+          ownerId: values.ownerId,
+          percentage: values.percentage,
+          companyIds: values.companyIds,
         });
         setShareholders((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
       } else {
         const created = await createShareholder({
-          ownerType: form.ownerType,
-          ownerId: form.ownerId,
-          percentage,
-          companyIds: form.companyIds,
+          ownerType: values.ownerType,
+          ownerId: values.ownerId,
+          percentage: values.percentage,
+          companyIds: values.companyIds,
         });
         setShareholders((prev) => [created, ...prev]);
       }
       setFormOpen(false);
-      setForm({ ...EMPTY_FORM });
     } finally {
       setFormSaving(false);
     }
@@ -361,142 +316,15 @@ export default function ShareholdersPage() {
           )}
         </div>
 
-        {/* Create / Edit dialog */}
-        <Dialog open={formOpen} onOpenChange={(open) => !formSaving && setFormOpen(open)}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{form.id ? "Modifier l'actionnaire" : "Nouvel actionnaire"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-2">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Type d&apos;actionnaire</label>
-                <Select
-                  value={form.ownerType}
-                  onValueChange={(value) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      ownerType: value as ShareholderOwnerType,
-                      ownerId: "",
-                    }))
-                  }
-                >
-                  <option value="USER">Personne (utilisateur)</option>
-                  <option value="COMPANY">Entreprise</option>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">
-                  {form.ownerType === "USER" ? "Utilisateur" : "Entreprise actionnaire"}
-                </label>
-                {form.ownerType === "USER" ? (
-                  <div className="space-y-1.5">
-                    <Input
-                      type="search"
-                      placeholder="Rechercher un utilisateur..."
-                      className="h-9 text-sm"
-                      value={userSelectSearch}
-                      onChange={(e) => setUserSelectSearch(e.target.value)}
-                    />
-                    <Select
-                      value={form.ownerId}
-                      onValueChange={(value) => setForm((prev) => ({ ...prev, ownerId: value }))}
-                    >
-                      <option value="">Sélectionner un utilisateur</option>
-                      {filteredUserSelectOptions.map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.label} ({u.email})
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    <Input
-                      type="search"
-                      placeholder="Rechercher une entreprise..."
-                      className="h-9 text-sm"
-                      value={companySelectSearch}
-                      onChange={(e) => setCompanySelectSearch(e.target.value)}
-                    />
-                    <Select
-                      value={form.ownerId}
-                      onValueChange={(value) => setForm((prev) => ({ ...prev, ownerId: value }))}
-                    >
-                      <option value="">Sélectionner une entreprise</option>
-                      {filteredCompanySelectOptions.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Pourcentage de détention</label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.01}
-                  value={form.percentage}
-                  onChange={(e) => setForm((prev) => ({ ...prev, percentage: e.target.value }))}
-                  className="w-32"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Entreprises liées</label>
-                <Input
-                  type="search"
-                  placeholder="Rechercher dans les entreprises..."
-                  className="h-9 text-sm"
-                  value={linkedCompaniesSearch}
-                  onChange={(e) => setLinkedCompaniesSearch(e.target.value)}
-                />
-                <select
-                  multiple
-                  className="mt-1 flex h-28 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
-                  value={form.companyIds}
-                  onChange={(e) => {
-                    const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
-                    setForm((prev) => ({ ...prev, companyIds: selected }));
-                  }}
-                >
-                  {filteredLinkedCompanyOptions.length === 0 && (
-                    <option value="" disabled>
-                      Aucune entreprise disponible pour le moment.
-                    </option>
-                  )}
-                  {filteredLinkedCompanyOptions.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <DialogFooter className="mt-4">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => !formSaving && setFormOpen(false)}
-                className="mr-2"
-              >
-                Annuler
-              </Button>
-              <Button
-                type="button"
-                onClick={handleSubmitForm}
-                disabled={formSaving || !form.ownerId || !form.percentage}
-              >
-                {formSaving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ShareholderFormDialog
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          onSubmit={handleSubmitForm}
+          saving={formSaving}
+          initial={formInitial}
+          userOptions={userOptionsForDialog}
+          companyOptions={companyOptions}
+        />
 
         {/* Delete dialog */}
         <Dialog open={!!deleteTarget} onOpenChange={(open) => !deleteLoading && !open && setDeleteTarget(null)}>
