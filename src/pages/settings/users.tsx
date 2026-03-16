@@ -136,6 +136,8 @@ export default function UsersPage() {
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteExistingUser, setInviteExistingUser] = useState<UserItem | null>(null);
+  const [inviteConfirmOpen, setInviteConfirmOpen] = useState(false);
   const [inviteForm, setInviteForm] = useState({
     email: "",
     firstName: "",
@@ -220,7 +222,7 @@ export default function UsersPage() {
   const nodeTypeLabelFr = (t: NodeType) =>
     t === "GROUP" ? "Groupe" : t === "COMPANY" ? "Entreprise" : "Unit\u00e9 d\u2019affaires";
 
-  const handleInvite = async () => {
+  const sendInviteRequest = async () => {
     setInviteLoading(true);
     try {
       await sendInvitation({
@@ -230,11 +232,31 @@ export default function UsersPage() {
         lastName: inviteForm.lastName || undefined,
         dataPerimeter: invitePerimeter.length > 0 ? invitePerimeter : undefined,
       });
+      setInviteConfirmOpen(false);
+      setInviteExistingUser(null);
       setInviteOpen(false);
       loadInvitations();
+      loadUsers();
     } catch { /* snackbar */ } finally {
       setInviteLoading(false);
     }
+  };
+
+  const handleInvite = async () => {
+    const email = inviteForm.email.trim().toLowerCase();
+    if (!email) return;
+
+    const existing = users.find(
+      (u) => u.email.toLowerCase() === email && u.status === "ACTIVE",
+    );
+
+    if (existing) {
+      setInviteExistingUser(existing);
+      setInviteConfirmOpen(true);
+      return;
+    }
+
+    await sendInviteRequest();
   };
 
   // ── Accept / Reject ──
@@ -838,6 +860,50 @@ export default function UsersPage() {
               }
             >
               {inviteLoading ? "Envoi\u2026" : "Envoyer l\u2019invitation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Existing user confirmation dialog */}
+      <Dialog open={inviteConfirmOpen} onOpenChange={setInviteConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Utilisateur déjà existant</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2 text-sm text-slate-700">
+            <p>Un utilisateur avec cet email existe déjà dans l’application :</p>
+            {inviteExistingUser && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                <div className="font-medium text-slate-900">
+                  {(inviteExistingUser.firstName ?? "")} {(inviteExistingUser.lastName ?? "")}
+                </div>
+                <div className="text-xs text-slate-500">{inviteExistingUser.email}</div>
+              </div>
+            )}
+            <p>
+              Confirmez-vous vouloir lui attribuer ce nouveau périmètre d’accès
+              et lui envoyer l’email d’information&nbsp;?
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => {
+                setInviteConfirmOpen(false);
+                setInviteExistingUser(null);
+              }}
+              disabled={inviteLoading}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="button"
+              onClick={sendInviteRequest}
+              disabled={inviteLoading}
+            >
+              {inviteLoading ? "Envoi..." : "Confirmer l’invitation"}
             </Button>
           </DialogFooter>
         </DialogContent>
