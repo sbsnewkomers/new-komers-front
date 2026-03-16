@@ -54,6 +54,7 @@ import {
   ShareholderFormDialog,
   type ShareholderFormValues,
 } from "@/components/shareholders/ShareholderFormDialog";
+import { Select } from "@/components/ui/Select";
 
 type BusinessUnit = {
   id: string;
