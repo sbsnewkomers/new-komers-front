@@ -208,14 +208,14 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
               </Select>
             )} */}
 
-            <div className="relative hidden md:block">
+            {/* <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
                 type="search"
                 placeholder="Global search..."
                 className="h-10 w-[240px] rounded-lg border-none bg-slate-100 pl-10 text-sm placeholder:text-slate-400 focus-visible:ring-0 lg:w-[320px]"
               />
-            </div>
+            </div> */}
 
             <div className="flex items-center gap-1 border-l border-slate-100 pl-4">
               <Button
