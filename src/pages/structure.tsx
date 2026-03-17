@@ -38,6 +38,10 @@ import {
   Plus,
   Upload,
   Play,
+  Building,
+  Briefcase,
+  Layers,
+  Star,
 } from "lucide-react";
 import {
   CompanyCreateWizard,
@@ -102,7 +106,8 @@ type TreeNode =
       groupId: string | null;
       completionPercentage: number;
     }
-  | { type: "bu"; id: string; name: string; companyId: string; code: string };
+  | { type: "bu"; id: string; name: string; companyId: string; code: string }
+  | { type: "section-header"; id: string; name: string };
 
 export default function StructurePage() {
   const { user, isAuthReady } = usePermissionsContext();
@@ -290,8 +295,23 @@ export default function StructurePage() {
     return ids;
   }, [tree]);
 
+  const totalBusinessUnits = useMemo(() => {
+    let count = 0;
+    (tree?.groups ?? []).forEach((g) => {
+      g.companies.forEach((c) => {
+        count += (c.businessUnits ?? []).length;
+      });
+    });
+    (tree?.standaloneCompanies ?? []).forEach((c) => {
+      count += (c.businessUnits ?? []).length;
+    });
+    return count;
+  }, [tree]);
+
   const treeRows = useMemo(() => {
     const rows: TreeNode[] = [];
+    
+    // Ajouter les groupes et leurs entreprises
     (tree?.groups ?? []).forEach((g) => {
       rows.push({ type: "group", id: g.id, name: g.name });
       g.companies.forEach((c) => {
@@ -315,26 +335,33 @@ export default function StructurePage() {
         }
       });
     });
-    (tree?.standaloneCompanies ?? []).forEach((c) => {
-      rows.push({
-        type: "company",
-        id: c.id,
-        name: c.name,
-        groupId: null,
-        completionPercentage: c.completionPercentage,
-      });
-      if (expandedCompanyIds.has(c.id)) {
-        c.businessUnits.forEach((bu) => {
-          rows.push({
-            type: "bu",
-            id: bu.id,
-            name: bu.name,
-            companyId: c.id,
-            code: bu.code,
-          });
+
+    // Ajouter les entreprises indépendantes avec un en-tête de section
+    const standaloneCompanies = tree?.standaloneCompanies ?? [];
+    if (standaloneCompanies.length > 0) {
+      rows.push({ type: "section-header", id: "standalone-header", name: "Entreprises indépendantes" });
+      standaloneCompanies.forEach((c) => {
+        rows.push({
+          type: "company",
+          id: c.id,
+          name: c.name,
+          groupId: null,
+          completionPercentage: c.completionPercentage,
         });
-      }
-    });
+        if (expandedCompanyIds.has(c.id)) {
+          c.businessUnits.forEach((bu) => {
+            rows.push({
+              type: "bu",
+              id: bu.id,
+              name: bu.name,
+              companyId: c.id,
+              code: bu.code,
+            });
+          });
+        }
+      });
+    }
+
     return rows;
   }, [tree, expandedCompanyIds]);
 
@@ -713,19 +740,40 @@ export default function StructurePage() {
       <Head>
         <title>Structure de l&apos;organisation</title>
       </Head>
-      <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold text-primary">Organisation</h2>
-              <p className="text-sm text-slate-500">
-                Gérez la structure hiérarchique de vos entités.
+      <div className="space-y-8">
+        {/* Header section */}
+        <div className="bg-gradient-to-r from-slate-50 to-blue-50/30 rounded-2xl border border-slate-200/60 p-6 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Folder className="h-5 w-5 text-primary" />
+                </div>
+                Structure organisationnelle
+              </h1>
+              <p className="text-slate-600 max-w-2xl">
+                Gérez la structure hiérarchique de vos entités : groupes, entreprises et business units.
               </p>
+              <div className="flex items-center gap-4 text-sm text-slate-500">
+                <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                  <Layers className="h-4 w-4 text-blue-600" />
+                  <span className="font-medium text-blue-700">{groupList.length} groupes</span>
+                </div>
+                <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                  <Building className="h-4 w-4 text-slate-600" />
+                  <span className="font-medium text-slate-700">{allTreeCompanies.length} entreprises</span>
+                </div>
+                <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                  <Briefcase className="h-4 w-4 text-emerald-600" />
+                  <span className="font-medium text-emerald-700">{totalBusinessUnits} business units</span>
+                </div>
+              </div>
             </div>
             <div className="flex gap-3">
               {canImportStructure && (
                 <Link
                   href="/structure/import/upload"
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-primary"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-md"
                 >
                   <Upload className="h-4 w-4" />
                   Importer
@@ -734,8 +782,8 @@ export default function StructurePage() {
               {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
                 <Button
                   onClick={() => setAddGroupOpen(true)}
-                  className="h-9 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={!canCreateCompany}
+                  className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
+                  disabled={!canCreateCompany}
                 >
                   <Plus className="h-4 w-4" />
                   Nouveau Groupe
@@ -744,7 +792,7 @@ export default function StructurePage() {
               {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
               <Button
                 onClick={() => setWizardOpen(true)}
-                className="h-9 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-10 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
                 disabled={!canCreateCompany}
               >
                 <Plus className="h-4 w-4" />
@@ -754,48 +802,116 @@ export default function StructurePage() {
               {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
                 <Button
                   onClick={() => setAddBUStandaloneOpen(true)}
-                  className="h-9 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={!canCreateCompany}
+                  className="h-10 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
+                  disabled={!canCreateCompany}
                 >
                   <Plus className="h-4 w-4" />
                   Nouvelle Business Unit
                 </Button>
               )}
-              
             </div>
           </div>
+        </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          {treeError && <p className="p-2 m-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md w-fit mx-auto">{treeError}</p>}
+        {/* Main content */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          {treeError && (
+            <div className="m-6 p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+              <div className="h-4 w-4 rounded-full bg-red-100 flex items-center justify-center">
+                <div className="h-2 w-2 rounded-full bg-red-500"></div>
+              </div>
+              {treeError}
+            </div>
+          )}
           {treeLoading && !treeRows.length ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-primary"></div>
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="h-12 w-12 animate-spin rounded-full border-3 border-slate-200 border-t-primary mb-4"></div>
+              <p className="text-slate-500 font-medium">Chargement de la structure...</p>
+            </div>
+          ) : treeRows.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-6">
+              <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                <Folder className="h-8 w-8 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">Aucune structure trouvée</h3>
+              <p className="text-slate-500 text-center max-w-md mb-6">
+                Commencez par créer un groupe ou une entreprise pour organiser votre structure.
+              </p>
+              {canCreateCompany && (
+                <div className="flex gap-3">
+                  {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                    <Button
+                      onClick={() => setAddGroupOpen(true)}
+                      className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Créer un groupe
+                    </Button>
+                  )}
+                  {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                    <Button
+                      onClick={() => setWizardOpen(true)}
+                      className="h-10 gap-2 bg-primary text-white hover:bg-slate-800 shadow-sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Créer une entreprise
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <div className="min-w-full">
-              <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-100 bg-slate-50/50 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <div>Nom</div>
-                <div>Type</div>
-                <div>Complétion</div>
+              <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50/30 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-blue-500" />
+                  Nom
+                </div>
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-slate-400" />
+                  Type
+                </div>
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-400" />
+                  Complétion
+                </div>
                 <div className="text-right">Actions</div>
               </div>
 
               <ul className="divide-y divide-slate-100">
                 {treeRows.map((node) => {
+                  // Gérer l'en-tête de section pour les entreprises indépendantes
+                  if (node.type === "section-header") {
+                    return (
+                      <li key={node.id} className="bg-slate-50/80 border-y border-slate-100">
+                        <div className="px-6 py-3 flex items-center gap-2">
+                          <div className="h-px flex-1 bg-slate-200" />
+                          <div className="flex items-center gap-2">
+                            <Building className="h-4 w-4 text-amber-600" />
+                            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide whitespace-nowrap">
+                              {node.name}
+                            </span>
+                          </div>
+                          <div className="h-px flex-1 bg-slate-200" />
+                        </div>
+                      </li>
+                    );
+                  }
+
                   const indent =
                     node.type === "group" ? 0 : node.type === "company" ? 1 : 2;
                   const Icon =
                     node.type === "group"
-                      ? Folder
+                      ? Layers
                       : node.type === "company"
-                        ? Building2
-                        : Package;
+                        ? Building
+                        : Briefcase;
                   const iconColor =
                     node.type === "group"
-                      ? "text-blue-500"
+                      ? "text-blue-600"
                       : node.type === "company"
                         ? "text-slate-700"
-                        : "text-slate-400";
+                        : "text-emerald-600";
                   const typeText =
                     node.type === "group"
                       ? "Groupe"
@@ -816,7 +932,7 @@ export default function StructurePage() {
                   return (
                     <li
                       key={`${node.type}-${node.id}`}
-                      className="group/row transition-colors hover:bg-slate-50/50"
+                      className="group/row transition-all duration-200 hover:bg-slate-50/50 hover:shadow-sm"
                     >
                       <div
                         className="grid cursor-pointer grid-cols-[1fr_120px_100px_60px] items-center gap-4 px-6 py-3"
@@ -847,17 +963,26 @@ export default function StructurePage() {
                               <div className="w-5 fill-slate-500 text-slate-400" />
                             )
                           )}
-                          <Icon className={`h-5 w-5 ${iconColor}`} />
+                          <Icon className={`h-5 w-5 ${iconColor} transition-colors group-hover/row:scale-110`} />
                           <span
-                            className={`truncate font-medium ${node.type === "group" ? "text-primary" : "text-slate-700"}`}
+                            className={`truncate font-medium transition-colors ${
+                              node.type === "group" 
+                                ? "text-primary font-semibold" 
+                                : "text-slate-700"
+                            }`}
                           >
                             {node.name}
                           </span>
+                          {node.type === "company" && node.groupId === null && (
+                            <span className="inline-flex items-center rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 text-[10px] font-medium">
+                              Indépendante
+                            </span>
+                          )}
                         </div>
 
                         <div>
                           <span
-                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${typeBadgeColor}`}
+                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide transition-colors ${typeBadgeColor}`}
                           >
                             {typeText}
                           </span>
@@ -866,9 +991,9 @@ export default function StructurePage() {
                         <div>
                           {completion !== null && (
                             <div className="flex items-center gap-2">
-                              <div className="h-1.5 flex-1 rounded-full bg-slate-100">
+                              <div className="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
                                 <div
-                                  className={`h-1.5 rounded-full transition-all ${
+                                  className={`h-1.5 rounded-full transition-all duration-500 ${
                                     completion === 100
                                       ? "bg-green-500"
                                       : completion >= 50
@@ -878,7 +1003,7 @@ export default function StructurePage() {
                                   style={{ width: `${completion}%` }}
                                 />
                               </div>
-                              <span className="text-[10px] tabular-nums text-slate-400">
+                              <span className="text-[10px] tabular-nums text-slate-400 font-medium">
                                 {completion}%
                               </span>
                             </div>
@@ -892,7 +1017,7 @@ export default function StructurePage() {
                                 <button
                                   type="button"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-primary hover:shadow-sm group-hover/row:opacity-100"
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-primary hover:shadow-md group-hover/row:opacity-100"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </button>

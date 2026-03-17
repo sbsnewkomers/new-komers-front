@@ -98,8 +98,7 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
   };
 
   const canNextStep1 = form.name.trim() && form.fiscal_year_start && form.fiscal_year_end;
-  const canNextStep2 = form.siret.trim() && form.groupId;
-  const canFinish = true;
+  const canNextStep2 = form.siret.trim(); // groupId is now optional
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -160,13 +159,13 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
         {step === 1 && (
           <div className="space-y-4 py-2">
             <Input
-              placeholder="Nom de l'entreprise"
+              placeholder="Nom de l&apos;entreprise"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               required
             />
             <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Date de début d'exercice</label>
+              <label className="mb-1 block text-xs text-muted-foreground">Date de début d&apos;exercice</label>
               <Input
                 type="date"
                 value={form.fiscal_year_start}
@@ -175,7 +174,7 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Date de fin d'exercice</label>
+              <label className="mb-1 block text-xs text-muted-foreground">Date de fin d&apos;exercice</label>
               <Input
                 type="date"
                 value={form.fiscal_year_end}
@@ -203,8 +202,8 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
               <Select
                 value={form.groupId}
                 onValueChange={(v) => setForm((f) => ({ ...f, groupId: v }))}
-                placeholder="Choisir un groupe"
               >
+                <option value="">Sélectionner un groupe (optionnel)</option>
                 {groups.map((g) => (
                   <option key={g.id} value={g.id}>{g.name}</option>
                 ))}
