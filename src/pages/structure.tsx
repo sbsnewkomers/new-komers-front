@@ -1347,6 +1347,12 @@ export default function StructurePage() {
                 onChange={(v) => setEditGroup((f) => ({ ...f, siret: v }))}
               />
               <Field
+                label="SIREN"
+                value={editGroup.siret ? editGroup.siret.substring(0, 9) : ""}
+                editing={false} // SIREN est calculé automatiquement, non modifiable
+                onChange={() => {}} // Non modifiable
+              />
+              <Field
                 label="Début d'exercice"
                 value={editGroup.fiscal_year_start}
                 editing={editing}
@@ -1389,6 +1395,12 @@ export default function StructurePage() {
                 editing={editing}
                 validate={validateSiret}
                 onChange={(v) => setEditCompany((f) => ({ ...f, siret: v }))}
+              />
+              <Field
+                label="SIREN"
+                value={editCompany.siret ? editCompany.siret.substring(0, 9) : ""}
+                editing={false} // SIREN est calculé automatiquement, non modifiable
+                onChange={() => {}} // Non modifiable
               />
               <FieldTextarea
                 label="Adresse"
@@ -1679,6 +1691,10 @@ export default function StructurePage() {
                       <dt className="text-slate-500">SIRET</dt>
                       <dd className="font-medium text-primary">
                         {ficheCompany.siret || "—"}
+                      </dd>
+                      <dt className="text-slate-500">SIREN</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheCompany.siret ? ficheCompany.siret.substring(0, 9) : "—"}
                       </dd>
                       <dt className="text-slate-500">Début d&apos;exercice</dt>
                       <dd className="font-medium text-primary">
