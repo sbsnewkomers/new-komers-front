@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Select } from "@/components/ui/Select";
+import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
 const STEPS = [
   { id: 1, title: "Informations Générales" },
   { id: 2, title: "Détails Administratifs" },
@@ -98,7 +99,7 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
   };
 
   const canNextStep1 = form.name.trim() && form.fiscal_year_start && form.fiscal_year_end;
-  const canNextStep2 = form.siret.trim(); // groupId is now optional
+  const canNextStep2 = form.siret.trim() && validateSiret(form.siret); // Validation SIRET ajoutée
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -187,10 +188,9 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
 
         {step === 2 && (
           <div className="space-y-4 py-2">
-            <Input
-              placeholder="SIRET"
+            <SiretInput
               value={form.siret}
-              onChange={(e) => setForm((f) => ({ ...f, siret: e.target.value }))}
+              onChange={(value) => setForm((f) => ({ ...f, siret: value }))}
             />
             <Textarea
               placeholder="Adresse"

@@ -17,6 +17,7 @@ import { CRUD_ACTION } from "@/permissions/actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
+import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
 import {
   Dialog,
   DialogContent,
@@ -1342,6 +1343,7 @@ export default function StructurePage() {
                 label="SIRET"
                 value={editGroup.siret}
                 editing={editing}
+                validate={validateSiret}
                 onChange={(v) => setEditGroup((f) => ({ ...f, siret: v }))}
               />
               <Field
@@ -1385,6 +1387,7 @@ export default function StructurePage() {
                 label="SIRET"
                 value={editCompany.siret}
                 editing={editing}
+                validate={validateSiret}
                 onChange={(v) => setEditCompany((f) => ({ ...f, siret: v }))}
               />
               <FieldTextarea
@@ -1458,6 +1461,7 @@ export default function StructurePage() {
                 label="SIRET"
                 value={editBU.siret}
                 editing={editing}
+                validate={validateSiret}
                 onChange={(v) => setEditBU((f) => ({ ...f, siret: v }))}
               />
             </div>
@@ -1887,12 +1891,11 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 SIRET
               </label>
-              <Input
+              <SiretInput
                 value={addGroupForm.siret}
-                onChange={(e) =>
-                  setAddGroupForm((f) => ({ ...f, siret: e.target.value }))
+                onChange={(value) =>
+                  setAddGroupForm((f) => ({ ...f, siret: value }))
                 }
-                placeholder="123 456 789 00012"
               />
             </div>
             <div>
@@ -2022,12 +2025,11 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 SIRET
               </label>
-              <Input
+              <SiretInput
                 value={addBUStandaloneForm.siret}
-                onChange={(e) =>
-                  setAddBUStandaloneForm((f) => ({ ...f, siret: e.target.value }))
+                onChange={(value) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, siret: value }))
                 }
-                placeholder="123 456 789 00012"
               />
             </div>
           </div>
@@ -2081,12 +2083,11 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 SIRET
               </label>
-              <Input
+              <SiretInput
                 value={addCompanyForm.siret}
-                onChange={(e) =>
-                  setAddCompanyForm((f) => ({ ...f, siret: e.target.value }))
+                onChange={(value) =>
+                  setAddCompanyForm((f) => ({ ...f, siret: value }))
                 }
-                placeholder="123 456 789 00012"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -2192,12 +2193,11 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 SIRET
               </label>
-              <Input
+              <SiretInput
                 value={addBUForm.siret}
-                onChange={(e) =>
-                  setAddBUForm((f) => ({ ...f, siret: e.target.value }))
+                onChange={(value) =>
+                  setAddBUForm((f) => ({ ...f, siret: value }))
                 }
-                placeholder="123 456 789 00012"
               />
             </div>
           </div>
@@ -2236,24 +2236,45 @@ function Field({
   editing,
   type = "text",
   onChange,
+  validate,
 }: {
   label: string;
   value: string;
   editing: boolean;
   type?: string;
   onChange: (v: string) => void;
+  validate?: (v: string) => boolean;
 }) {
+  const [error, setError] = useState<string>("");
+  
+  const handleChange = (newValue: string) => {
+    if (validate) {
+      if (!validate(newValue)) {
+        setError("Le SIRET doit contenir exactement 14 chiffres");
+      } else {
+        setError("");
+      }
+    }
+    onChange(newValue);
+  };
+
   return (
     <div>
       <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
         {label}
       </label>
       {editing ? (
-        <Input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
+        <div>
+          <Input
+            type={type}
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            className={error ? "border-red-500" : ""}
+          />
+          {error && (
+            <p className="mt-1 text-xs text-red-500">{error}</p>
+          )}
+        </div>
       ) : (
         <p className="text-sm font-medium text-primary">{value || "—"}</p>
       )}
