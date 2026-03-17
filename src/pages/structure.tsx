@@ -8,6 +8,7 @@ import {
   fetchStructureTree,
   type StructureTree,
   type TreeCompany,
+  type TreeGroup,
 } from "@/lib/structureApi";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
@@ -135,6 +136,10 @@ export default function StructurePage() {
   const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(
     new Set(),
   );
+
+  // États pour la recherche
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   const [addCompanyGroupId, setAddCompanyGroupId] = useState<string | null>(
@@ -308,11 +313,78 @@ export default function StructurePage() {
     return count;
   }, [tree]);
 
+  // Fonction de filtrage pour la recherche
+  const filteredTreeData = useMemo(() => {
+    if (!searchQuery.trim()) return tree;
+
+    const query = searchQuery.toLowerCase().trim();
+    const filtered = { 
+      groups: [] as TreeGroup[], 
+      standaloneCompanies: [] as TreeCompany[] 
+    };
+
+    // Filtrer les groupes et leurs entreprises
+    (tree?.groups ?? []).forEach((group) => {
+      const groupMatches = group.name.toLowerCase().includes(query);
+      const filteredCompanies = group.companies.filter((company) => {
+        const companyMatches = company.name.toLowerCase().includes(query) ||
+                               company.siret?.toLowerCase().includes(query);
+        
+        // Filtrer aussi les business units si l'entreprise correspond ou si une BU correspond
+        const filteredBUs = company.businessUnits?.filter((bu) =>
+          bu.name.toLowerCase().includes(query) ||
+          bu.code.toLowerCase().includes(query)
+        ) || [];
+        
+        return companyMatches || filteredBUs.length > 0;
+      });
+
+      // Inclure le groupe s'il correspond ou s'il a des entreprises qui correspondent
+      if (groupMatches || filteredCompanies.length > 0) {
+        filtered.groups.push({
+          ...group,
+          companies: filteredCompanies.length > 0 ? filteredCompanies : group.companies
+        });
+      }
+    });
+
+    // Filtrer les entreprises indépendantes
+    filtered.standaloneCompanies = (tree?.standaloneCompanies ?? []).filter((company) => {
+      const companyMatches = company.name.toLowerCase().includes(query) ||
+                             company.siret?.toLowerCase().includes(query);
+      
+      // Inclure aussi si une business unit correspond
+      const filteredBUs = company.businessUnits?.filter((bu) =>
+        bu.name.toLowerCase().includes(query) ||
+        bu.code.toLowerCase().includes(query)
+      ) || [];
+      
+      return companyMatches || filteredBUs.length > 0;
+    });
+
+    return filtered;
+  }, [tree, searchQuery]);
+
+  // Recalculer les données filtrées
+  const filteredGroupList = useMemo(() => filteredTreeData?.groups ?? [], [filteredTreeData]);
+  const filteredAllTreeCompanies = useMemo<(TreeCompany & { groupId: string | null })[]>(
+    () => [
+      ...(filteredTreeData?.groups ?? []).flatMap((g) =>
+        g.companies.map((c) => ({ ...c, groupId: g.id as string | null })),
+      ),
+      ...(filteredTreeData?.standaloneCompanies ?? []).map((c) => ({
+        ...c,
+        groupId: null as string | null,
+      })),
+    ],
+    [filteredTreeData],
+  );
+
   const treeRows = useMemo(() => {
     const rows: TreeNode[] = [];
     
-    // Ajouter les groupes et leurs entreprises
-    (tree?.groups ?? []).forEach((g) => {
+    // Ajouter les groupes et leurs entreprises (filtrés)
+    (filteredTreeData?.groups ?? []).forEach((g) => {
       rows.push({ type: "group", id: g.id, name: g.name });
       g.companies.forEach((c) => {
         rows.push({
@@ -336,8 +408,8 @@ export default function StructurePage() {
       });
     });
 
-    // Ajouter les entreprises indépendantes avec un en-tête de section
-    const standaloneCompanies = tree?.standaloneCompanies ?? [];
+    // Ajouter les entreprises indépendantes avec un en-tête de section (filtrées)
+    const standaloneCompanies = filteredTreeData?.standaloneCompanies ?? [];
     if (standaloneCompanies.length > 0) {
       rows.push({ type: "section-header", id: "standalone-header", name: "Entreprises indépendantes" });
       standaloneCompanies.forEach((c) => {
@@ -363,7 +435,7 @@ export default function StructurePage() {
     }
 
     return rows;
-  }, [tree, expandedCompanyIds]);
+  }, [filteredTreeData, expandedCompanyIds]);
 
   const openDetail = useCallback(
     async (node: TreeNode) => {
@@ -754,18 +826,61 @@ export default function StructurePage() {
               <p className="text-slate-600 max-w-2xl">
                 Gérez la structure hiérarchique de vos entités : groupes, entreprises et business units.
               </p>
+              
+              {/* Barre de recherche */}
+              <div className="relative max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                  placeholder="Rechercher un groupe, une entreprise ou une business unit..."
+                  className={`w-full pl-10 pr-4 py-2.5 text-sm border rounded-lg transition-all duration-200 ${
+                    isSearchFocused 
+                      ? 'border-primary ring-2 ring-primary/20 bg-white' 
+                      : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+                  } focus:outline-none placeholder:text-slate-400`}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    <svg className="h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
               <div className="flex items-center gap-4 text-sm text-slate-500">
                 <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
                   <Layers className="h-4 w-4 text-blue-600" />
-                  <span className="font-medium text-blue-700">{groupList.length} groupes</span>
+                  <span className="font-medium text-blue-700">
+                    {searchQuery.trim() ? filteredGroupList.length : groupList.length} groupes
+                    {searchQuery.trim() && ` sur ${groupList.length}`}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
                   <Building className="h-4 w-4 text-slate-600" />
-                  <span className="font-medium text-slate-700">{allTreeCompanies.length} entreprises</span>
+                  <span className="font-medium text-slate-700">
+                    {searchQuery.trim() ? filteredAllTreeCompanies.length : allTreeCompanies.length} entreprises
+                    {searchQuery.trim() && ` sur ${allTreeCompanies.length}`}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
                   <Briefcase className="h-4 w-4 text-emerald-600" />
-                  <span className="font-medium text-emerald-700">{totalBusinessUnits} business units</span>
+                  <span className="font-medium text-emerald-700">
+                    {searchQuery.trim() 
+                      ? treeRows.filter(r => r.type === "bu").length 
+                      : totalBusinessUnits} business units
+                    {searchQuery.trim() && ` sur ${totalBusinessUnits}`}
+                  </span>
                 </div>
               </div>
             </div>
@@ -831,13 +946,35 @@ export default function StructurePage() {
           ) : treeRows.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6">
               <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                <Folder className="h-8 w-8 text-slate-400" />
+                {searchQuery.trim() ? (
+                  <svg className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                ) : (
+                  <Folder className="h-8 w-8 text-slate-400" />
+                )}
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">Aucune structure trouvée</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                {searchQuery.trim() ? "Aucun résultat trouvé" : "Aucune structure trouvée"}
+              </h3>
               <p className="text-slate-500 text-center max-w-md mb-6">
-                Commencez par créer un groupe ou une entreprise pour organiser votre structure.
+                {searchQuery.trim() 
+                  ? `Aucun groupe, entreprise ou business unit ne correspond à "${searchQuery}". Essayez avec d'autres termes.`
+                  : "Commencez par créer un groupe ou une entreprise pour organiser votre structure."
+                }
               </p>
-              {canCreateCompany && (
+              {searchQuery.trim() ? (
+                <Button
+                  onClick={() => setSearchQuery("")}
+                  variant="outline"
+                  className="h-10 gap-2"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Effacer la recherche
+                </Button>
+              ) : canCreateCompany ? (
                 <div className="flex gap-3">
                   {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
                     <Button
@@ -858,10 +995,32 @@ export default function StructurePage() {
                     </Button>
                   )}
                 </div>
-              )}
+              ) : null}
             </div>
           ) : (
             <div className="min-w-full">
+              {/* Indicateur de recherche active */}
+              {searchQuery.trim() && (
+                <div className="bg-amber-50 border border-amber-200 px-4 py-2 flex items-center gap-2 justify-between">
+                  <div className="flex items-center gap-2 text-sm text-amber-700">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <span className="font-medium">
+                      Recherche : &quot;{searchQuery}&quot; - {treeRows.filter(r => r.type !== "section-header").length} résultat{treeRows.filter(r => r.type !== "section-header").length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <Button
+                    onClick={() => setSearchQuery("")}
+                    variant="ghost"
+                    size="sm"
+                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 h-8 px-3"
+                  >
+                    Effacer
+                  </Button>
+                </div>
+              )}
+              
               <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50/30 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-blue-500" />
