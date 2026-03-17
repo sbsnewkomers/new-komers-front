@@ -90,6 +90,49 @@ function summarizeDetails(details: unknown): string {
     const d = details as Record<string, unknown>;
     if (typeof d.message === "string") return d.message;
     if (typeof d.reason === "string") return d.reason;
+    // Common audit payload shapes we want to render nicely (avoid raw JSON in UI)
+    if (Array.isArray(d.updatedFields)) {
+      const fields = d.updatedFields.filter((x) => typeof x === "string") as string[];
+      if (fields.length > 0) return `Champs modifiés : ${fields.join(", ")}`;
+    }
+    if (d.changes && typeof d.changes === "object") {
+      const changes = d.changes as Record<string, unknown>;
+      const keys = Object.keys(changes).filter((k) => changes[k] !== undefined);
+      if (keys.length > 0) {
+        const pairs = keys.slice(0, 6).map((k) => {
+          const v = changes[k];
+          if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+            return `${k}: ${String(v)}`;
+          }
+          if (Array.isArray(v)) return `${k}: [${v.length}]`;
+          if (v && typeof v === "object") return `${k}: {…}`;
+          return `${k}: —`;
+        });
+        return `Modifications : ${pairs.join(" · ")}${keys.length > 6 ? " · …" : ""}`;
+      }
+      return "Modifications enregistrées";
+    }
+    if (typeof d.email === "string" && typeof d.role === "string") {
+      return `Email : ${d.email} · Rôle : ${d.role}`;
+    }
+    if (typeof d.email === "string" && typeof d.invitationCleaned === "boolean") {
+      return `Email : ${d.email} · Invitation nettoyée : ${d.invitationCleaned ? "oui" : "non"}`;
+    }
+    if (typeof d.name === "string" && typeof d.code === "string") {
+      const companyId =
+        typeof d.companyId === "string" ? ` · Société : ${String(d.companyId).slice(0, 8)}` : "";
+      return `Nom : ${d.name} · Code : ${d.code}${companyId}`;
+    }
+    if (typeof d.ownerType === "string" && typeof d.ownerId === "string") {
+      const pct = typeof d.percentage === "number" ? ` · ${d.percentage}%` : "";
+      const companies = Array.isArray(d.companyIds)
+        ? ` · Sociétés : ${(d.companyIds as unknown[]).length}`
+        : "";
+      return `Actionnaire : ${d.ownerType} ${String(d.ownerId).slice(0, 8)}${pct}${companies}`;
+    }
+    if (typeof d.ownerId === "string" && typeof d.percentage === "number") {
+      return `Actionnaire : ${String(d.ownerId).slice(0, 8)} · ${d.percentage}%`;
+    }
     try {
       return JSON.stringify(details);
     } catch {
@@ -103,27 +146,42 @@ function mapBackendActionToUi(action: string): AuditActionUi {
   const a = action.toUpperCase();
   if (a === "LOGIN" || a === "LOGIN_FAILED") return "LOGIN";
   if (a === "LOGOUT") return "LOGOUT";
-  if (a.includes("INVITED")) return "INVITE";
-  if (a.includes("PERMISSION")) return "PERMISSION_CHANGE";
+  if (a.startsWith("INVITATION_") || a.includes("INVITATION")) return "INVITE";
+  if (a.includes("PERMISSION") || a === "UNAUTHORIZED_ACTION") return "PERMISSION_CHANGE";
   if (a.includes("IMPORT")) return "IMPORT";
   if (a.endsWith("_CREATED")) return "CREATE";
-  if (a.endsWith("_UPDATED") || a.endsWith("_SCOPE_CHANGED") || a.endsWith("_ROLE_CHANGED")) {
+  if (
+    a.endsWith("_UPDATED") ||
+    a.endsWith("_SCOPE_CHANGED") ||
+    a.endsWith("_ROLE_CHANGED") ||
+    a.endsWith("_STATUS_CHANGE") ||
+    a.endsWith("_PASSWORD_CHANGE") ||
+    a === "PASSWORD_RESET_REQUESTED" ||
+    a === "PASSWORD_CHANGED"
+  ) {
     return "UPDATE";
   }
-  if (a.endsWith("_DELETED")) return "DELETE";
+  if (a.endsWith("_DELETED") || a.endsWith("_ARCHIVED")) return "DELETE";
   if (a === "STRUCTURE_IMPORTED" || a === "DATA_IMPORTED") return "IMPORT";
   return "VIEW";
 }
 
 function mapCategoryFromLog(log: AuditLogDto): AuditCategory {
   const a = log.action.toUpperCase();
-  if (a.includes("LOGIN") || a.includes("LOGOUT") || a.includes("PASSWORD")) return "AUTH";
+  if (
+    a.includes("LOGIN") ||
+    a.includes("LOGOUT") ||
+    a.includes("PASSWORD") ||
+    a === "UNAUTHORIZED_ACTION"
+  ) {
+    return "AUTH";
+  }
   if (a.startsWith("USER_")) return "USER";
   if (a.includes("GROUP") || a.includes("COMPANY") || a.includes("BU") || a.includes("FISCAL_YEAR") || a.includes("SHAREHOLDER")) {
     return "ENTITY";
   }
   if (a.includes("IMPORT")) return "IMPORT";
-  if (a.includes("PERMISSION")) return "PERMISSION";
+  if (a.includes("PERMISSION") || a.includes("PERIMETER")) return "PERMISSION";
   return "REPORTING";
 }
 
@@ -166,6 +224,8 @@ export default function AuditPage() {
   const [actionFilter, setActionFilter] = useState<AuditActionUi | "">("");
   const [categoryFilter, setCategoryFilter] = useState<AuditCategory | "">("");
   const [statusFilter, setStatusFilter] = useState<"" | "success" | "failure">("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     if (!isAuthReady) return;
@@ -182,7 +242,12 @@ export default function AuditPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetchAuditLogs({ page: pageToLoad, limit: PAGE_SIZE });
+        const res = await fetchAuditLogs({
+          page: pageToLoad,
+          limit: PAGE_SIZE,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+        });
         setLogs(res.data);
         setTotal(res.meta.total);
         setLastPage(res.meta.lastPage || 1);
@@ -195,7 +260,7 @@ export default function AuditPage() {
         setLoading(false);
       }
     },
-    [],
+    [startDate, endDate],
   );
 
   useEffect(() => {
@@ -244,7 +309,10 @@ export default function AuditPage() {
 
   const handleExportCsv = async () => {
     try {
-      await exportAuditLogsCsv({});
+      await exportAuditLogsCsv({
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+      });
     } catch {
       // errors already surfaced via snackbar in exportAuditLogsCsv
     }
@@ -356,6 +424,21 @@ export default function AuditPage() {
             <option value="success">Succès</option>
             <option value="failure">Échec</option>
           </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="h-9 w-[150px] border-slate-200 bg-white text-sm"
+            />
+            <span className="text-xs text-slate-400">à</span>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="h-9 w-[150px] border-slate-200 bg-white text-sm"
+            />
+          </div>
           {(search || actionFilter || categoryFilter || statusFilter) && (
             <button
               type="button"
@@ -364,6 +447,8 @@ export default function AuditPage() {
                 setActionFilter("");
                 setCategoryFilter("");
                 setStatusFilter("");
+                setStartDate("");
+                setEndDate("");
               }}
               className="text-xs font-medium text-slate-500 hover:text-slate-900 underline"
             >
