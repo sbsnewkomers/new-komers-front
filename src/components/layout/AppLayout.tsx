@@ -6,7 +6,6 @@ import { useRouter } from "next/router";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import {
   LayoutDashboard,
@@ -120,12 +119,12 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
             ref={menuRef}
           >
             {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER") && (
-              <Link href="/settings/users" className={navLinkClass("/settings")}>
+              <Link href="/users" className={navLinkClass("/users")}>
                 <Users className="h-5 w-5" />
                 Users
               </Link>
             )}
-            <Link href="/permissions-assign" className={navLinkClass("/permissions-assign")}>
+            <Link href="/settings" className={navLinkClass("/settings")}>
               <Settings className="h-5 w-5" />
               Settings
             </Link>
@@ -205,20 +204,20 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
 
           {/* Right Actions */}
           <div className="flex items-center gap-4">
-            {/* {companies.length > 0 && (
+            {companies.length > 0 && (
               <Select
                 value={selectedCompanyId}
-                onValueChange={onCompanyChange}
-                placeholder="Entreprise"
-                className="border-none bg-slate-100 text-sm font-medium text-slate-700 shadow-none focus:ring-0"
+                onValueChange={(v) => onCompanyChange?.(v)}
+                className="hidden h-9 min-w-[220px] rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 md:block"
               >
+                <option value="">Toutes les entreprises</option>
                 {companies.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}
               </Select>
-            )} */}
+            )}
 
             {/* <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -314,12 +313,12 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
                 </Link>
               )}
               {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER") && (
-                <Link href="/settings/users" className={navLinkClass("/settings")} onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/users" className={navLinkClass("/users")} onClick={() => setMobileMenuOpen(false)}>
                   <Users className="h-5 w-5" />
                   Users
                 </Link>
               )}
-              <Link href="/permissions-assign" className={navLinkClass("/permissions-assign")} onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/settings" className={navLinkClass("/settings")} onClick={() => setMobileMenuOpen(false)}>
                 <Settings className="h-5 w-5" />
                 Settings
               </Link>
