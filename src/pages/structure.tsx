@@ -265,6 +265,23 @@ export default function StructurePage() {
     void loadTree();
   }, [isAuthReady, user, loadTree]);
 
+  // Keep structure in sync when returning to the tab/page (e.g. after imports or other changes).
+  useEffect(() => {
+    if (!isAuthReady || !user) return;
+
+    const refresh = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      void loadTree();
+    };
+
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [isAuthReady, user, loadTree]);
+
   const loadBUsForCompany = useCallback(async (companyId: string) => {
     try {
       const data = await apiFetch<BusinessUnit[]>(
@@ -617,7 +634,7 @@ export default function StructurePage() {
     }
     setEditing(false);
     setDetailOpen(false);
-    loadTree();
+    await loadTree();
   };
 
   const handleDelete = async () => {
@@ -646,7 +663,7 @@ export default function StructurePage() {
     }
     setConfirmDeleteOpen(false);
     setDetailOpen(false);
-    loadTree();
+    await loadTree();
   };
 
   const handleCreateCompany = useCallback(
@@ -675,7 +692,7 @@ export default function StructurePage() {
         }),
         snackbar: { showSuccess: true, successMessage: "Entreprise créée" },
       });
-      loadTree();
+      await loadTree();
     },
     [loadTree],
   );
@@ -695,7 +712,7 @@ export default function StructurePage() {
         }),
         snackbar: { showSuccess: true, successMessage: "Entreprise créée" },
       });
-      loadTree();
+      await loadTree();
       setAddCompanyOpen(false);
       setAddCompanyForm({
         name: "",
@@ -719,7 +736,7 @@ export default function StructurePage() {
         body: JSON.stringify(addBUForm),
         snackbar: { showSuccess: true, successMessage: "Business unit créée" },
       });
-      loadTree();
+      await loadTree();
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
       setAddBUForm({ name: "", code: "", activity: "", siret: "" });
@@ -745,7 +762,7 @@ export default function StructurePage() {
         }),
         snackbar: { showSuccess: true, successMessage: "Groupe créé" },
       });
-      loadTree();
+      await loadTree();
       setAddGroupOpen(false);
       setAddGroupForm({
         name: "",
@@ -782,7 +799,7 @@ export default function StructurePage() {
           },
         },
       );
-      loadTree();
+      await loadTree();
       setExpandedCompanyIds((prev) =>
         new Set(prev).add(addBUStandaloneForm.companyId),
       );
