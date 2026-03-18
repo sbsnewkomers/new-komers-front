@@ -8,6 +8,7 @@ import {
   fetchStructureTree,
   type StructureTree,
   type TreeCompany,
+  type TreeGroup,
 } from "@/lib/structureApi";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
@@ -16,6 +17,7 @@ import { CRUD_ACTION } from "@/permissions/actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
+import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
 import {
   Dialog,
   DialogContent,
@@ -38,6 +40,10 @@ import {
   Plus,
   Upload,
   Play,
+  Building,
+  Briefcase,
+  Layers,
+  Star,
 } from "lucide-react";
 import {
   CompanyCreateWizard,
@@ -102,7 +108,8 @@ type TreeNode =
       groupId: string | null;
       completionPercentage: number;
     }
-  | { type: "bu"; id: string; name: string; companyId: string; code: string };
+  | { type: "bu"; id: string; name: string; companyId: string; code: string }
+  | { type: "section-header"; id: string; name: string };
 
 export default function StructurePage() {
   const { user, isAuthReady } = usePermissionsContext();
@@ -130,6 +137,10 @@ export default function StructurePage() {
   const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(
     new Set(),
   );
+
+  // États pour la recherche
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   const [addCompanyGroupId, setAddCompanyGroupId] = useState<string | null>(
@@ -290,9 +301,91 @@ export default function StructurePage() {
     return ids;
   }, [tree]);
 
+  const totalBusinessUnits = useMemo(() => {
+    let count = 0;
+    (tree?.groups ?? []).forEach((g) => {
+      g.companies.forEach((c) => {
+        count += (c.businessUnits ?? []).length;
+      });
+    });
+    (tree?.standaloneCompanies ?? []).forEach((c) => {
+      count += (c.businessUnits ?? []).length;
+    });
+    return count;
+  }, [tree]);
+
+  // Fonction de filtrage pour la recherche
+  const filteredTreeData = useMemo(() => {
+    if (!searchQuery.trim()) return tree;
+
+    const query = searchQuery.toLowerCase().trim();
+    const filtered = { 
+      groups: [] as TreeGroup[], 
+      standaloneCompanies: [] as TreeCompany[] 
+    };
+
+    // Filtrer les groupes et leurs entreprises
+    (tree?.groups ?? []).forEach((group) => {
+      const groupMatches = group.name.toLowerCase().includes(query);
+      const filteredCompanies = group.companies.filter((company) => {
+        const companyMatches = company.name.toLowerCase().includes(query) ||
+                               company.siret?.toLowerCase().includes(query);
+        
+        // Filtrer aussi les business units si l'entreprise correspond ou si une BU correspond
+        const filteredBUs = company.businessUnits?.filter((bu) =>
+          bu.name.toLowerCase().includes(query) ||
+          bu.code.toLowerCase().includes(query)
+        ) || [];
+        
+        return companyMatches || filteredBUs.length > 0;
+      });
+
+      // Inclure le groupe s'il correspond ou s'il a des entreprises qui correspondent
+      if (groupMatches || filteredCompanies.length > 0) {
+        filtered.groups.push({
+          ...group,
+          companies: filteredCompanies.length > 0 ? filteredCompanies : group.companies
+        });
+      }
+    });
+
+    // Filtrer les entreprises indépendantes
+    filtered.standaloneCompanies = (tree?.standaloneCompanies ?? []).filter((company) => {
+      const companyMatches = company.name.toLowerCase().includes(query) ||
+                             company.siret?.toLowerCase().includes(query);
+      
+      // Inclure aussi si une business unit correspond
+      const filteredBUs = company.businessUnits?.filter((bu) =>
+        bu.name.toLowerCase().includes(query) ||
+        bu.code.toLowerCase().includes(query)
+      ) || [];
+      
+      return companyMatches || filteredBUs.length > 0;
+    });
+
+    return filtered;
+  }, [tree, searchQuery]);
+
+  // Recalculer les données filtrées
+  const filteredGroupList = useMemo(() => filteredTreeData?.groups ?? [], [filteredTreeData]);
+  const filteredAllTreeCompanies = useMemo<(TreeCompany & { groupId: string | null })[]>(
+    () => [
+      ...(filteredTreeData?.groups ?? []).flatMap((g) =>
+        g.companies.map((c) => ({ ...c, groupId: g.id as string | null })),
+      ),
+      ...(filteredTreeData?.standaloneCompanies ?? []).map((c) => ({
+        ...c,
+        groupId: null as string | null,
+      })),
+    ],
+    [filteredTreeData],
+  );
+
   const treeRows = useMemo(() => {
     const rows: TreeNode[] = [];
-    (tree?.groups ?? []).forEach((g) => {
+    
+    // Ajouter les groupes et leurs entreprises (filtrés)
+    (filteredTreeData?.groups ?? []).forEach((g) => {
       rows.push({ type: "group", id: g.id, name: g.name });
       g.companies.forEach((c) => {
         rows.push({
@@ -315,28 +408,35 @@ export default function StructurePage() {
         }
       });
     });
-    (tree?.standaloneCompanies ?? []).forEach((c) => {
-      rows.push({
-        type: "company",
-        id: c.id,
-        name: c.name,
-        groupId: null,
-        completionPercentage: c.completionPercentage,
-      });
-      if (expandedCompanyIds.has(c.id)) {
-        c.businessUnits.forEach((bu) => {
-          rows.push({
-            type: "bu",
-            id: bu.id,
-            name: bu.name,
-            companyId: c.id,
-            code: bu.code,
-          });
+
+    // Ajouter les entreprises indépendantes avec un en-tête de section (filtrées)
+    const standaloneCompanies = filteredTreeData?.standaloneCompanies ?? [];
+    if (standaloneCompanies.length > 0) {
+      rows.push({ type: "section-header", id: "standalone-header", name: "Entreprises indépendantes" });
+      standaloneCompanies.forEach((c) => {
+        rows.push({
+          type: "company",
+          id: c.id,
+          name: c.name,
+          groupId: null,
+          completionPercentage: c.completionPercentage,
         });
-      }
-    });
+        if (expandedCompanyIds.has(c.id)) {
+          c.businessUnits.forEach((bu) => {
+            rows.push({
+              type: "bu",
+              id: bu.id,
+              name: bu.name,
+              companyId: c.id,
+              code: bu.code,
+            });
+          });
+        }
+      });
+    }
+
     return rows;
-  }, [tree, expandedCompanyIds]);
+  }, [filteredTreeData, expandedCompanyIds]);
 
   const openDetail = useCallback(
     async (node: TreeNode) => {
@@ -713,19 +813,83 @@ export default function StructurePage() {
       <Head>
         <title>Structure de l&apos;organisation</title>
       </Head>
-      <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold text-primary">Organisation</h2>
-              <p className="text-sm text-slate-500">
-                Gérez la structure hiérarchique de vos entités.
+      <div className="space-y-8">
+        {/* Header section */}
+        <div className="bg-gradient-to-r from-slate-50 to-blue-50/30 rounded-2xl border border-slate-200/60 p-6 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Folder className="h-5 w-5 text-primary" />
+                </div>
+                Structure organisationnelle
+              </h1>
+              <p className="text-slate-600 max-w-2xl">
+                Gérez la structure hiérarchique de vos entités : groupes, entreprises et business units.
               </p>
+              
+              {/* Barre de recherche */}
+              <div className="relative max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                  placeholder="Rechercher un groupe, une entreprise ou une business unit..."
+                  className={`w-full pl-10 pr-4 py-2.5 text-sm border rounded-lg transition-all duration-200 ${
+                    isSearchFocused 
+                      ? 'border-primary ring-2 ring-primary/20 bg-white' 
+                      : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+                  } focus:outline-none placeholder:text-slate-400`}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    <svg className="h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-4 text-sm text-slate-500">
+                <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                  <Layers className="h-4 w-4 text-blue-600" />
+                  <span className="font-medium text-blue-700">
+                    {searchQuery.trim() ? filteredGroupList.length : groupList.length} groupes
+                    {searchQuery.trim() && ` sur ${groupList.length}`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                  <Building className="h-4 w-4 text-slate-600" />
+                  <span className="font-medium text-slate-700">
+                    {searchQuery.trim() ? filteredAllTreeCompanies.length : allTreeCompanies.length} entreprises
+                    {searchQuery.trim() && ` sur ${allTreeCompanies.length}`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                  <Briefcase className="h-4 w-4 text-emerald-600" />
+                  <span className="font-medium text-emerald-700">
+                    {searchQuery.trim() 
+                      ? treeRows.filter(r => r.type === "bu").length 
+                      : totalBusinessUnits} business units
+                    {searchQuery.trim() && ` sur ${totalBusinessUnits}`}
+                  </span>
+                </div>
+              </div>
             </div>
             <div className="flex gap-3">
               {canImportStructure && (
                 <Link
                   href="/structure/import/upload"
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-primary"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-md"
                 >
                   <Upload className="h-4 w-4" />
                   Importer
@@ -734,8 +898,8 @@ export default function StructurePage() {
               {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
                 <Button
                   onClick={() => setAddGroupOpen(true)}
-                  className="h-9 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={!canCreateCompany}
+                  className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
+                  disabled={!canCreateCompany}
                 >
                   <Plus className="h-4 w-4" />
                   Nouveau Groupe
@@ -744,7 +908,7 @@ export default function StructurePage() {
               {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
               <Button
                 onClick={() => setWizardOpen(true)}
-                className="h-9 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-10 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
                 disabled={!canCreateCompany}
               >
                 <Plus className="h-4 w-4" />
@@ -754,48 +918,160 @@ export default function StructurePage() {
               {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
                 <Button
                   onClick={() => setAddBUStandaloneOpen(true)}
-                  className="h-9 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={!canCreateCompany}
+                  className="h-10 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
+                  disabled={!canCreateCompany}
                 >
                   <Plus className="h-4 w-4" />
                   Nouvelle Business Unit
                 </Button>
               )}
-              
             </div>
           </div>
+        </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          {treeError && <p className="p-2 m-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md w-fit mx-auto">{treeError}</p>}
+        {/* Main content */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          {treeError && (
+            <div className="m-6 p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+              <div className="h-4 w-4 rounded-full bg-red-100 flex items-center justify-center">
+                <div className="h-2 w-2 rounded-full bg-red-500"></div>
+              </div>
+              {treeError}
+            </div>
+          )}
           {treeLoading && !treeRows.length ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-primary"></div>
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="h-12 w-12 animate-spin rounded-full border-3 border-slate-200 border-t-primary mb-4"></div>
+              <p className="text-slate-500 font-medium">Chargement de la structure...</p>
+            </div>
+          ) : treeRows.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-6">
+              <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                {searchQuery.trim() ? (
+                  <svg className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                ) : (
+                  <Folder className="h-8 w-8 text-slate-400" />
+                )}
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                {searchQuery.trim() ? "Aucun résultat trouvé" : "Aucune structure trouvée"}
+              </h3>
+              <p className="text-slate-500 text-center max-w-md mb-6">
+                {searchQuery.trim() 
+                  ? `Aucun groupe, entreprise ou business unit ne correspond à "${searchQuery}". Essayez avec d'autres termes.`
+                  : "Commencez par créer un groupe ou une entreprise pour organiser votre structure."
+                }
+              </p>
+              {searchQuery.trim() ? (
+                <Button
+                  onClick={() => setSearchQuery("")}
+                  variant="outline"
+                  className="h-10 gap-2"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Effacer la recherche
+                </Button>
+              ) : canCreateCompany ? (
+                <div className="flex gap-3">
+                  {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                    <Button
+                      onClick={() => setAddGroupOpen(true)}
+                      className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Créer un groupe
+                    </Button>
+                  )}
+                  {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                    <Button
+                      onClick={() => setWizardOpen(true)}
+                      className="h-10 gap-2 bg-primary text-white hover:bg-slate-800 shadow-sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Créer une entreprise
+                    </Button>
+                  )}
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="min-w-full">
-              <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-100 bg-slate-50/50 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <div>Nom</div>
-                <div>Type</div>
-                <div>Complétion</div>
+              {/* Indicateur de recherche active */}
+              {searchQuery.trim() && (
+                <div className="bg-amber-50 border border-amber-200 px-4 py-2 flex items-center gap-2 justify-between">
+                  <div className="flex items-center gap-2 text-sm text-amber-700">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <span className="font-medium">
+                      Recherche : &quot;{searchQuery}&quot; - {treeRows.filter(r => r.type !== "section-header").length} résultat{treeRows.filter(r => r.type !== "section-header").length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <Button
+                    onClick={() => setSearchQuery("")}
+                    variant="ghost"
+                    size="sm"
+                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 h-8 px-3"
+                  >
+                    Effacer
+                  </Button>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50/30 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-blue-500" />
+                  Nom
+                </div>
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-slate-400" />
+                  Type
+                </div>
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-400" />
+                  Complétion
+                </div>
                 <div className="text-right">Actions</div>
               </div>
 
               <ul className="divide-y divide-slate-100">
                 {treeRows.map((node) => {
+                  // Gérer l'en-tête de section pour les entreprises indépendantes
+                  if (node.type === "section-header") {
+                    return (
+                      <li key={node.id} className="bg-slate-50/80 border-y border-slate-100">
+                        <div className="px-6 py-3 flex items-center gap-2">
+                          <div className="h-px flex-1 bg-slate-200" />
+                          <div className="flex items-center gap-2">
+                            <Building className="h-4 w-4 text-amber-600" />
+                            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide whitespace-nowrap">
+                              {node.name}
+                            </span>
+                          </div>
+                          <div className="h-px flex-1 bg-slate-200" />
+                        </div>
+                      </li>
+                    );
+                  }
+
                   const indent =
                     node.type === "group" ? 0 : node.type === "company" ? 1 : 2;
                   const Icon =
                     node.type === "group"
-                      ? Folder
+                      ? Layers
                       : node.type === "company"
-                        ? Building2
-                        : Package;
+                        ? Building
+                        : Briefcase;
                   const iconColor =
                     node.type === "group"
-                      ? "text-blue-500"
+                      ? "text-blue-600"
                       : node.type === "company"
                         ? "text-slate-700"
-                        : "text-slate-400";
+                        : "text-emerald-600";
                   const typeText =
                     node.type === "group"
                       ? "Groupe"
@@ -816,7 +1092,7 @@ export default function StructurePage() {
                   return (
                     <li
                       key={`${node.type}-${node.id}`}
-                      className="group/row transition-colors hover:bg-slate-50/50"
+                      className="group/row transition-all duration-200 hover:bg-slate-50/50 hover:shadow-sm"
                     >
                       <div
                         className="grid cursor-pointer grid-cols-[1fr_120px_100px_60px] items-center gap-4 px-6 py-3"
@@ -847,17 +1123,26 @@ export default function StructurePage() {
                               <div className="w-5 fill-slate-500 text-slate-400" />
                             )
                           )}
-                          <Icon className={`h-5 w-5 ${iconColor}`} />
+                          <Icon className={`h-5 w-5 ${iconColor} transition-colors group-hover/row:scale-110`} />
                           <span
-                            className={`truncate font-medium ${node.type === "group" ? "text-primary" : "text-slate-700"}`}
+                            className={`truncate font-medium transition-colors ${
+                              node.type === "group" 
+                                ? "text-primary font-semibold" 
+                                : "text-slate-700"
+                            }`}
                           >
                             {node.name}
                           </span>
+                          {node.type === "company" && node.groupId === null && (
+                            <span className="inline-flex items-center rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 text-[10px] font-medium">
+                              Indépendante
+                            </span>
+                          )}
                         </div>
 
                         <div>
                           <span
-                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${typeBadgeColor}`}
+                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide transition-colors ${typeBadgeColor}`}
                           >
                             {typeText}
                           </span>
@@ -866,9 +1151,9 @@ export default function StructurePage() {
                         <div>
                           {completion !== null && (
                             <div className="flex items-center gap-2">
-                              <div className="h-1.5 flex-1 rounded-full bg-slate-100">
+                              <div className="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
                                 <div
-                                  className={`h-1.5 rounded-full transition-all ${
+                                  className={`h-1.5 rounded-full transition-all duration-500 ${
                                     completion === 100
                                       ? "bg-green-500"
                                       : completion >= 50
@@ -878,7 +1163,7 @@ export default function StructurePage() {
                                   style={{ width: `${completion}%` }}
                                 />
                               </div>
-                              <span className="text-[10px] tabular-nums text-slate-400">
+                              <span className="text-[10px] tabular-nums text-slate-400 font-medium">
                                 {completion}%
                               </span>
                             </div>
@@ -892,7 +1177,7 @@ export default function StructurePage() {
                                 <button
                                   type="button"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-primary hover:shadow-sm group-hover/row:opacity-100"
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-primary hover:shadow-md group-hover/row:opacity-100"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </button>
@@ -1058,7 +1343,14 @@ export default function StructurePage() {
                 label="SIRET"
                 value={editGroup.siret}
                 editing={editing}
+                validate={validateSiret}
                 onChange={(v) => setEditGroup((f) => ({ ...f, siret: v }))}
+              />
+              <Field
+                label="SIREN"
+                value={editGroup.siret ? editGroup.siret.substring(0, 9) : ""}
+                editing={false} // SIREN est calculé automatiquement, non modifiable
+                onChange={() => {}} // Non modifiable
               />
               <Field
                 label="Début d'exercice"
@@ -1101,7 +1393,14 @@ export default function StructurePage() {
                 label="SIRET"
                 value={editCompany.siret}
                 editing={editing}
+                validate={validateSiret}
                 onChange={(v) => setEditCompany((f) => ({ ...f, siret: v }))}
+              />
+              <Field
+                label="SIREN"
+                value={editCompany.siret ? editCompany.siret.substring(0, 9) : ""}
+                editing={false} // SIREN est calculé automatiquement, non modifiable
+                onChange={() => {}} // Non modifiable
               />
               <FieldTextarea
                 label="Adresse"
@@ -1174,6 +1473,7 @@ export default function StructurePage() {
                 label="SIRET"
                 value={editBU.siret}
                 editing={editing}
+                validate={validateSiret}
                 onChange={(v) => setEditBU((f) => ({ ...f, siret: v }))}
               />
             </div>
@@ -1392,6 +1692,10 @@ export default function StructurePage() {
                       <dd className="font-medium text-primary">
                         {ficheCompany.siret || "—"}
                       </dd>
+                      <dt className="text-slate-500">SIREN</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheCompany.siret ? ficheCompany.siret.substring(0, 9) : "—"}
+                      </dd>
                       <dt className="text-slate-500">Début d&apos;exercice</dt>
                       <dd className="font-medium text-primary">
                         {ficheCompany.fiscal_year_start || "—"}
@@ -1603,12 +1907,11 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 SIRET
               </label>
-              <Input
+              <SiretInput
                 value={addGroupForm.siret}
-                onChange={(e) =>
-                  setAddGroupForm((f) => ({ ...f, siret: e.target.value }))
+                onChange={(value) =>
+                  setAddGroupForm((f) => ({ ...f, siret: value }))
                 }
-                placeholder="123 456 789 00012"
               />
             </div>
             <div>
@@ -1738,12 +2041,11 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 SIRET
               </label>
-              <Input
+              <SiretInput
                 value={addBUStandaloneForm.siret}
-                onChange={(e) =>
-                  setAddBUStandaloneForm((f) => ({ ...f, siret: e.target.value }))
+                onChange={(value) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, siret: value }))
                 }
-                placeholder="123 456 789 00012"
               />
             </div>
           </div>
@@ -1797,12 +2099,11 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 SIRET
               </label>
-              <Input
+              <SiretInput
                 value={addCompanyForm.siret}
-                onChange={(e) =>
-                  setAddCompanyForm((f) => ({ ...f, siret: e.target.value }))
+                onChange={(value) =>
+                  setAddCompanyForm((f) => ({ ...f, siret: value }))
                 }
-                placeholder="123 456 789 00012"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -1908,12 +2209,11 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 SIRET
               </label>
-              <Input
+              <SiretInput
                 value={addBUForm.siret}
-                onChange={(e) =>
-                  setAddBUForm((f) => ({ ...f, siret: e.target.value }))
+                onChange={(value) =>
+                  setAddBUForm((f) => ({ ...f, siret: value }))
                 }
-                placeholder="123 456 789 00012"
               />
             </div>
           </div>
@@ -1952,24 +2252,45 @@ function Field({
   editing,
   type = "text",
   onChange,
+  validate,
 }: {
   label: string;
   value: string;
   editing: boolean;
   type?: string;
   onChange: (v: string) => void;
+  validate?: (v: string) => boolean;
 }) {
+  const [error, setError] = useState<string>("");
+  
+  const handleChange = (newValue: string) => {
+    if (validate) {
+      if (!validate(newValue)) {
+        setError("Le SIRET doit contenir exactement 14 chiffres");
+      } else {
+        setError("");
+      }
+    }
+    onChange(newValue);
+  };
+
   return (
     <div>
       <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
         {label}
       </label>
       {editing ? (
-        <Input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
+        <div>
+          <Input
+            type={type}
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            className={error ? "border-red-500" : ""}
+          />
+          {error && (
+            <p className="mt-1 text-xs text-red-500">{error}</p>
+          )}
+        </div>
       ) : (
         <p className="text-sm font-medium text-primary">{value || "—"}</p>
       )}

@@ -10,6 +10,7 @@ export type TreeCompany = {
   id: string;
   name: string;
   completionPercentage: number;
+  siret?: string;
   businessUnits: TreeBU[];
 };
 
