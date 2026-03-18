@@ -96,7 +96,12 @@ type CompanyFull = {
 
 type NodeUsersByRole = Record<
   string,
-  { id: string; email: string; firstName?: string | null; lastName?: string | null }[]
+  {
+    id: string;
+    email: string;
+    firstName?: string | null;
+    lastName?: string | null;
+  }[]
 >;
 
 type TreeNode =
@@ -206,11 +211,17 @@ export default function StructurePage() {
   });
   const [nodeUsers, setNodeUsers] = useState<NodeUsersByRole | null>(null);
   const [nodeUsersOpen, setNodeUsersOpen] = useState(false);
-  const [ficheShareholders, setFicheShareholders] = useState<ShareholderDto[]>([]);
-  const [ficheShareholdersLoading, setFicheShareholdersLoading] = useState(false);
-  const [ficheShareholderFormOpen, setFicheShareholderFormOpen] = useState(false);
+  const [ficheShareholders, setFicheShareholders] = useState<ShareholderDto[]>(
+    [],
+  );
+  const [ficheShareholdersLoading, setFicheShareholdersLoading] =
+    useState(false);
+  const [ficheShareholderFormOpen, setFicheShareholderFormOpen] =
+    useState(false);
   const [ficheShareholderSaving, setFicheShareholderSaving] = useState(false);
-  const [ficheShareholderUsers, setFicheShareholderUsers] = useState<UserItem[]>([]);
+  const [ficheShareholderUsers, setFicheShareholderUsers] = useState<
+    UserItem[]
+  >([]);
 
   const ficheShareholderUserOptions = useMemo(
     () =>
@@ -231,7 +242,9 @@ export default function StructurePage() {
     } catch (e) {
       if (e instanceof Error) {
         try {
-          const parsed = JSON.parse(e.message) as { message?: string | string[] } | undefined;
+          const parsed = JSON.parse(e.message) as
+            | { message?: string | string[] }
+            | undefined;
           const m = parsed?.message;
           const msg = Array.isArray(m) ? m.join(", ") : m;
           setTreeError(msg || e.message || "Erreur");
@@ -319,24 +332,27 @@ export default function StructurePage() {
     if (!searchQuery.trim()) return tree;
 
     const query = searchQuery.toLowerCase().trim();
-    const filtered = { 
-      groups: [] as TreeGroup[], 
-      standaloneCompanies: [] as TreeCompany[] 
+    const filtered = {
+      groups: [] as TreeGroup[],
+      standaloneCompanies: [] as TreeCompany[],
     };
 
     // Filtrer les groupes et leurs entreprises
     (tree?.groups ?? []).forEach((group) => {
       const groupMatches = group.name.toLowerCase().includes(query);
       const filteredCompanies = group.companies.filter((company) => {
-        const companyMatches = company.name.toLowerCase().includes(query) ||
-                               company.siret?.toLowerCase().includes(query);
-        
+        const companyMatches =
+          company.name.toLowerCase().includes(query) ||
+          company.siret?.toLowerCase().includes(query);
+
         // Filtrer aussi les business units si l'entreprise correspond ou si une BU correspond
-        const filteredBUs = company.businessUnits?.filter((bu) =>
-          bu.name.toLowerCase().includes(query) ||
-          bu.code.toLowerCase().includes(query)
-        ) || [];
-        
+        const filteredBUs =
+          company.businessUnits?.filter(
+            (bu) =>
+              bu.name.toLowerCase().includes(query) ||
+              bu.code.toLowerCase().includes(query),
+          ) || [];
+
         return companyMatches || filteredBUs.length > 0;
       });
 
@@ -344,31 +360,42 @@ export default function StructurePage() {
       if (groupMatches || filteredCompanies.length > 0) {
         filtered.groups.push({
           ...group,
-          companies: filteredCompanies.length > 0 ? filteredCompanies : group.companies
+          companies:
+            filteredCompanies.length > 0 ? filteredCompanies : group.companies,
         });
       }
     });
 
     // Filtrer les entreprises indépendantes
-    filtered.standaloneCompanies = (tree?.standaloneCompanies ?? []).filter((company) => {
-      const companyMatches = company.name.toLowerCase().includes(query) ||
-                             company.siret?.toLowerCase().includes(query);
-      
-      // Inclure aussi si une business unit correspond
-      const filteredBUs = company.businessUnits?.filter((bu) =>
-        bu.name.toLowerCase().includes(query) ||
-        bu.code.toLowerCase().includes(query)
-      ) || [];
-      
-      return companyMatches || filteredBUs.length > 0;
-    });
+    filtered.standaloneCompanies = (tree?.standaloneCompanies ?? []).filter(
+      (company) => {
+        const companyMatches =
+          company.name.toLowerCase().includes(query) ||
+          company.siret?.toLowerCase().includes(query);
+
+        // Inclure aussi si une business unit correspond
+        const filteredBUs =
+          company.businessUnits?.filter(
+            (bu) =>
+              bu.name.toLowerCase().includes(query) ||
+              bu.code.toLowerCase().includes(query),
+          ) || [];
+
+        return companyMatches || filteredBUs.length > 0;
+      },
+    );
 
     return filtered;
   }, [tree, searchQuery]);
 
   // Recalculer les données filtrées
-  const filteredGroupList = useMemo(() => filteredTreeData?.groups ?? [], [filteredTreeData]);
-  const filteredAllTreeCompanies = useMemo<(TreeCompany & { groupId: string | null })[]>(
+  const filteredGroupList = useMemo(
+    () => filteredTreeData?.groups ?? [],
+    [filteredTreeData],
+  );
+  const filteredAllTreeCompanies = useMemo<
+    (TreeCompany & { groupId: string | null })[]
+  >(
     () => [
       ...(filteredTreeData?.groups ?? []).flatMap((g) =>
         g.companies.map((c) => ({ ...c, groupId: g.id as string | null })),
@@ -383,7 +410,7 @@ export default function StructurePage() {
 
   const treeRows = useMemo(() => {
     const rows: TreeNode[] = [];
-    
+
     // Ajouter les groupes et leurs entreprises (filtrés)
     (filteredTreeData?.groups ?? []).forEach((g) => {
       rows.push({ type: "group", id: g.id, name: g.name });
@@ -412,7 +439,11 @@ export default function StructurePage() {
     // Ajouter les entreprises indépendantes avec un en-tête de section (filtrées)
     const standaloneCompanies = filteredTreeData?.standaloneCompanies ?? [];
     if (standaloneCompanies.length > 0) {
-      rows.push({ type: "section-header", id: "standalone-header", name: "Entreprises indépendantes" });
+      rows.push({
+        type: "section-header",
+        id: "standalone-header",
+        name: "Entreprises indépendantes",
+      });
       standaloneCompanies.forEach((c) => {
         rows.push({
           type: "company",
@@ -520,7 +551,11 @@ export default function StructurePage() {
 
       // Load managers & users linked to this node
       const nodeTypeParam =
-        node.type === "group" ? "GROUP" : node.type === "company" ? "COMPANY" : "BUSINESS_UNIT";
+        node.type === "group"
+          ? "GROUP"
+          : node.type === "company"
+            ? "COMPANY"
+            : "BUSINESS_UNIT";
       if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
         try {
           const users = await apiFetch<NodeUsersByRole>(
@@ -727,21 +762,30 @@ export default function StructurePage() {
   };
 
   const handleCreateBUStandalone = async () => {
-    if (!addBUStandaloneForm.name.trim() || !addBUStandaloneForm.companyId) return;
+    if (!addBUStandaloneForm.name.trim() || !addBUStandaloneForm.companyId)
+      return;
     setAddBUStandaloneLoading(true);
     try {
-      await apiFetch(`/companies/${addBUStandaloneForm.companyId}/business-units`, {
-        method: "POST",
-        body: JSON.stringify({
-          name: addBUStandaloneForm.name,
-          code: addBUStandaloneForm.code,
-          activity: addBUStandaloneForm.activity,
-          siret: addBUStandaloneForm.siret,
-        }),
-        snackbar: { showSuccess: true, successMessage: "Business unit créée" },
-      });
+      await apiFetch(
+        `/companies/${addBUStandaloneForm.companyId}/business-units`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            name: addBUStandaloneForm.name,
+            code: addBUStandaloneForm.code,
+            activity: addBUStandaloneForm.activity,
+            siret: addBUStandaloneForm.siret,
+          }),
+          snackbar: {
+            showSuccess: true,
+            successMessage: "Business unit créée",
+          },
+        },
+      );
       loadTree();
-      setExpandedCompanyIds((prev) => new Set(prev).add(addBUStandaloneForm.companyId));
+      setExpandedCompanyIds((prev) =>
+        new Set(prev).add(addBUStandaloneForm.companyId),
+      );
       setAddBUStandaloneOpen(false);
       setAddBUStandaloneForm({
         name: "",
@@ -815,24 +859,37 @@ export default function StructurePage() {
       </Head>
       <div className="space-y-8">
         {/* Header section */}
-        <div className="bg-gradient-to-r from-slate-50 to-blue-50/30 rounded-2xl border border-slate-200/60 p-6 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-6">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Folder className="h-5 w-5 text-primary" />
-                </div>
-                Structure organisationnelle
-              </h1>
-              <p className="text-slate-600 max-w-2xl">
-                Gérez la structure hiérarchique de vos entités : groupes, entreprises et business units.
-              </p>
-              
+            <div className="flex flex-col md:flex-row gap-2 items-center justify-between w-full">
+              <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Folder className="h-5 w-5 text-primary" />
+                  </div>
+                  Structure Organisationnelle
+                </h1>
+                <p className="text-slate-500 max-w-2xl">
+                  Gérez la structure hiérarchique de vos entités : groupes,
+                  entreprises et business units.
+                </p>
+              </div>
+
               {/* Barre de recherche */}
               <div className="relative max-w-md">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <div className="absolute top-1/3 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="h-4 w-4 text-slate-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                 </div>
                 <input
@@ -841,11 +898,11 @@ export default function StructurePage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setIsSearchFocused(false)}
-                  placeholder="Rechercher un groupe, une entreprise ou une business unit..."
+                  placeholder="Rechercher"
                   className={`w-full pl-10 pr-4 py-2.5 text-sm border rounded-lg transition-all duration-200 ${
-                    isSearchFocused 
-                      ? 'border-primary ring-2 ring-primary/20 bg-white' 
-                      : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+                    isSearchFocused
+                      ? "border-primary ring-2 ring-primary/20 bg-white"
+                      : "border-slate-200 bg-slate-50 hover:border-slate-300"
                   } focus:outline-none placeholder:text-slate-400`}
                 />
                 {searchQuery && (
@@ -853,78 +910,98 @@ export default function StructurePage() {
                     onClick={() => setSearchQuery("")}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   >
-                    <svg className="h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 )}
               </div>
+            </div>
+            <div className="flex items-center gap-4 justify-between w-full!">
               <div className="flex items-center gap-4 text-sm text-slate-500">
                 <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
                   <Layers className="h-4 w-4 text-blue-600" />
                   <span className="font-medium text-blue-700">
-                    {searchQuery.trim() ? filteredGroupList.length : groupList.length} groupes
+                    {searchQuery.trim()
+                      ? filteredGroupList.length
+                      : groupList.length}{" "}
+                    groupes
                     {searchQuery.trim() && ` sur ${groupList.length}`}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
                   <Building className="h-4 w-4 text-slate-600" />
                   <span className="font-medium text-slate-700">
-                    {searchQuery.trim() ? filteredAllTreeCompanies.length : allTreeCompanies.length} entreprises
+                    {searchQuery.trim()
+                      ? filteredAllTreeCompanies.length
+                      : allTreeCompanies.length}{" "}
+                    entreprises
                     {searchQuery.trim() && ` sur ${allTreeCompanies.length}`}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
                   <Briefcase className="h-4 w-4 text-emerald-600" />
                   <span className="font-medium text-emerald-700">
-                    {searchQuery.trim() 
-                      ? treeRows.filter(r => r.type === "bu").length 
-                      : totalBusinessUnits} business units
+                    {searchQuery.trim()
+                      ? treeRows.filter((r) => r.type === "bu").length
+                      : totalBusinessUnits}{" "}
+                    business units
                     {searchQuery.trim() && ` sur ${totalBusinessUnits}`}
                   </span>
                 </div>
               </div>
-            </div>
-            <div className="flex gap-3">
-              {canImportStructure && (
-                <Link
-                  href="/structure/import/upload"
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-md"
-                >
-                  <Upload className="h-4 w-4" />
-                  Importer
-                </Link>
-              )}
-              {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
-                <Button
-                  onClick={() => setAddGroupOpen(true)}
-                  className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                  disabled={!canCreateCompany}
-                >
-                  <Plus className="h-4 w-4" />
-                  Nouveau Groupe
-                </Button>
-              )}
-              {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
-              <Button
-                onClick={() => setWizardOpen(true)}
-                className="h-10 gap-2 bg-primary text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                disabled={!canCreateCompany}
-              >
-                <Plus className="h-4 w-4" />
-                Nouvelle Entreprise
-              </Button>
-              )}
-              {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
-                <Button
-                  onClick={() => setAddBUStandaloneOpen(true)}
-                  className="h-10 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                  disabled={!canCreateCompany}
-                >
-                  <Plus className="h-4 w-4" />
-                  Nouvelle Business Unit
-                </Button>
-              )}
+
+              <div className="flex gap-3">
+                {canImportStructure && (
+                  <Link
+                    href="/structure/import/upload"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-md"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Importer
+                  </Link>
+                )}
+                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                  <Button
+                    onClick={() => setAddGroupOpen(true)}
+                    className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
+                    disabled={!canCreateCompany}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Groupe
+                  </Button>
+                )}
+                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                  <Button
+                    onClick={() => setWizardOpen(true)}
+                    className="h-10 gap-2 bg-primary text-white hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
+                    disabled={!canCreateCompany}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Entreprise
+                  </Button>
+                )}
+                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                  <Button
+                    onClick={() => setAddBUStandaloneOpen(true)}
+                    className="h-10 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
+                    disabled={!canCreateCompany}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Business Unit
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -942,27 +1019,40 @@ export default function StructurePage() {
           {treeLoading && !treeRows.length ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="h-12 w-12 animate-spin rounded-full border-3 border-slate-200 border-t-primary mb-4"></div>
-              <p className="text-slate-500 font-medium">Chargement de la structure...</p>
+              <p className="text-slate-500 font-medium">
+                Chargement de la structure...
+              </p>
             </div>
           ) : treeRows.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6">
               <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
                 {searchQuery.trim() ? (
-                  <svg className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <svg
+                    className="h-8 w-8 text-slate-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                 ) : (
                   <Folder className="h-8 w-8 text-slate-400" />
                 )}
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                {searchQuery.trim() ? "Aucun résultat trouvé" : "Aucune structure trouvée"}
+                {searchQuery.trim()
+                  ? "Aucun résultat trouvé"
+                  : "Aucune structure trouvée"}
               </h3>
               <p className="text-slate-500 text-center max-w-md mb-6">
-                {searchQuery.trim() 
+                {searchQuery.trim()
                   ? `Aucun groupe, entreprise ou business unit ne correspond à "${searchQuery}". Essayez avec d'autres termes.`
-                  : "Commencez par créer un groupe ou une entreprise pour organiser votre structure."
-                }
+                  : "Commencez par créer un groupe ou une entreprise pour organiser votre structure."}
               </p>
               {searchQuery.trim() ? (
                 <Button
@@ -970,14 +1060,25 @@ export default function StructurePage() {
                   variant="outline"
                   className="h-10 gap-2"
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                   Effacer la recherche
                 </Button>
               ) : canCreateCompany ? (
                 <div className="flex gap-3">
-                  {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                  {(user?.role === "SUPER_ADMIN" ||
+                    user?.role === "MANAGER") && (
                     <Button
                       onClick={() => setAddGroupOpen(true)}
                       className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
@@ -986,7 +1087,8 @@ export default function StructurePage() {
                       Créer un groupe
                     </Button>
                   )}
-                  {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                  {(user?.role === "SUPER_ADMIN" ||
+                    user?.role === "MANAGER") && (
                     <Button
                       onClick={() => setWizardOpen(true)}
                       className="h-10 gap-2 bg-primary text-white hover:bg-slate-800 shadow-sm"
@@ -1004,11 +1106,30 @@ export default function StructurePage() {
               {searchQuery.trim() && (
                 <div className="bg-amber-50 border border-amber-200 px-4 py-2 flex items-center gap-2 justify-between">
                   <div className="flex items-center gap-2 text-sm text-amber-700">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
                     </svg>
                     <span className="font-medium">
-                      Recherche : &quot;{searchQuery}&quot; - {treeRows.filter(r => r.type !== "section-header").length} résultat{treeRows.filter(r => r.type !== "section-header").length > 1 ? "s" : ""}
+                      Recherche : &quot;{searchQuery}&quot; -{" "}
+                      {
+                        treeRows.filter((r) => r.type !== "section-header")
+                          .length
+                      }{" "}
+                      résultat
+                      {treeRows.filter((r) => r.type !== "section-header")
+                        .length > 1
+                        ? "s"
+                        : ""}
                     </span>
                   </div>
                   <Button
@@ -1021,7 +1142,7 @@ export default function StructurePage() {
                   </Button>
                 </div>
               )}
-              
+
               <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50/30 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-blue-500" />
@@ -1043,7 +1164,10 @@ export default function StructurePage() {
                   // Gérer l'en-tête de section pour les entreprises indépendantes
                   if (node.type === "section-header") {
                     return (
-                      <li key={node.id} className="bg-slate-50/80 border-y border-slate-100">
+                      <li
+                        key={node.id}
+                        className="bg-slate-50/80 border-y border-slate-100"
+                      >
                         <div className="px-6 py-3 flex items-center gap-2">
                           <div className="h-px flex-1 bg-slate-200" />
                           <div className="flex items-center gap-2">
@@ -1123,11 +1247,13 @@ export default function StructurePage() {
                               <div className="w-5 fill-slate-500 text-slate-400" />
                             )
                           )}
-                          <Icon className={`h-5 w-5 ${iconColor} transition-colors group-hover/row:scale-110`} />
+                          <Icon
+                            className={`h-5 w-5 ${iconColor} transition-colors group-hover/row:scale-110`}
+                          />
                           <span
                             className={`truncate font-medium transition-colors ${
-                              node.type === "group" 
-                                ? "text-primary font-semibold" 
+                              node.type === "group"
+                                ? "text-primary font-semibold"
                                 : "text-slate-700"
                             }`}
                           >
@@ -1171,7 +1297,8 @@ export default function StructurePage() {
                         </div>
 
                         <div className="flex justify-end">
-                          {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") ? (
+                          {user?.role === "SUPER_ADMIN" ||
+                          user?.role === "MANAGER" ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <button
@@ -1205,8 +1332,8 @@ export default function StructurePage() {
                                       setAddCompanyOpen(true);
                                     }}
                                   >
-                                    <Plus className="mr-2 h-4 w-4" /> Ajouter une
-                                    entreprise
+                                    <Plus className="mr-2 h-4 w-4" /> Ajouter
+                                    une entreprise
                                   </DropdownMenuItem>
                                 )}
                                 {node.type === "company" && (
@@ -1398,7 +1525,9 @@ export default function StructurePage() {
               />
               <Field
                 label="SIREN"
-                value={editCompany.siret ? editCompany.siret.substring(0, 9) : ""}
+                value={
+                  editCompany.siret ? editCompany.siret.substring(0, 9) : ""
+                }
                 editing={false} // SIREN est calculé automatiquement, non modifiable
                 onChange={() => {}} // Non modifiable
               />
@@ -1694,7 +1823,9 @@ export default function StructurePage() {
                       </dd>
                       <dt className="text-slate-500">SIREN</dt>
                       <dd className="font-medium text-primary">
-                        {ficheCompany.siret ? ficheCompany.siret.substring(0, 9) : "—"}
+                        {ficheCompany.siret
+                          ? ficheCompany.siret.substring(0, 9)
+                          : "—"}
                       </dd>
                       <dt className="text-slate-500">Début d&apos;exercice</dt>
                       <dd className="font-medium text-primary">
@@ -1921,7 +2052,10 @@ export default function StructurePage() {
               <Input
                 value={addGroupForm.mainActivity}
                 onChange={(e) =>
-                  setAddGroupForm((f) => ({ ...f, mainActivity: e.target.value }))
+                  setAddGroupForm((f) => ({
+                    ...f,
+                    mainActivity: e.target.value,
+                  }))
                 }
                 placeholder="Activité principale"
               />
@@ -2008,7 +2142,10 @@ export default function StructurePage() {
               <Input
                 value={addBUStandaloneForm.name}
                 onChange={(e) =>
-                  setAddBUStandaloneForm((f) => ({ ...f, name: e.target.value }))
+                  setAddBUStandaloneForm((f) => ({
+                    ...f,
+                    name: e.target.value,
+                  }))
                 }
                 placeholder="Nom de la BU"
               />
@@ -2020,7 +2157,10 @@ export default function StructurePage() {
               <Input
                 value={addBUStandaloneForm.code}
                 onChange={(e) =>
-                  setAddBUStandaloneForm((f) => ({ ...f, code: e.target.value }))
+                  setAddBUStandaloneForm((f) => ({
+                    ...f,
+                    code: e.target.value,
+                  }))
                 }
                 placeholder="BU-001"
               />
@@ -2032,7 +2172,10 @@ export default function StructurePage() {
               <Input
                 value={addBUStandaloneForm.activity}
                 onChange={(e) =>
-                  setAddBUStandaloneForm((f) => ({ ...f, activity: e.target.value }))
+                  setAddBUStandaloneForm((f) => ({
+                    ...f,
+                    activity: e.target.value,
+                  }))
                 }
                 placeholder="Activité principale"
               />
@@ -2050,7 +2193,10 @@ export default function StructurePage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddBUStandaloneOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setAddBUStandaloneOpen(false)}
+            >
               Annuler
             </Button>
             <Button
@@ -2262,7 +2408,7 @@ function Field({
   validate?: (v: string) => boolean;
 }) {
   const [error, setError] = useState<string>("");
-  
+
   const handleChange = (newValue: string) => {
     if (validate) {
       if (!validate(newValue)) {
@@ -2287,9 +2433,7 @@ function Field({
             onChange={(e) => handleChange(e.target.value)}
             className={error ? "border-red-500" : ""}
           />
-          {error && (
-            <p className="mt-1 text-xs text-red-500">{error}</p>
-          )}
+          {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
         </div>
       ) : (
         <p className="text-sm font-medium text-primary">{value || "—"}</p>

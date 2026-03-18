@@ -13,6 +13,7 @@ import {
   ImportExecuteResult,
   validateStructureFile,
 } from "@/lib/structureImportApi";
+import { Upload } from "lucide-react";
 
 export default function StructureImportUploadPage() {
   const { accessToken } = usePermissionsContext();
@@ -22,7 +23,8 @@ export default function StructureImportUploadPage() {
   const [isValidating, setIsValidating] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [report, setReport] = useState<ImportReport | null>(null);
-  const [executeResult, setExecuteResult] = useState<ImportExecuteResult | null>(null);
+  const [executeResult, setExecuteResult] =
+    useState<ImportExecuteResult | null>(null);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -52,28 +54,34 @@ export default function StructureImportUploadPage() {
     setDragOver(false);
   }, []);
 
-  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    if (!f.name.endsWith(".xlsx")) {
-      setError("Veuillez sélectionner un fichier Excel (.xlsx).");
-      setFile(null);
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      if (!f.name.endsWith(".xlsx")) {
+        setError("Veuillez sélectionner un fichier Excel (.xlsx).");
+        setFile(null);
+        setReport(null);
+        setExecuteResult(null);
+        return;
+      }
+      setFile(f);
       setReport(null);
       setExecuteResult(null);
-      return;
-    }
-    setFile(f);
-    setReport(null);
-    setExecuteResult(null);
-    setError(null);
-  }, []);
+      setError(null);
+    },
+    [],
+  );
 
   const handleDownloadTemplate = async () => {
     try {
       setError(null);
       await downloadStructureTemplate(accessToken);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Échec du téléchargement du modèle.";
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Échec du téléchargement du modèle.";
       setError(msg);
     }
   };
@@ -88,12 +96,15 @@ export default function StructureImportUploadPage() {
       setReport(rep);
       if (rep.errors.length > 0) {
         // Marquer clairement qu'il y a des erreurs
-        setError("Le fichier contient des erreurs. Corrigez-les puis réimportez si nécessaire.");
+        setError(
+          "Le fichier contient des erreurs. Corrigez-les puis réimportez si nécessaire.",
+        );
         // Réinitialiser le fichier pour forcer un nouveau choix après correction
         setFile(null);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erreur lors de la validation.";
+      const msg =
+        err instanceof Error ? err.message : "Erreur lors de la validation.";
       setError(msg);
       setReport(null);
     } finally {
@@ -109,7 +120,8 @@ export default function StructureImportUploadPage() {
       const rep = await executeStructureImport(file, accessToken);
       setExecuteResult(rep);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erreur lors de l'import.";
+      const msg =
+        err instanceof Error ? err.message : "Erreur lors de l'import.";
       setError(msg);
       setExecuteResult(null);
       setReport(null);
@@ -131,13 +143,13 @@ export default function StructureImportUploadPage() {
       <Head>
         <title>Import structure — Fichier Excel</title>
       </Head>
-      <div className="mx-auto max-w-4xl space-y-6">
-        <div className="flex items-center gap-4">
+      <div className="mx-auto w-full space-y-6">
+        <div className="flex items-center gap-1">
           <Link
             href="/structure"
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            ← Structure
+            ← Structure /
           </Link>
           <Link
             href="/structure/import/upload"
@@ -146,24 +158,29 @@ export default function StructureImportUploadPage() {
             Import
           </Link>
         </div>
-        <h1 className="text-xl font-semibold">
-          Import en masse de la structure
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Utilisez le modèle Excel pour créer ou mettre à jour groupes,
-          entreprises et business units.
-        </p>
-
-        <div className="flex flex-wrap gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleDownloadTemplate}
-          >
-            Télécharger le modèle Excel
-          </Button>
+        <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm space-y-4 flex items-center justify-between">
+          <div className="flex flex-col gap-2 ">
+            <h1 className="text-xl font-semibold flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Upload className="h-5 w-5 text-primary" />
+              </div>
+              Import en masse de la structure
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Utilisez le modèle Excel pour créer ou mettre à jour groupes,
+              entreprises et business units.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <Button
+              type="button"
+              variant="default"
+              onClick={handleDownloadTemplate}
+            >
+              Télécharger le modèle Excel
+            </Button>
+          </div>
         </div>
-
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -172,7 +189,7 @@ export default function StructureImportUploadPage() {
             "rounded-xl border-2 border-dashed p-12 text-center " +
             (dragOver
               ? "border-primary bg-primary/5"
-              : "border-border bg-muted/30")
+              : "border-border bg-muted")
           }
         >
           <input

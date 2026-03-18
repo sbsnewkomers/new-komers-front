@@ -204,7 +204,7 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
 
           {/* Right Actions */}
           <div className="flex items-center gap-4">
-            {companies.length > 0 && (
+            {/* {companies.length > 0 && (
               <Select
                 value={selectedCompanyId}
                 onValueChange={(v) => onCompanyChange?.(v)}
@@ -217,7 +217,7 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
                   </option>
                 ))}
               </Select>
-            )}
+            )} */}
 
             {/* <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
