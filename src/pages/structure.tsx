@@ -9,6 +9,7 @@ import {
   type StructureTree,
   type TreeCompany,
   type TreeGroup,
+  type TreeOrganisation,
 } from "@/lib/structureApi";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
@@ -43,7 +44,6 @@ import {
   Building,
   Briefcase,
   Layers,
-  Star,
 } from "lucide-react";
 import {
   CompanyCreateWizard,
@@ -80,6 +80,12 @@ type GroupFull = {
   mainActivity?: string;
 };
 
+type OrganisationFull = {
+  id: string;
+  name: string;
+  description?: string;
+};
+
 type CompanyFull = {
   id: string;
   name: string;
@@ -105,12 +111,14 @@ type NodeUsersByRole = Record<
 >;
 
 type TreeNode =
+  | { type: "organisation"; id: string; name: string }
   | { type: "group"; id: string; name: string }
   | {
       type: "company";
       id: string;
       name: string;
       groupId: string | null;
+      organisationId?: string;
       completionPercentage: number;
     }
   | { type: "bu"; id: string; name: string; companyId: string; code: string }
@@ -127,6 +135,7 @@ export default function StructurePage() {
   const [tree, setTree] = useState<StructureTree | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeError, setTreeError] = useState<string | null>(null);
+  const [isTreeLoaded, setIsTreeLoaded] = useState(false);
   const [busByCompany, setBusByCompany] = useState<
     Record<string, BusinessUnit[]>
   >({});
@@ -146,6 +155,14 @@ export default function StructurePage() {
   // États pour la recherche
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  // État pour créer une organisation
+  const [addOrganisationOpen, setAddOrganisationOpen] = useState(false);
+  const [addOrganisationForm, setAddOrganisationForm] = useState({
+    name: "",
+    description: "",
+  });
+  const [addOrganisationLoading, setAddOrganisationLoading] = useState(false);
 
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   const [addCompanyGroupId, setAddCompanyGroupId] = useState<string | null>(
@@ -189,6 +206,10 @@ export default function StructurePage() {
   });
   const [addBUStandaloneLoading, setAddBUStandaloneLoading] = useState(false);
 
+  const [editOrganisation, setEditOrganisation] = useState({
+    name: "",
+    description: "",
+  });
   const [editGroup, setEditGroup] = useState({
     name: "",
     siret: "",
@@ -234,11 +255,15 @@ export default function StructurePage() {
   );
 
   const loadTree = useCallback(async () => {
+    // Éviter les rechargements multiples
+    if (treeLoading) return;
+    
     setTreeLoading(true);
     setTreeError(null);
     try {
       const data = await fetchStructureTree();
       setTree(data);
+      setIsTreeLoaded(true);
     } catch (e) {
       if (e instanceof Error) {
         try {
@@ -257,13 +282,13 @@ export default function StructurePage() {
     } finally {
       setTreeLoading(false);
     }
-  }, []);
+  }, [treeLoading]);
 
   // Only load the structure tree once auth bootstrap is done and we have a user.
   useEffect(() => {
-    if (!isAuthReady || !user) return;
+    if (!isAuthReady || !user || isTreeLoaded) return;
     void loadTree();
-  }, [isAuthReady, user, loadTree]);
+  }, [isAuthReady, user, isTreeLoaded, loadTree]);
 
   // Keep structure in sync when returning to the tab/page (e.g. after imports or other changes).
   useEffect(() => {
@@ -278,10 +303,11 @@ export default function StructurePage() {
     document.addEventListener("visibilitychange", refresh);
     return () => {
       window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("visibilitychange", refresh);
     };
   }, [isAuthReady, user, loadTree]);
 
+  
   const loadBUsForCompany = useCallback(async (companyId: string) => {
     try {
       const data = await apiFetch<BusinessUnit[]>(
@@ -296,18 +322,36 @@ export default function StructurePage() {
     }
   }, []);
 
-  const groupList = useMemo(() => tree?.groups ?? [], [tree]);
+  // Combine groups from organisations and standalone groups
+  const groupList = useMemo(() => {
+    const orgGroups = (tree?.organisations ?? []).flatMap((org) => org.groups);
+    const standaloneGroups = tree?.groups ?? [];
+    return [...orgGroups, ...standaloneGroups];
+  }, [tree]);
 
   const allTreeCompanies = useMemo<
-    (TreeCompany & { groupId: string | null })[]
+    (TreeCompany & { groupId: string | null; organisationId?: string })[]
   >(
     () => [
-      ...(tree?.groups ?? []).flatMap((g) =>
-        g.companies.map((c) => ({ ...c, groupId: g.id as string | null })),
+      // Companies from organisations
+      ...(tree?.organisations ?? []).flatMap((org) =>
+        org.groups.flatMap((g) =>
+          g.companies.map((c) => ({ ...c, groupId: g.id, organisationId: org.id })),
+        ),
       ),
+      // Standalone companies from organisations
+      ...(tree?.organisations ?? []).flatMap((org) =>
+        org.standaloneCompanies.map((c) => ({ ...c, groupId: null, organisationId: org.id })),
+      ),
+      // Companies from standalone groups
+      ...(tree?.groups ?? []).flatMap((g) =>
+        g.companies.map((c) => ({ ...c, groupId: g.id, organisationId: undefined })),
+      ),
+      // Completely standalone companies
       ...(tree?.standaloneCompanies ?? []).map((c) => ({
         ...c,
-        groupId: null as string | null,
+        groupId: null,
+        organisationId: undefined,
       })),
     ],
     [tree],
@@ -320,11 +364,25 @@ export default function StructurePage() {
 
   const companiesWithBus = useMemo(() => {
     const ids = new Set<string>();
+    // Companies from organisation groups
+    (tree?.organisations ?? []).forEach((org) => {
+      org.groups.forEach((g) => {
+        g.companies.forEach((c) => {
+          if ((c.businessUnits ?? []).length > 0) ids.add(c.id);
+        });
+      });
+      // Standalone companies from organisations
+      org.standaloneCompanies.forEach((c) => {
+        if ((c.businessUnits ?? []).length > 0) ids.add(c.id);
+      });
+    });
+    // Companies from standalone groups
     (tree?.groups ?? []).forEach((g) => {
       g.companies.forEach((c) => {
         if ((c.businessUnits ?? []).length > 0) ids.add(c.id);
       });
     });
+    // Completely standalone companies
     (tree?.standaloneCompanies ?? []).forEach((c) => {
       if ((c.businessUnits ?? []).length > 0) ids.add(c.id);
     });
@@ -333,11 +391,25 @@ export default function StructurePage() {
 
   const totalBusinessUnits = useMemo(() => {
     let count = 0;
+    // Business units from organisation groups
+    (tree?.organisations ?? []).forEach((org) => {
+      org.groups.forEach((g) => {
+        g.companies.forEach((c) => {
+          count += (c.businessUnits ?? []).length;
+        });
+      });
+      // Standalone companies from organisations
+      org.standaloneCompanies.forEach((c) => {
+        count += (c.businessUnits ?? []).length;
+      });
+    });
+    // Business units from standalone groups
     (tree?.groups ?? []).forEach((g) => {
       g.companies.forEach((c) => {
         count += (c.businessUnits ?? []).length;
       });
     });
+    // Completely standalone companies
     (tree?.standaloneCompanies ?? []).forEach((c) => {
       count += (c.businessUnits ?? []).length;
     });
@@ -350,19 +422,49 @@ export default function StructurePage() {
 
     const query = searchQuery.toLowerCase().trim();
     const filtered = {
+      organisations: [] as TreeOrganisation[],
       groups: [] as TreeGroup[],
       standaloneCompanies: [] as TreeCompany[],
     };
 
-    // Filtrer les groupes et leurs entreprises
-    (tree?.groups ?? []).forEach((group) => {
-      const groupMatches = group.name.toLowerCase().includes(query);
-      const filteredCompanies = group.companies.filter((company) => {
+    // Filtrer les organisations et leurs groupes/entreprises
+    (tree?.organisations ?? []).forEach((org) => {
+      const orgMatches = org.name.toLowerCase().includes(query) || 
+                        org.description?.toLowerCase().includes(query);
+      
+      const filteredGroups = org.groups.map((group) => {
+        const groupMatches = group.name.toLowerCase().includes(query);
+        const filteredCompanies = group.companies.filter((company) => {
+          const companyMatches =
+            company.name.toLowerCase().includes(query) ||
+            company.siret?.toLowerCase().includes(query);
+
+          // Filtrer aussi les business units si l'entreprise correspond ou si une BU correspond
+          const filteredBUs =
+            company.businessUnits?.filter(
+              (bu) =>
+                bu.name.toLowerCase().includes(query) ||
+                bu.code.toLowerCase().includes(query),
+            ) || [];
+
+          return companyMatches || filteredBUs.length > 0;
+        });
+
+        if (groupMatches || filteredCompanies.length > 0) {
+          return {
+            ...group,
+            companies: filteredCompanies.length > 0 ? filteredCompanies : group.companies,
+          };
+        }
+        return null;
+      }).filter((g): g is TreeGroup => g !== null);
+
+      // Filtrer les entreprises indépendantes de l'organisation
+      const filteredStandaloneCompanies = org.standaloneCompanies.filter((company) => {
         const companyMatches =
           company.name.toLowerCase().includes(query) ||
           company.siret?.toLowerCase().includes(query);
 
-        // Filtrer aussi les business units si l'entreprise correspond ou si une BU correspond
         const filteredBUs =
           company.businessUnits?.filter(
             (bu) =>
@@ -373,24 +475,48 @@ export default function StructurePage() {
         return companyMatches || filteredBUs.length > 0;
       });
 
-      // Inclure le groupe s'il correspond ou s'il a des entreprises qui correspondent
-      if (groupMatches || filteredCompanies.length > 0) {
-        filtered.groups.push({
-          ...group,
-          companies:
-            filteredCompanies.length > 0 ? filteredCompanies : group.companies,
+      if (orgMatches || filteredGroups.length > 0 || filteredStandaloneCompanies.length > 0) {
+        filtered.organisations.push({
+          ...org,
+          groups: filteredGroups,
+          standaloneCompanies: filteredStandaloneCompanies,
         });
       }
     });
 
-    // Filtrer les entreprises indépendantes
+    // Filtrer les groupes standalone et leurs entreprises
+    (tree?.groups ?? []).forEach((group) => {
+      const groupMatches = group.name.toLowerCase().includes(query);
+      const filteredCompanies = group.companies.filter((company) => {
+        const companyMatches =
+          company.name.toLowerCase().includes(query) ||
+          company.siret?.toLowerCase().includes(query);
+
+        const filteredBUs =
+          company.businessUnits?.filter(
+            (bu) =>
+              bu.name.toLowerCase().includes(query) ||
+              bu.code.toLowerCase().includes(query),
+          ) || [];
+
+        return companyMatches || filteredBUs.length > 0;
+      });
+
+      if (groupMatches || filteredCompanies.length > 0) {
+        filtered.groups.push({
+          ...group,
+          companies: filteredCompanies.length > 0 ? filteredCompanies : group.companies,
+        });
+      }
+    });
+
+    // Filtrer les entreprises complètement indépendantes
     filtered.standaloneCompanies = (tree?.standaloneCompanies ?? []).filter(
       (company) => {
         const companyMatches =
           company.name.toLowerCase().includes(query) ||
           company.siret?.toLowerCase().includes(query);
 
-        // Inclure aussi si une business unit correspond
         const filteredBUs =
           company.businessUnits?.filter(
             (bu) =>
@@ -406,20 +532,35 @@ export default function StructurePage() {
   }, [tree, searchQuery]);
 
   // Recalculer les données filtrées
-  const filteredGroupList = useMemo(
-    () => filteredTreeData?.groups ?? [],
-    [filteredTreeData],
-  );
+  const filteredGroupList = useMemo(() => {
+    const orgGroups = (filteredTreeData?.organisations ?? []).flatMap((org) => org.groups);
+    const standaloneGroups = filteredTreeData?.groups ?? [];
+    return [...orgGroups, ...standaloneGroups];
+  }, [filteredTreeData]);
+
   const filteredAllTreeCompanies = useMemo<
-    (TreeCompany & { groupId: string | null })[]
+    (TreeCompany & { groupId: string | null; organisationId?: string })[]
   >(
     () => [
-      ...(filteredTreeData?.groups ?? []).flatMap((g) =>
-        g.companies.map((c) => ({ ...c, groupId: g.id as string | null })),
+      // Companies from organisations
+      ...(filteredTreeData?.organisations ?? []).flatMap((org) =>
+        org.groups.flatMap((g) =>
+          g.companies.map((c) => ({ ...c, groupId: g.id, organisationId: org.id })),
+        ),
       ),
+      // Standalone companies from organisations
+      ...(filteredTreeData?.organisations ?? []).flatMap((org) =>
+        org.standaloneCompanies.map((c) => ({ ...c, groupId: null, organisationId: org.id })),
+      ),
+      // Companies from standalone groups
+      ...(filteredTreeData?.groups ?? []).flatMap((g) =>
+        g.companies.map((c) => ({ ...c, groupId: g.id, organisationId: undefined })),
+      ),
+      // Completely standalone companies
       ...(filteredTreeData?.standaloneCompanies ?? []).map((c) => ({
         ...c,
-        groupId: null as string | null,
+        groupId: null,
+        organisationId: undefined,
       })),
     ],
     [filteredTreeData],
@@ -428,7 +569,68 @@ export default function StructurePage() {
   const treeRows = useMemo(() => {
     const rows: TreeNode[] = [];
 
-    // Ajouter les groupes et leurs entreprises (filtrés)
+    // Ajouter les organisations et leurs groupes/entreprises
+    (filteredTreeData?.organisations ?? []).forEach((org) => {
+      rows.push({ type: "organisation", id: org.id, name: org.name });
+      
+      // Ajouter les groupes de l'organisation
+      org.groups.forEach((g) => {
+        rows.push({ type: "group", id: g.id, name: g.name });
+        g.companies.forEach((c) => {
+          rows.push({
+            type: "company",
+            id: c.id,
+            name: c.name,
+            groupId: g.id,
+            organisationId: org.id,
+            completionPercentage: c.completionPercentage,
+          });
+          if (expandedCompanyIds.has(c.id)) {
+            c.businessUnits.forEach((bu) => {
+              rows.push({
+                type: "bu",
+                id: bu.id,
+                name: bu.name,
+                companyId: c.id,
+                code: bu.code,
+              });
+            });
+          }
+        });
+      });
+
+      // Ajouter les entreprises indépendantes de l'organisation dans une section séparée
+      if (org.standaloneCompanies.length > 0) {
+        rows.push({
+          type: "section-header",
+          id: `org-${org.id}-standalone-header`,
+          name: "ENTREPRISES INDÉPENDANTES",
+        });
+        org.standaloneCompanies.forEach((c) => {
+          rows.push({
+            type: "company",
+            id: c.id,
+            name: c.name,
+            groupId: null,
+            organisationId: org.id,
+            completionPercentage: c.completionPercentage,
+          });
+          if (expandedCompanyIds.has(c.id)) {
+            c.businessUnits.forEach((bu) => {
+              rows.push({
+                type: "bu",
+                id: bu.id,
+                name: bu.name,
+                companyId: c.id,
+                code: bu.code,
+              });
+            });
+          }
+        });
+      }
+    });
+
+    // Ajouter les groupes standalone et leurs entreprises
     (filteredTreeData?.groups ?? []).forEach((g) => {
       rows.push({ type: "group", id: g.id, name: g.name });
       g.companies.forEach((c) => {
@@ -453,7 +655,7 @@ export default function StructurePage() {
       });
     });
 
-    // Ajouter les entreprises indépendantes avec un en-tête de section (filtrées)
+    // Ajouter les entreprises complètement indépendantes avec un en-tête de section
     const standaloneCompanies = filteredTreeData?.standaloneCompanies ?? [];
     if (standaloneCompanies.length > 0) {
       rows.push({
@@ -492,7 +694,22 @@ export default function StructurePage() {
       setEditing(false);
       setNodeUsers(null);
 
-      if (node.type === "group") {
+      if (node.type === "organisation") {
+        try {
+          const org = await apiFetch<OrganisationFull>(`/organisations/${node.id}`, {
+            snackbar: { showSuccess: false, showError: true },
+          });
+          setEditOrganisation({
+            name: org.name,
+            description: org.description ?? "",
+          });
+        } catch {
+          setEditOrganisation({
+            name: node.name,
+            description: "",
+          });
+        }
+      } else if (node.type === "group") {
         try {
           const g = await apiFetch<GroupFull>(`/groups/${node.id}`, {
             snackbar: { showSuccess: false, showError: true },
@@ -568,11 +785,13 @@ export default function StructurePage() {
 
       // Load managers & users linked to this node
       const nodeTypeParam =
-        node.type === "group"
-          ? "GROUP"
-          : node.type === "company"
-            ? "COMPANY"
-            : "BUSINESS_UNIT";
+        node.type === "organisation"
+          ? "ORGANISATION"
+          : node.type === "group"
+            ? "GROUP"
+            : node.type === "company"
+              ? "COMPANY"
+              : "BUSINESS_UNIT";
       if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
         try {
           const users = await apiFetch<NodeUsersByRole>(
@@ -592,7 +811,16 @@ export default function StructurePage() {
 
   const handleSave = async () => {
     if (!selectedNode) return;
-    if (selectedNode.type === "group") {
+    if (selectedNode.type === "organisation") {
+      await apiFetch(`/organisations/${selectedNode.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          name: editOrganisation.name,
+          description: editOrganisation.description || undefined,
+        }),
+        snackbar: { showSuccess: true, successMessage: "Organisation mise à jour" },
+      });
+    } else if (selectedNode.type === "group") {
       await apiFetch(`/groups/${selectedNode.id}`, {
         method: "PUT",
         body: JSON.stringify({
@@ -634,7 +862,33 @@ export default function StructurePage() {
     }
     setEditing(false);
     setDetailOpen(false);
-    await loadTree();
+    // Recharger l'arbre pour refléter les changements
+    void loadTree();
+  };
+
+  const handleCreateOrganisation = async () => {
+    if (!addOrganisationForm.name.trim()) return;
+    
+    setAddOrganisationLoading(true);
+    try {
+      await apiFetch("/organisations", {
+        method: "POST",
+        body: JSON.stringify({
+          name: addOrganisationForm.name.trim(),
+          description: addOrganisationForm.description.trim() || undefined,
+        }),
+        snackbar: { 
+          showSuccess: true, 
+          successMessage: "Organisation créée avec succès" 
+        },
+      });
+      
+      setAddOrganisationOpen(false);
+      setAddOrganisationForm({ name: "", description: "" });
+      void loadTree();
+    } finally {
+      setAddOrganisationLoading(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -858,11 +1112,13 @@ export default function StructurePage() {
   };
 
   const typeLabel =
-    selectedNode?.type === "group"
-      ? "Groupe"
-      : selectedNode?.type === "company"
-        ? "Entreprise"
-        : "Business Unit";
+    selectedNode?.type === "organisation"
+      ? "Organisation"
+      : selectedNode?.type === "group"
+        ? "Groupe"
+        : selectedNode?.type === "company"
+          ? "Entreprise"
+          : "Business Unit";
 
   return (
     <AppLayout
@@ -880,15 +1136,26 @@ export default function StructurePage() {
           <div className="flex flex-wrap items-center justify-between gap-6">
             <div className="flex flex-col md:flex-row gap-2 items-center justify-between w-full">
               <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Folder className="h-5 w-5 text-primary" />
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <Building2 className="h-6 w-6 text-white" />
                   </div>
-                  Structure Organisationnelle
-                </h1>
-                <p className="text-slate-500 max-w-2xl">
-                  Gérez la structure hiérarchique de vos entités : groupes,
-                  entreprises et business units.
+                  <div>
+                    <h1 className="text-3xl font-bold text-slate-900">
+                      {user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" 
+                        ? "Structure Organisationnelle" 
+                        : tree?.organisations?.[0]?.name || "Structure Organisationnelle"}
+                    </h1>
+                    <p className="text-sm font-medium text-purple-600 uppercase tracking-wide">
+                      {user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" 
+                        ? "Toutes les organisations" 
+                        : "Organisation"}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-slate-600 max-w-2xl ml-13 font-medium">
+                  Gérez la structure hiérarchique de votre organisation et pilotez 
+                  l&apos;ensemble de vos entités : groupes, entreprises et business units.
                 </p>
               </div>
 
@@ -988,31 +1255,34 @@ export default function StructurePage() {
                     Importer
                   </Link>
                 )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button
                     onClick={() => setAddGroupOpen(true)}
                     className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                    disabled={!canCreateCompany}
+                    disabled={!canCreateCompany || (!tree?.organisations || tree.organisations.length === 0)}
+                    title={!tree?.organisations || tree.organisations.length === 0 ? "Créez d'abord une organisation" : ""}
                   >
                     <Plus className="h-4 w-4" />
                     Groupe
                   </Button>
                 )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button
                     onClick={() => setWizardOpen(true)}
                     className="h-10 gap-2 bg-primary text-white hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                    disabled={!canCreateCompany}
+                    disabled={!canCreateCompany || (!tree?.organisations || tree.organisations.length === 0)}
+                    title={!tree?.organisations || tree.organisations.length === 0 ? "Créez d'abord une organisation" : ""}
                   >
                     <Plus className="h-4 w-4" />
                     Entreprise
                   </Button>
                 )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button
                     onClick={() => setAddBUStandaloneOpen(true)}
                     className="h-10 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                    disabled={!canCreateCompany}
+                    disabled={!canCreateCompany || (!tree?.organisations || tree.organisations.length === 0)}
+                    title={!tree?.organisations || tree.organisations.length === 0 ? "Créez d'abord une organisation" : ""}
                   >
                     <Plus className="h-4 w-4" />
                     Business Unit
@@ -1041,82 +1311,147 @@ export default function StructurePage() {
               </p>
             </div>
           ) : treeRows.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-6">
-              <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                {searchQuery.trim() ? (
-                  <svg
-                    className="h-8 w-8 text-slate-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                ) : (
-                  <Folder className="h-8 w-8 text-slate-400" />
-                )}
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                {searchQuery.trim()
-                  ? "Aucun résultat trouvé"
-                  : "Aucune structure trouvée"}
-              </h3>
-              <p className="text-slate-500 text-center max-w-md mb-6">
-                {searchQuery.trim()
-                  ? `Aucun groupe, entreprise ou business unit ne correspond à "${searchQuery}". Essayez avec d'autres termes.`
-                  : "Commencez par créer un groupe ou une entreprise pour organiser votre structure."}
-              </p>
-              {searchQuery.trim() ? (
-                <Button
-                  onClick={() => setSearchQuery("")}
-                  variant="outline"
-                  className="h-10 gap-2"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                  Effacer la recherche
-                </Button>
-              ) : canCreateCompany ? (
-                <div className="flex gap-3">
-                  {(user?.role === "SUPER_ADMIN" ||
-                    user?.role === "MANAGER") && (
-                    <Button
-                      onClick={() => setAddGroupOpen(true)}
-                      className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Créer un groupe
-                    </Button>
-                  )}
-                  {(user?.role === "SUPER_ADMIN" ||
-                    user?.role === "MANAGER") && (
-                    <Button
-                      onClick={() => setWizardOpen(true)}
-                      className="h-10 gap-2 bg-primary text-white hover:bg-slate-800 shadow-sm"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Créer une entreprise
-                    </Button>
+            <>
+              {/* État vide : aucune organisation - Formulaire de création direct */}
+              {!treeLoading && !tree?.organisations && (
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 max-w-2xl mx-auto">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
+                      <Building2 className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-slate-900">
+                        Créer votre organisation
+                      </h3>
+                      <p className="text-slate-500 text-sm">
+                        Commencez par créer votre organisation pour gérer la structure hiérarchique de vos entités.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {user?.role === "HEAD_MANAGER" || user?.role === "SUPER_ADMIN" ? (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">
+                          Nom de l&apos;organisation *
+                        </label>
+                        <Input
+                          value={addOrganisationForm.name}
+                          onChange={(e) =>
+                            setAddOrganisationForm((f) => ({ ...f, name: e.target.value }))
+                          }
+                          placeholder="Ex: TechCorp International"
+                          className="h-11"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">
+                          Description
+                        </label>
+                        <Textarea
+                          value={addOrganisationForm.description}
+                          onChange={(e) =>
+                            setAddOrganisationForm((f) => ({
+                              ...f,
+                              description: e.target.value,
+                            }))
+                          }
+                          placeholder="Décrivez votre organisation, ses activités et objectifs..."
+                          rows={3}
+                        />
+                      </div>
+                      <div className="flex gap-3 pt-2">
+                        <Button
+                          onClick={handleCreateOrganisation}
+                          disabled={addOrganisationLoading || !addOrganisationForm.name.trim()}
+                          className="h-11 gap-2 bg-purple-600 text-white hover:bg-purple-700 shadow-sm transition-all hover:shadow-md"
+                        >
+                          {addOrganisationLoading ? (
+                            <>
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                              Création...
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-4 w-4" />
+                              Créer l&apos;organisation
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setAddOrganisationForm({ name: "", description: "" })}
+                          className="h-11"
+                        >
+                          Réinitialiser
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="text-slate-500">
+                        Vous devez être un Head Manager ou Super Admin pour créer une organisation.
+                      </div>
+                    </div>
                   )}
                 </div>
-              ) : null}
-            </div>
+              )}
+
+              {/* Fallback pour autres cas vides */}
+              <div className="flex flex-col items-center justify-center py-16 px-6">
+                <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                  {searchQuery.trim() ? (
+                    <svg
+                      className="h-8 w-8 text-slate-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  ) : (
+                    <Folder className="h-8 w-8 text-slate-400" />
+                  )}
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  {searchQuery.trim()
+                    ? "Aucun résultat trouvé"
+                    : "Aucune structure trouvée"}
+                </h3>
+                <p className="text-slate-500 text-center max-w-md mb-6">
+                  {searchQuery.trim()
+                    ? `Aucun groupe, entreprise ou business unit ne correspond à "${searchQuery}". Essayez avec d'autres termes.`
+                    : "Commencez par créer un groupe ou une entreprise pour organiser votre structure."}
+                </p>
+                {searchQuery.trim() ? (
+                  <Button
+                    onClick={() => setSearchQuery("")}
+                    variant="outline"
+                    className="h-10 gap-2"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                    Effacer la recherche
+                  </Button>
+                ) : null}
+              </div>
+            </>
           ) : (
             <div className="min-w-full">
               {/* Indicateur de recherche active */}
@@ -1160,26 +1495,26 @@ export default function StructurePage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50/30 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-blue-500" />
-                  Nom
+              {tree?.organisations && tree.organisations.length > 0 && (
+                <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50/30 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  <div className="flex items-center">
+                    Nom
+                  </div>
+                  <div className="flex items-center">
+                    Type
+                  </div>
+                  <div className="flex items-center">
+                    Complétion
+                  </div>
+                  <div className="text-right">Actions</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-slate-400" />
-                  Type
-                </div>
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-amber-400" />
-                  Complétion
-                </div>
-                <div className="text-right">Actions</div>
-              </div>
+              )}
 
               <ul className="divide-y divide-slate-100">
                 {treeRows.map((node) => {
                   // Gérer l'en-tête de section pour les entreprises indépendantes
                   if (node.type === "section-header") {
+                    const isPackageIcon = node.name === "ENTREPRISES INDÉPENDANTES";
                     return (
                       <li
                         key={node.id}
@@ -1188,7 +1523,11 @@ export default function StructurePage() {
                         <div className="px-6 py-3 flex items-center gap-2">
                           <div className="h-px flex-1 bg-slate-200" />
                           <div className="flex items-center gap-2">
-                            <Building className="h-4 w-4 text-amber-600" />
+                            {isPackageIcon ? (
+                              <Package className="h-4 w-4 text-amber-600" />
+                            ) : (
+                              <Building className="h-4 w-4 text-amber-600" />
+                            )}
                             <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide whitespace-nowrap">
                               {node.name}
                             </span>
@@ -1200,31 +1539,41 @@ export default function StructurePage() {
                   }
 
                   const indent =
-                    node.type === "group" ? 0 : node.type === "company" ? 1 : 2;
+                    node.type === "organisation" ? 0 :
+                    node.type === "group" ? 1 : 
+                    node.type === "company" ? 2 : 3;
                   const Icon =
-                    node.type === "group"
-                      ? Layers
-                      : node.type === "company"
-                        ? Building
-                        : Briefcase;
+                    node.type === "organisation"
+                      ? Building2
+                      : node.type === "group"
+                        ? Layers
+                        : node.type === "company"
+                          ? Building
+                          : Briefcase;
                   const iconColor =
-                    node.type === "group"
-                      ? "text-blue-600"
-                      : node.type === "company"
-                        ? "text-slate-700"
-                        : "text-emerald-600";
+                    node.type === "organisation"
+                      ? "text-purple-600"
+                      : node.type === "group"
+                        ? "text-blue-600"
+                        : node.type === "company"
+                          ? "text-slate-700"
+                          : "text-emerald-600";
                   const typeText =
-                    node.type === "group"
-                      ? "Groupe"
-                      : node.type === "company"
-                        ? "Entreprise"
-                        : "BU";
+                    node.type === "organisation"
+                      ? "Organisation"
+                      : node.type === "group"
+                        ? "Groupe"
+                        : node.type === "company"
+                          ? "Entreprise"
+                          : "BU";
                   const typeBadgeColor =
-                    node.type === "group"
-                      ? "bg-blue-50 text-blue-700 border-blue-100"
-                      : node.type === "company"
-                        ? "bg-slate-100 text-slate-700 border-slate-200"
-                        : "bg-slate-50 text-slate-500 border-slate-100";
+                    node.type === "organisation"
+                      ? "bg-purple-50 text-purple-700 border-purple-100"
+                      : node.type === "group"
+                        ? "bg-blue-50 text-blue-700 border-blue-100"
+                        : node.type === "company"
+                          ? "bg-slate-100 text-slate-700 border-slate-200"
+                          : "bg-slate-50 text-slate-500 border-slate-100";
                   const completion =
                     node.type === "company" ? node.completionPercentage : null;
                   const canExpand =
@@ -1315,6 +1664,7 @@ export default function StructurePage() {
 
                         <div className="flex justify-end">
                           {user?.role === "SUPER_ADMIN" ||
+                          user?.role === "HEAD_MANAGER" ||
                           user?.role === "MANAGER" ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -1335,6 +1685,24 @@ export default function StructurePage() {
                                 >
                                   Voir / Modifier
                                 </DropdownMenuItem>
+                                {node.type === "organisation" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setAddGroupForm({
+                                        name: "",
+                                        siret: "",
+                                        mainActivity: "",
+                                        fiscal_year_start: "",
+                                        fiscal_year_end: "",
+                                      });
+                                      setAddGroupOpen(true);
+                                    }}
+                                  >
+                                    <Plus className="mr-2 h-4 w-4" /> Ajouter
+                                    un groupe
+                                  </DropdownMenuItem>
+                                )}
                                 {node.type === "group" && (
                                   <DropdownMenuItem
                                     onClick={(e) => {
@@ -1456,11 +1824,13 @@ export default function StructurePage() {
           <DialogHeader className="flex-row items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <span className="text-lg">
-                {selectedNode?.type === "group"
-                  ? "📁"
-                  : selectedNode?.type === "company"
-                    ? "🏢"
-                    : "📦"}
+                {selectedNode?.type === "organisation"
+                  ? "🏢"
+                  : selectedNode?.type === "group"
+                    ? "📁"
+                    : selectedNode?.type === "company"
+                      ? "🏢"
+                      : "📦"}
               </span>
               {editing ? `Modifier ${typeLabel}` : typeLabel}
             </DialogTitle>
@@ -1474,6 +1844,28 @@ export default function StructurePage() {
                 </Button>
               )}
           </DialogHeader>
+
+          {selectedNode?.type === "organisation" && (
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-slate-700">Informations de l&apos;organisation</h3>
+                <div className="bg-slate-50 rounded-lg p-4 space-y-4">
+                  <Field
+                    label="Nom"
+                    value={editOrganisation.name}
+                    editing={editing}
+                    onChange={(v) => setEditOrganisation((f) => ({ ...f, name: v }))}
+                  />
+                  <FieldTextarea
+                    label="Description"
+                    value={editOrganisation.description}
+                    editing={editing}
+                    onChange={(v) => setEditOrganisation((f) => ({ ...f, description: v }))}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {selectedNode?.type === "group" && (
             <div className="space-y-4 py-2">
@@ -1628,7 +2020,7 @@ export default function StructurePage() {
           <DialogFooter className="gap-2">
             {!editing ? (
               <>
-                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER" || user?.role === "HEAD_MANAGER") && (
                   <Button
                     variant="outline"
                     className="border-red-200 text-red-600 hover:bg-red-50"
@@ -1649,7 +2041,7 @@ export default function StructurePage() {
                     Fiche
                   </Button>
                 )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button variant="outline" onClick={() => setEditing(true)}>
                     Modifier
                   </Button>
@@ -1944,7 +2336,8 @@ export default function StructurePage() {
                       </p>
                       {(user?.role === "SUPER_ADMIN" ||
                         user?.role === "ADMIN" ||
-                        user?.role === "MANAGER") && (
+                        user?.role === "MANAGER" ||
+                        user?.role === "HEAD_MANAGER") && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -2394,6 +2787,60 @@ export default function StructurePage() {
               className="disabled:cursor-not-allowed disabled:opacity-60"
             >
               {addBULoading ? "Création..." : "Créer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Organisation Modal */}
+      <Dialog open={addOrganisationOpen} onOpenChange={setAddOrganisationOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-purple-600" />
+              Créer l&apos;organisation
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Nom *
+              </label>
+              <Input
+                value={addOrganisationForm.name}
+                onChange={(e) =>
+                  setAddOrganisationForm((f) => ({ ...f, name: e.target.value }))
+                }
+                placeholder="Nom de l&apos;organisation"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Description
+              </label>
+              <Textarea
+                value={addOrganisationForm.description}
+                onChange={(e) =>
+                  setAddOrganisationForm((f) => ({
+                    ...f,
+                    description: e.target.value,
+                  }))
+                }
+                placeholder="Description de l&apos;organisation"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOrganisationOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleCreateOrganisation}
+              disabled={addOrganisationLoading || !addOrganisationForm.name.trim()}
+              className="bg-purple-600 text-white hover:bg-purple-700"
+            >
+              {addOrganisationLoading ? "Création..." : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>

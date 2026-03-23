@@ -20,7 +20,16 @@ export type TreeGroup = {
   companies: TreeCompany[];
 };
 
+export type TreeOrganisation = {
+  id: string;
+  name: string;
+  description?: string;
+  groups: TreeGroup[];
+  standaloneCompanies: TreeCompany[];
+};
+
 export type StructureTree = {
+  organisations?: TreeOrganisation[];
   groups?: TreeGroup[];
   standaloneCompanies?: TreeCompany[];
 };

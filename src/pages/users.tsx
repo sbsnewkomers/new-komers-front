@@ -82,6 +82,7 @@ import {
 const roleBadgeColor: Record<UserRole, string> = {
   SUPER_ADMIN: "bg-purple-50 text-purple-700 border-purple-200",
   ADMIN: "bg-blue-50 text-blue-700 border-blue-200",
+  HEAD_MANAGER: "bg-indigo-50 text-indigo-700 border-indigo-200",
   MANAGER: "bg-amber-50 text-amber-700 border-amber-200",
   END_USER: "bg-slate-50 text-slate-600 border-slate-200",
 };

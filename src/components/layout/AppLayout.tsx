@@ -118,7 +118,7 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
             className="mt-auto border-t border-slate-100 p-4 space-y-2"
             ref={menuRef}
           >
-            {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER") && (
+            {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER" || user?.role === "HEAD_MANAGER") && (
               <Link href="/users" className={navLinkClass("/users")}>
                 <Users className="h-5 w-5" />
                 Users
@@ -312,7 +312,7 @@ export function AppLayout({ title, children, companies = [], selectedCompanyId =
                   Audit
                 </Link>
               )}
-              {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER") && (
+              {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER" || user?.role === "HEAD_MANAGER") && (
                 <Link href="/users" className={navLinkClass("/users")} onClick={() => setMobileMenuOpen(false)}>
                   <Users className="h-5 w-5" />
                   Users
