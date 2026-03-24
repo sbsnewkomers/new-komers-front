@@ -42,7 +42,8 @@ export async function apiFetch<T>(
     // We rely on Authorization header tokens now; cookies are not needed.
     credentials: "same-origin",
     headers: {
-      "Content-Type": "application/json",
+      // Only set Content-Type for non-FormData requests
+      ...(fetchInit.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(fetchInit.headers ?? {}),
     },
@@ -98,9 +99,9 @@ export async function apiFetch<T>(
 
     // Throw a richer error object, but with a clean .message for UI
     const err = new Error(displayMessage);
-    (err as any).status = res.status;
-    (err as any).payload = parsed ?? null;
-    (err as any).rawBody = text;
+    (err as Error & { status: number }).status = res.status;
+    (err as Error & { payload: unknown }).payload = parsed ?? null;
+    (err as Error & { rawBody: string }).rawBody = text;
     throw err;
   }
 
@@ -119,10 +120,22 @@ export async function apiFetch<T>(
     return undefined as T;
   }
 
+  // Check if response is JSON
+  const contentType = res.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      // If it's supposed to be JSON but can't parse, throw error
+      throw new Error("Invalid JSON response from server");
+    }
+  }
+
+  // For non-JSON responses, try to parse as JSON first (for multipart responses that contain JSON)
   try {
     return JSON.parse(text) as T;
   } catch {
-    // If backend returned non-JSON but 2xx, just return raw text
+    // If it's not JSON, return raw text
     return text as unknown as T;
   }
 }

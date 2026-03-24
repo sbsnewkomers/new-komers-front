@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
+import { FileUpload } from "@/components/ui/FileUpload";
 import {
   Dialog,
   DialogContent,
@@ -84,6 +85,17 @@ type OrganisationFull = {
   id: string;
   name: string;
   description?: string;
+  logo?: string;
+  address?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  manager_id?: string;
+  manager?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email: string;
+  } | null;
 };
 
 type CompanyFull = {
@@ -161,8 +173,41 @@ export default function StructurePage() {
   const [addOrganisationForm, setAddOrganisationForm] = useState({
     name: "",
     description: "",
+    logo: "",
+    address: "",
+    contact_email: "",
+    contact_phone: "",
+    manager_id: "",
   });
   const [addOrganisationLoading, setAddOrganisationLoading] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>("");
+
+  // Gérer le changement de fichier logo
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Vérifier que c'est une image
+      if (!file.type.startsWith('image/')) {
+        alert('Veuillez sélectionner une image valide');
+        return;
+      }
+      // Vérifier la taille (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('L\'image ne doit pas dépasser 5MB');
+        return;
+      }
+      setLogoFile(file);
+      setAddOrganisationForm(prev => ({ ...prev, logo: file.name }));
+      
+      // Créer un aperçu
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   const [addCompanyGroupId, setAddCompanyGroupId] = useState<string | null>(
@@ -210,7 +255,13 @@ export default function StructurePage() {
   const [editOrganisation, setEditOrganisation] = useState({
     name: "",
     description: "",
+    logo: "",
+    address: "",
+    contact_email: "",
+    contact_phone: "",
+    manager_id: "",
   });
+  const [editOrganisationLogoFile, setEditOrganisationLogoFile] = useState<File | null>(null);
   const [editGroup, setEditGroup] = useState({
     name: "",
     siret: "",
@@ -325,8 +376,10 @@ export default function StructurePage() {
 
   // Combine groups from organisations and standalone groups
   const groupList = useMemo(() => {
-    const orgGroups = (tree?.organisations ?? []).flatMap((org) => org.groups);
-    const standaloneGroups = tree?.groups ?? [];
+    const orgGroups = (tree?.organisations ?? []).flatMap((org) => 
+      org.groups.map(group => ({ ...group, organisationId: org.id }))
+    );
+    const standaloneGroups = (tree?.groups ?? []).map(group => ({ ...group, organisationId: undefined }));
     return [...orgGroups, ...standaloneGroups];
   }, [tree]);
 
@@ -542,8 +595,10 @@ export default function StructurePage() {
 
   // Recalculer les données filtrées
   const filteredGroupList = useMemo(() => {
-    const orgGroups = (filteredTreeData?.organisations ?? []).flatMap((org) => org.groups);
-    const standaloneGroups = filteredTreeData?.groups ?? [];
+    const orgGroups = (filteredTreeData?.organisations ?? []).flatMap((org) => 
+      org.groups.map(group => ({ ...group, organisationId: org.id }))
+    );
+    const standaloneGroups = (filteredTreeData?.groups ?? []).map(group => ({ ...group, organisationId: undefined }));
     return [...orgGroups, ...standaloneGroups];
   }, [filteredTreeData]);
 
@@ -714,12 +769,24 @@ export default function StructurePage() {
           setEditOrganisation({
             name: org.name,
             description: org.description ?? "",
+            logo: org.logo ?? "",
+            address: org.address ?? "",
+            contact_email: org.contact_email ?? "",
+            contact_phone: org.contact_phone ?? "",
+            manager_id: org.manager_id ?? "",
           });
+          setEditOrganisationLogoFile(null);
         } catch {
           setEditOrganisation({
             name: node.name,
             description: "",
+            logo: "",
+            address: "",
+            contact_email: "",
+            contact_phone: "",
+            manager_id: "",
           });
+          setEditOrganisationLogoFile(null);
         }
       } else if (node.type === "group") {
         try {
@@ -824,14 +891,41 @@ export default function StructurePage() {
   const handleSave = async () => {
     if (!selectedNode) return;
     if (selectedNode.type === "organisation") {
-      await apiFetch(`/organisations/${selectedNode.id}`, {
+      const formData = new FormData();
+      formData.append('name', editOrganisation.name);
+      if (editOrganisation.description) {
+        formData.append('description', editOrganisation.description);
+      }
+      if (editOrganisation.address) {
+        formData.append('address', editOrganisation.address);
+      }
+      if (editOrganisation.contact_email) {
+        formData.append('contact_email', editOrganisation.contact_email);
+      }
+      if (editOrganisation.contact_phone) {
+        formData.append('contact_phone', editOrganisation.contact_phone);
+      }
+      if (editOrganisation.manager_id) {
+        formData.append('manager_id', editOrganisation.manager_id);
+      }
+      if (editOrganisationLogoFile) {
+        formData.append('logo', editOrganisationLogoFile);
+      }
+
+      const updatedOrg = await apiFetch<OrganisationFull>(`/organisations/${selectedNode.id}`, {
         method: "PUT",
-        body: JSON.stringify({
-          name: editOrganisation.name,
-          description: editOrganisation.description || undefined,
-        }),
+        body: formData,
+        headers: {}, // Important: ne pas définir Content-Type pour FormData
         snackbar: { showSuccess: true, successMessage: "Organisation mise à jour" },
       });
+      setEditOrganisationLogoFile(null);
+      // Mettre à jour l'état local avec le logo retourné par le serveur
+      if (updatedOrg) {
+        setEditOrganisation(prev => ({
+          ...prev,
+          logo: updatedOrg.logo || ""
+        }));
+      }
     } else if (selectedNode.type === "group") {
       await apiFetch(`/groups/${selectedNode.id}`, {
         method: "PUT",
@@ -883,20 +977,64 @@ export default function StructurePage() {
     
     setAddOrganisationLoading(true);
     try {
-      await apiFetch("/organisations", {
-        method: "POST",
-        body: JSON.stringify({
-          name: addOrganisationForm.name.trim(),
-          description: addOrganisationForm.description.trim() || undefined,
-        }),
-        snackbar: { 
-          showSuccess: true, 
-          successMessage: "Organisation créée avec succès" 
+      // Créer FormData pour l'upload du fichier
+      const formData = new FormData();
+      formData.append('name', addOrganisationForm.name.trim());
+      formData.append('description', addOrganisationForm.description.trim() || '');
+      formData.append('address', addOrganisationForm.address.trim() || '');
+      formData.append('contact_email', addOrganisationForm.contact_email.trim() || '');
+      formData.append('contact_phone', addOrganisationForm.contact_phone.trim() || '');
+      
+      // Ajouter le fichier logo s'il existe
+      if (logoFile) {
+        formData.append('logo', logoFile);
+      }
+      
+      // Pour l'upload de fichiers, on doit utiliser fetch directement car apiFetch force JSON
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      // Récupérer le token depuis le storage correct
+      let token = null;
+      try {
+        const raw = window.localStorage.getItem("nk-auth-tokens");
+        if (raw) {
+          const parsed = JSON.parse(raw) as { accessToken?: string };
+          token = parsed.accessToken || null;
+        }
+      } catch {
+        token = null;
+      }
+      console.log('Token d accès:', token); // Ajout d'un log pour vérifier le token
+      const response = await fetch(`${baseUrl}/organisations`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          // Ne PAS définir Content-Type pour FormData
         },
       });
       
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Erreur création organisation:', response.status, errorText);
+        alert(`Erreur lors de la création: ${response.status} ${errorText}`);
+        return;
+      }
+      
+      // Afficher un message de succès
+      alert("Organisation créée avec succès");
+      
       setAddOrganisationOpen(false);
-      setAddOrganisationForm({ name: "", description: "" });
+      setAddOrganisationForm({ 
+        name: "", 
+        description: "", 
+        logo: "",
+        address: "",
+        contact_email: "",
+        contact_phone: "",
+        manager_id: "",
+      });
+      setLogoFile(null);
+      setLogoPreview("");
       void loadTree();
     } finally {
       setAddOrganisationLoading(false);
@@ -1801,7 +1939,78 @@ export default function StructurePage() {
                     editing={editing}
                     onChange={(v) => setEditOrganisation((f) => ({ ...f, description: v }))}
                   />
+                  <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Logo
+                  </label>
+                  {editing ? (
+                    <FileUpload
+                      key={editOrganisation.logo}
+                      value={editOrganisation.logo}
+                      onChange={(file) => {
+                        setEditOrganisationLogoFile(file);
+                        if (file) {
+                          setEditOrganisation((f) => ({ ...f, logo: file.name }));
+                        } else {
+                          setEditOrganisation((f) => ({ ...f, logo: "" }));
+                        }
+                      }}
+                      placeholder="Uploader une image de logo"
+                      accept="image/*"
+                    />
+                  ) : (
+                    <div className="space-y-2">
+                      {editOrganisation.logo ? (
+                        <>
+                          {console.log('Logo à afficher:', editOrganisation.logo)}
+                          {editOrganisation.logo.startsWith('http') ? (
+                            <img 
+                              src={editOrganisation.logo} 
+                              alt="Logo de l'organisation" 
+                              className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                              onError={(e) => {
+                                console.error('Erreur chargement image URL:', editOrganisation.logo);
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <img 
+                              src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editOrganisation.logo}`} 
+                              alt="Logo de l'organisation" 
+                              className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                              onError={(e) => {
+                                console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editOrganisation.logo}`);
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <p className="text-xs text-slate-500">{editOrganisation.logo}</p>
+                        </>
+                      ) : (
+                        <p className="text-sm font-medium text-primary">—</p>
+                      )}
+                    </div>
+                  )}
                 </div>
+                  <FieldTextarea
+                    label="Adresse"
+                    value={editOrganisation.address}
+                    editing={editing}
+                    onChange={(v) => setEditOrganisation((f) => ({ ...f, address: v }))}
+                  />
+                  <Field
+                    label="Email de contact"
+                    value={editOrganisation.contact_email}
+                    editing={editing}
+                    onChange={(v) => setEditOrganisation((f) => ({ ...f, contact_email: v }))}
+                  />
+                  <Field
+                    label="Téléphone de contact"
+                    value={editOrganisation.contact_phone}
+                    editing={editing}
+                    onChange={(v) => setEditOrganisation((f) => ({ ...f, contact_phone: v }))}
+                  />
+                                  </div>
               </div>
             </div>
           )}
@@ -2760,8 +2969,8 @@ export default function StructurePage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
                 Nom *
               </label>
               <Input
@@ -2772,8 +2981,8 @@ export default function StructurePage() {
                 placeholder="Nom de l&apos;organisation"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
                 Description
               </label>
               <Textarea
@@ -2788,9 +2997,75 @@ export default function StructurePage() {
                 rows={3}
               />
             </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Logo
+              </label>
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                  placeholder="Choisir une image"
+                />
+                {logoPreview && (
+                  <div className="mt-2">
+                    <img 
+                      src={logoPreview} 
+                      alt="Aperçu du logo" 
+                      className="h-20 w-20 object-cover rounded-lg border border-slate-200"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Adresse
+              </label>
+              <Input
+                value={addOrganisationForm.address}
+                onChange={(e) =>
+                  setAddOrganisationForm((f) => ({ ...f, address: e.target.value }))
+                }
+                placeholder="Adresse de l&apos;organisation"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Email de contact
+              </label>
+              <Input
+                type="email"
+                value={addOrganisationForm.contact_email}
+                onChange={(e) =>
+                  setAddOrganisationForm((f) => ({ ...f, contact_email: e.target.value }))
+                }
+                placeholder="email@exemple.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Téléphone de contact
+              </label>
+              <Input
+                value={addOrganisationForm.contact_phone}
+                onChange={(e) =>
+                  setAddOrganisationForm((f) => ({ ...f, contact_phone: e.target.value }))
+                }
+                placeholder="+33 1 23 45 67 89"
+              />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddOrganisationOpen(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setAddOrganisationOpen(false);
+                setLogoFile(null);
+                setLogoPreview("");
+              }}
+            >
               Annuler
             </Button>
             <Button
@@ -2807,7 +3082,7 @@ export default function StructurePage() {
       <CompanyCreateWizard
         open={wizardOpen}
         onOpenChange={setWizardOpen}
-        groups={groupList.map((g) => ({ id: g.id, name: g.name, organisationId: g.organisationId }))}
+        groups={groupList.filter((g) => g.organisationId).map((g) => ({ id: g.id, name: g.name, organisationId: g.organisationId! }))}
         organisations={tree?.organisations?.map((o) => ({ id: o.id, name: o.name })) || []}
         onSubmit={handleCreateCompany}
       />

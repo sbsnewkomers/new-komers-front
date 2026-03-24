@@ -24,6 +24,17 @@ export type TreeOrganisation = {
   id: string;
   name: string;
   description?: string;
+  logo?: string;
+  address?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  manager_id?: string;
+  manager?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email: string;
+  } | null;
   groups: TreeGroup[];
   standaloneCompanies: TreeCompany[];
 };
