@@ -1,44 +1,94 @@
 import "@/styles/globals.css";
+
 import type { AppProps } from "next/app";
+
 import { PermissionsProvider, usePermissionsContext } from "@/permissions/PermissionsProvider";
+
+import { OrganisationProvider } from "@/providers/OrganisationProvider";
+
 import { SnackbarProvider } from "@/ui/SnackbarProvider";
+
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+
 import { useGlobalErrorHandler } from "@/hooks/useGlobalErrorHandler";
 
+
+
 function GlobalErrorListener({ children }: { children: React.ReactNode }) {
+
   useGlobalErrorHandler();
+
   return <>{children}</>;
+
 }
+
+
 
 function AuthBootstrapGate({ children }: { children: React.ReactNode }) {
+
   const { isAuthReady } = usePermissionsContext();
 
+
+
   if (!isAuthReady) {
+
     // Simple global splash while we resolve /auth/me + refresh logic
+
     return (
+
       <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] text-slate-600">
+
         <div className="text-center space-y-2">
+
           <p className="text-sm font-medium">Chargement de votre session...</p>
+
         </div>
+
       </div>
+
     );
+
   }
 
+
+
   return <>{children}</>;
+
 }
 
+
+
 export default function App({ Component, pageProps }: AppProps) {
+
   return (
+
     <SnackbarProvider>
+
       <GlobalErrorListener>
+
         <ErrorBoundary>
+
           <PermissionsProvider>
-            <AuthBootstrapGate>
-              <Component {...pageProps} />
-            </AuthBootstrapGate>
+
+            <OrganisationProvider>
+
+              <AuthBootstrapGate>
+
+                <Component {...pageProps} />
+
+              </AuthBootstrapGate>
+
+            </OrganisationProvider>
+
           </PermissionsProvider>
+
         </ErrorBoundary>
+
       </GlobalErrorListener>
+
     </SnackbarProvider>
+
   );
+
 }
+

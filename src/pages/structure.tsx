@@ -26,6 +26,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/Dialog";
+import { Select } from "@/components/ui/Select";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -60,7 +61,6 @@ import {
   ShareholderFormDialog,
   type ShareholderFormValues,
 } from "@/components/shareholders/ShareholderFormDialog";
-import { Select } from "@/components/ui/Select";
 
 type BusinessUnit = {
   id: string;
@@ -193,6 +193,7 @@ export default function StructurePage() {
     fiscal_year_start: "",
     fiscal_year_end: "",
     mainActivity: "",
+    organisationId: "",
   });
   const [addGroupLoading, setAddGroupLoading] = useState(false);
 
@@ -361,6 +362,14 @@ export default function StructurePage() {
     () => allTreeCompanies.map((c) => ({ id: c.id, name: c.name })),
     [allTreeCompanies],
   );
+
+  // Pour les rôles non-admin, passer les organisations au AppLayout
+  const organisationsForLayout = useMemo(() => {
+    if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
+      return []; // Les admins voient déjà toutes les organisations dans la structure
+    }
+    return tree?.organisations?.map((o) => ({ id: o.id, name: o.name })) || [];
+  }, [tree?.organisations, user?.role]);
 
   const companiesWithBus = useMemo(() => {
     const ids = new Set<string>();
@@ -571,7 +580,10 @@ export default function StructurePage() {
 
     // Ajouter les organisations et leurs groupes/entreprises
     (filteredTreeData?.organisations ?? []).forEach((org) => {
-      rows.push({ type: "organisation", id: org.id, name: org.name });
+      // N'afficher les organisations que pour SUPER_ADMIN et ADMIN
+      if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
+        rows.push({ type: "organisation", id: org.id, name: org.name });
+      }
       
       // Ajouter les groupes de l'organisation
       org.groups.forEach((g) => {
@@ -686,7 +698,7 @@ export default function StructurePage() {
     }
 
     return rows;
-  }, [filteredTreeData, expandedCompanyIds]);
+  }, [filteredTreeData, expandedCompanyIds, user]);
 
   const openDetail = useCallback(
     async (node: TreeNode) => {
@@ -1024,6 +1036,7 @@ export default function StructurePage() {
         fiscal_year_start: "",
         fiscal_year_end: "",
         mainActivity: "",
+        organisationId: "",
       });
     } catch {
       /* snackbar handles */
@@ -1124,6 +1137,7 @@ export default function StructurePage() {
     <AppLayout
       title="Structure"
       companies={companyListForLayout}
+      organisations={organisationsForLayout}
       selectedCompanyId=""
       onCompanyChange={() => {}}
     >
@@ -1255,7 +1269,16 @@ export default function StructurePage() {
                     Importer
                   </Link>
                 )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
+                  <Button
+                    onClick={() => setAddOrganisationOpen(true)}
+                    className="h-10 gap-2 bg-purple-600 text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Organisation
+                  </Button>
+                )}
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button
                     onClick={() => setAddGroupOpen(true)}
                     className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
@@ -1266,7 +1289,7 @@ export default function StructurePage() {
                     Groupe
                   </Button>
                 )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button
                     onClick={() => setWizardOpen(true)}
                     className="h-10 gap-2 bg-primary text-white hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
@@ -1277,7 +1300,7 @@ export default function StructurePage() {
                     Entreprise
                   </Button>
                 )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button
                     onClick={() => setAddBUStandaloneOpen(true)}
                     className="h-10 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
@@ -1312,92 +1335,6 @@ export default function StructurePage() {
             </div>
           ) : treeRows.length === 0 ? (
             <>
-              {/* État vide : aucune organisation - Formulaire de création direct */}
-              {!treeLoading && !tree?.organisations && (
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 max-w-2xl mx-auto">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
-                      <Building2 className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-slate-900">
-                        Créer votre organisation
-                      </h3>
-                      <p className="text-slate-500 text-sm">
-                        Commencez par créer votre organisation pour gérer la structure hiérarchique de vos entités.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {user?.role === "HEAD_MANAGER" || user?.role === "SUPER_ADMIN" ? (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="mb-2 block text-sm font-semibold text-slate-700">
-                          Nom de l&apos;organisation *
-                        </label>
-                        <Input
-                          value={addOrganisationForm.name}
-                          onChange={(e) =>
-                            setAddOrganisationForm((f) => ({ ...f, name: e.target.value }))
-                          }
-                          placeholder="Ex: TechCorp International"
-                          className="h-11"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-2 block text-sm font-semibold text-slate-700">
-                          Description
-                        </label>
-                        <Textarea
-                          value={addOrganisationForm.description}
-                          onChange={(e) =>
-                            setAddOrganisationForm((f) => ({
-                              ...f,
-                              description: e.target.value,
-                            }))
-                          }
-                          placeholder="Décrivez votre organisation, ses activités et objectifs..."
-                          rows={3}
-                        />
-                      </div>
-                      <div className="flex gap-3 pt-2">
-                        <Button
-                          onClick={handleCreateOrganisation}
-                          disabled={addOrganisationLoading || !addOrganisationForm.name.trim()}
-                          className="h-11 gap-2 bg-purple-600 text-white hover:bg-purple-700 shadow-sm transition-all hover:shadow-md"
-                        >
-                          {addOrganisationLoading ? (
-                            <>
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                              Création...
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="h-4 w-4" />
-                              Créer l&apos;organisation
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setAddOrganisationForm({ name: "", description: "" })}
-                          className="h-11"
-                        >
-                          Réinitialiser
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <div className="text-slate-500">
-                        Vous devez être un Head Manager ou Super Admin pour créer une organisation.
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Fallback pour autres cas vides */}
               <div className="flex flex-col items-center justify-center py-16 px-6">
                 <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
                   {searchQuery.trim() ? (
@@ -1664,6 +1601,7 @@ export default function StructurePage() {
 
                         <div className="flex justify-end">
                           {user?.role === "SUPER_ADMIN" ||
+                          user?.role === "ADMIN" ||
                           user?.role === "HEAD_MANAGER" ||
                           user?.role === "MANAGER" ? (
                             <DropdownMenu>
@@ -1695,6 +1633,7 @@ export default function StructurePage() {
                                         mainActivity: "",
                                         fiscal_year_start: "",
                                         fiscal_year_end: "",
+                                        organisationId: node.id,
                                       });
                                       setAddGroupOpen(true);
                                     }}
@@ -2020,7 +1959,7 @@ export default function StructurePage() {
           <DialogFooter className="gap-2">
             {!editing ? (
               <>
-                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER" || user?.role === "HEAD_MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER" || user?.role === "HEAD_MANAGER") && (
                   <Button
                     variant="outline"
                     className="border-red-200 text-red-600 hover:bg-red-50"
@@ -2041,7 +1980,7 @@ export default function StructurePage() {
                     Fiche
                   </Button>
                 )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button variant="outline" onClick={() => setEditing(true)}>
                     Modifier
                   </Button>
@@ -2434,6 +2373,25 @@ export default function StructurePage() {
           <div className="space-y-4 py-2">
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Organisation *
+              </label>
+              <Select
+                value={addGroupForm.organisationId}
+                onValueChange={(value) =>
+                  setAddGroupForm((f) => ({ ...f, organisationId: value }))
+                }
+                className="h-11"
+              >
+                <option value="">Sélectionner une organisation</option>
+                {tree?.organisations?.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Nom *
               </label>
               <Input
@@ -2509,7 +2467,7 @@ export default function StructurePage() {
             </Button>
             <Button
               onClick={handleCreateGroup}
-              disabled={addGroupLoading || !addGroupForm.name.trim()}
+              disabled={addGroupLoading || !addGroupForm.name.trim() || !addGroupForm.organisationId.trim()}
             >
               {addGroupLoading ? "Création..." : "Créer"}
             </Button>
@@ -2849,7 +2807,8 @@ export default function StructurePage() {
       <CompanyCreateWizard
         open={wizardOpen}
         onOpenChange={setWizardOpen}
-        groups={groupList.map((g) => ({ id: g.id, name: g.name }))}
+        groups={groupList.map((g) => ({ id: g.id, name: g.name, organisationId: g.organisationId }))}
+        organisations={tree?.organisations?.map((o) => ({ id: o.id, name: o.name })) || []}
         onSubmit={handleCreateCompany}
       />
     </AppLayout>
