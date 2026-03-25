@@ -9,7 +9,7 @@ import {
   type StructureTree,
   type TreeCompany,
   type TreeGroup,
-  type TreeOrganisation,
+  type Treeworkspace,
 } from "@/lib/structureApi";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
@@ -81,7 +81,7 @@ type GroupFull = {
   mainActivity?: string;
 };
 
-type OrganisationFull = {
+type workspaceFull = {
   id: string;
   name: string;
   description?: string;
@@ -123,14 +123,14 @@ type NodeUsersByRole = Record<
 >;
 
 type TreeNode =
-  | { type: "organisation"; id: string; name: string }
+  | { type: "workspace"; id: string; name: string }
   | { type: "group"; id: string; name: string }
   | {
       type: "company";
       id: string;
       name: string;
       groupId: string | null;
-      organisationId?: string;
+      workspaceId?: string;
       completionPercentage: number;
     }
   | { type: "bu"; id: string; name: string; companyId: string; code: string }
@@ -168,9 +168,9 @@ export default function StructurePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  // État pour créer une organisation
-  const [addOrganisationOpen, setAddOrganisationOpen] = useState(false);
-  const [addOrganisationForm, setAddOrganisationForm] = useState({
+  // État pour créer une workspace
+  const [addworkspaceOpen, setAddworkspaceOpen] = useState(false);
+  const [addworkspaceForm, setAddworkspaceForm] = useState({
     name: "",
     description: "",
     logo: "",
@@ -179,7 +179,7 @@ export default function StructurePage() {
     contact_phone: "",
     manager_id: "",
   });
-  const [addOrganisationLoading, setAddOrganisationLoading] = useState(false);
+  const [addworkspaceLoading, setAddworkspaceLoading] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
 
@@ -198,7 +198,7 @@ export default function StructurePage() {
         return;
       }
       setLogoFile(file);
-      setAddOrganisationForm(prev => ({ ...prev, logo: file.name }));
+      setAddworkspaceForm(prev => ({ ...prev, logo: file.name }));
       
       // Créer un aperçu
       const reader = new FileReader();
@@ -238,7 +238,7 @@ export default function StructurePage() {
     fiscal_year_start: "",
     fiscal_year_end: "",
     mainActivity: "",
-    organisationId: "",
+    workspaceId: "",
   });
   const [addGroupLoading, setAddGroupLoading] = useState(false);
 
@@ -252,7 +252,7 @@ export default function StructurePage() {
   });
   const [addBUStandaloneLoading, setAddBUStandaloneLoading] = useState(false);
 
-  const [editOrganisation, setEditOrganisation] = useState({
+  const [editworkspace, setEditworkspace] = useState({
     name: "",
     description: "",
     logo: "",
@@ -261,7 +261,7 @@ export default function StructurePage() {
     contact_phone: "",
     manager_id: "",
   });
-  const [editOrganisationLogoFile, setEditOrganisationLogoFile] = useState<File | null>(null);
+  const [editworkspaceLogoFile, setEditworkspaceLogoFile] = useState<File | null>(null);
   const [editGroup, setEditGroup] = useState({
     name: "",
     siret: "",
@@ -374,38 +374,38 @@ export default function StructurePage() {
     }
   }, []);
 
-  // Combine groups from organisations and standalone groups
+  // Combine groups from workspaces and standalone groups
   const groupList = useMemo(() => {
-    const orgGroups = (tree?.organisations ?? []).flatMap((org) => 
-      org.groups.map(group => ({ ...group, organisationId: org.id }))
+    const orgGroups = (tree?.workspaces ?? []).flatMap((org) => 
+      org.groups.map(group => ({ ...group, workspaceId: org.id }))
     );
-    const standaloneGroups = (tree?.groups ?? []).map(group => ({ ...group, organisationId: undefined }));
+    const standaloneGroups = (tree?.groups ?? []).map(group => ({ ...group, workspaceId: undefined }));
     return [...orgGroups, ...standaloneGroups];
   }, [tree]);
 
   const allTreeCompanies = useMemo<
-    (TreeCompany & { groupId: string | null; organisationId?: string })[]
+    (TreeCompany & { groupId: string | null; workspaceId?: string })[]
   >(
     () => [
-      // Companies from organisations
-      ...(tree?.organisations ?? []).flatMap((org) =>
+      // Companies from workspaces
+      ...(tree?.workspaces ?? []).flatMap((org) =>
         org.groups.flatMap((g) =>
-          g.companies.map((c) => ({ ...c, groupId: g.id, organisationId: org.id })),
+          g.companies.map((c) => ({ ...c, groupId: g.id, workspaceId: org.id })),
         ),
       ),
-      // Standalone companies from organisations
-      ...(tree?.organisations ?? []).flatMap((org) =>
-        org.standaloneCompanies.map((c) => ({ ...c, groupId: null, organisationId: org.id })),
+      // Standalone companies from workspaces
+      ...(tree?.workspaces ?? []).flatMap((org) =>
+        org.standaloneCompanies.map((c) => ({ ...c, groupId: null, workspaceId: org.id })),
       ),
       // Companies from standalone groups
       ...(tree?.groups ?? []).flatMap((g) =>
-        g.companies.map((c) => ({ ...c, groupId: g.id, organisationId: undefined })),
+        g.companies.map((c) => ({ ...c, groupId: g.id, workspaceId: undefined })),
       ),
       // Completely standalone companies
       ...(tree?.standaloneCompanies ?? []).map((c) => ({
         ...c,
         groupId: null,
-        organisationId: undefined,
+        workspaceId: undefined,
       })),
     ],
     [tree],
@@ -416,24 +416,24 @@ export default function StructurePage() {
     [allTreeCompanies],
   );
 
-  // Pour les rôles non-admin, passer les organisations au AppLayout
-  const organisationsForLayout = useMemo(() => {
+  // Pour les rôles non-admin, passer les workspaces au AppLayout
+  const workspacesForLayout = useMemo(() => {
     if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
-      return []; // Les admins voient déjà toutes les organisations dans la structure
+      return []; // Les admins voient déjà toutes les workspaces dans la structure
     }
-    return tree?.organisations?.map((o) => ({ id: o.id, name: o.name })) || [];
-  }, [tree?.organisations, user?.role]);
+    return tree?.workspaces?.map((o) => ({ id: o.id, name: o.name })) || [];
+  }, [tree?.workspaces, user?.role]);
 
   const companiesWithBus = useMemo(() => {
     const ids = new Set<string>();
-    // Companies from organisation groups
-    (tree?.organisations ?? []).forEach((org) => {
+    // Companies from workspace groups
+    (tree?.workspaces ?? []).forEach((org) => {
       org.groups.forEach((g) => {
         g.companies.forEach((c) => {
           if ((c.businessUnits ?? []).length > 0) ids.add(c.id);
         });
       });
-      // Standalone companies from organisations
+      // Standalone companies from workspaces
       org.standaloneCompanies.forEach((c) => {
         if ((c.businessUnits ?? []).length > 0) ids.add(c.id);
       });
@@ -453,14 +453,14 @@ export default function StructurePage() {
 
   const totalBusinessUnits = useMemo(() => {
     let count = 0;
-    // Business units from organisation groups
-    (tree?.organisations ?? []).forEach((org) => {
+    // Business units from workspace groups
+    (tree?.workspaces ?? []).forEach((org) => {
       org.groups.forEach((g) => {
         g.companies.forEach((c) => {
           count += (c.businessUnits ?? []).length;
         });
       });
-      // Standalone companies from organisations
+      // Standalone companies from workspaces
       org.standaloneCompanies.forEach((c) => {
         count += (c.businessUnits ?? []).length;
       });
@@ -484,13 +484,13 @@ export default function StructurePage() {
 
     const query = searchQuery.toLowerCase().trim();
     const filtered = {
-      organisations: [] as TreeOrganisation[],
+      workspaces: [] as Treeworkspace[],
       groups: [] as TreeGroup[],
       standaloneCompanies: [] as TreeCompany[],
     };
 
-    // Filtrer les organisations et leurs groupes/entreprises
-    (tree?.organisations ?? []).forEach((org) => {
+    // Filtrer les workspaces et leurs groupes/entreprises
+    (tree?.workspaces ?? []).forEach((org) => {
       const orgMatches = org.name.toLowerCase().includes(query) || 
                         org.description?.toLowerCase().includes(query);
       
@@ -521,7 +521,7 @@ export default function StructurePage() {
         return null;
       }).filter((g): g is TreeGroup => g !== null);
 
-      // Filtrer les entreprises indépendantes de l'organisation
+      // Filtrer les entreprises indépendantes de l'workspace
       const filteredStandaloneCompanies = org.standaloneCompanies.filter((company) => {
         const companyMatches =
           company.name.toLowerCase().includes(query) ||
@@ -538,7 +538,7 @@ export default function StructurePage() {
       });
 
       if (orgMatches || filteredGroups.length > 0 || filteredStandaloneCompanies.length > 0) {
-        filtered.organisations.push({
+        filtered.workspaces.push({
           ...org,
           groups: filteredGroups,
           standaloneCompanies: filteredStandaloneCompanies,
@@ -595,36 +595,36 @@ export default function StructurePage() {
 
   // Recalculer les données filtrées
   const filteredGroupList = useMemo(() => {
-    const orgGroups = (filteredTreeData?.organisations ?? []).flatMap((org) => 
-      org.groups.map(group => ({ ...group, organisationId: org.id }))
+    const orgGroups = (filteredTreeData?.workspaces ?? []).flatMap((org) => 
+      org.groups.map(group => ({ ...group, workspaceId: org.id }))
     );
-    const standaloneGroups = (filteredTreeData?.groups ?? []).map(group => ({ ...group, organisationId: undefined }));
+    const standaloneGroups = (filteredTreeData?.groups ?? []).map(group => ({ ...group, workspaceId: undefined }));
     return [...orgGroups, ...standaloneGroups];
   }, [filteredTreeData]);
 
   const filteredAllTreeCompanies = useMemo<
-    (TreeCompany & { groupId: string | null; organisationId?: string })[]
+    (TreeCompany & { groupId: string | null; workspaceId?: string })[]
   >(
     () => [
-      // Companies from organisations
-      ...(filteredTreeData?.organisations ?? []).flatMap((org) =>
+      // Companies from workspaces
+      ...(filteredTreeData?.workspaces ?? []).flatMap((org) =>
         org.groups.flatMap((g) =>
-          g.companies.map((c) => ({ ...c, groupId: g.id, organisationId: org.id })),
+          g.companies.map((c) => ({ ...c, groupId: g.id, workspaceId: org.id })),
         ),
       ),
-      // Standalone companies from organisations
-      ...(filteredTreeData?.organisations ?? []).flatMap((org) =>
-        org.standaloneCompanies.map((c) => ({ ...c, groupId: null, organisationId: org.id })),
+      // Standalone companies from workspaces
+      ...(filteredTreeData?.workspaces ?? []).flatMap((org) =>
+        org.standaloneCompanies.map((c) => ({ ...c, groupId: null, workspaceId: org.id })),
       ),
       // Companies from standalone groups
       ...(filteredTreeData?.groups ?? []).flatMap((g) =>
-        g.companies.map((c) => ({ ...c, groupId: g.id, organisationId: undefined })),
+        g.companies.map((c) => ({ ...c, groupId: g.id, workspaceId: undefined })),
       ),
       // Completely standalone companies
       ...(filteredTreeData?.standaloneCompanies ?? []).map((c) => ({
         ...c,
         groupId: null,
-        organisationId: undefined,
+        workspaceId: undefined,
       })),
     ],
     [filteredTreeData],
@@ -633,14 +633,14 @@ export default function StructurePage() {
   const treeRows = useMemo(() => {
     const rows: TreeNode[] = [];
 
-    // Ajouter les organisations et leurs groupes/entreprises
-    (filteredTreeData?.organisations ?? []).forEach((org) => {
-      // N'afficher les organisations que pour SUPER_ADMIN et ADMIN
+    // Ajouter les workspaces et leurs groupes/entreprises
+    (filteredTreeData?.workspaces ?? []).forEach((org) => {
+      // N'afficher les workspaces que pour SUPER_ADMIN et ADMIN
       if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
-        rows.push({ type: "organisation", id: org.id, name: org.name });
+        rows.push({ type: "workspace", id: org.id, name: org.name });
       }
       
-      // Ajouter les groupes de l'organisation
+      // Ajouter les groupes de l'workspace
       org.groups.forEach((g) => {
         rows.push({ type: "group", id: g.id, name: g.name });
         g.companies.forEach((c) => {
@@ -649,7 +649,7 @@ export default function StructurePage() {
             id: c.id,
             name: c.name,
             groupId: g.id,
-            organisationId: org.id,
+            workspaceId: org.id,
             completionPercentage: c.completionPercentage,
           });
           if (expandedCompanyIds.has(c.id)) {
@@ -666,7 +666,7 @@ export default function StructurePage() {
         });
       });
 
-      // Ajouter les entreprises indépendantes de l'organisation dans une section séparée
+      // Ajouter les entreprises indépendantes de l'workspace dans une section séparée
       if (org.standaloneCompanies.length > 0) {
         rows.push({
           type: "section-header",
@@ -679,7 +679,7 @@ export default function StructurePage() {
             id: c.id,
             name: c.name,
             groupId: null,
-            organisationId: org.id,
+            workspaceId: org.id,
             completionPercentage: c.completionPercentage,
           });
           if (expandedCompanyIds.has(c.id)) {
@@ -761,12 +761,12 @@ export default function StructurePage() {
       setEditing(false);
       setNodeUsers(null);
 
-      if (node.type === "organisation") {
+      if (node.type === "workspace") {
         try {
-          const org = await apiFetch<OrganisationFull>(`/organisations/${node.id}`, {
+          const org = await apiFetch<workspaceFull>(`/workspaces/${node.id}`, {
             snackbar: { showSuccess: false, showError: true },
           });
-          setEditOrganisation({
+          setEditworkspace({
             name: org.name,
             description: org.description ?? "",
             logo: org.logo ?? "",
@@ -775,9 +775,9 @@ export default function StructurePage() {
             contact_phone: org.contact_phone ?? "",
             manager_id: org.manager_id ?? "",
           });
-          setEditOrganisationLogoFile(null);
+          setEditworkspaceLogoFile(null);
         } catch {
-          setEditOrganisation({
+          setEditworkspace({
             name: node.name,
             description: "",
             logo: "",
@@ -786,7 +786,7 @@ export default function StructurePage() {
             contact_phone: "",
             manager_id: "",
           });
-          setEditOrganisationLogoFile(null);
+          setEditworkspaceLogoFile(null);
         }
       } else if (node.type === "group") {
         try {
@@ -864,8 +864,8 @@ export default function StructurePage() {
 
       // Load managers & users linked to this node
       const nodeTypeParam =
-        node.type === "organisation"
-          ? "ORGANISATION"
+        node.type === "workspace"
+          ? "WORKSPACE"
           : node.type === "group"
             ? "GROUP"
             : node.type === "company"
@@ -890,38 +890,38 @@ export default function StructurePage() {
 
   const handleSave = async () => {
     if (!selectedNode) return;
-    if (selectedNode.type === "organisation") {
+    if (selectedNode.type === "workspace") {
       const formData = new FormData();
-      formData.append('name', editOrganisation.name);
-      if (editOrganisation.description) {
-        formData.append('description', editOrganisation.description);
+      formData.append('name', editworkspace.name);
+      if (editworkspace.description) {
+        formData.append('description', editworkspace.description);
       }
-      if (editOrganisation.address) {
-        formData.append('address', editOrganisation.address);
+      if (editworkspace.address) {
+        formData.append('address', editworkspace.address);
       }
-      if (editOrganisation.contact_email) {
-        formData.append('contact_email', editOrganisation.contact_email);
+      if (editworkspace.contact_email) {
+        formData.append('contact_email', editworkspace.contact_email);
       }
-      if (editOrganisation.contact_phone) {
-        formData.append('contact_phone', editOrganisation.contact_phone);
+      if (editworkspace.contact_phone) {
+        formData.append('contact_phone', editworkspace.contact_phone);
       }
-      if (editOrganisation.manager_id) {
-        formData.append('manager_id', editOrganisation.manager_id);
+      if (editworkspace.manager_id) {
+        formData.append('manager_id', editworkspace.manager_id);
       }
-      if (editOrganisationLogoFile) {
-        formData.append('logo', editOrganisationLogoFile);
+      if (editworkspaceLogoFile) {
+        formData.append('logo', editworkspaceLogoFile);
       }
 
-      const updatedOrg = await apiFetch<OrganisationFull>(`/organisations/${selectedNode.id}`, {
+      const updatedOrg = await apiFetch<workspaceFull>(`/workspaces/${selectedNode.id}`, {
         method: "PUT",
         body: formData,
         headers: {}, // Important: ne pas définir Content-Type pour FormData
-        snackbar: { showSuccess: true, successMessage: "Organisation mise à jour" },
+        snackbar: { showSuccess: true, successMessage: "Workspace mise à jour" },
       });
-      setEditOrganisationLogoFile(null);
+      setEditworkspaceLogoFile(null);
       // Mettre à jour l'état local avec le logo retourné par le serveur
       if (updatedOrg) {
-        setEditOrganisation(prev => ({
+        setEditworkspace(prev => ({
           ...prev,
           logo: updatedOrg.logo || ""
         }));
@@ -972,18 +972,18 @@ export default function StructurePage() {
     void loadTree();
   };
 
-  const handleCreateOrganisation = async () => {
-    if (!addOrganisationForm.name.trim()) return;
+  const handleCreateworkspace = async () => {
+    if (!addworkspaceForm.name.trim()) return;
     
-    setAddOrganisationLoading(true);
+    setAddworkspaceLoading(true);
     try {
       // Créer FormData pour l'upload du fichier
       const formData = new FormData();
-      formData.append('name', addOrganisationForm.name.trim());
-      formData.append('description', addOrganisationForm.description.trim() || '');
-      formData.append('address', addOrganisationForm.address.trim() || '');
-      formData.append('contact_email', addOrganisationForm.contact_email.trim() || '');
-      formData.append('contact_phone', addOrganisationForm.contact_phone.trim() || '');
+      formData.append('name', addworkspaceForm.name.trim());
+      formData.append('description', addworkspaceForm.description.trim() || '');
+      formData.append('address', addworkspaceForm.address.trim() || '');
+      formData.append('contact_email', addworkspaceForm.contact_email.trim() || '');
+      formData.append('contact_phone', addworkspaceForm.contact_phone.trim() || '');
       
       // Ajouter le fichier logo s'il existe
       if (logoFile) {
@@ -1004,7 +1004,7 @@ export default function StructurePage() {
         token = null;
       }
       console.log('Token d accès:', token); // Ajout d'un log pour vérifier le token
-      const response = await fetch(`${baseUrl}/organisations`, {
+      const response = await fetch(`${baseUrl}/workspaces`, {
         method: 'POST',
         body: formData,
         headers: {
@@ -1015,16 +1015,16 @@ export default function StructurePage() {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Erreur création organisation:', response.status, errorText);
+        console.error('Erreur création workspace:', response.status, errorText);
         alert(`Erreur lors de la création: ${response.status} ${errorText}`);
         return;
       }
       
       // Afficher un message de succès
-      alert("Organisation créée avec succès");
+      alert("Workspace créée avec succès");
       
-      setAddOrganisationOpen(false);
-      setAddOrganisationForm({ 
+      setAddworkspaceOpen(false);
+      setAddworkspaceForm({ 
         name: "", 
         description: "", 
         logo: "",
@@ -1037,7 +1037,7 @@ export default function StructurePage() {
       setLogoPreview("");
       void loadTree();
     } finally {
-      setAddOrganisationLoading(false);
+      setAddworkspaceLoading(false);
     }
   };
 
@@ -1174,7 +1174,7 @@ export default function StructurePage() {
         fiscal_year_start: "",
         fiscal_year_end: "",
         mainActivity: "",
-        organisationId: "",
+        workspaceId: "",
       });
     } catch {
       /* snackbar handles */
@@ -1263,8 +1263,8 @@ export default function StructurePage() {
   };
 
   const typeLabel =
-    selectedNode?.type === "organisation"
-      ? "Organisation"
+    selectedNode?.type === "workspace"
+      ? "Workspace"
       : selectedNode?.type === "group"
         ? "Groupe"
         : selectedNode?.type === "company"
@@ -1275,12 +1275,12 @@ export default function StructurePage() {
     <AppLayout
       title="Structure"
       companies={companyListForLayout}
-      organisations={organisationsForLayout}
+      workspaces={workspacesForLayout}
       selectedCompanyId=""
       onCompanyChange={() => {}}
     >
       <Head>
-        <title>Structure de l&apos;organisation</title>
+        <title>Structure de l&apos;workspace</title>
       </Head>
       <div className="space-y-8">
         {/* Header section */}
@@ -1295,18 +1295,18 @@ export default function StructurePage() {
                   <div>
                     <h1 className="text-3xl font-bold text-slate-900">
                       {user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" 
-                        ? "Structure Organisationnelle" 
-                        : tree?.organisations?.[0]?.name || "Structure Organisationnelle"}
+                        ? "Structure des workspaces" 
+                        : tree?.workspaces?.[0]?.name || "Structure des workspaces"}
                     </h1>
                     <p className="text-sm font-medium text-purple-600 uppercase tracking-wide">
                       {user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" 
-                        ? "Toutes les organisations" 
-                        : "Organisation"}
+                        ? "Toutes les workspaces" 
+                        : "Workspace"}
                     </p>
                   </div>
                 </div>
                 <p className="text-slate-600 max-w-2xl ml-13 font-medium">
-                  Gérez la structure hiérarchique de votre organisation et pilotez 
+                  Gérez la structure hiérarchique de votre workspace et pilotez 
                   l&apos;ensemble de vos entités : groupes, entreprises et business units.
                 </p>
               </div>
@@ -1409,19 +1409,19 @@ export default function StructurePage() {
                 )}
                 {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
                   <Button
-                    onClick={() => setAddOrganisationOpen(true)}
+                    onClick={() => setAddworkspaceOpen(true)}
                     className="h-10 gap-2 bg-purple-600 text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
                   >
                     <Plus className="h-4 w-4" />
-                    Organisation
+                    Workspace
                   </Button>
                 )}
                 {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button
                     onClick={() => setAddGroupOpen(true)}
                     className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                    disabled={!canCreateCompany || (!tree?.organisations || tree.organisations.length === 0)}
-                    title={!tree?.organisations || tree.organisations.length === 0 ? "Créez d'abord une organisation" : ""}
+                    disabled={!canCreateCompany || (!tree?.workspaces || tree.workspaces.length === 0)}
+                    title={!tree?.workspaces || tree.workspaces.length === 0 ? "Créez d'abord une workspace" : ""}
                   >
                     <Plus className="h-4 w-4" />
                     Groupe
@@ -1431,8 +1431,8 @@ export default function StructurePage() {
                   <Button
                     onClick={() => setWizardOpen(true)}
                     className="h-10 gap-2 bg-primary text-white hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                    disabled={!canCreateCompany || (!tree?.organisations || tree.organisations.length === 0)}
-                    title={!tree?.organisations || tree.organisations.length === 0 ? "Créez d'abord une organisation" : ""}
+                    disabled={!canCreateCompany || (!tree?.workspaces || tree.workspaces.length === 0)}
+                    title={!tree?.workspaces || tree.workspaces.length === 0 ? "Créez d'abord une workspace" : ""}
                   >
                     <Plus className="h-4 w-4" />
                     Entreprise
@@ -1442,8 +1442,8 @@ export default function StructurePage() {
                   <Button
                     onClick={() => setAddBUStandaloneOpen(true)}
                     className="h-10 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                    disabled={!canCreateCompany || (!tree?.organisations || tree.organisations.length === 0)}
-                    title={!tree?.organisations || tree.organisations.length === 0 ? "Créez d'abord une organisation" : ""}
+                    disabled={!canCreateCompany || (!tree?.workspaces || tree.workspaces.length === 0)}
+                    title={!tree?.workspaces || tree.workspaces.length === 0 ? "Créez d'abord une workspace" : ""}
                   >
                     <Plus className="h-4 w-4" />
                     Business Unit
@@ -1570,7 +1570,7 @@ export default function StructurePage() {
                 </div>
               )}
 
-              {tree?.organisations && tree.organisations.length > 0 && (
+              {tree?.workspaces && tree.workspaces.length > 0 && (
                 <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50/30 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
                   <div className="flex items-center">
                     Nom
@@ -1614,11 +1614,11 @@ export default function StructurePage() {
                   }
 
                   const indent =
-                    node.type === "organisation" ? 0 :
+                    node.type === "workspace" ? 0 :
                     node.type === "group" ? 1 : 
                     node.type === "company" ? 2 : 3;
                   const Icon =
-                    node.type === "organisation"
+                    node.type === "workspace"
                       ? Building2
                       : node.type === "group"
                         ? Layers
@@ -1626,7 +1626,7 @@ export default function StructurePage() {
                           ? Building
                           : Briefcase;
                   const iconColor =
-                    node.type === "organisation"
+                    node.type === "workspace"
                       ? "text-purple-600"
                       : node.type === "group"
                         ? "text-blue-600"
@@ -1634,15 +1634,15 @@ export default function StructurePage() {
                           ? "text-slate-700"
                           : "text-emerald-600";
                   const typeText =
-                    node.type === "organisation"
-                      ? "Organisation"
+                    node.type === "workspace"
+                      ? "Workspace"
                       : node.type === "group"
                         ? "Groupe"
                         : node.type === "company"
                           ? "Entreprise"
                           : "BU";
                   const typeBadgeColor =
-                    node.type === "organisation"
+                    node.type === "workspace"
                       ? "bg-purple-50 text-purple-700 border-purple-100"
                       : node.type === "group"
                         ? "bg-blue-50 text-blue-700 border-blue-100"
@@ -1761,7 +1761,7 @@ export default function StructurePage() {
                                 >
                                   Voir / Modifier
                                 </DropdownMenuItem>
-                                {node.type === "organisation" && (
+                                {node.type === "workspace" && (
                                   <DropdownMenuItem
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -1771,7 +1771,7 @@ export default function StructurePage() {
                                         mainActivity: "",
                                         fiscal_year_start: "",
                                         fiscal_year_end: "",
-                                        organisationId: node.id,
+                                        workspaceId: node.id,
                                       });
                                       setAddGroupOpen(true);
                                     }}
@@ -1901,7 +1901,7 @@ export default function StructurePage() {
           <DialogHeader className="flex-row items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <span className="text-lg">
-                {selectedNode?.type === "organisation"
+                {selectedNode?.type === "workspace"
                   ? "🏢"
                   : selectedNode?.type === "group"
                     ? "📁"
@@ -1922,22 +1922,22 @@ export default function StructurePage() {
               )}
           </DialogHeader>
 
-          {selectedNode?.type === "organisation" && (
+          {selectedNode?.type === "workspace" && (
             <div className="space-y-4 py-2">
               <div className="space-y-2">
-                <h3 className="text-sm font-medium text-slate-700">Informations de l&apos;organisation</h3>
+                <h3 className="text-sm font-medium text-slate-700">Informations de l&apos;workspace</h3>
                 <div className="bg-slate-50 rounded-lg p-4 space-y-4">
                   <Field
                     label="Nom"
-                    value={editOrganisation.name}
+                    value={editworkspace.name}
                     editing={editing}
-                    onChange={(v) => setEditOrganisation((f) => ({ ...f, name: v }))}
+                    onChange={(v) => setEditworkspace((f) => ({ ...f, name: v }))}
                   />
                   <FieldTextarea
                     label="Description"
-                    value={editOrganisation.description}
+                    value={editworkspace.description}
                     editing={editing}
-                    onChange={(v) => setEditOrganisation((f) => ({ ...f, description: v }))}
+                    onChange={(v) => setEditworkspace((f) => ({ ...f, description: v }))}
                   />
                   <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -1945,14 +1945,14 @@ export default function StructurePage() {
                   </label>
                   {editing ? (
                     <FileUpload
-                      key={editOrganisation.logo}
-                      value={editOrganisation.logo}
+                      key={editworkspace.logo}
+                      value={editworkspace.logo}
                       onChange={(file) => {
-                        setEditOrganisationLogoFile(file);
+                        setEditworkspaceLogoFile(file);
                         if (file) {
-                          setEditOrganisation((f) => ({ ...f, logo: file.name }));
+                          setEditworkspace((f) => ({ ...f, logo: file.name }));
                         } else {
-                          setEditOrganisation((f) => ({ ...f, logo: "" }));
+                          setEditworkspace((f) => ({ ...f, logo: "" }));
                         }
                       }}
                       placeholder="Uploader une image de logo"
@@ -1960,31 +1960,31 @@ export default function StructurePage() {
                     />
                   ) : (
                     <div className="space-y-2">
-                      {editOrganisation.logo ? (
+                      {editworkspace.logo ? (
                         <>
-                          {console.log('Logo à afficher:', editOrganisation.logo)}
-                          {editOrganisation.logo.startsWith('http') ? (
+                          {console.log('Logo à afficher:', editworkspace.logo)}
+                          {editworkspace.logo.startsWith('http') ? (
                             <img 
-                              src={editOrganisation.logo} 
-                              alt="Logo de l'organisation" 
+                              src={editworkspace.logo} 
+                              alt="Logo de l'workspace" 
                               className="h-16 w-16 object-cover rounded-lg border border-slate-200"
                               onError={(e) => {
-                                console.error('Erreur chargement image URL:', editOrganisation.logo);
+                                console.error('Erreur chargement image URL:', editworkspace.logo);
                                 e.currentTarget.style.display = 'none';
                               }}
                             />
                           ) : (
                             <img 
-                              src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editOrganisation.logo}`} 
-                              alt="Logo de l'organisation" 
+                              src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`} 
+                              alt="Logo de l'workspace" 
                               className="h-16 w-16 object-cover rounded-lg border border-slate-200"
                               onError={(e) => {
-                                console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editOrganisation.logo}`);
+                                console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`);
                                 e.currentTarget.style.display = 'none';
                               }}
                             />
                           )}
-                          <p className="text-xs text-slate-500">{editOrganisation.logo}</p>
+                          <p className="text-xs text-slate-500">{editworkspace.logo}</p>
                         </>
                       ) : (
                         <p className="text-sm font-medium text-primary">—</p>
@@ -1994,21 +1994,21 @@ export default function StructurePage() {
                 </div>
                   <FieldTextarea
                     label="Adresse"
-                    value={editOrganisation.address}
+                    value={editworkspace.address}
                     editing={editing}
-                    onChange={(v) => setEditOrganisation((f) => ({ ...f, address: v }))}
+                    onChange={(v) => setEditworkspace((f) => ({ ...f, address: v }))}
                   />
                   <Field
                     label="Email de contact"
-                    value={editOrganisation.contact_email}
+                    value={editworkspace.contact_email}
                     editing={editing}
-                    onChange={(v) => setEditOrganisation((f) => ({ ...f, contact_email: v }))}
+                    onChange={(v) => setEditworkspace((f) => ({ ...f, contact_email: v }))}
                   />
                   <Field
                     label="Téléphone de contact"
-                    value={editOrganisation.contact_phone}
+                    value={editworkspace.contact_phone}
                     editing={editing}
-                    onChange={(v) => setEditOrganisation((f) => ({ ...f, contact_phone: v }))}
+                    onChange={(v) => setEditworkspace((f) => ({ ...f, contact_phone: v }))}
                   />
                                   </div>
               </div>
@@ -2582,17 +2582,17 @@ export default function StructurePage() {
           <div className="space-y-4 py-2">
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Organisation *
+                Workspace *
               </label>
               <Select
-                value={addGroupForm.organisationId}
+                value={addGroupForm.workspaceId}
                 onValueChange={(value) =>
-                  setAddGroupForm((f) => ({ ...f, organisationId: value }))
+                  setAddGroupForm((f) => ({ ...f, workspaceId: value }))
                 }
                 className="h-11"
               >
-                <option value="">Sélectionner une organisation</option>
-                {tree?.organisations?.map((org) => (
+                <option value="">Sélectionner une workspace</option>
+                {tree?.workspaces?.map((org) => (
                   <option key={org.id} value={org.id}>
                     {org.name}
                   </option>
@@ -2676,7 +2676,7 @@ export default function StructurePage() {
             </Button>
             <Button
               onClick={handleCreateGroup}
-              disabled={addGroupLoading || !addGroupForm.name.trim() || !addGroupForm.organisationId.trim()}
+              disabled={addGroupLoading || !addGroupForm.name.trim() || !addGroupForm.workspaceId.trim()}
             >
               {addGroupLoading ? "Création..." : "Créer"}
             </Button>
@@ -2959,13 +2959,13 @@ export default function StructurePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Organisation Modal */}
-      <Dialog open={addOrganisationOpen} onOpenChange={setAddOrganisationOpen}>
+      {/* Add Workspace Modal */}
+      <Dialog open={addworkspaceOpen} onOpenChange={setAddworkspaceOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-purple-600" />
-              Créer l&apos;organisation
+              Créer l&apos;workspace
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -2974,11 +2974,11 @@ export default function StructurePage() {
                 Nom *
               </label>
               <Input
-                value={addOrganisationForm.name}
+                value={addworkspaceForm.name}
                 onChange={(e) =>
-                  setAddOrganisationForm((f) => ({ ...f, name: e.target.value }))
+                  setAddworkspaceForm((f) => ({ ...f, name: e.target.value }))
                 }
-                placeholder="Nom de l&apos;organisation"
+                placeholder="Nom de l&apos;workspace"
               />
             </div>
             <div className="space-y-2">
@@ -2986,14 +2986,14 @@ export default function StructurePage() {
                 Description
               </label>
               <Textarea
-                value={addOrganisationForm.description}
+                value={addworkspaceForm.description}
                 onChange={(e) =>
-                  setAddOrganisationForm((f) => ({
+                  setAddworkspaceForm((f) => ({
                     ...f,
                     description: e.target.value,
                   }))
                 }
-                placeholder="Description de l&apos;organisation"
+                placeholder="Description de l&apos;workspace"
                 rows={3}
               />
             </div>
@@ -3024,11 +3024,11 @@ export default function StructurePage() {
                 Adresse
               </label>
               <Input
-                value={addOrganisationForm.address}
+                value={addworkspaceForm.address}
                 onChange={(e) =>
-                  setAddOrganisationForm((f) => ({ ...f, address: e.target.value }))
+                  setAddworkspaceForm((f) => ({ ...f, address: e.target.value }))
                 }
-                placeholder="Adresse de l&apos;organisation"
+                placeholder="Adresse de l&apos;workspace"
               />
             </div>
             <div className="space-y-2">
@@ -3037,9 +3037,9 @@ export default function StructurePage() {
               </label>
               <Input
                 type="email"
-                value={addOrganisationForm.contact_email}
+                value={addworkspaceForm.contact_email}
                 onChange={(e) =>
-                  setAddOrganisationForm((f) => ({ ...f, contact_email: e.target.value }))
+                  setAddworkspaceForm((f) => ({ ...f, contact_email: e.target.value }))
                 }
                 placeholder="email@exemple.com"
               />
@@ -3049,9 +3049,9 @@ export default function StructurePage() {
                 Téléphone de contact
               </label>
               <Input
-                value={addOrganisationForm.contact_phone}
+                value={addworkspaceForm.contact_phone}
                 onChange={(e) =>
-                  setAddOrganisationForm((f) => ({ ...f, contact_phone: e.target.value }))
+                  setAddworkspaceForm((f) => ({ ...f, contact_phone: e.target.value }))
                 }
                 placeholder="+33 1 23 45 67 89"
               />
@@ -3061,7 +3061,7 @@ export default function StructurePage() {
             <Button 
               variant="outline" 
               onClick={() => {
-                setAddOrganisationOpen(false);
+                setAddworkspaceOpen(false);
                 setLogoFile(null);
                 setLogoPreview("");
               }}
@@ -3069,11 +3069,11 @@ export default function StructurePage() {
               Annuler
             </Button>
             <Button
-              onClick={handleCreateOrganisation}
-              disabled={addOrganisationLoading || !addOrganisationForm.name.trim()}
+              onClick={handleCreateworkspace}
+              disabled={addworkspaceLoading || !addworkspaceForm.name.trim()}
               className="bg-purple-600 text-white hover:bg-purple-700"
             >
-              {addOrganisationLoading ? "Création..." : "Créer"}
+              {addworkspaceLoading ? "Création..." : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3085,9 +3085,9 @@ export default function StructurePage() {
         groups={groupList.map((g) => ({ 
           id: g.id, 
           name: g.name, 
-          organisationId: g.organisationId || "" 
+          workspaceId: g.workspaceId || "" 
         }))}
-        organisations={tree?.organisations?.map((o) => ({ id: o.id, name: o.name })) || []}
+        workspaces={tree?.workspaces?.map((o) => ({ id: o.id, name: o.name })) || []}
         onSubmit={handleCreateCompany}
       />
     </AppLayout>

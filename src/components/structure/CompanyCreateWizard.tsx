@@ -39,7 +39,7 @@ export type CompanyWizardForm = {
   siret: string;
   address: string;
   groupId: string;
-  organisationId: string;
+  workspaceId: string;
   ape_code: string;
   main_activity: string;
   size: string;
@@ -53,7 +53,7 @@ const defaultForm: CompanyWizardForm = {
   siret: "",
   address: "",
   groupId: "",
-  organisationId: "",
+  workspaceId: "",
   ape_code: "",
   main_activity: "",
   size: "SMALL",
@@ -63,29 +63,29 @@ const defaultForm: CompanyWizardForm = {
 type CompanyCreateWizardProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  groups: { id: string; name: string; organisationId: string }[];
-  organisations: { id: string; name: string }[];
+  groups: { id: string; name: string; workspaceId: string }[];
+  workspaces: { id: string; name: string }[];
   onSubmit: (data: CompanyWizardForm) => Promise<void>;
 };
 
-export function CompanyCreateWizard({ open, onOpenChange, groups, organisations, onSubmit }: CompanyCreateWizardProps) {
+export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, onSubmit }: CompanyCreateWizardProps) {
   const [step, setStep] = React.useState(1);
   const [form, setForm] = React.useState<CompanyWizardForm>(defaultForm);
   const [loading, setLoading] = React.useState(false);
 
-  // Fonction pour trouver l'organisation d'un groupe
-  const getOrganisationFromGroup = React.useCallback((groupId: string) => {
+  // Fonction pour trouver l'workspace d'un groupe
+  const getworkspaceFromGroup = React.useCallback((groupId: string) => {
     const group = groups.find(g => g.id === groupId);
-    return group?.organisationId || "";
+    return group?.workspaceId || "";
   }, [groups]);
 
   const handleGroupChange = React.useCallback((groupId: string) => {
     setForm((f) => ({ 
       ...f, 
       groupId,
-      organisationId: groupId ? getOrganisationFromGroup(groupId) : ""
+      workspaceId: groupId ? getworkspaceFromGroup(groupId) : ""
     }));
-  }, [getOrganisationFromGroup]);
+  }, [getworkspaceFromGroup]);
 
   const reset = React.useCallback(() => {
     setStep(1);
@@ -116,7 +116,7 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, organisations,
   };
 
   const canNextStep1 = form.name.trim() && form.fiscal_year_start && form.fiscal_year_end;
-  const canNextStep2 = form.siret.trim() && validateSiret(form.siret) && (form.groupId || form.organisationId); // Organisation requise si pas de groupe
+  const canNextStep2 = form.siret.trim() && validateSiret(form.siret) && (form.groupId || form.workspaceId); // Workspace requise si pas de groupe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -228,14 +228,14 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, organisations,
             </div>
             {!form.groupId && (
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">Organisation *</label>
+                <label className="mb-1 block text-xs text-muted-foreground">Workspace *</label>
                 <Select
-                  value={form.organisationId}
-                  onValueChange={(v) => setForm((f) => ({ ...f, organisationId: v }))}
+                  value={form.workspaceId}
+                  onValueChange={(v) => setForm((f) => ({ ...f, workspaceId: v }))}
                   required
                 >
-                  <option value="">Sélectionner une organisation</option>
-                  {organisations.map((org) => (
+                  <option value="">Sélectionner une workspace</option>
+                  {workspaces.map((org) => (
                     <option key={org.id} value={org.id}>{org.name}</option>
                   ))}
                 </Select>

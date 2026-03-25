@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/apiClient";
 
-export type Organisation = {
+export type Workspace = {
   id: string;
   name: string;
   description?: string;
@@ -18,8 +18,8 @@ export type Organisation = {
   } | null;
 };
 
-export function useOrganisations() {
-  const [list, setList] = useState<Organisation[]>([]);
+export function useWorkspaces() {
+  const [list, setList] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,12 +27,12 @@ export function useOrganisations() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch<Organisation[]>("/organisations", {
+      const data = await apiFetch<Workspace[]>("/workspaces", {
         snackbar: { showSuccess: false, showError: true },
       });
       setList(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur lors du chargement des organisations");
+      setError(e instanceof Error ? e.message : "Erreur lors du chargement des workspaces");
       setList([]);
     } finally {
       setLoading(false);

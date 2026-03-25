@@ -10,7 +10,7 @@ import { useRouter } from "next/router";
 
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 
-import { useOrganisationContext } from "@/providers/OrganisationProvider";
+import { useWorkspaceContext } from "@/providers/WorkspaceProvider";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 
@@ -60,9 +60,9 @@ type AppLayoutProps = {
 
   companies?: { id: string; name: string }[];
 
-  /** Optional: organisations for organisation display */
+  /** Optional: workspaces for workspace display */
 
-  organisations?: { id: string; name: string }[];
+  workspaces?: { id: string; name: string }[];
 
   selectedCompanyId?: string;
 
@@ -72,13 +72,13 @@ type AppLayoutProps = {
 
 
 
-export function AppLayout({ title, children, companies = [], organisations = [], selectedCompanyId = "", onCompanyChange }: AppLayoutProps) {
+export function AppLayout({ title, children, companies = [], workspaces = [], selectedCompanyId = "", onCompanyChange }: AppLayoutProps) {
 
   const router = useRouter();
 
   const { user, logout } = usePermissionsContext();
 
-  const { organisations: globalOrganisations } = useOrganisationContext();
+  const { workspaces: globalworkspaces } = useWorkspaceContext();
 
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
 
@@ -88,25 +88,25 @@ export function AppLayout({ title, children, companies = [], organisations = [],
 
 
 
-  // Récupérer le nom de l'organisation pour les rôles non-admin
+  // Récupérer le nom de l'workspace pour les rôles non-admin
 
-  const organisationName = React.useMemo(() => {
+  const workspaceName = React.useMemo(() => {
 
     if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
 
-      return null; // Les admins voient déjà toutes les organisations dans la structure
+      return null; // Les admins voient déjà toutes les workspaces dans la structure
 
     }
 
-    // Utiliser les organisations globales si disponibles, sinon utiliser les props
+    // Utiliser les workspaces globales si disponibles, sinon utiliser les props
 
-    const orgsToUse = globalOrganisations.length > 0 ? globalOrganisations : organisations;
+    const orgsToUse = globalworkspaces.length > 0 ? globalworkspaces : workspaces;
 
-    // Pour les autres rôles (HEAD_MANAGER, MANAGER, END_USER), utiliser la première organisation de la liste
+    // Pour les autres rôles (HEAD_MANAGER, MANAGER, END_USER), utiliser la première workspace de la liste
 
     return orgsToUse && orgsToUse.length > 0 ? orgsToUse[0].name : null;
 
-  }, [user?.role, organisations, globalOrganisations]);
+  }, [user?.role, workspaces, globalworkspaces]);
 
 
 
@@ -182,7 +182,7 @@ export function AppLayout({ title, children, companies = [], organisations = [],
 
                 </span>
 
-                {organisationName && (
+                {workspaceName && (
 
                   <>
 
@@ -190,7 +190,7 @@ export function AppLayout({ title, children, companies = [], organisations = [],
 
                     <span className="text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
                       <Building className="h-3 w-3" />
-                      {organisationName}
+                      {workspaceName}
                     </span>
 
                   </>
@@ -445,7 +445,7 @@ export function AppLayout({ title, children, companies = [], organisations = [],
 
               <span className="font-medium text-primary line-clamp-1">{title}</span>
 
-              {organisationName && (
+              {workspaceName && (
 
                 <>
 
@@ -453,7 +453,7 @@ export function AppLayout({ title, children, companies = [], organisations = [],
 
                   <span className="text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
                     <Building className="h-3 w-3" />
-                    {organisationName}
+                    {workspaceName}
                   </span>
 
                 </>

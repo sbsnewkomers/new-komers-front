@@ -4,7 +4,7 @@ import type { AppProps } from "next/app";
 
 import { PermissionsProvider, usePermissionsContext } from "@/permissions/PermissionsProvider";
 
-import { OrganisationProvider } from "@/providers/OrganisationProvider";
+import { WorkspaceProvider } from "@/providers/WorkspaceProvider";
 
 import { SnackbarProvider } from "@/ui/SnackbarProvider";
 
@@ -70,7 +70,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
           <PermissionsProvider>
 
-            <OrganisationProvider>
+            <WorkspaceProvider>
 
               <AuthBootstrapGate>
 
@@ -78,7 +78,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
               </AuthBootstrapGate>
 
-            </OrganisationProvider>
+            </WorkspaceProvider>
 
           </PermissionsProvider>
 

@@ -20,7 +20,7 @@ export type TreeGroup = {
   companies: TreeCompany[];
 };
 
-export type TreeOrganisation = {
+export type Treeworkspace = {
   id: string;
   name: string;
   description?: string;
@@ -40,7 +40,7 @@ export type TreeOrganisation = {
 };
 
 export type StructureTree = {
-  organisations?: TreeOrganisation[];
+  workspaces?: Treeworkspace[];
   groups?: TreeGroup[];
   standaloneCompanies?: TreeCompany[];
 };

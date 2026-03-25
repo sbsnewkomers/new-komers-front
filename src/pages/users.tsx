@@ -54,7 +54,7 @@ import {
   nodeTypeLabel,
 } from "@/lib/permissionsAdminApi";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
-import { useGroups, useCompanies, useBusinessUnits, useOrganisations } from "@/hooks";
+import { useGroups, useCompanies, useBusinessUnits, useWorkspaces } from "@/hooks";
 import { fetchStructureTree, type StructureTree } from "@/lib/structureApi";
 import {
   Plus,
@@ -129,7 +129,7 @@ export default function UsersPage() {
   const groupsHook = useGroups();
   const companiesHook = useCompanies();
   const busHook = useBusinessUnits(companyIdForBU || null);
-  const organisationsHook = useOrganisations();
+  const workspacesHook = useWorkspaces();
   const [structureTree, setStructureTree] = useState<StructureTree | null>(null);
 
   // ── Invitations state ──
@@ -173,10 +173,10 @@ export default function UsersPage() {
   useEffect(() => { if (companyIdForBU && permOpen) busHook.fetchList(); }, [companyIdForBU, permOpen]);
   useEffect(() => { if (perimCompanyId && inviteOpen) perimBusHook.fetchList(); }, [perimCompanyId, inviteOpen]);
   useEffect(() => { if (inviteOpen) {
-    // Load structure tree for organisations and standalone companies
+    // Load structure tree for workspaces and standalone companies
     fetchStructureTree().then(data => {
       console.log("Complete structure tree:", data);
-      console.log("Structure tree organisations:", data?.organisations);
+      console.log("Structure tree workspaces:", data?.workspaces);
       console.log("Structure tree standalone companies:", data?.standaloneCompanies);
       console.log("Structure tree groups:", data?.groups);
       setStructureTree(data);
@@ -186,7 +186,7 @@ export default function UsersPage() {
   // Reset perimeter type when role changes
   useEffect(() => {
     if (inviteForm.role === "HEAD_MANAGER") {
-      setPerimNodeType("ORGANISATION");
+      setPerimNodeType("WORKSPACE");
     } else {
       setPerimNodeType("GROUP");
     }
@@ -209,8 +209,8 @@ export default function UsersPage() {
   const openInviteModal = () => {
     setInviteForm({ email: "", firstName: "", lastName: "", role: defaultInviteRole });
     setInvitePerimeter([]);
-    // Pour HEAD_MANAGER, le type par défaut est ORGANISATION
-    const defaultNodeType = defaultInviteRole === "HEAD_MANAGER" ? "ORGANISATION" : "GROUP";
+    // Pour HEAD_MANAGER, le type par défaut est WORKSPACE
+    const defaultNodeType = defaultInviteRole === "HEAD_MANAGER" ? "WORKSPACE" : "GROUP";
     setPerimNodeType(defaultNodeType);
     setPerimNodeId("");
     setPerimCompanyId("");
@@ -236,7 +236,7 @@ export default function UsersPage() {
     else if (perimNodeType === "COMPANY") {
       // Combine all company sources
       const hookCompanies = companiesHook.list ?? [];
-      const orgStandaloneCompanies = structureTree?.organisations?.flatMap(org => org.standaloneCompanies) ?? [];
+      const orgStandaloneCompanies = structureTree?.workspaces?.flatMap(org => org.standaloneCompanies) ?? [];
       const groupCompanies = structureTree?.groups?.flatMap(g => g.companies) ?? [];
       const completelyStandaloneCompanies = structureTree?.standaloneCompanies ?? [];
       
@@ -247,19 +247,19 @@ export default function UsersPage() {
       
       options = [...hookCompanies, ...orgStandaloneCompanies, ...groupCompanies, ...completelyStandaloneCompanies];
     }
-    else if (perimNodeType === "ORGANISATION") {
-      // Try both sources: useOrganisations hook and structureTree
-      const hookOrgs = organisationsHook.list ?? [];
-      const treeOrgs = structureTree?.organisations ?? [];
-      console.log("Hook organisations:", hookOrgs);
-      console.log("Tree organisations:", treeOrgs);
+    else if (perimNodeType === "WORKSPACE") {
+      // Try both sources: useworkspaces hook and structureTree
+      const hookOrgs = workspacesHook.list ?? [];
+      const treeOrgs = structureTree?.workspaces ?? [];
+      console.log("Hook workspaces:", hookOrgs);
+      console.log("Tree workspaces:", treeOrgs);
       options = hookOrgs.length > 0 ? hookOrgs : treeOrgs;
     }
     else options = perimBusHook.list ?? [];
     
     console.log(`perimNodeType: ${perimNodeType}, final options:`, options);
     return options;
-  }, [perimNodeType, groupsHook.list, companiesHook.list, structureTree, perimBusHook.list, organisationsHook.list]);
+  }, [perimNodeType, groupsHook.list, companiesHook.list, structureTree, perimBusHook.list, workspacesHook.list]);
 
   const perimNodeName = (item: DataPerimeterItem) => {
     if (item.nodeType === "GROUP") {
@@ -269,14 +269,14 @@ export default function UsersPage() {
     if (item.nodeType === "COMPANY") {
       // Check all company sources
       const hookCompanies = companiesHook.list ?? [];
-      const orgStandaloneCompanies = structureTree?.organisations?.flatMap(org => org.standaloneCompanies) ?? [];
+      const orgStandaloneCompanies = structureTree?.workspaces?.flatMap(org => org.standaloneCompanies) ?? [];
       const groupCompanies = structureTree?.groups?.flatMap(g => g.companies) ?? [];
       const completelyStandaloneCompanies = structureTree?.standaloneCompanies ?? [];
       const allCompanies = [...hookCompanies, ...orgStandaloneCompanies, ...groupCompanies, ...completelyStandaloneCompanies];
       return allCompanies.find((n: { id: string; name: string }) => n.id === item.nodeId)?.name ?? item.nodeId.slice(0, 8);
     }
-    if (item.nodeType === "ORGANISATION") {
-      const list = structureTree?.organisations ?? [];
+    if (item.nodeType === "WORKSPACE") {
+      const list = structureTree?.workspaces ?? [];
       return list.find((n: { id: string; name: string }) => n.id === item.nodeId)?.name ?? item.nodeId.slice(0, 8);
     }
     // BUSINESS_UNIT
@@ -285,7 +285,7 @@ export default function UsersPage() {
   };
 
   const nodeTypeLabelFr = (t: NodeType) =>
-    t === "GROUP" ? "Groupe" : t === "COMPANY" ? "Entreprise" : t === "ORGANISATION" ? "Organisation" : "Unité d'affaires";
+    t === "GROUP" ? "Groupe" : t === "COMPANY" ? "Entreprise" : t === "WORKSPACE" ? "Workspace" : "Unité d'affaires";
 
   const sendInviteRequest = async () => {
     setInviteLoading(true);
@@ -851,7 +851,7 @@ export default function UsersPage() {
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">P&eacute;rim&egrave;tre d&rsquo;acc&egrave;s</label>
                 <p className="mb-3 text-xs text-slate-400">
                   {inviteForm.role === "HEAD_MANAGER" 
-                    ? "Définir l'organisation accessible (obligatoire). L'héritage hiérarchique s'applique automatiquement."
+                    ? "Définir l'workspace accessible (obligatoire). L'héritage hiérarchique s'applique automatiquement."
                     : "Définir les groupes, entreprises ou BU accessibles. L'héritage hiérarchique s'applique automatiquement."
                   }
                 </p>
@@ -882,12 +882,12 @@ export default function UsersPage() {
                         className="h-8 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
                       >
                         {inviteForm.role === "HEAD_MANAGER" ? (
-                          <option value="ORGANISATION">Organisation</option>
+                          <option value="WORKSPACE">Workspace</option>
                         ) : (
                           <>
                             <option value="GROUP">Groupe</option>
                             <option value="COMPANY">Entreprise</option>
-                            <option value="ORGANISATION">Organisation</option>
+                            <option value="WORKSPACE">Workspace</option>
                             <option value="BUSINESS_UNIT">Unit&eacute; d&rsquo;affaires</option>
                           </>
                         )}

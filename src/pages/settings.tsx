@@ -118,7 +118,7 @@ export default function SettingsPage() {
                 <CardHeader className="flex-row items-center justify-between space-y-0">
                   <div className="flex items-center gap-2">
                     <Building2 className="h-5 w-5 text-slate-700" />
-                    <CardTitle className="text-base">Organisation</CardTitle>
+                    <CardTitle className="text-base">Workspace</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -129,7 +129,7 @@ export default function SettingsPage() {
                     <Input
                       value={orgName}
                       onChange={(e) => setOrgName(e.target.value)}
-                      placeholder="Nom de l'organisation"
+                      placeholder="Nom de l'workspace"
                     />
                   </div>
                   <div className="space-y-1.5">
