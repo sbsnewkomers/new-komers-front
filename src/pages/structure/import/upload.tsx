@@ -13,7 +13,7 @@ import {
   ImportExecuteResult,
   validateStructureFile,
 } from "@/lib/structureImportApi";
-import { Upload } from "lucide-react";
+import { Download, Upload } from "lucide-react";
 
 export default function StructureImportUploadPage() {
   const { accessToken } = usePermissionsContext();
@@ -177,6 +177,7 @@ export default function StructureImportUploadPage() {
               variant="default"
               onClick={handleDownloadTemplate}
             >
+              <Download className="h-5 w-5 text-white" />
               Télécharger le modèle Excel
             </Button>
           </div>
