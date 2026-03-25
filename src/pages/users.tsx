@@ -173,9 +173,12 @@ export default function UsersPage() {
   useEffect(() => { if (companyIdForBU && permOpen) busHook.fetchList(); }, [companyIdForBU, permOpen]);
   useEffect(() => { if (perimCompanyId && inviteOpen) perimBusHook.fetchList(); }, [perimCompanyId, inviteOpen]);
   useEffect(() => { if (inviteOpen) {
-    // Load structure tree for organisations
+    // Load structure tree for organisations and standalone companies
     fetchStructureTree().then(data => {
+      console.log("Complete structure tree:", data);
       console.log("Structure tree organisations:", data?.organisations);
+      console.log("Structure tree standalone companies:", data?.standaloneCompanies);
+      console.log("Structure tree groups:", data?.groups);
       setStructureTree(data);
     });
   } }, [inviteOpen]);
@@ -230,7 +233,20 @@ export default function UsersPage() {
   const perimNodeOptions = useMemo(() => {
     let options;
     if (perimNodeType === "GROUP") options = groupsHook.list ?? [];
-    else if (perimNodeType === "COMPANY") options = companiesHook.list ?? [];
+    else if (perimNodeType === "COMPANY") {
+      // Combine all company sources
+      const hookCompanies = companiesHook.list ?? [];
+      const orgStandaloneCompanies = structureTree?.organisations?.flatMap(org => org.standaloneCompanies) ?? [];
+      const groupCompanies = structureTree?.groups?.flatMap(g => g.companies) ?? [];
+      const completelyStandaloneCompanies = structureTree?.standaloneCompanies ?? [];
+      
+      console.log("Hook companies:", hookCompanies);
+      console.log("Org standalone companies:", orgStandaloneCompanies);
+      console.log("Group companies:", groupCompanies);
+      console.log("Completely standalone companies:", completelyStandaloneCompanies);
+      
+      options = [...hookCompanies, ...orgStandaloneCompanies, ...groupCompanies, ...completelyStandaloneCompanies];
+    }
     else if (perimNodeType === "ORGANISATION") {
       // Try both sources: useOrganisations hook and structureTree
       const hookOrgs = organisationsHook.list ?? [];
@@ -246,14 +262,25 @@ export default function UsersPage() {
   }, [perimNodeType, groupsHook.list, companiesHook.list, structureTree, perimBusHook.list, organisationsHook.list]);
 
   const perimNodeName = (item: DataPerimeterItem) => {
-    const list =
-      item.nodeType === "GROUP"
-        ? (groupsHook.list ?? [])
-        : item.nodeType === "COMPANY"
-          ? (companiesHook.list ?? [])
-          : item.nodeType === "ORGANISATION"
-            ? (structureTree?.organisations ?? [])
-            : (perimBusHook.list ?? []);
+    if (item.nodeType === "GROUP") {
+      const list = groupsHook.list ?? [];
+      return list.find((n: { id: string; name: string }) => n.id === item.nodeId)?.name ?? item.nodeId.slice(0, 8);
+    }
+    if (item.nodeType === "COMPANY") {
+      // Check all company sources
+      const hookCompanies = companiesHook.list ?? [];
+      const orgStandaloneCompanies = structureTree?.organisations?.flatMap(org => org.standaloneCompanies) ?? [];
+      const groupCompanies = structureTree?.groups?.flatMap(g => g.companies) ?? [];
+      const completelyStandaloneCompanies = structureTree?.standaloneCompanies ?? [];
+      const allCompanies = [...hookCompanies, ...orgStandaloneCompanies, ...groupCompanies, ...completelyStandaloneCompanies];
+      return allCompanies.find((n: { id: string; name: string }) => n.id === item.nodeId)?.name ?? item.nodeId.slice(0, 8);
+    }
+    if (item.nodeType === "ORGANISATION") {
+      const list = structureTree?.organisations ?? [];
+      return list.find((n: { id: string; name: string }) => n.id === item.nodeId)?.name ?? item.nodeId.slice(0, 8);
+    }
+    // BUSINESS_UNIT
+    const list = perimBusHook.list ?? [];
     return list.find((n: { id: string; name: string }) => n.id === item.nodeId)?.name ?? item.nodeId.slice(0, 8);
   };
 
