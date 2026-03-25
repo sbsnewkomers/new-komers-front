@@ -2,7 +2,7 @@ import { apiFetch } from "@/lib/apiClient";
 
 export type InvitationStatus = "PENDING" | "ACCEPTED" | "REJECTED";
 export type UserRole = "SUPER_ADMIN" | "ADMIN" | "HEAD_MANAGER" | "MANAGER" | "END_USER";
-export type NodeType = "GROUP" | "COMPANY" | "BUSINESS_UNIT";
+export type NodeType = "GROUP" | "COMPANY" | "BUSINESS_UNIT" | "ORGANISATION";
 
 export type DataPerimeterItem = {
   nodeType: NodeType;

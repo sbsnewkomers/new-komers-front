@@ -54,7 +54,8 @@ import {
   nodeTypeLabel,
 } from "@/lib/permissionsAdminApi";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
-import { useGroups, useCompanies, useBusinessUnits } from "@/hooks";
+import { useGroups, useCompanies, useBusinessUnits, useOrganisations } from "@/hooks";
+import { fetchStructureTree, type StructureTree } from "@/lib/structureApi";
 import {
   Plus,
   Search,
@@ -128,6 +129,8 @@ export default function UsersPage() {
   const groupsHook = useGroups();
   const companiesHook = useCompanies();
   const busHook = useBusinessUnits(companyIdForBU || null);
+  const organisationsHook = useOrganisations();
+  const [structureTree, setStructureTree] = useState<StructureTree | null>(null);
 
   // ── Invitations state ──
   const [invitations, setInvitations] = useState<InvitationItem[]>([]);
@@ -169,6 +172,24 @@ export default function UsersPage() {
   useEffect(() => { if (activeTab === "invitations") loadInvitations(); }, [activeTab, loadInvitations]);
   useEffect(() => { if (companyIdForBU && permOpen) busHook.fetchList(); }, [companyIdForBU, permOpen]);
   useEffect(() => { if (perimCompanyId && inviteOpen) perimBusHook.fetchList(); }, [perimCompanyId, inviteOpen]);
+  useEffect(() => { if (inviteOpen) {
+    // Load structure tree for organisations
+    fetchStructureTree().then(data => {
+      console.log("Structure tree organisations:", data?.organisations);
+      setStructureTree(data);
+    });
+  } }, [inviteOpen]);
+
+  // Reset perimeter type when role changes
+  useEffect(() => {
+    if (inviteForm.role === "HEAD_MANAGER") {
+      setPerimNodeType("ORGANISATION");
+    } else {
+      setPerimNodeType("GROUP");
+    }
+    setPerimNodeId("");
+    setPerimCompanyId("");
+  }, [inviteForm.role]);
 
   // ── Role-based invite options ──
   const currentRole = currentUser?.role as UserRole | undefined;
@@ -185,7 +206,9 @@ export default function UsersPage() {
   const openInviteModal = () => {
     setInviteForm({ email: "", firstName: "", lastName: "", role: defaultInviteRole });
     setInvitePerimeter([]);
-    setPerimNodeType("GROUP");
+    // Pour HEAD_MANAGER, le type par défaut est ORGANISATION
+    const defaultNodeType = defaultInviteRole === "HEAD_MANAGER" ? "ORGANISATION" : "GROUP";
+    setPerimNodeType(defaultNodeType);
     setPerimNodeId("");
     setPerimCompanyId("");
     groupsHook.fetchList();
@@ -205,10 +228,22 @@ export default function UsersPage() {
   };
 
   const perimNodeOptions = useMemo(() => {
-    if (perimNodeType === "GROUP") return groupsHook.list ?? [];
-    if (perimNodeType === "COMPANY") return companiesHook.list ?? [];
-    return perimBusHook.list ?? [];
-  }, [perimNodeType, groupsHook.list, companiesHook.list, perimBusHook.list]);
+    let options;
+    if (perimNodeType === "GROUP") options = groupsHook.list ?? [];
+    else if (perimNodeType === "COMPANY") options = companiesHook.list ?? [];
+    else if (perimNodeType === "ORGANISATION") {
+      // Try both sources: useOrganisations hook and structureTree
+      const hookOrgs = organisationsHook.list ?? [];
+      const treeOrgs = structureTree?.organisations ?? [];
+      console.log("Hook organisations:", hookOrgs);
+      console.log("Tree organisations:", treeOrgs);
+      options = hookOrgs.length > 0 ? hookOrgs : treeOrgs;
+    }
+    else options = perimBusHook.list ?? [];
+    
+    console.log(`perimNodeType: ${perimNodeType}, final options:`, options);
+    return options;
+  }, [perimNodeType, groupsHook.list, companiesHook.list, structureTree, perimBusHook.list, organisationsHook.list]);
 
   const perimNodeName = (item: DataPerimeterItem) => {
     const list =
@@ -216,12 +251,14 @@ export default function UsersPage() {
         ? (groupsHook.list ?? [])
         : item.nodeType === "COMPANY"
           ? (companiesHook.list ?? [])
-          : (perimBusHook.list ?? []);
-    return list.find((n) => n.id === item.nodeId)?.name ?? item.nodeId.slice(0, 8);
+          : item.nodeType === "ORGANISATION"
+            ? (structureTree?.organisations ?? [])
+            : (perimBusHook.list ?? []);
+    return list.find((n: { id: string; name: string }) => n.id === item.nodeId)?.name ?? item.nodeId.slice(0, 8);
   };
 
   const nodeTypeLabelFr = (t: NodeType) =>
-    t === "GROUP" ? "Groupe" : t === "COMPANY" ? "Entreprise" : "Unit\u00e9 d\u2019affaires";
+    t === "GROUP" ? "Groupe" : t === "COMPANY" ? "Entreprise" : t === "ORGANISATION" ? "Organisation" : "Unité d'affaires";
 
   const sendInviteRequest = async () => {
     setInviteLoading(true);
@@ -785,7 +822,12 @@ export default function UsersPage() {
             {inviteForm.role !== "ADMIN" && (
               <div>
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">P&eacute;rim&egrave;tre d&rsquo;acc&egrave;s</label>
-                <p className="mb-3 text-xs text-slate-400">D&eacute;finir les groupes, entreprises ou BU accessibles. L&rsquo;h&eacute;ritage hi&eacute;rarchique s&rsquo;applique automatiquement.</p>
+                <p className="mb-3 text-xs text-slate-400">
+                  {inviteForm.role === "HEAD_MANAGER" 
+                    ? "Définir l'organisation accessible (obligatoire). L'héritage hiérarchique s'applique automatiquement."
+                    : "Définir les groupes, entreprises ou BU accessibles. L'héritage hiérarchique s'applique automatiquement."
+                  }
+                </p>
 
                 {invitePerimeter.length > 0 && (
                   <ul className="mb-3 space-y-1.5">
@@ -812,9 +854,16 @@ export default function UsersPage() {
                         onChange={(e) => { setPerimNodeType(e.target.value as NodeType); setPerimNodeId(""); if (e.target.value !== "BUSINESS_UNIT") setPerimCompanyId(""); }}
                         className="h-8 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
                       >
-                        <option value="GROUP">Groupe</option>
-                        <option value="COMPANY">Entreprise</option>
-                        <option value="BUSINESS_UNIT">Unit&eacute; d&rsquo;affaires</option>
+                        {inviteForm.role === "HEAD_MANAGER" ? (
+                          <option value="ORGANISATION">Organisation</option>
+                        ) : (
+                          <>
+                            <option value="GROUP">Groupe</option>
+                            <option value="COMPANY">Entreprise</option>
+                            <option value="ORGANISATION">Organisation</option>
+                            <option value="BUSINESS_UNIT">Unit&eacute; d&rsquo;affaires</option>
+                          </>
+                        )}
                       </select>
                     </div>
                     {perimNodeType === "BUSINESS_UNIT" && (
@@ -839,7 +888,7 @@ export default function UsersPage() {
                         className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 disabled:opacity-50"
                       >
                         <option value="">Choisir&hellip;</option>
-                        {perimNodeOptions.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
+                        {perimNodeOptions.map((n: { id: string; name: string }) => <option key={n.id} value={n.id}>{n.name}</option>)}
                       </select>
                     </div>
                     <Button onClick={addPerimeterItem} disabled={!perimNodeId} className="h-8 px-3 text-xs">
@@ -857,7 +906,8 @@ export default function UsersPage() {
               disabled={
                 inviteLoading ||
                 !inviteForm.email ||
-                (inviteForm.role === "END_USER" && invitePerimeter.length === 0)
+                (inviteForm.role === "END_USER" && invitePerimeter.length === 0) ||
+                (inviteForm.role === "HEAD_MANAGER" && invitePerimeter.length === 0)
               }
             >
               {inviteLoading ? "Envoi\u2026" : "Envoyer l\u2019invitation"}
