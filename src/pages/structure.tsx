@@ -3082,7 +3082,11 @@ export default function StructurePage() {
       <CompanyCreateWizard
         open={wizardOpen}
         onOpenChange={setWizardOpen}
-        groups={groupList.filter((g) => g.organisationId).map((g) => ({ id: g.id, name: g.name, organisationId: g.organisationId! }))}
+        groups={groupList.map((g) => ({ 
+          id: g.id, 
+          name: g.name, 
+          organisationId: g.organisationId || "" 
+        }))}
         organisations={tree?.organisations?.map((o) => ({ id: o.id, name: o.name })) || []}
         onSubmit={handleCreateCompany}
       />
