@@ -79,6 +79,7 @@ type GroupFull = {
   fiscal_year_start: string;
   fiscal_year_end: string;
   mainActivity?: string;
+  logo?: string;
 };
 
 type workspaceFull = {
@@ -262,12 +263,14 @@ export default function StructurePage() {
     manager_id: "",
   });
   const [editworkspaceLogoFile, setEditworkspaceLogoFile] = useState<File | null>(null);
+  const [editGroupLogoFile, setEditGroupLogoFile] = useState<File | null>(null);
   const [editGroup, setEditGroup] = useState({
     name: "",
     siret: "",
     fiscal_year_start: "",
     fiscal_year_end: "",
     mainActivity: "",
+    logo: "",
   });
   const [editCompany, setEditCompany] = useState({
     name: "",
@@ -813,6 +816,7 @@ export default function StructurePage() {
             fiscal_year_start: g.fiscal_year_start ?? "",
             fiscal_year_end: g.fiscal_year_end ?? "",
             mainActivity: g.mainActivity ?? "",
+            logo: g.logo ?? "",
           });
         } catch {
           setEditGroup({
@@ -821,7 +825,9 @@ export default function StructurePage() {
             fiscal_year_start: "",
             fiscal_year_end: "",
             mainActivity: "",
+            logo: "",
           });
+          setEditGroupLogoFile(null);
         }
       } else if (node.type === "company") {
         try {
@@ -941,17 +947,38 @@ export default function StructurePage() {
         }));
       }
     } else if (selectedNode.type === "group") {
-      await apiFetch(`/groups/${selectedNode.id}`, {
+      const formData = new FormData();
+      formData.append('name', editGroup.name);
+      if (editGroup.siret) {
+        formData.append('siret', editGroup.siret);
+      }
+      if (editGroup.fiscal_year_start) {
+        formData.append('fiscal_year_start', editGroup.fiscal_year_start);
+      }
+      if (editGroup.fiscal_year_end) {
+        formData.append('fiscal_year_end', editGroup.fiscal_year_end);
+      }
+      if (editGroup.mainActivity) {
+        formData.append('mainActivity', editGroup.mainActivity);
+      }
+      if (editGroupLogoFile) {
+        formData.append('logo', editGroupLogoFile);
+      }
+
+      const updatedGroup = await apiFetch<GroupFull>(`/groups/${selectedNode.id}`, {
         method: "PUT",
-        body: JSON.stringify({
-          name: editGroup.name,
-          siret: editGroup.siret,
-          fiscal_year_start: editGroup.fiscal_year_start,
-          fiscal_year_end: editGroup.fiscal_year_end,
-          mainActivity: editGroup.mainActivity || undefined,
-        }),
+        body: formData,
+        headers: {}, // Important: ne pas définir Content-Type pour FormData
         snackbar: { showSuccess: true, successMessage: "Groupe mis à jour" },
       });
+      setEditGroupLogoFile(null);
+      // Mettre à jour l'état local avec le logo retourné par le serveur
+      if (updatedGroup) {
+        setEditGroup(prev => ({
+          ...prev,
+          logo: updatedGroup.logo || ""
+        }));
+      }
     } else if (selectedNode.type === "company") {
       await apiFetch(`/companies/${selectedNode.id}`, {
         method: "PUT",
@@ -2077,6 +2104,58 @@ export default function StructurePage() {
                   setEditGroup((f) => ({ ...f, mainActivity: v }))
                 }
               />
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Logo
+                </label>
+                {editing ? (
+                  <FileUpload
+                    key={editGroup.logo}
+                    value={editGroup.logo}
+                    onChange={(file) => {
+                      setEditGroupLogoFile(file);
+                      if (file) {
+                        setEditGroup((f) => ({ ...f, logo: file.name }));
+                      } else {
+                        setEditGroup((f) => ({ ...f, logo: "" }));
+                      }
+                    }}
+                    placeholder="Uploader une image de logo"
+                    accept="image/*"
+                  />
+                ) : (
+                  <div className="space-y-2">
+                    {editGroup.logo ? (
+                      <>
+                        {editGroup.logo.startsWith('http') ? (
+                          <img 
+                            src={editGroup.logo} 
+                            alt="Logo du groupe" 
+                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            onError={(e) => {
+                              console.error('Erreur chargement image URL:', editGroup.logo);
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <img 
+                            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editGroup.logo}`} 
+                            alt="Logo du groupe" 
+                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            onError={(e) => {
+                              console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editGroup.logo}`);
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
+                        <p className="text-xs text-slate-500">{editGroup.logo}</p>
+                      </>
+                    ) : (
+                      <p className="text-sm font-medium text-primary">—</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
