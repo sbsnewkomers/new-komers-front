@@ -633,16 +633,20 @@ export default function StructurePage() {
   const treeRows = useMemo(() => {
     const rows: TreeNode[] = [];
 
+    console.log('filteredTreeData workspaces:', filteredTreeData?.workspaces);
+    
     // Ajouter les workspaces et leurs groupes/entreprises
     (filteredTreeData?.workspaces ?? []).forEach((org) => {
       // N'afficher les workspaces que pour SUPER_ADMIN et ADMIN
       if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
         rows.push({ type: "workspace", id: org.id, name: org.name });
+        console.log(`Added workspace: ${org.name}`);
       }
       
-      // Ajouter les groupes de l'workspace
+      // Ajouter les groupes de l'workspace immédiatement après le workspace
       org.groups.forEach((g) => {
         rows.push({ type: "group", id: g.id, name: g.name });
+        console.log(`Added group for workspace ${org.name}: ${g.name}`);
         g.companies.forEach((c) => {
           rows.push({
             type: "company",
@@ -697,29 +701,38 @@ export default function StructurePage() {
       }
     });
 
-    // Ajouter les groupes standalone et leurs entreprises
+    // Ajouter les groupes standalone et leurs entreprises (seulement s'ils n'ont pas déjà été ajoutés via les workspaces)
+    const workspaceGroupIds = new Set(
+      (filteredTreeData?.workspaces ?? []).flatMap((org) => 
+        org.groups.map((g) => g.id)
+      )
+    );
+    
     (filteredTreeData?.groups ?? []).forEach((g) => {
-      rows.push({ type: "group", id: g.id, name: g.name });
-      g.companies.forEach((c) => {
-        rows.push({
-          type: "company",
-          id: c.id,
-          name: c.name,
-          groupId: g.id,
-          completionPercentage: c.completionPercentage,
-        });
-        if (expandedCompanyIds.has(c.id)) {
-          c.businessUnits.forEach((bu) => {
-            rows.push({
-              type: "bu",
-              id: bu.id,
-              name: bu.name,
-              companyId: c.id,
-              code: bu.code,
-            });
+      if (!workspaceGroupIds.has(g.id)) {
+        rows.push({ type: "group", id: g.id, name: g.name });
+        console.log(`Added standalone group: ${g.name}`);
+        g.companies.forEach((c) => {
+          rows.push({
+            type: "company",
+            id: c.id,
+            name: c.name,
+            groupId: g.id,
+            completionPercentage: c.completionPercentage,
           });
-        }
-      });
+          if (expandedCompanyIds.has(c.id)) {
+            c.businessUnits.forEach((bu) => {
+              rows.push({
+                type: "bu",
+                id: bu.id,
+                name: bu.name,
+                companyId: c.id,
+                code: bu.code,
+              });
+            });
+          }
+        });
+      }
     });
 
     // Ajouter les entreprises complètement indépendantes avec un en-tête de section
@@ -752,6 +765,7 @@ export default function StructurePage() {
       });
     }
 
+    console.log('Final treeRows order:', rows.map(r => `${r.type}: ${r.name}`));
     return rows;
   }, [filteredTreeData, expandedCompanyIds, user]);
 
@@ -1163,6 +1177,7 @@ export default function StructurePage() {
           fiscal_year_start: addGroupForm.fiscal_year_start || undefined,
           fiscal_year_end: addGroupForm.fiscal_year_end || undefined,
           mainActivity: addGroupForm.mainActivity || undefined,
+          workspace_id: addGroupForm.workspaceId || undefined,
         }),
         snackbar: { showSuccess: true, successMessage: "Groupe créé" },
       });
