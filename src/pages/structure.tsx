@@ -110,6 +110,8 @@ type CompanyFull = {
   main_activity?: string;
   size?: string;
   model?: string;
+  logo?: string;
+  completionPercentage?: number;
   group_id: string;
 };
 
@@ -264,6 +266,7 @@ export default function StructurePage() {
   });
   const [editworkspaceLogoFile, setEditworkspaceLogoFile] = useState<File | null>(null);
   const [editGroupLogoFile, setEditGroupLogoFile] = useState<File | null>(null);
+  const [editCompanyLogoFile, setEditCompanyLogoFile] = useState<File | null>(null);
   const [editGroup, setEditGroup] = useState({
     name: "",
     siret: "",
@@ -278,6 +281,12 @@ export default function StructurePage() {
     address: "",
     ape_code: "",
     main_activity: "",
+    fiscal_year_start: "",
+    fiscal_year_end: "",
+    size: "",
+    model: "",
+    logo: "",
+    completionPercentage: 0,
   });
   const [editBU, setEditBU] = useState({
     name: "",
@@ -840,6 +849,12 @@ export default function StructurePage() {
             address: c.address ?? "",
             ape_code: c.ape_code ?? "",
             main_activity: c.main_activity ?? "",
+            fiscal_year_start: c.fiscal_year_start ?? "",
+            fiscal_year_end: c.fiscal_year_end ?? "",
+            size: c.size ?? "",
+            model: c.model ?? "",
+            logo: c.logo ?? "",
+            completionPercentage: c.completionPercentage ?? 0,
           });
         } catch {
           setEditCompany({
@@ -848,6 +863,12 @@ export default function StructurePage() {
             address: "",
             ape_code: "",
             main_activity: "",
+            fiscal_year_start: "",
+            fiscal_year_end: "",
+            size: "",
+            model: "",
+            logo: "",
+            completionPercentage: 0,
           });
         }
         loadBUsForCompany(node.id);
@@ -980,20 +1001,54 @@ export default function StructurePage() {
         }));
       }
     } else if (selectedNode.type === "company") {
-      await apiFetch(`/companies/${selectedNode.id}`, {
+      const formData = new FormData();
+      formData.append('name', editCompany.name);
+      if (editCompany.siret) {
+        formData.append('siret', editCompany.siret);
+      }
+      if (editCompany.address) {
+        formData.append('address', editCompany.address);
+      }
+      if (editCompany.ape_code) {
+        formData.append('ape_code', editCompany.ape_code);
+      }
+      if (editCompany.main_activity) {
+        formData.append('main_activity', editCompany.main_activity);
+      }
+      if (editCompany.fiscal_year_start) {
+        formData.append('fiscal_year_start', editCompany.fiscal_year_start);
+      }
+      if (editCompany.fiscal_year_end) {
+        formData.append('fiscal_year_end', editCompany.fiscal_year_end);
+      }
+      if (editCompany.size) {
+        formData.append('size', editCompany.size);
+      }
+      if (editCompany.model) {
+        formData.append('model', editCompany.model);
+      }
+      if (editCompanyLogoFile) {
+        formData.append('logo', editCompanyLogoFile);
+      }
+      formData.append('completionPercentage', String(editCompany.completionPercentage || 0));
+
+      const updatedCompany = await apiFetch<CompanyFull>(`/companies/${selectedNode.id}`, {
         method: "PUT",
-        body: JSON.stringify({
-          name: editCompany.name,
-          siret: editCompany.siret,
-          address: editCompany.address || undefined,
-          ape_code: editCompany.ape_code || undefined,
-          main_activity: editCompany.main_activity || undefined,
-        }),
+        body: formData,
+        headers: {}, // Important: ne pas définir Content-Type pour FormData
         snackbar: {
           showSuccess: true,
           successMessage: "Entreprise mise à jour",
         },
       });
+      setEditCompanyLogoFile(null);
+      // Mettre à jour l'état local avec le logo retourné par le serveur
+      if (updatedCompany) {
+        setEditCompany(prev => ({
+          ...prev,
+          logo: updatedCompany.logo || ""
+        }));
+      }
     } else if (selectedNode.type === "bu") {
       await apiFetch(
         `/companies/${selectedNode.companyId}/business-units/${selectedNode.id}`,
@@ -1939,8 +1994,8 @@ export default function StructurePage() {
 
       {/* Detail Modal */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader className="flex-row items-center justify-between">
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+          <DialogHeader className="flex-row items-center justify-between sticky top-0 bg-white z-10 pb-4">
             <DialogTitle className="flex items-center gap-2">
               <span className="text-lg">
                 {selectedNode?.type === "workspace"
@@ -2202,6 +2257,100 @@ export default function StructurePage() {
                   setEditCompany((f) => ({ ...f, main_activity: v }))
                 }
               />
+              <Field
+                label="Début d'exercice"
+                value={editCompany.fiscal_year_start}
+                editing={editing}
+                type="date"
+                onChange={(v) =>
+                  setEditCompany((f) => ({ ...f, fiscal_year_start: v }))
+                }
+              />
+              <Field
+                label="Fin d'exercice"
+                value={editCompany.fiscal_year_end}
+                editing={editing}
+                type="date"
+                onChange={(v) =>
+                  setEditCompany((f) => ({ ...f, fiscal_year_end: v }))
+                }
+              />
+              <Field
+                label="Taille"
+                value={editCompany.size}
+                editing={editing}
+                onChange={(v) =>
+                  setEditCompany((f) => ({ ...f, size: v }))
+                }
+              />
+              <Field
+                label="Modèle"
+                value={editCompany.model}
+                editing={editing}
+                onChange={(v) =>
+                  setEditCompany((f) => ({ ...f, model: v }))
+                }
+              />
+              <Field
+                label="Pourcentage de complétion"
+                value={editCompany.completionPercentage.toString()}
+                editing={false}
+                type="number"
+                onChange={(v) =>
+                  setEditCompany((f) => ({ ...f, completionPercentage: parseFloat(v) || 0 }))
+                }
+              />
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Logo
+                </label>
+                {editing ? (
+                  <FileUpload
+                    key={editCompany.logo}
+                    value={editCompany.logo}
+                    onChange={(file) => {
+                      setEditCompanyLogoFile(file);
+                      if (file) {
+                        setEditCompany((f) => ({ ...f, logo: file.name }));
+                      } else {
+                        setEditCompany((f) => ({ ...f, logo: "" }));
+                      }
+                    }}
+                    placeholder="Uploader une image de logo"
+                    accept="image/*"
+                  />
+                ) : (
+                  <div className="space-y-2">
+                    {editCompany.logo ? (
+                      <>
+                        {editCompany.logo.startsWith('http') ? (
+                          <img 
+                            src={editCompany.logo} 
+                            alt="Logo de l'entreprise" 
+                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            onError={(e) => {
+                              console.error('Erreur chargement image URL:', editCompany.logo);
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <img 
+                            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editCompany.logo}`} 
+                            alt="Logo de l'entreprise" 
+                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            onError={(e) => {
+                              console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editCompany.logo}`);
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
+                                              </>
+                    ) : (
+                      <p className="text-sm font-medium text-primary">—</p>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {!editing && (busByCompany[selectedNode.id] ?? []).length > 0 && (
                 <div className="rounded-xl border border-slate-300 bg-slate-50 p-3 w-fit">
@@ -2259,7 +2408,7 @@ export default function StructurePage() {
             </div>
           )}
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 sticky bottom-0 bg-white border-t pt-4 mt-4">
             {!editing ? (
               <>
                 {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER" || user?.role === "HEAD_MANAGER") && (
