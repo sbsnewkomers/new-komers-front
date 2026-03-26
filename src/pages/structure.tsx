@@ -9,6 +9,7 @@ import {
   type StructureTree,
   type TreeCompany,
   type TreeGroup,
+  type Treeworkspace,
 } from "@/lib/structureApi";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
+import { FileUpload } from "@/components/ui/FileUpload";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +27,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/Dialog";
+import { Select } from "@/components/ui/Select";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -43,7 +46,6 @@ import {
   Building,
   Briefcase,
   Layers,
-  Star,
 } from "lucide-react";
 import {
   CompanyCreateWizard,
@@ -60,7 +62,6 @@ import {
   ShareholderFormDialog,
   type ShareholderFormValues,
 } from "@/components/shareholders/ShareholderFormDialog";
-import { Select } from "@/components/ui/Select";
 
 type BusinessUnit = {
   id: string;
@@ -78,6 +79,23 @@ type GroupFull = {
   fiscal_year_start: string;
   fiscal_year_end: string;
   mainActivity?: string;
+};
+
+type workspaceFull = {
+  id: string;
+  name: string;
+  description?: string;
+  logo?: string;
+  address?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  manager_id?: string;
+  manager?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email: string;
+  } | null;
 };
 
 type CompanyFull = {
@@ -105,12 +123,14 @@ type NodeUsersByRole = Record<
 >;
 
 type TreeNode =
+  | { type: "workspace"; id: string; name: string }
   | { type: "group"; id: string; name: string }
   | {
       type: "company";
       id: string;
       name: string;
       groupId: string | null;
+      workspaceId?: string;
       completionPercentage: number;
     }
   | { type: "bu"; id: string; name: string; companyId: string; code: string }
@@ -127,6 +147,7 @@ export default function StructurePage() {
   const [tree, setTree] = useState<StructureTree | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeError, setTreeError] = useState<string | null>(null);
+  const [isTreeLoaded, setIsTreeLoaded] = useState(false);
   const [busByCompany, setBusByCompany] = useState<
     Record<string, BusinessUnit[]>
   >({});
@@ -146,6 +167,47 @@ export default function StructurePage() {
   // États pour la recherche
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  // État pour créer une workspace
+  const [addworkspaceOpen, setAddworkspaceOpen] = useState(false);
+  const [addworkspaceForm, setAddworkspaceForm] = useState({
+    name: "",
+    description: "",
+    logo: "",
+    address: "",
+    contact_email: "",
+    contact_phone: "",
+    manager_id: "",
+  });
+  const [addworkspaceLoading, setAddworkspaceLoading] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>("");
+
+  // Gérer le changement de fichier logo
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Vérifier que c'est une image
+      if (!file.type.startsWith('image/')) {
+        alert('Veuillez sélectionner une image valide');
+        return;
+      }
+      // Vérifier la taille (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('L\'image ne doit pas dépasser 5MB');
+        return;
+      }
+      setLogoFile(file);
+      setAddworkspaceForm(prev => ({ ...prev, logo: file.name }));
+      
+      // Créer un aperçu
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   const [addCompanyGroupId, setAddCompanyGroupId] = useState<string | null>(
@@ -176,6 +238,7 @@ export default function StructurePage() {
     fiscal_year_start: "",
     fiscal_year_end: "",
     mainActivity: "",
+    workspaceId: "",
   });
   const [addGroupLoading, setAddGroupLoading] = useState(false);
 
@@ -189,6 +252,16 @@ export default function StructurePage() {
   });
   const [addBUStandaloneLoading, setAddBUStandaloneLoading] = useState(false);
 
+  const [editworkspace, setEditworkspace] = useState({
+    name: "",
+    description: "",
+    logo: "",
+    address: "",
+    contact_email: "",
+    contact_phone: "",
+    manager_id: "",
+  });
+  const [editworkspaceLogoFile, setEditworkspaceLogoFile] = useState<File | null>(null);
   const [editGroup, setEditGroup] = useState({
     name: "",
     siret: "",
@@ -234,11 +307,15 @@ export default function StructurePage() {
   );
 
   const loadTree = useCallback(async () => {
+    // Éviter les rechargements multiples
+    if (treeLoading) return;
+    
     setTreeLoading(true);
     setTreeError(null);
     try {
       const data = await fetchStructureTree();
       setTree(data);
+      setIsTreeLoaded(true);
     } catch (e) {
       if (e instanceof Error) {
         try {
@@ -257,13 +334,13 @@ export default function StructurePage() {
     } finally {
       setTreeLoading(false);
     }
-  }, []);
+  }, [treeLoading]);
 
   // Only load the structure tree once auth bootstrap is done and we have a user.
   useEffect(() => {
-    if (!isAuthReady || !user) return;
+    if (!isAuthReady || !user || isTreeLoaded) return;
     void loadTree();
-  }, [isAuthReady, user, loadTree]);
+  }, [isAuthReady, user, isTreeLoaded, loadTree]);
 
   // Keep structure in sync when returning to the tab/page (e.g. after imports or other changes).
   useEffect(() => {
@@ -278,10 +355,11 @@ export default function StructurePage() {
     document.addEventListener("visibilitychange", refresh);
     return () => {
       window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("visibilitychange", refresh);
     };
   }, [isAuthReady, user, loadTree]);
 
+  
   const loadBUsForCompany = useCallback(async (companyId: string) => {
     try {
       const data = await apiFetch<BusinessUnit[]>(
@@ -296,18 +374,38 @@ export default function StructurePage() {
     }
   }, []);
 
-  const groupList = useMemo(() => tree?.groups ?? [], [tree]);
+  // Combine groups from workspaces and standalone groups
+  const groupList = useMemo(() => {
+    const orgGroups = (tree?.workspaces ?? []).flatMap((org) => 
+      org.groups.map(group => ({ ...group, workspaceId: org.id }))
+    );
+    const standaloneGroups = (tree?.groups ?? []).map(group => ({ ...group, workspaceId: undefined }));
+    return [...orgGroups, ...standaloneGroups];
+  }, [tree]);
 
   const allTreeCompanies = useMemo<
-    (TreeCompany & { groupId: string | null })[]
+    (TreeCompany & { groupId: string | null; workspaceId?: string })[]
   >(
     () => [
-      ...(tree?.groups ?? []).flatMap((g) =>
-        g.companies.map((c) => ({ ...c, groupId: g.id as string | null })),
+      // Companies from workspaces
+      ...(tree?.workspaces ?? []).flatMap((org) =>
+        org.groups.flatMap((g) =>
+          g.companies.map((c) => ({ ...c, groupId: g.id, workspaceId: org.id })),
+        ),
       ),
+      // Standalone companies from workspaces
+      ...(tree?.workspaces ?? []).flatMap((org) =>
+        org.standaloneCompanies.map((c) => ({ ...c, groupId: null, workspaceId: org.id })),
+      ),
+      // Companies from standalone groups
+      ...(tree?.groups ?? []).flatMap((g) =>
+        g.companies.map((c) => ({ ...c, groupId: g.id, workspaceId: undefined })),
+      ),
+      // Completely standalone companies
       ...(tree?.standaloneCompanies ?? []).map((c) => ({
         ...c,
-        groupId: null as string | null,
+        groupId: null,
+        workspaceId: undefined,
       })),
     ],
     [tree],
@@ -318,13 +416,35 @@ export default function StructurePage() {
     [allTreeCompanies],
   );
 
+  // Pour les rôles non-admin, passer les workspaces au AppLayout
+  const workspacesForLayout = useMemo(() => {
+    if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
+      return []; // Les admins voient déjà toutes les workspaces dans la structure
+    }
+    return tree?.workspaces?.map((o) => ({ id: o.id, name: o.name })) || [];
+  }, [tree?.workspaces, user?.role]);
+
   const companiesWithBus = useMemo(() => {
     const ids = new Set<string>();
+    // Companies from workspace groups
+    (tree?.workspaces ?? []).forEach((org) => {
+      org.groups.forEach((g) => {
+        g.companies.forEach((c) => {
+          if ((c.businessUnits ?? []).length > 0) ids.add(c.id);
+        });
+      });
+      // Standalone companies from workspaces
+      org.standaloneCompanies.forEach((c) => {
+        if ((c.businessUnits ?? []).length > 0) ids.add(c.id);
+      });
+    });
+    // Companies from standalone groups
     (tree?.groups ?? []).forEach((g) => {
       g.companies.forEach((c) => {
         if ((c.businessUnits ?? []).length > 0) ids.add(c.id);
       });
     });
+    // Completely standalone companies
     (tree?.standaloneCompanies ?? []).forEach((c) => {
       if ((c.businessUnits ?? []).length > 0) ids.add(c.id);
     });
@@ -333,11 +453,25 @@ export default function StructurePage() {
 
   const totalBusinessUnits = useMemo(() => {
     let count = 0;
+    // Business units from workspace groups
+    (tree?.workspaces ?? []).forEach((org) => {
+      org.groups.forEach((g) => {
+        g.companies.forEach((c) => {
+          count += (c.businessUnits ?? []).length;
+        });
+      });
+      // Standalone companies from workspaces
+      org.standaloneCompanies.forEach((c) => {
+        count += (c.businessUnits ?? []).length;
+      });
+    });
+    // Business units from standalone groups
     (tree?.groups ?? []).forEach((g) => {
       g.companies.forEach((c) => {
         count += (c.businessUnits ?? []).length;
       });
     });
+    // Completely standalone companies
     (tree?.standaloneCompanies ?? []).forEach((c) => {
       count += (c.businessUnits ?? []).length;
     });
@@ -350,19 +484,49 @@ export default function StructurePage() {
 
     const query = searchQuery.toLowerCase().trim();
     const filtered = {
+      workspaces: [] as Treeworkspace[],
       groups: [] as TreeGroup[],
       standaloneCompanies: [] as TreeCompany[],
     };
 
-    // Filtrer les groupes et leurs entreprises
-    (tree?.groups ?? []).forEach((group) => {
-      const groupMatches = group.name.toLowerCase().includes(query);
-      const filteredCompanies = group.companies.filter((company) => {
+    // Filtrer les workspaces et leurs groupes/entreprises
+    (tree?.workspaces ?? []).forEach((org) => {
+      const orgMatches = org.name.toLowerCase().includes(query) || 
+                        org.description?.toLowerCase().includes(query);
+      
+      const filteredGroups = org.groups.map((group) => {
+        const groupMatches = group.name.toLowerCase().includes(query);
+        const filteredCompanies = group.companies.filter((company) => {
+          const companyMatches =
+            company.name.toLowerCase().includes(query) ||
+            company.siret?.toLowerCase().includes(query);
+
+          // Filtrer aussi les business units si l'entreprise correspond ou si une BU correspond
+          const filteredBUs =
+            company.businessUnits?.filter(
+              (bu) =>
+                bu.name.toLowerCase().includes(query) ||
+                bu.code.toLowerCase().includes(query),
+            ) || [];
+
+          return companyMatches || filteredBUs.length > 0;
+        });
+
+        if (groupMatches || filteredCompanies.length > 0) {
+          return {
+            ...group,
+            companies: filteredCompanies.length > 0 ? filteredCompanies : group.companies,
+          };
+        }
+        return null;
+      }).filter((g): g is TreeGroup => g !== null);
+
+      // Filtrer les entreprises indépendantes de l'workspace
+      const filteredStandaloneCompanies = org.standaloneCompanies.filter((company) => {
         const companyMatches =
           company.name.toLowerCase().includes(query) ||
           company.siret?.toLowerCase().includes(query);
 
-        // Filtrer aussi les business units si l'entreprise correspond ou si une BU correspond
         const filteredBUs =
           company.businessUnits?.filter(
             (bu) =>
@@ -373,24 +537,48 @@ export default function StructurePage() {
         return companyMatches || filteredBUs.length > 0;
       });
 
-      // Inclure le groupe s'il correspond ou s'il a des entreprises qui correspondent
-      if (groupMatches || filteredCompanies.length > 0) {
-        filtered.groups.push({
-          ...group,
-          companies:
-            filteredCompanies.length > 0 ? filteredCompanies : group.companies,
+      if (orgMatches || filteredGroups.length > 0 || filteredStandaloneCompanies.length > 0) {
+        filtered.workspaces.push({
+          ...org,
+          groups: filteredGroups,
+          standaloneCompanies: filteredStandaloneCompanies,
         });
       }
     });
 
-    // Filtrer les entreprises indépendantes
+    // Filtrer les groupes standalone et leurs entreprises
+    (tree?.groups ?? []).forEach((group) => {
+      const groupMatches = group.name.toLowerCase().includes(query);
+      const filteredCompanies = group.companies.filter((company) => {
+        const companyMatches =
+          company.name.toLowerCase().includes(query) ||
+          company.siret?.toLowerCase().includes(query);
+
+        const filteredBUs =
+          company.businessUnits?.filter(
+            (bu) =>
+              bu.name.toLowerCase().includes(query) ||
+              bu.code.toLowerCase().includes(query),
+          ) || [];
+
+        return companyMatches || filteredBUs.length > 0;
+      });
+
+      if (groupMatches || filteredCompanies.length > 0) {
+        filtered.groups.push({
+          ...group,
+          companies: filteredCompanies.length > 0 ? filteredCompanies : group.companies,
+        });
+      }
+    });
+
+    // Filtrer les entreprises complètement indépendantes
     filtered.standaloneCompanies = (tree?.standaloneCompanies ?? []).filter(
       (company) => {
         const companyMatches =
           company.name.toLowerCase().includes(query) ||
           company.siret?.toLowerCase().includes(query);
 
-        // Inclure aussi si une business unit correspond
         const filteredBUs =
           company.businessUnits?.filter(
             (bu) =>
@@ -406,20 +594,37 @@ export default function StructurePage() {
   }, [tree, searchQuery]);
 
   // Recalculer les données filtrées
-  const filteredGroupList = useMemo(
-    () => filteredTreeData?.groups ?? [],
-    [filteredTreeData],
-  );
+  const filteredGroupList = useMemo(() => {
+    const orgGroups = (filteredTreeData?.workspaces ?? []).flatMap((org) => 
+      org.groups.map(group => ({ ...group, workspaceId: org.id }))
+    );
+    const standaloneGroups = (filteredTreeData?.groups ?? []).map(group => ({ ...group, workspaceId: undefined }));
+    return [...orgGroups, ...standaloneGroups];
+  }, [filteredTreeData]);
+
   const filteredAllTreeCompanies = useMemo<
-    (TreeCompany & { groupId: string | null })[]
+    (TreeCompany & { groupId: string | null; workspaceId?: string })[]
   >(
     () => [
-      ...(filteredTreeData?.groups ?? []).flatMap((g) =>
-        g.companies.map((c) => ({ ...c, groupId: g.id as string | null })),
+      // Companies from workspaces
+      ...(filteredTreeData?.workspaces ?? []).flatMap((org) =>
+        org.groups.flatMap((g) =>
+          g.companies.map((c) => ({ ...c, groupId: g.id, workspaceId: org.id })),
+        ),
       ),
+      // Standalone companies from workspaces
+      ...(filteredTreeData?.workspaces ?? []).flatMap((org) =>
+        org.standaloneCompanies.map((c) => ({ ...c, groupId: null, workspaceId: org.id })),
+      ),
+      // Companies from standalone groups
+      ...(filteredTreeData?.groups ?? []).flatMap((g) =>
+        g.companies.map((c) => ({ ...c, groupId: g.id, workspaceId: undefined })),
+      ),
+      // Completely standalone companies
       ...(filteredTreeData?.standaloneCompanies ?? []).map((c) => ({
         ...c,
-        groupId: null as string | null,
+        groupId: null,
+        workspaceId: undefined,
       })),
     ],
     [filteredTreeData],
@@ -428,32 +633,109 @@ export default function StructurePage() {
   const treeRows = useMemo(() => {
     const rows: TreeNode[] = [];
 
-    // Ajouter les groupes et leurs entreprises (filtrés)
-    (filteredTreeData?.groups ?? []).forEach((g) => {
-      rows.push({ type: "group", id: g.id, name: g.name });
-      g.companies.forEach((c) => {
-        rows.push({
-          type: "company",
-          id: c.id,
-          name: c.name,
-          groupId: g.id,
-          completionPercentage: c.completionPercentage,
-        });
-        if (expandedCompanyIds.has(c.id)) {
-          c.businessUnits.forEach((bu) => {
-            rows.push({
-              type: "bu",
-              id: bu.id,
-              name: bu.name,
-              companyId: c.id,
-              code: bu.code,
-            });
+    console.log('filteredTreeData workspaces:', filteredTreeData?.workspaces);
+    
+    // Ajouter les workspaces et leurs groupes/entreprises
+    (filteredTreeData?.workspaces ?? []).forEach((org) => {
+      // N'afficher les workspaces que pour SUPER_ADMIN et ADMIN
+      if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
+        rows.push({ type: "workspace", id: org.id, name: org.name });
+        console.log(`Added workspace: ${org.name}`);
+      }
+      
+      // Ajouter les groupes de l'workspace immédiatement après le workspace
+      org.groups.forEach((g) => {
+        rows.push({ type: "group", id: g.id, name: g.name });
+        console.log(`Added group for workspace ${org.name}: ${g.name}`);
+        g.companies.forEach((c) => {
+          rows.push({
+            type: "company",
+            id: c.id,
+            name: c.name,
+            groupId: g.id,
+            workspaceId: org.id,
+            completionPercentage: c.completionPercentage,
           });
-        }
+          if (expandedCompanyIds.has(c.id)) {
+            c.businessUnits.forEach((bu) => {
+              rows.push({
+                type: "bu",
+                id: bu.id,
+                name: bu.name,
+                companyId: c.id,
+                code: bu.code,
+              });
+            });
+          }
+        });
       });
+
+      // Ajouter les entreprises indépendantes de l'workspace dans une section séparée
+      if (org.standaloneCompanies.length > 0) {
+        rows.push({
+          type: "section-header",
+          id: `org-${org.id}-standalone-header`,
+          name: "ENTREPRISES INDÉPENDANTES",
+        });
+        org.standaloneCompanies.forEach((c) => {
+          rows.push({
+            type: "company",
+            id: c.id,
+            name: c.name,
+            groupId: null,
+            workspaceId: org.id,
+            completionPercentage: c.completionPercentage,
+          });
+          if (expandedCompanyIds.has(c.id)) {
+            c.businessUnits.forEach((bu) => {
+              rows.push({
+                type: "bu",
+                id: bu.id,
+                name: bu.name,
+                companyId: c.id,
+                code: bu.code,
+              });
+            });
+          }
+        });
+      }
     });
 
-    // Ajouter les entreprises indépendantes avec un en-tête de section (filtrées)
+    // Ajouter les groupes standalone et leurs entreprises (seulement s'ils n'ont pas déjà été ajoutés via les workspaces)
+    const workspaceGroupIds = new Set(
+      (filteredTreeData?.workspaces ?? []).flatMap((org) => 
+        org.groups.map((g) => g.id)
+      )
+    );
+    
+    (filteredTreeData?.groups ?? []).forEach((g) => {
+      if (!workspaceGroupIds.has(g.id)) {
+        rows.push({ type: "group", id: g.id, name: g.name });
+        console.log(`Added standalone group: ${g.name}`);
+        g.companies.forEach((c) => {
+          rows.push({
+            type: "company",
+            id: c.id,
+            name: c.name,
+            groupId: g.id,
+            completionPercentage: c.completionPercentage,
+          });
+          if (expandedCompanyIds.has(c.id)) {
+            c.businessUnits.forEach((bu) => {
+              rows.push({
+                type: "bu",
+                id: bu.id,
+                name: bu.name,
+                companyId: c.id,
+                code: bu.code,
+              });
+            });
+          }
+        });
+      }
+    });
+
+    // Ajouter les entreprises complètement indépendantes avec un en-tête de section
     const standaloneCompanies = filteredTreeData?.standaloneCompanies ?? [];
     if (standaloneCompanies.length > 0) {
       rows.push({
@@ -483,8 +765,9 @@ export default function StructurePage() {
       });
     }
 
+    console.log('Final treeRows order:', rows.map(r => `${r.type}: ${r.name}`));
     return rows;
-  }, [filteredTreeData, expandedCompanyIds]);
+  }, [filteredTreeData, expandedCompanyIds, user]);
 
   const openDetail = useCallback(
     async (node: TreeNode) => {
@@ -492,7 +775,34 @@ export default function StructurePage() {
       setEditing(false);
       setNodeUsers(null);
 
-      if (node.type === "group") {
+      if (node.type === "workspace") {
+        try {
+          const org = await apiFetch<workspaceFull>(`/workspaces/${node.id}`, {
+            snackbar: { showSuccess: false, showError: true },
+          });
+          setEditworkspace({
+            name: org.name,
+            description: org.description ?? "",
+            logo: org.logo ?? "",
+            address: org.address ?? "",
+            contact_email: org.contact_email ?? "",
+            contact_phone: org.contact_phone ?? "",
+            manager_id: org.manager_id ?? "",
+          });
+          setEditworkspaceLogoFile(null);
+        } catch {
+          setEditworkspace({
+            name: node.name,
+            description: "",
+            logo: "",
+            address: "",
+            contact_email: "",
+            contact_phone: "",
+            manager_id: "",
+          });
+          setEditworkspaceLogoFile(null);
+        }
+      } else if (node.type === "group") {
         try {
           const g = await apiFetch<GroupFull>(`/groups/${node.id}`, {
             snackbar: { showSuccess: false, showError: true },
@@ -568,11 +878,13 @@ export default function StructurePage() {
 
       // Load managers & users linked to this node
       const nodeTypeParam =
-        node.type === "group"
-          ? "GROUP"
-          : node.type === "company"
-            ? "COMPANY"
-            : "BUSINESS_UNIT";
+        node.type === "workspace"
+          ? "WORKSPACE"
+          : node.type === "group"
+            ? "GROUP"
+            : node.type === "company"
+              ? "COMPANY"
+              : "BUSINESS_UNIT";
       if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
         try {
           const users = await apiFetch<NodeUsersByRole>(
@@ -592,7 +904,43 @@ export default function StructurePage() {
 
   const handleSave = async () => {
     if (!selectedNode) return;
-    if (selectedNode.type === "group") {
+    if (selectedNode.type === "workspace") {
+      const formData = new FormData();
+      formData.append('name', editworkspace.name);
+      if (editworkspace.description) {
+        formData.append('description', editworkspace.description);
+      }
+      if (editworkspace.address) {
+        formData.append('address', editworkspace.address);
+      }
+      if (editworkspace.contact_email) {
+        formData.append('contact_email', editworkspace.contact_email);
+      }
+      if (editworkspace.contact_phone) {
+        formData.append('contact_phone', editworkspace.contact_phone);
+      }
+      if (editworkspace.manager_id) {
+        formData.append('manager_id', editworkspace.manager_id);
+      }
+      if (editworkspaceLogoFile) {
+        formData.append('logo', editworkspaceLogoFile);
+      }
+
+      const updatedOrg = await apiFetch<workspaceFull>(`/workspaces/${selectedNode.id}`, {
+        method: "PUT",
+        body: formData,
+        headers: {}, // Important: ne pas définir Content-Type pour FormData
+        snackbar: { showSuccess: true, successMessage: "Workspace mise à jour" },
+      });
+      setEditworkspaceLogoFile(null);
+      // Mettre à jour l'état local avec le logo retourné par le serveur
+      if (updatedOrg) {
+        setEditworkspace(prev => ({
+          ...prev,
+          logo: updatedOrg.logo || ""
+        }));
+      }
+    } else if (selectedNode.type === "group") {
       await apiFetch(`/groups/${selectedNode.id}`, {
         method: "PUT",
         body: JSON.stringify({
@@ -634,7 +982,77 @@ export default function StructurePage() {
     }
     setEditing(false);
     setDetailOpen(false);
-    await loadTree();
+    // Recharger l'arbre pour refléter les changements
+    void loadTree();
+  };
+
+  const handleCreateworkspace = async () => {
+    if (!addworkspaceForm.name.trim()) return;
+    
+    setAddworkspaceLoading(true);
+    try {
+      // Créer FormData pour l'upload du fichier
+      const formData = new FormData();
+      formData.append('name', addworkspaceForm.name.trim());
+      formData.append('description', addworkspaceForm.description.trim() || '');
+      formData.append('address', addworkspaceForm.address.trim() || '');
+      formData.append('contact_email', addworkspaceForm.contact_email.trim() || '');
+      formData.append('contact_phone', addworkspaceForm.contact_phone.trim() || '');
+      
+      // Ajouter le fichier logo s'il existe
+      if (logoFile) {
+        formData.append('logo', logoFile);
+      }
+      
+      // Pour l'upload de fichiers, on doit utiliser fetch directement car apiFetch force JSON
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      // Récupérer le token depuis le storage correct
+      let token = null;
+      try {
+        const raw = window.localStorage.getItem("nk-auth-tokens");
+        if (raw) {
+          const parsed = JSON.parse(raw) as { accessToken?: string };
+          token = parsed.accessToken || null;
+        }
+      } catch {
+        token = null;
+      }
+      console.log('Token d accès:', token); // Ajout d'un log pour vérifier le token
+      const response = await fetch(`${baseUrl}/workspaces`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          // Ne PAS définir Content-Type pour FormData
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Erreur création workspace:', response.status, errorText);
+        alert(`Erreur lors de la création: ${response.status} ${errorText}`);
+        return;
+      }
+      
+      // Afficher un message de succès
+      alert("Workspace créée avec succès");
+      
+      setAddworkspaceOpen(false);
+      setAddworkspaceForm({ 
+        name: "", 
+        description: "", 
+        logo: "",
+        address: "",
+        contact_email: "",
+        contact_phone: "",
+        manager_id: "",
+      });
+      setLogoFile(null);
+      setLogoPreview("");
+      void loadTree();
+    } finally {
+      setAddworkspaceLoading(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -759,6 +1177,7 @@ export default function StructurePage() {
           fiscal_year_start: addGroupForm.fiscal_year_start || undefined,
           fiscal_year_end: addGroupForm.fiscal_year_end || undefined,
           mainActivity: addGroupForm.mainActivity || undefined,
+          workspace_id: addGroupForm.workspaceId || undefined,
         }),
         snackbar: { showSuccess: true, successMessage: "Groupe créé" },
       });
@@ -770,6 +1189,7 @@ export default function StructurePage() {
         fiscal_year_start: "",
         fiscal_year_end: "",
         mainActivity: "",
+        workspaceId: "",
       });
     } catch {
       /* snackbar handles */
@@ -858,21 +1278,24 @@ export default function StructurePage() {
   };
 
   const typeLabel =
-    selectedNode?.type === "group"
-      ? "Groupe"
-      : selectedNode?.type === "company"
-        ? "Entreprise"
-        : "Business Unit";
+    selectedNode?.type === "workspace"
+      ? "Workspace"
+      : selectedNode?.type === "group"
+        ? "Groupe"
+        : selectedNode?.type === "company"
+          ? "Entreprise"
+          : "Business Unit";
 
   return (
     <AppLayout
       title="Structure"
       companies={companyListForLayout}
+      workspaces={workspacesForLayout}
       selectedCompanyId=""
       onCompanyChange={() => {}}
     >
       <Head>
-        <title>Structure de l&apos;organisation</title>
+        <title>Structure de l&apos;workspace</title>
       </Head>
       <div className="space-y-8">
         {/* Header section */}
@@ -880,15 +1303,26 @@ export default function StructurePage() {
           <div className="flex flex-wrap items-center justify-between gap-6">
             <div className="flex flex-col md:flex-row gap-2 items-center justify-between w-full">
               <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Folder className="h-5 w-5 text-primary" />
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <Building2 className="h-6 w-6 text-white" />
                   </div>
-                  Structure Organisationnelle
-                </h1>
-                <p className="text-slate-500 max-w-2xl">
-                  Gérez la structure hiérarchique de vos entités : groupes,
-                  entreprises et business units.
+                  <div>
+                    <h1 className="text-3xl font-bold text-slate-900">
+                      {user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" 
+                        ? "Structure des workspaces" 
+                        : tree?.workspaces?.[0]?.name || "Structure des workspaces"}
+                    </h1>
+                    <p className="text-sm font-medium text-purple-600 uppercase tracking-wide">
+                      {user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" 
+                        ? "Toutes les workspaces" 
+                        : "Workspace"}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-slate-600 max-w-2xl ml-13 font-medium">
+                  Gérez la structure hiérarchique de votre workspace et pilotez 
+                  l&apos;ensemble de vos entités : groupes, entreprises et business units.
                 </p>
               </div>
 
@@ -988,31 +1422,43 @@ export default function StructurePage() {
                     Importer
                   </Link>
                 )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
+                  <Button
+                    onClick={() => setAddworkspaceOpen(true)}
+                    className="h-10 gap-2 bg-purple-600 text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Workspace
+                  </Button>
+                )}
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button
                     onClick={() => setAddGroupOpen(true)}
                     className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                    disabled={!canCreateCompany}
+                    disabled={!canCreateCompany || (!tree?.workspaces || tree.workspaces.length === 0)}
+                    title={!tree?.workspaces || tree.workspaces.length === 0 ? "Créez d'abord une workspace" : ""}
                   >
                     <Plus className="h-4 w-4" />
                     Groupe
                   </Button>
                 )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button
                     onClick={() => setWizardOpen(true)}
                     className="h-10 gap-2 bg-primary text-white hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                    disabled={!canCreateCompany}
+                    disabled={!canCreateCompany || (!tree?.workspaces || tree.workspaces.length === 0)}
+                    title={!tree?.workspaces || tree.workspaces.length === 0 ? "Créez d'abord une workspace" : ""}
                   >
                     <Plus className="h-4 w-4" />
                     Entreprise
                   </Button>
                 )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button
                     onClick={() => setAddBUStandaloneOpen(true)}
                     className="h-10 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                    disabled={!canCreateCompany}
+                    disabled={!canCreateCompany || (!tree?.workspaces || tree.workspaces.length === 0)}
+                    title={!tree?.workspaces || tree.workspaces.length === 0 ? "Créez d'abord une workspace" : ""}
                   >
                     <Plus className="h-4 w-4" />
                     Business Unit
@@ -1041,82 +1487,61 @@ export default function StructurePage() {
               </p>
             </div>
           ) : treeRows.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-6">
-              <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                {searchQuery.trim() ? (
-                  <svg
-                    className="h-8 w-8 text-slate-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                ) : (
-                  <Folder className="h-8 w-8 text-slate-400" />
-                )}
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                {searchQuery.trim()
-                  ? "Aucun résultat trouvé"
-                  : "Aucune structure trouvée"}
-              </h3>
-              <p className="text-slate-500 text-center max-w-md mb-6">
-                {searchQuery.trim()
-                  ? `Aucun groupe, entreprise ou business unit ne correspond à "${searchQuery}". Essayez avec d'autres termes.`
-                  : "Commencez par créer un groupe ou une entreprise pour organiser votre structure."}
-              </p>
-              {searchQuery.trim() ? (
-                <Button
-                  onClick={() => setSearchQuery("")}
-                  variant="outline"
-                  className="h-10 gap-2"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                  Effacer la recherche
-                </Button>
-              ) : canCreateCompany ? (
-                <div className="flex gap-3">
-                  {(user?.role === "SUPER_ADMIN" ||
-                    user?.role === "MANAGER") && (
-                    <Button
-                      onClick={() => setAddGroupOpen(true)}
-                      className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+            <>
+              <div className="flex flex-col items-center justify-center py-16 px-6">
+                <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                  {searchQuery.trim() ? (
+                    <svg
+                      className="h-8 w-8 text-slate-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      <Plus className="h-4 w-4" />
-                      Créer un groupe
-                    </Button>
-                  )}
-                  {(user?.role === "SUPER_ADMIN" ||
-                    user?.role === "MANAGER") && (
-                    <Button
-                      onClick={() => setWizardOpen(true)}
-                      className="h-10 gap-2 bg-primary text-white hover:bg-slate-800 shadow-sm"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Créer une entreprise
-                    </Button>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  ) : (
+                    <Folder className="h-8 w-8 text-slate-400" />
                   )}
                 </div>
-              ) : null}
-            </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  {searchQuery.trim()
+                    ? "Aucun résultat trouvé"
+                    : "Aucune structure trouvée"}
+                </h3>
+                <p className="text-slate-500 text-center max-w-md mb-6">
+                  {searchQuery.trim()
+                    ? `Aucun groupe, entreprise ou business unit ne correspond à "${searchQuery}". Essayez avec d'autres termes.`
+                    : "Commencez par créer un groupe ou une entreprise pour organiser votre structure."}
+                </p>
+                {searchQuery.trim() ? (
+                  <Button
+                    onClick={() => setSearchQuery("")}
+                    variant="outline"
+                    className="h-10 gap-2"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                    Effacer la recherche
+                  </Button>
+                ) : null}
+              </div>
+            </>
           ) : (
             <div className="min-w-full">
               {/* Indicateur de recherche active */}
@@ -1160,26 +1585,26 @@ export default function StructurePage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50/30 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-blue-500" />
-                  Nom
+              {tree?.workspaces && tree.workspaces.length > 0 && (
+                <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50/30 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  <div className="flex items-center">
+                    Nom
+                  </div>
+                  <div className="flex items-center">
+                    Type
+                  </div>
+                  <div className="flex items-center">
+                    Complétion
+                  </div>
+                  <div className="text-right">Actions</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-slate-400" />
-                  Type
-                </div>
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-amber-400" />
-                  Complétion
-                </div>
-                <div className="text-right">Actions</div>
-              </div>
+              )}
 
               <ul className="divide-y divide-slate-100">
                 {treeRows.map((node) => {
                   // Gérer l'en-tête de section pour les entreprises indépendantes
                   if (node.type === "section-header") {
+                    const isPackageIcon = node.name === "ENTREPRISES INDÉPENDANTES";
                     return (
                       <li
                         key={node.id}
@@ -1188,7 +1613,11 @@ export default function StructurePage() {
                         <div className="px-6 py-3 flex items-center gap-2">
                           <div className="h-px flex-1 bg-slate-200" />
                           <div className="flex items-center gap-2">
-                            <Building className="h-4 w-4 text-amber-600" />
+                            {isPackageIcon ? (
+                              <Package className="h-4 w-4 text-amber-600" />
+                            ) : (
+                              <Building className="h-4 w-4 text-amber-600" />
+                            )}
                             <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide whitespace-nowrap">
                               {node.name}
                             </span>
@@ -1200,31 +1629,41 @@ export default function StructurePage() {
                   }
 
                   const indent =
-                    node.type === "group" ? 0 : node.type === "company" ? 1 : 2;
+                    node.type === "workspace" ? 0 :
+                    node.type === "group" ? 1 : 
+                    node.type === "company" ? 2 : 3;
                   const Icon =
-                    node.type === "group"
-                      ? Layers
-                      : node.type === "company"
-                        ? Building
-                        : Briefcase;
+                    node.type === "workspace"
+                      ? Building2
+                      : node.type === "group"
+                        ? Layers
+                        : node.type === "company"
+                          ? Building
+                          : Briefcase;
                   const iconColor =
-                    node.type === "group"
-                      ? "text-blue-600"
-                      : node.type === "company"
-                        ? "text-slate-700"
-                        : "text-emerald-600";
+                    node.type === "workspace"
+                      ? "text-purple-600"
+                      : node.type === "group"
+                        ? "text-blue-600"
+                        : node.type === "company"
+                          ? "text-slate-700"
+                          : "text-emerald-600";
                   const typeText =
-                    node.type === "group"
-                      ? "Groupe"
-                      : node.type === "company"
-                        ? "Entreprise"
-                        : "BU";
+                    node.type === "workspace"
+                      ? "Workspace"
+                      : node.type === "group"
+                        ? "Groupe"
+                        : node.type === "company"
+                          ? "Entreprise"
+                          : "BU";
                   const typeBadgeColor =
-                    node.type === "group"
-                      ? "bg-blue-50 text-blue-700 border-blue-100"
-                      : node.type === "company"
-                        ? "bg-slate-100 text-slate-700 border-slate-200"
-                        : "bg-slate-50 text-slate-500 border-slate-100";
+                    node.type === "workspace"
+                      ? "bg-purple-50 text-purple-700 border-purple-100"
+                      : node.type === "group"
+                        ? "bg-blue-50 text-blue-700 border-blue-100"
+                        : node.type === "company"
+                          ? "bg-slate-100 text-slate-700 border-slate-200"
+                          : "bg-slate-50 text-slate-500 border-slate-100";
                   const completion =
                     node.type === "company" ? node.completionPercentage : null;
                   const canExpand =
@@ -1315,6 +1754,8 @@ export default function StructurePage() {
 
                         <div className="flex justify-end">
                           {user?.role === "SUPER_ADMIN" ||
+                          user?.role === "ADMIN" ||
+                          user?.role === "HEAD_MANAGER" ||
                           user?.role === "MANAGER" ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -1335,6 +1776,25 @@ export default function StructurePage() {
                                 >
                                   Voir / Modifier
                                 </DropdownMenuItem>
+                                {node.type === "workspace" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setAddGroupForm({
+                                        name: "",
+                                        siret: "",
+                                        mainActivity: "",
+                                        fiscal_year_start: "",
+                                        fiscal_year_end: "",
+                                        workspaceId: node.id,
+                                      });
+                                      setAddGroupOpen(true);
+                                    }}
+                                  >
+                                    <Plus className="mr-2 h-4 w-4" /> Ajouter
+                                    un groupe
+                                  </DropdownMenuItem>
+                                )}
                                 {node.type === "group" && (
                                   <DropdownMenuItem
                                     onClick={(e) => {
@@ -1456,11 +1916,13 @@ export default function StructurePage() {
           <DialogHeader className="flex-row items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <span className="text-lg">
-                {selectedNode?.type === "group"
-                  ? "📁"
-                  : selectedNode?.type === "company"
-                    ? "🏢"
-                    : "📦"}
+                {selectedNode?.type === "workspace"
+                  ? "🏢"
+                  : selectedNode?.type === "group"
+                    ? "📁"
+                    : selectedNode?.type === "company"
+                      ? "🏢"
+                      : "📦"}
               </span>
               {editing ? `Modifier ${typeLabel}` : typeLabel}
             </DialogTitle>
@@ -1474,6 +1936,99 @@ export default function StructurePage() {
                 </Button>
               )}
           </DialogHeader>
+
+          {selectedNode?.type === "workspace" && (
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-slate-700">Informations de l&apos;workspace</h3>
+                <div className="bg-slate-50 rounded-lg p-4 space-y-4">
+                  <Field
+                    label="Nom"
+                    value={editworkspace.name}
+                    editing={editing}
+                    onChange={(v) => setEditworkspace((f) => ({ ...f, name: v }))}
+                  />
+                  <FieldTextarea
+                    label="Description"
+                    value={editworkspace.description}
+                    editing={editing}
+                    onChange={(v) => setEditworkspace((f) => ({ ...f, description: v }))}
+                  />
+                  <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Logo
+                  </label>
+                  {editing ? (
+                    <FileUpload
+                      key={editworkspace.logo}
+                      value={editworkspace.logo}
+                      onChange={(file) => {
+                        setEditworkspaceLogoFile(file);
+                        if (file) {
+                          setEditworkspace((f) => ({ ...f, logo: file.name }));
+                        } else {
+                          setEditworkspace((f) => ({ ...f, logo: "" }));
+                        }
+                      }}
+                      placeholder="Uploader une image de logo"
+                      accept="image/*"
+                    />
+                  ) : (
+                    <div className="space-y-2">
+                      {editworkspace.logo ? (
+                        <>
+                          {console.log('Logo à afficher:', editworkspace.logo)}
+                          {editworkspace.logo.startsWith('http') ? (
+                            <img 
+                              src={editworkspace.logo} 
+                              alt="Logo de l'workspace" 
+                              className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                              onError={(e) => {
+                                console.error('Erreur chargement image URL:', editworkspace.logo);
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <img 
+                              src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`} 
+                              alt="Logo de l'workspace" 
+                              className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                              onError={(e) => {
+                                console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`);
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <p className="text-xs text-slate-500">{editworkspace.logo}</p>
+                        </>
+                      ) : (
+                        <p className="text-sm font-medium text-primary">—</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                  <FieldTextarea
+                    label="Adresse"
+                    value={editworkspace.address}
+                    editing={editing}
+                    onChange={(v) => setEditworkspace((f) => ({ ...f, address: v }))}
+                  />
+                  <Field
+                    label="Email de contact"
+                    value={editworkspace.contact_email}
+                    editing={editing}
+                    onChange={(v) => setEditworkspace((f) => ({ ...f, contact_email: v }))}
+                  />
+                  <Field
+                    label="Téléphone de contact"
+                    value={editworkspace.contact_phone}
+                    editing={editing}
+                    onChange={(v) => setEditworkspace((f) => ({ ...f, contact_phone: v }))}
+                  />
+                                  </div>
+              </div>
+            </div>
+          )}
 
           {selectedNode?.type === "group" && (
             <div className="space-y-4 py-2">
@@ -1628,7 +2183,7 @@ export default function StructurePage() {
           <DialogFooter className="gap-2">
             {!editing ? (
               <>
-                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER" || user?.role === "HEAD_MANAGER") && (
                   <Button
                     variant="outline"
                     className="border-red-200 text-red-600 hover:bg-red-50"
@@ -1649,7 +2204,7 @@ export default function StructurePage() {
                     Fiche
                   </Button>
                 )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "MANAGER") && (
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
                   <Button variant="outline" onClick={() => setEditing(true)}>
                     Modifier
                   </Button>
@@ -1944,7 +2499,8 @@ export default function StructurePage() {
                       </p>
                       {(user?.role === "SUPER_ADMIN" ||
                         user?.role === "ADMIN" ||
-                        user?.role === "MANAGER") && (
+                        user?.role === "MANAGER" ||
+                        user?.role === "HEAD_MANAGER") && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -2041,6 +2597,25 @@ export default function StructurePage() {
           <div className="space-y-4 py-2">
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Workspace *
+              </label>
+              <Select
+                value={addGroupForm.workspaceId}
+                onValueChange={(value) =>
+                  setAddGroupForm((f) => ({ ...f, workspaceId: value }))
+                }
+                className="h-11"
+              >
+                <option value="">Sélectionner une workspace</option>
+                {tree?.workspaces?.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Nom *
               </label>
               <Input
@@ -2116,7 +2691,7 @@ export default function StructurePage() {
             </Button>
             <Button
               onClick={handleCreateGroup}
-              disabled={addGroupLoading || !addGroupForm.name.trim()}
+              disabled={addGroupLoading || !addGroupForm.name.trim() || !addGroupForm.workspaceId.trim()}
             >
               {addGroupLoading ? "Création..." : "Créer"}
             </Button>
@@ -2399,10 +2974,135 @@ export default function StructurePage() {
         </DialogContent>
       </Dialog>
 
+      {/* Add Workspace Modal */}
+      <Dialog open={addworkspaceOpen} onOpenChange={setAddworkspaceOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-purple-600" />
+              Créer l&apos;workspace
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Nom *
+              </label>
+              <Input
+                value={addworkspaceForm.name}
+                onChange={(e) =>
+                  setAddworkspaceForm((f) => ({ ...f, name: e.target.value }))
+                }
+                placeholder="Nom de l&apos;workspace"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Description
+              </label>
+              <Textarea
+                value={addworkspaceForm.description}
+                onChange={(e) =>
+                  setAddworkspaceForm((f) => ({
+                    ...f,
+                    description: e.target.value,
+                  }))
+                }
+                placeholder="Description de l&apos;workspace"
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Logo
+              </label>
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                  placeholder="Choisir une image"
+                />
+                {logoPreview && (
+                  <div className="mt-2">
+                    <img 
+                      src={logoPreview} 
+                      alt="Aperçu du logo" 
+                      className="h-20 w-20 object-cover rounded-lg border border-slate-200"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Adresse
+              </label>
+              <Input
+                value={addworkspaceForm.address}
+                onChange={(e) =>
+                  setAddworkspaceForm((f) => ({ ...f, address: e.target.value }))
+                }
+                placeholder="Adresse de l&apos;workspace"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Email de contact
+              </label>
+              <Input
+                type="email"
+                value={addworkspaceForm.contact_email}
+                onChange={(e) =>
+                  setAddworkspaceForm((f) => ({ ...f, contact_email: e.target.value }))
+                }
+                placeholder="email@exemple.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Téléphone de contact
+              </label>
+              <Input
+                value={addworkspaceForm.contact_phone}
+                onChange={(e) =>
+                  setAddworkspaceForm((f) => ({ ...f, contact_phone: e.target.value }))
+                }
+                placeholder="+33 1 23 45 67 89"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setAddworkspaceOpen(false);
+                setLogoFile(null);
+                setLogoPreview("");
+              }}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleCreateworkspace}
+              disabled={addworkspaceLoading || !addworkspaceForm.name.trim()}
+              className="bg-purple-600 text-white hover:bg-purple-700"
+            >
+              {addworkspaceLoading ? "Création..." : "Créer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <CompanyCreateWizard
         open={wizardOpen}
         onOpenChange={setWizardOpen}
-        groups={groupList.map((g) => ({ id: g.id, name: g.name }))}
+        groups={groupList.map((g) => ({ 
+          id: g.id, 
+          name: g.name, 
+          workspaceId: g.workspaceId || "" 
+        }))}
+        workspaces={tree?.workspaces?.map((o) => ({ id: o.id, name: o.name })) || []}
         onSubmit={handleCreateCompany}
       />
     </AppLayout>

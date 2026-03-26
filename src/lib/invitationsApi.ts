@@ -1,8 +1,8 @@
 import { apiFetch } from "@/lib/apiClient";
 
 export type InvitationStatus = "PENDING" | "ACCEPTED" | "REJECTED";
-export type UserRole = "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "END_USER";
-export type NodeType = "GROUP" | "COMPANY" | "BUSINESS_UNIT";
+export type UserRole = "SUPER_ADMIN" | "ADMIN" | "HEAD_MANAGER" | "MANAGER" | "END_USER";
+export type NodeType = "GROUP" | "COMPANY" | "BUSINESS_UNIT" | "WORKSPACE";
 
 export type DataPerimeterItem = {
   nodeType: NodeType;
@@ -106,9 +106,11 @@ export function invitationStatusColor(s: InvitationStatus): string {
 export function allowedInviteRoles(currentRole: UserRole): UserRole[] {
   switch (currentRole) {
     case "SUPER_ADMIN":
-      return ["ADMIN", "MANAGER", "END_USER"];
+      return ["ADMIN", "HEAD_MANAGER", "MANAGER", "END_USER"];
     case "ADMIN":
-      return ["ADMIN", "MANAGER", "END_USER"];
+      return ["ADMIN", "HEAD_MANAGER", "MANAGER", "END_USER"];
+    case "HEAD_MANAGER":
+      return ["MANAGER", "END_USER"];
     case "MANAGER":
       return ["MANAGER", "END_USER"];
     default:

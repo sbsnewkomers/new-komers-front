@@ -39,6 +39,7 @@ export type CompanyWizardForm = {
   siret: string;
   address: string;
   groupId: string;
+  workspaceId: string;
   ape_code: string;
   main_activity: string;
   size: string;
@@ -52,6 +53,7 @@ const defaultForm: CompanyWizardForm = {
   siret: "",
   address: "",
   groupId: "",
+  workspaceId: "",
   ape_code: "",
   main_activity: "",
   size: "SMALL",
@@ -61,14 +63,29 @@ const defaultForm: CompanyWizardForm = {
 type CompanyCreateWizardProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  groups: { id: string; name: string }[];
+  groups: { id: string; name: string; workspaceId: string }[];
+  workspaces: { id: string; name: string }[];
   onSubmit: (data: CompanyWizardForm) => Promise<void>;
 };
 
-export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: CompanyCreateWizardProps) {
+export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, onSubmit }: CompanyCreateWizardProps) {
   const [step, setStep] = React.useState(1);
   const [form, setForm] = React.useState<CompanyWizardForm>(defaultForm);
   const [loading, setLoading] = React.useState(false);
+
+  // Fonction pour trouver l'workspace d'un groupe
+  const getworkspaceFromGroup = React.useCallback((groupId: string) => {
+    const group = groups.find(g => g.id === groupId);
+    return group?.workspaceId || "";
+  }, [groups]);
+
+  const handleGroupChange = React.useCallback((groupId: string) => {
+    setForm((f) => ({ 
+      ...f, 
+      groupId,
+      workspaceId: groupId ? getworkspaceFromGroup(groupId) : ""
+    }));
+  }, [getworkspaceFromGroup]);
 
   const reset = React.useCallback(() => {
     setStep(1);
@@ -99,7 +116,7 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
   };
 
   const canNextStep1 = form.name.trim() && form.fiscal_year_start && form.fiscal_year_end;
-  const canNextStep2 = form.siret.trim() && validateSiret(form.siret); // Validation SIRET ajoutée
+  const canNextStep2 = form.siret.trim() && validateSiret(form.siret) && (form.groupId || form.workspaceId); // Workspace requise si pas de groupe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -201,7 +218,7 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
               <label className="mb-1 block text-xs text-muted-foreground">Rattachement à un groupe</label>
               <Select
                 value={form.groupId}
-                onValueChange={(v) => setForm((f) => ({ ...f, groupId: v }))}
+                onValueChange={handleGroupChange}
               >
                 <option value="">Sélectionner un groupe (optionnel)</option>
                 {groups.map((g) => (
@@ -209,6 +226,21 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, onSubmit }: Co
                 ))}
               </Select>
             </div>
+            {!form.groupId && (
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Workspace *</label>
+                <Select
+                  value={form.workspaceId}
+                  onValueChange={(v) => setForm((f) => ({ ...f, workspaceId: v }))}
+                  required
+                >
+                  <option value="">Sélectionner une workspace</option>
+                  {workspaces.map((org) => (
+                    <option key={org.id} value={org.id}>{org.name}</option>
+                  ))}
+                </Select>
+              </div>
+            )}
           </div>
         )}
 
