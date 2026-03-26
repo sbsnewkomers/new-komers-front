@@ -235,14 +235,11 @@ export function AppLayout({ title, children, companies = [], workspaces = [], se
 
             )}
 
-            <Link href="/budget" className={navLinkClass("/budget")}>
-
+            {/* <Link href="/budget" className={navLinkClass("/budget")}>
               <BookOpen className="h-5 w-5" />
-
               Accounting
-
-            </Link>
-
+            </Link> */}
+            
             <Link href="/import" className={navLinkClass("/import")}>
 
               <Upload className="h-5 w-5" />
