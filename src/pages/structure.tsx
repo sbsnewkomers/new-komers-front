@@ -148,6 +148,7 @@ export default function StructurePage() {
   const canImportStructure =
     user?.role === "SUPER_ADMIN" ||
     user?.role === "ADMIN" ||
+    user?.role === "HEAD_MANAGER" ||
     user?.role === "MANAGER";
   const canCreateCompany = can("companies", CRUD_ACTION.CREATE);
 
