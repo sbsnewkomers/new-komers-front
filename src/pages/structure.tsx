@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
 import { FileUpload } from "@/components/ui/FileUpload";
+import { ApeCodeSelect } from "@/components/structure/ApeCodeSelect";
 import {
   Dialog,
   DialogContent,
@@ -76,6 +77,7 @@ type GroupFull = {
   id: string;
   name: string;
   siret: string;
+  ape_code?: string;
   fiscal_year_start: string;
   fiscal_year_end: string;
   mainActivity?: string;
@@ -245,6 +247,7 @@ export default function StructurePage() {
   const [addGroupForm, setAddGroupForm] = useState({
     name: "",
     siret: "",
+    ape_code: "",
     fiscal_year_start: "",
     fiscal_year_end: "",
     mainActivity: "",
@@ -277,6 +280,7 @@ export default function StructurePage() {
   const [editGroup, setEditGroup] = useState({
     name: "",
     siret: "",
+    ape_code: "",
     fiscal_year_start: "",
     fiscal_year_end: "",
     mainActivity: "",
@@ -829,6 +833,7 @@ export default function StructurePage() {
           setEditGroup({
             name: g.name,
             siret: g.siret ?? "",
+            ape_code: g.ape_code ?? "",
             fiscal_year_start: g.fiscal_year_start ?? "",
             fiscal_year_end: g.fiscal_year_end ?? "",
             mainActivity: g.mainActivity ?? "",
@@ -838,6 +843,7 @@ export default function StructurePage() {
           setEditGroup({
             name: node.name,
             siret: "",
+            ape_code: "",
             fiscal_year_start: "",
             fiscal_year_end: "",
             mainActivity: "",
@@ -979,6 +985,9 @@ export default function StructurePage() {
       formData.append('name', editGroup.name);
       if (editGroup.siret) {
         formData.append('siret', editGroup.siret);
+      }
+      if (editGroup.ape_code) {
+        formData.append('ape_code', editGroup.ape_code);
       }
       if (editGroup.fiscal_year_start) {
         formData.append('fiscal_year_start', editGroup.fiscal_year_start);
@@ -1351,6 +1360,7 @@ export default function StructurePage() {
         body: JSON.stringify({
           name: addGroupForm.name,
           siret: addGroupForm.siret || undefined,
+          ape_code: addGroupForm.ape_code || undefined,
           fiscal_year_start: addGroupForm.fiscal_year_start || undefined,
           fiscal_year_end: addGroupForm.fiscal_year_end || undefined,
           mainActivity: addGroupForm.mainActivity || undefined,
@@ -1363,6 +1373,7 @@ export default function StructurePage() {
       setAddGroupForm({
         name: "",
         siret: "",
+        ape_code: "",
         fiscal_year_start: "",
         fiscal_year_end: "",
         mainActivity: "",
@@ -1960,10 +1971,11 @@ export default function StructurePage() {
                                       setAddGroupForm({
                                         name: "",
                                         siret: "",
+                                        ape_code: "",
                                         mainActivity: "",
                                         fiscal_year_start: "",
                                         fiscal_year_end: "",
-                                        workspaceId: node.id,
+                                        workspaceId: "",
                                       });
                                       setAddGroupOpen(true);
                                     }}
@@ -2240,6 +2252,12 @@ export default function StructurePage() {
                 onChange={() => {}} // Non modifiable
               />
               <Field
+                label="Code APE"
+                value={editGroup.ape_code}
+                editing={editing}
+                onChange={(v) => setEditGroup((f) => ({ ...f, ape_code: v }))}
+              />
+              <Field
                 label="Début d'exercice"
                 value={editGroup.fiscal_year_start}
                 editing={editing}
@@ -2271,14 +2289,17 @@ export default function StructurePage() {
                   setEditGroup((f) => ({ ...f, fiscal_year_end: v }));
                 }}
               />
-              <Field
-                label="Activité principale"
-                value={editGroup.mainActivity}
-                editing={editing}
-                onChange={(v) =>
-                  setEditGroup((f) => ({ ...f, mainActivity: v }))
-                }
-              />
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Activité principale
+                </label>
+                <Input
+                  value={editGroup.mainActivity}
+                  readOnly={true}
+                  className="bg-slate-50 cursor-not-allowed"
+                  placeholder="—"
+                />
+              </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Logo
@@ -2363,20 +2384,28 @@ export default function StructurePage() {
                 editing={editing}
                 onChange={(v) => setEditCompany((f) => ({ ...f, address: v }))}
               />
-              <Field
-                label="Code APE"
-                value={editCompany.ape_code}
-                editing={editing}
-                onChange={(v) => setEditCompany((f) => ({ ...f, ape_code: v }))}
-              />
-              <Field
-                label="Activité principale"
-                value={editCompany.main_activity}
-                editing={editing}
-                onChange={(v) =>
-                  setEditCompany((f) => ({ ...f, main_activity: v }))
-                }
-              />
+              <div className="space-y-2">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Code APE
+                </label>
+                <ApeCodeSelect
+                  value={editCompany.ape_code}
+                  onChange={(value) => setEditCompany((f) => ({ ...f, ape_code: value }))}
+                  onDescriptionChange={(description) => setEditCompany((f) => ({ ...f, main_activity: description }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Activité principale
+                </label>
+                <Input
+                  placeholder="Activité principale"
+                  value={editCompany.main_activity}
+                  onChange={(e) => setEditCompany((f) => ({ ...f, main_activity: e.target.value }))}
+                  readOnly
+                  className="bg-gray-50 cursor-not-allowed"
+                />
+              </div>
               <Field
                 label="Début d'exercice"
                 value={editCompany.fiscal_year_start}
@@ -2990,6 +3019,20 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Code APE
+              </label>
+              <ApeCodeSelect
+                value={addGroupForm.ape_code}
+                onChange={(value) =>
+                  setAddGroupForm((f) => ({ ...f, ape_code: value }))
+                }
+                onDescriptionChange={(description) =>
+                  setAddGroupForm((f) => ({ ...f, mainActivity: description }))
+                }
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 SIRET
               </label>
               <SiretInput
@@ -3012,6 +3055,8 @@ export default function StructurePage() {
                   }))
                 }
                 placeholder="Activité principale"
+                readOnly
+                className="bg-gray-50 cursor-not-allowed"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -3119,24 +3164,30 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Code
+                Code APE
               </label>
-              <Input
+              <ApeCodeSelect
                 value={addBUStandaloneForm.code}
-                onChange={(e) =>
+                onChange={(value) =>
                   setAddBUStandaloneForm((f) => ({
                     ...f,
-                    code: e.target.value,
+                    code: value,
                   }))
                 }
-                placeholder="BU-001"
+                onDescriptionChange={(description) =>
+                  setAddBUStandaloneForm((f) => ({
+                    ...f,
+                    activity: description,
+                  }))
+                }
               />
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Activité
+                Activité principale
               </label>
               <Input
+                placeholder="Activité principale"
                 value={addBUStandaloneForm.activity}
                 onChange={(e) =>
                   setAddBUStandaloneForm((f) => ({
@@ -3144,7 +3195,8 @@ export default function StructurePage() {
                     activity: e.target.value,
                   }))
                 }
-                placeholder="Activité principale"
+                readOnly
+                className="bg-gray-50 cursor-not-allowed"
               />
             </div>
             <div>
@@ -3225,14 +3277,29 @@ export default function StructurePage() {
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Code APE
                 </label>
-                <Input
+                <ApeCodeSelect
                   value={addCompanyForm.ape_code}
-                  onChange={(e) =>
-                    setAddCompanyForm((f) => ({ ...f, ape_code: e.target.value }))
+                  onChange={(value) =>
+                    setAddCompanyForm((f) => ({ ...f, ape_code: value }))
                   }
-                  placeholder="Code APE"
+                  onDescriptionChange={(description) =>
+                    setAddCompanyForm((f) => ({ ...f, main_activity: description }))
+                  }
                 />
               </div>
+            </div>
+            
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Activité principale
+              </label>
+              <Input
+                placeholder="Activité principale"
+                value={addCompanyForm.main_activity}
+                onChange={(e) => setAddCompanyForm((f) => ({ ...f, main_activity: e.target.value }))}
+                readOnly
+                className="bg-gray-50 cursor-not-allowed"
+              />
             </div>
             
             <div>
@@ -3245,19 +3312,6 @@ export default function StructurePage() {
                   setAddCompanyForm((f) => ({ ...f, address: e.target.value }))
                 }
                 placeholder="Adresse de l'entreprise"
-              />
-            </div>
-            
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Activité principale
-              </label>
-              <Input
-                value={addCompanyForm.main_activity}
-                onChange={(e) =>
-                  setAddCompanyForm((f) => ({ ...f, main_activity: e.target.value }))
-                }
-                placeholder="Activité principale"
               />
             </div>
             
@@ -3404,26 +3458,24 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Code
+                Code APE
               </label>
-              <Input
+              <ApeCodeSelect
                 value={addBUForm.code}
-                onChange={(e) =>
-                  setAddBUForm((f) => ({ ...f, code: e.target.value }))
-                }
-                placeholder="BU-001"
+                onChange={(value) => setAddBUForm((f) => ({ ...f, code: value }))}
+                onDescriptionChange={(description) => setAddBUForm((f) => ({ ...f, activity: description }))}
               />
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Activité
+                Activité principale
               </label>
               <Input
-                value={addBUForm.activity}
-                onChange={(e) =>
-                  setAddBUForm((f) => ({ ...f, activity: e.target.value }))
-                }
                 placeholder="Activité principale"
+                value={addBUForm.activity}
+                onChange={(e) => setAddBUForm((f) => ({ ...f, activity: e.target.value }))}
+                readOnly
+                className="bg-gray-50 cursor-not-allowed"
               />
             </div>
             <div>

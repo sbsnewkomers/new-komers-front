@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Select } from "@/components/ui/Select";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
+import { ApeCodeSelect } from "./ApeCodeSelect";
 const STEPS = [
   { id: 1, title: "Informations Générales" },
   { id: 2, title: "Détails Administratifs" },
@@ -292,15 +293,20 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
 
         {step === 3 && (
           <div className="space-y-4 py-2">
-            <Input
-              placeholder="Code APE"
-              value={form.ape_code}
-              onChange={(e) => setForm((f) => ({ ...f, ape_code: e.target.value }))}
-            />
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Code APE</label>
+              <ApeCodeSelect
+                value={form.ape_code}
+                onChange={(value) => setForm((f) => ({ ...f, ape_code: value }))}
+                onDescriptionChange={(description) => setForm((f) => ({ ...f, main_activity: description }))}
+              />
+            </div>
             <Input
               placeholder="Activité principale"
               value={form.main_activity}
               onChange={(e) => setForm((f) => ({ ...f, main_activity: e.target.value }))}
+              readOnly
+              className="bg-gray-50 cursor-not-allowed"
             />
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Taille</label>
