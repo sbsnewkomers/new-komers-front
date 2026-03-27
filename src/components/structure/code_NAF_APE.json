@@ -1,0 +1,4424 @@
+[
+    {
+        "Code NAF / APE": "0111Z",
+        "Description": "Culture de céréales (à l'exception du riz), de légumineuses et de graines oléagineuses",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0112Z",
+        "Description": "Culture du riz",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0113Z",
+        "Description": "Culture de légumes, de melons, de racines et de tubercules",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0114Z",
+        "Description": "Culture de la canne à sucre",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0115Z",
+        "Description": "Culture du tabac",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0116Z",
+        "Description": "Culture de plantes à fibres",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0119Z",
+        "Description": "Autres cultures non permanentes",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0121Z",
+        "Description": "Culture de la vigne",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0122Z",
+        "Description": "Culture de fruits tropicaux et subtropicaux",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0123Z",
+        "Description": "Culture d'agrumes",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0124Z",
+        "Description": "Culture de fruits à pépins et à noyau",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0125Z",
+        "Description": "Culture d'autres fruits d'arbres ou d'arbustes et de fruits à coque",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0126Z",
+        "Description": "Culture de fruits oléagineux",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0127Z",
+        "Description": "Culture de plantes à boissons",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0128Z",
+        "Description": "Culture de plantes à épices, aromatiques, médicinales et pharmaceutiques",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0129Z",
+        "Description": "Autres cultures permanentes",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0130Z",
+        "Description": "Reproduction de plantes",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0141Z",
+        "Description": "Élevage de vaches laitières",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0142Z",
+        "Description": "Élevage d'autres bovins et de buffles",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0143Z",
+        "Description": "Élevage de chevaux et d'autres équidés",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0144Z",
+        "Description": "Élevage de chameaux et d'autres camélidés",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0145Z",
+        "Description": "Élevage d'ovins et de caprins",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0146Z",
+        "Description": "Élevage de porcins",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0147Z",
+        "Description": "Élevage de volailles",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0149Z",
+        "Description": "Élevage d'autres animaux",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0150Z",
+        "Description": "Culture et élevage associés",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0161Z",
+        "Description": "Activités de soutien aux cultures",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0162Z",
+        "Description": "Activités de soutien à la production animale",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0163Z",
+        "Description": "Traitement primaire des récoltes",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0164Z",
+        "Description": "Traitement des semences",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0170Z",
+        "Description": "Chasse, piégeage et services annexes",
+        "Section": 1,
+        "Description section": "Culture et production animale, chasse et services annexes"
+    },
+    {
+        "Code NAF / APE": "0210Z",
+        "Description": "Sylviculture et autres activités forestières",
+        "Section": 2,
+        "Description section": "Sylviculture et exploitation forestière"
+    },
+    {
+        "Code NAF / APE": "0220Z",
+        "Description": "Exploitation forestière",
+        "Section": 2,
+        "Description section": "Sylviculture et exploitation forestière"
+    },
+    {
+        "Code NAF / APE": "0230Z",
+        "Description": "Récolte de produits forestiers non ligneux poussant à l'état sauvage",
+        "Section": 2,
+        "Description section": "Sylviculture et exploitation forestière"
+    },
+    {
+        "Code NAF / APE": "0240Z",
+        "Description": "Services de soutien à l'exploitation forestière",
+        "Section": 2,
+        "Description section": "Sylviculture et exploitation forestière"
+    },
+    {
+        "Code NAF / APE": "0311Z",
+        "Description": "Pêche en mer",
+        "Section": 3,
+        "Description section": "Pêche et aquaculture"
+    },
+    {
+        "Code NAF / APE": "0312Z",
+        "Description": "Pêche en eau douce",
+        "Section": 3,
+        "Description section": "Pêche et aquaculture"
+    },
+    {
+        "Code NAF / APE": "0321Z",
+        "Description": "Aquaculture en mer",
+        "Section": 3,
+        "Description section": "Pêche et aquaculture"
+    },
+    {
+        "Code NAF / APE": "0322Z",
+        "Description": "Aquaculture en eau douce",
+        "Section": 3,
+        "Description section": "Pêche et aquaculture"
+    },
+    {
+        "Code NAF / APE": "0510Z",
+        "Description": "Extraction de houille",
+        "Section": 5,
+        "Description section": "Extraction de houille et de lignite"
+    },
+    {
+        "Code NAF / APE": "0520Z",
+        "Description": "Extraction de lignite",
+        "Section": 5,
+        "Description section": "Extraction de houille et de lignite"
+    },
+    {
+        "Code NAF / APE": "0610Z",
+        "Description": "Extraction de pétrole brut",
+        "Section": 6,
+        "Description section": "Extraction d'hydrocarbures"
+    },
+    {
+        "Code NAF / APE": "0620Z",
+        "Description": "Extraction de gaz naturel",
+        "Section": 6,
+        "Description section": "Extraction d'hydrocarbures"
+    },
+    {
+        "Code NAF / APE": "0710Z",
+        "Description": "Extraction de minerais de fer",
+        "Section": 7,
+        "Description section": "Extraction de minerais métalliques"
+    },
+    {
+        "Code NAF / APE": "0721Z",
+        "Description": "Extraction de minerais d'uranium et de thorium",
+        "Section": 7,
+        "Description section": "Extraction de minerais métalliques"
+    },
+    {
+        "Code NAF / APE": "0729Z",
+        "Description": "Extraction d'autres minerais de métaux non ferreux",
+        "Section": 7,
+        "Description section": "Extraction de minerais métalliques"
+    },
+    {
+        "Code NAF / APE": "0811Z",
+        "Description": "Extraction de pierres ornementales et de construction, de calcaire industriel, de gypse, de craie et d'ardoise",
+        "Section": 8,
+        "Description section": "Autres industries extractives"
+    },
+    {
+        "Code NAF / APE": "0812Z",
+        "Description": "Exploitation de gravières et sablières, extraction d’argiles et de kaolin",
+        "Section": 8,
+        "Description section": "Autres industries extractives"
+    },
+    {
+        "Code NAF / APE": "0891Z",
+        "Description": "Extraction des minéraux chimiques et d'engrais minéraux",
+        "Section": 8,
+        "Description section": "Autres industries extractives"
+    },
+    {
+        "Code NAF / APE": "0892Z",
+        "Description": "Extraction de tourbe",
+        "Section": 8,
+        "Description section": "Autres industries extractives"
+    },
+    {
+        "Code NAF / APE": "0893Z",
+        "Description": "Production de sel",
+        "Section": 8,
+        "Description section": "Autres industries extractives"
+    },
+    {
+        "Code NAF / APE": "0899Z",
+        "Description": "Autres activités extractives nca",
+        "Section": 8,
+        "Description section": "Autres industries extractives"
+    },
+    {
+        "Code NAF / APE": "0910Z",
+        "Description": "Activités de soutien à l'extraction d'hydrocarbures",
+        "Section": 9,
+        "Description section": "Services de soutien aux industries extractives"
+    },
+    {
+        "Code NAF / APE": "0990Z",
+        "Description": "Activités de soutien aux autres industries extractives",
+        "Section": 9,
+        "Description section": "Services de soutien aux industries extractives"
+    },
+    {
+        "Code NAF / APE": "1011Z",
+        "Description": "Transformation et conservation de la viande de boucherie",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1011Z",
+        "Description": "Transformation et conservation de la viande de boucherie",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1012Z",
+        "Description": "Transformation et conservation de la viande de volaille",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1013A",
+        "Description": "Préparation industrielle de produits à base de viande",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1013B",
+        "Description": "Charcuterie",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1020Z",
+        "Description": "Transformation et conservation de poisson, de crustacés et de mollusques",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1031Z",
+        "Description": "Transformation et conservation de pommes de terre",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1032Z",
+        "Description": "Préparation de jus de fruits et légumes",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1039A",
+        "Description": "Autre transformation et conservation de légumes",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1039B",
+        "Description": "Transformation et conservation de fruits",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1041A",
+        "Description": "Fabrication d'huiles et graisses brutes",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1041B",
+        "Description": "Fabrication d'huiles et graisses raffinées",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1042Z",
+        "Description": "Fabrication de margarine et graisses comestibles similaires",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1051A",
+        "Description": "Fabrication de lait liquide et de produits frais",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1051B",
+        "Description": "Fabrication de beurre",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1051C",
+        "Description": "Fabrication de fromage",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1051D",
+        "Description": "Fabrication d'autres produits laitiers",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1052Z",
+        "Description": "Fabrication de glaces et sorbets",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1061A",
+        "Description": "Meunerie",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1061B",
+        "Description": "Autres activités du travail des grains",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1062Z",
+        "Description": "Fabrication de produits amylacés",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1071A",
+        "Description": "Fabrication industrielle de pain et de pâtisserie fraîche",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1071B",
+        "Description": "Cuisson de produits de boulangerie",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1071C",
+        "Description": "Boulangerie et boulangerie-pâtisserie",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1071D",
+        "Description": "Pâtisserie",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1072Z",
+        "Description": "Fabrication de biscuits, biscottes et pâtisseries de conservation",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1073Z",
+        "Description": "Fabrication de pâtes alimentaires",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1081Z",
+        "Description": "Fabrication de sucre",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1082Z",
+        "Description": "Fabrication de cacao, chocolat et de produits de confiserie",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1083Z",
+        "Description": "Transformation du thé et du café",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1084Z",
+        "Description": "Fabrication de condiments et assaisonnements",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1085Z",
+        "Description": "Fabrication de plats préparés",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1086Z",
+        "Description": "Fabrication d'aliments homogénéisés et diététiques",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1089Z",
+        "Description": "Fabrication d'autres produits alimentaires nca",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1091Z",
+        "Description": "Fabrication d'aliments pour animaux de ferme",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1092Z",
+        "Description": "Fabrication d'aliments pour animaux de compagnie",
+        "Section": 10,
+        "Description section": "Industries alimentaires"
+    },
+    {
+        "Code NAF / APE": "1101Z",
+        "Description": "Production de boissons alcooliques distillées",
+        "Section": 11,
+        "Description section": "Fabrication de boissons"
+    },
+    {
+        "Code NAF / APE": "1102A",
+        "Description": "Fabrication de vins effervescents",
+        "Section": 11,
+        "Description section": "Fabrication de boissons"
+    },
+    {
+        "Code NAF / APE": "1102B",
+        "Description": "Vinification",
+        "Section": 11,
+        "Description section": "Fabrication de boissons"
+    },
+    {
+        "Code NAF / APE": "1103Z",
+        "Description": "Fabrication de cidre et de vins de fruits",
+        "Section": 11,
+        "Description section": "Fabrication de boissons"
+    },
+    {
+        "Code NAF / APE": "1104Z",
+        "Description": "Production d'autres boissons fermentées non distillées",
+        "Section": 11,
+        "Description section": "Fabrication de boissons"
+    },
+    {
+        "Code NAF / APE": "1105Z",
+        "Description": "Fabrication de bière",
+        "Section": 11,
+        "Description section": "Fabrication de boissons"
+    },
+    {
+        "Code NAF / APE": "1106Z",
+        "Description": "Fabrication de malt",
+        "Section": 11,
+        "Description section": "Fabrication de boissons"
+    },
+    {
+        "Code NAF / APE": "1107A",
+        "Description": "Industrie des eaux de table",
+        "Section": 11,
+        "Description section": "Fabrication de boissons"
+    },
+    {
+        "Code NAF / APE": "1107B",
+        "Description": "Production de boissons rafraîchissantes",
+        "Section": 11,
+        "Description section": "Fabrication de boissons"
+    },
+    {
+        "Code NAF / APE": "1200Z",
+        "Description": "Fabrication de produits à base de tabac",
+        "Section": 12,
+        "Description section": "Fabrication de produits à base de tabac"
+    },
+    {
+        "Code NAF / APE": "1310Z",
+        "Description": "Préparation de fibres textiles et filature",
+        "Section": 13,
+        "Description section": "Fabrication de textiles"
+    },
+    {
+        "Code NAF / APE": "1320Z",
+        "Description": "Tissage",
+        "Section": 13,
+        "Description section": "Fabrication de textiles"
+    },
+    {
+        "Code NAF / APE": "1330Z",
+        "Description": "Ennoblissement textile",
+        "Section": 13,
+        "Description section": "Fabrication de textiles"
+    },
+    {
+        "Code NAF / APE": "1391Z",
+        "Description": "Fabrication d'étoffes à mailles",
+        "Section": 13,
+        "Description section": "Fabrication de textiles"
+    },
+    {
+        "Code NAF / APE": "1392Z",
+        "Description": "Fabrication d'articles textiles, sauf habillement",
+        "Section": 13,
+        "Description section": "Fabrication de textiles"
+    },
+    {
+        "Code NAF / APE": "1393Z",
+        "Description": "Fabrication de tapis et moquettes",
+        "Section": 13,
+        "Description section": "Fabrication de textiles"
+    },
+    {
+        "Code NAF / APE": "1394Z",
+        "Description": "Fabrication de ficelles, cordes et filets",
+        "Section": 13,
+        "Description section": "Fabrication de textiles"
+    },
+    {
+        "Code NAF / APE": "1395Z",
+        "Description": "Fabrication de non-tissés, sauf habillement",
+        "Section": 13,
+        "Description section": "Fabrication de textiles"
+    },
+    {
+        "Code NAF / APE": "1396Z",
+        "Description": "Fabrication d'autres textiles techniques et industriels",
+        "Section": 13,
+        "Description section": "Fabrication de textiles"
+    },
+    {
+        "Code NAF / APE": "1399Z",
+        "Description": "Fabrication d'autres textiles nca",
+        "Section": 13,
+        "Description section": "Fabrication de textiles"
+    },
+    {
+        "Code NAF / APE": "1411Z",
+        "Description": "Fabrication de vêtements en cuir",
+        "Section": 14,
+        "Description section": "Industrie de l'habillement"
+    },
+    {
+        "Code NAF / APE": "1412Z",
+        "Description": "Fabrication de vêtements de travail",
+        "Section": 14,
+        "Description section": "Industrie de l'habillement"
+    },
+    {
+        "Code NAF / APE": "1413Z",
+        "Description": "Fabrication de vêtements de dessus",
+        "Section": 14,
+        "Description section": "Industrie de l'habillement"
+    },
+    {
+        "Code NAF / APE": "1414Z",
+        "Description": "Fabrication de vêtements de dessous",
+        "Section": 14,
+        "Description section": "Industrie de l'habillement"
+    },
+    {
+        "Code NAF / APE": "1419Z",
+        "Description": "Fabrication d'autres vêtements et accessoires",
+        "Section": 14,
+        "Description section": "Industrie de l'habillement"
+    },
+    {
+        "Code NAF / APE": "1420Z",
+        "Description": "Fabrication d'articles en fourrure",
+        "Section": 14,
+        "Description section": "Industrie de l'habillement"
+    },
+    {
+        "Code NAF / APE": "1431Z",
+        "Description": "Fabrication d'articles chaussants à mailles",
+        "Section": 14,
+        "Description section": "Industrie de l'habillement"
+    },
+    {
+        "Code NAF / APE": "1439Z",
+        "Description": "Fabrication d'autres articles à mailles",
+        "Section": 14,
+        "Description section": "Industrie de l'habillement"
+    },
+    {
+        "Code NAF / APE": "1511Z",
+        "Description": "Apprêt et tannage des cuirs ; préparation et teinture des fourrures",
+        "Section": 15,
+        "Description section": "Industrie du cuir et de la chaussure"
+    },
+    {
+        "Code NAF / APE": "1512Z",
+        "Description": "Fabrication d'articles de voyage, de maroquinerie et de sellerie",
+        "Section": 15,
+        "Description section": "Industrie du cuir et de la chaussure"
+    },
+    {
+        "Code NAF / APE": "1520Z",
+        "Description": "Fabrication de chaussures",
+        "Section": 15,
+        "Description section": "Industrie du cuir et de la chaussure"
+    },
+    {
+        "Code NAF / APE": "1610A",
+        "Description": "Sciage et rabotage du bois, hors imprégnation",
+        "Section": 16,
+        "Description section": "Travail du bois et fabrication d'articles en bois et en liège, à l’exception des meubles ; fabrication d’articles en vannerie et sparterie"
+    },
+    {
+        "Code NAF / APE": "1610B",
+        "Description": "Imprégnation du bois",
+        "Section": 16,
+        "Description section": "Travail du bois et fabrication d'articles en bois et en liège, à l’exception des meubles ; fabrication d’articles en vannerie et sparterie"
+    },
+    {
+        "Code NAF / APE": "1621Z",
+        "Description": "Fabrication de placage et de panneaux de bois",
+        "Section": 16,
+        "Description section": "Travail du bois et fabrication d'articles en bois et en liège, à l’exception des meubles ; fabrication d’articles en vannerie et sparterie"
+    },
+    {
+        "Code NAF / APE": "1622Z",
+        "Description": "Fabrication de parquets assemblés",
+        "Section": 16,
+        "Description section": "Travail du bois et fabrication d'articles en bois et en liège, à l’exception des meubles ; fabrication d’articles en vannerie et sparterie"
+    },
+    {
+        "Code NAF / APE": "1623Z",
+        "Description": "Fabrication de charpentes et d'autres menuiseries",
+        "Section": 16,
+        "Description section": "Travail du bois et fabrication d'articles en bois et en liège, à l’exception des meubles ; fabrication d’articles en vannerie et sparterie"
+    },
+    {
+        "Code NAF / APE": "1624Z",
+        "Description": "Fabrication d'emballages en bois",
+        "Section": 16,
+        "Description section": "Travail du bois et fabrication d'articles en bois et en liège, à l’exception des meubles ; fabrication d’articles en vannerie et sparterie"
+    },
+    {
+        "Code NAF / APE": "1629Z",
+        "Description": "Fabrication d'objets divers en bois ; fabrication d'objets en liège, vannerie et sparterie",
+        "Section": 16,
+        "Description section": "Travail du bois et fabrication d'articles en bois et en liège, à l’exception des meubles ; fabrication d’articles en vannerie et sparterie"
+    },
+    {
+        "Code NAF / APE": "1629Z",
+        "Description": "Fabrication d'objets divers en bois; fabrication d'objets en liège, vannerie et sparterie",
+        "Section": 16,
+        "Description section": "Travail du bois et fabrication d'articles en bois et en liège, à l’exception des meubles ; fabrication d’articles en vannerie et sparterie"
+    },
+    {
+        "Code NAF / APE": "1711Z",
+        "Description": "Fabrication de pâte à papier",
+        "Section": 17,
+        "Description section": "Industrie du papier et du carton"
+    },
+    {
+        "Code NAF / APE": "1712Z",
+        "Description": "Fabrication de papier et de carton",
+        "Section": 17,
+        "Description section": "Industrie du papier et du carton"
+    },
+    {
+        "Code NAF / APE": "1721A",
+        "Description": "Fabrication de carton ondulé",
+        "Section": 17,
+        "Description section": "Industrie du papier et du carton"
+    },
+    {
+        "Code NAF / APE": "1721B",
+        "Description": "Fabrication de cartonnages",
+        "Section": 17,
+        "Description section": "Industrie du papier et du carton"
+    },
+    {
+        "Code NAF / APE": "1721C",
+        "Description": "Fabrication d'emballages en papier",
+        "Section": 17,
+        "Description section": "Industrie du papier et du carton"
+    },
+    {
+        "Code NAF / APE": "1722Z",
+        "Description": "Fabrication d'articles en papier à usage sanitaire ou domestique",
+        "Section": 17,
+        "Description section": "Industrie du papier et du carton"
+    },
+    {
+        "Code NAF / APE": "1723Z",
+        "Description": "Fabrication d'articles de papeterie",
+        "Section": 17,
+        "Description section": "Industrie du papier et du carton"
+    },
+    {
+        "Code NAF / APE": "1724Z",
+        "Description": "Fabrication de papiers peints",
+        "Section": 17,
+        "Description section": "Industrie du papier et du carton"
+    },
+    {
+        "Code NAF / APE": "1729Z",
+        "Description": "Fabrication d'autres articles en papier ou en carton",
+        "Section": 17,
+        "Description section": "Industrie du papier et du carton"
+    },
+    {
+        "Code NAF / APE": "1811Z",
+        "Description": "Imprimerie de journaux",
+        "Section": 18,
+        "Description section": "Imprimerie et reproduction d'enregistrements"
+    },
+    {
+        "Code NAF / APE": "1812Z",
+        "Description": "Autre imprimerie (labeur)",
+        "Section": 18,
+        "Description section": "Imprimerie et reproduction d'enregistrements"
+    },
+    {
+        "Code NAF / APE": "1813Z",
+        "Description": "Activités de pré-presse",
+        "Section": 18,
+        "Description section": "Imprimerie et reproduction d'enregistrements"
+    },
+    {
+        "Code NAF / APE": "1814Z",
+        "Description": "Reliure et activités connexes",
+        "Section": 18,
+        "Description section": "Imprimerie et reproduction d'enregistrements"
+    },
+    {
+        "Code NAF / APE": "1820Z",
+        "Description": "Reproduction d'enregistrements",
+        "Section": 18,
+        "Description section": "Imprimerie et reproduction d'enregistrements"
+    },
+    {
+        "Code NAF / APE": "1910Z",
+        "Description": "Cokéfaction",
+        "Section": 19,
+        "Description section": "Cokéfaction et raffinage"
+    },
+    {
+        "Code NAF / APE": "1920Z",
+        "Description": "Raffinage du pétrole",
+        "Section": 19,
+        "Description section": "Cokéfaction et raffinage"
+    },
+    {
+        "Code NAF / APE": "2011Z",
+        "Description": "Fabrication de gaz industriels",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2012Z",
+        "Description": "Fabrication de colorants et de pigments",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2013A",
+        "Description": "Enrichissement et retraitement de matières nucléaires",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2013B",
+        "Description": "Fabrication d'autres produits chimiques inorganiques de base nca",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2014Z",
+        "Description": "Fabrication d'autres produits chimiques organiques de base",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2015Z",
+        "Description": "Fabrication de produits azotés et d'engrais",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2016Z",
+        "Description": "Fabrication de matières plastiques de base",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2017Z",
+        "Description": "Fabrication de caoutchouc synthétique",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2020Z",
+        "Description": "Fabrication de pesticides et d’autres produits agrochimiques",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2030Z",
+        "Description": "Fabrication de peintures, vernis, encres et mastics",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2041Z",
+        "Description": "Fabrication de savons, détergents et produits d'entretien",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2042Z",
+        "Description": "Fabrication de parfums et de produits pour la toilette",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2051Z",
+        "Description": "Fabrication de produits explosifs",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2052Z",
+        "Description": "Fabrication de colles",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2053Z",
+        "Description": "Fabrication d'huiles essentielles",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2059Z",
+        "Description": "Fabrication d'autres produits chimiques nca",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2060Z",
+        "Description": "Fabrication de fibres artificielles ou synthétiques",
+        "Section": 20,
+        "Description section": "Industrie chimique"
+    },
+    {
+        "Code NAF / APE": "2110Z",
+        "Description": "Fabrication de produits pharmaceutiques de base",
+        "Section": 21,
+        "Description section": "Industrie pharmaceutique"
+    },
+    {
+        "Code NAF / APE": "2120Z",
+        "Description": "Fabrication de préparations pharmaceutiques",
+        "Section": 21,
+        "Description section": "Industrie pharmaceutique"
+    },
+    {
+        "Code NAF / APE": "2211Z",
+        "Description": "Fabrication et rechapage de pneumatiques",
+        "Section": 22,
+        "Description section": "Fabrication de produits en caoutchouc et en plastique"
+    },
+    {
+        "Code NAF / APE": "2219Z",
+        "Description": "Fabrication d'autres articles en caoutchouc",
+        "Section": 22,
+        "Description section": "Fabrication de produits en caoutchouc et en plastique"
+    },
+    {
+        "Code NAF / APE": "2221Z",
+        "Description": "Fabrication de plaques, feuilles, tubes et profilés en matières plastiques",
+        "Section": 22,
+        "Description section": "Fabrication de produits en caoutchouc et en plastique"
+    },
+    {
+        "Code NAF / APE": "2222Z",
+        "Description": "Fabrication d'emballages en matières plastiques",
+        "Section": 22,
+        "Description section": "Fabrication de produits en caoutchouc et en plastique"
+    },
+    {
+        "Code NAF / APE": "2223Z",
+        "Description": "Fabrication d'éléments en matières plastiques pour la construction",
+        "Section": 22,
+        "Description section": "Fabrication de produits en caoutchouc et en plastique"
+    },
+    {
+        "Code NAF / APE": "2229A",
+        "Description": "Fabrication de pièces techniques à base de matières plastiques",
+        "Section": 22,
+        "Description section": "Fabrication de produits en caoutchouc et en plastique"
+    },
+    {
+        "Code NAF / APE": "2229B",
+        "Description": "Fabrication de produits de consommation courante en matières plastiques",
+        "Section": 22,
+        "Description section": "Fabrication de produits en caoutchouc et en plastique"
+    },
+    {
+        "Code NAF / APE": "2311Z",
+        "Description": "Fabrication de verre plat",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2312Z",
+        "Description": "Façonnage et transformation du verre plat",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2313Z",
+        "Description": "Fabrication de verre creux",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2314Z",
+        "Description": "Fabrication de fibres de verre",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2319Z",
+        "Description": "Fabrication et façonnage d'autres articles en verre, y compris verre technique",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2320Z",
+        "Description": "Fabrication de produits réfractaires",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2331Z",
+        "Description": "Fabrication de carreaux en céramique",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2332Z",
+        "Description": "Fabrication de briques, tuiles et produits de construction, en terre cuite",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2341Z",
+        "Description": "Fabrication d'articles céramiques à usage domestique ou ornemental",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2342Z",
+        "Description": "Fabrication d'appareils sanitaires en céramique",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2343Z",
+        "Description": "Fabrication d'isolateurs et pièces isolantes en céramique",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2344Z",
+        "Description": "Fabrication d'autres produits céramiques à usage technique",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2349Z",
+        "Description": "Fabrication d'autres produits céramiques",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2351Z",
+        "Description": "Fabrication de ciment",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2352Z",
+        "Description": "Fabrication de chaux et plâtre",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2361Z",
+        "Description": "Fabrication d'éléments en béton pour la construction",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2362Z",
+        "Description": "Fabrication d'éléments en plâtre pour la construction",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2363Z",
+        "Description": "Fabrication de béton prêt à l'emploi",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2364Z",
+        "Description": "Fabrication de mortiers et bétons secs",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2365Z",
+        "Description": "Fabrication d'ouvrages en fibre-ciment",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2369Z",
+        "Description": "Fabrication d'autres ouvrages en béton, en ciment ou en plâtre",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2370Z",
+        "Description": "Taille, façonnage et finissage de pierres",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2391Z",
+        "Description": "Fabrication de produits abrasifs",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2399Z",
+        "Description": "Fabrication d'autres produits minéraux non métalliques nca",
+        "Section": 23,
+        "Description section": "Fabrication d'autres produits minéraux non métalliques"
+    },
+    {
+        "Code NAF / APE": "2410Z",
+        "Description": "Sidérurgie",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2420Z",
+        "Description": "Fabrication de tubes, tuyaux, profilés creux et accessoires correspondants en acier",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2431Z",
+        "Description": "Étirage à froid de barres",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2432Z",
+        "Description": "Laminage à froid de feuillards",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2433Z",
+        "Description": "Profilage à froid par formage ou pliage",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2434Z",
+        "Description": "Tréfilage à froid",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2441Z",
+        "Description": "Production de métaux précieux",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2442Z",
+        "Description": "Métallurgie de l'aluminium",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2443Z",
+        "Description": "Métallurgie du plomb, du zinc ou de l'étain",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2444Z",
+        "Description": "Métallurgie du cuivre",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2445Z",
+        "Description": "Métallurgie des autres métaux non ferreux",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2446Z",
+        "Description": "Élaboration et transformation de matières nucléaires",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2451Z",
+        "Description": "Fonderie de fonte",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2452Z",
+        "Description": "Fonderie d'acier",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2453Z",
+        "Description": "Fonderie de métaux légers",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2454Z",
+        "Description": "Fonderie d'autres métaux non ferreux",
+        "Section": 24,
+        "Description section": "Métallurgie"
+    },
+    {
+        "Code NAF / APE": "2511Z",
+        "Description": "Fabrication de structures métalliques et de parties de structures",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2512Z",
+        "Description": "Fabrication de portes et fenêtres en métal",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2521Z",
+        "Description": "Fabrication de radiateurs et de chaudières pour le chauffage central",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2529Z",
+        "Description": "Fabrication d'autres réservoirs, citernes et conteneurs métalliques",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2530Z",
+        "Description": "Fabrication de générateurs de vapeur, à l'exception des chaudières pour le chauffage central",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2540Z",
+        "Description": "Fabrication d'armes et de munitions",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2550A",
+        "Description": "Forge, estampage, matriçage ; métallurgie des poudres",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2550B",
+        "Description": "Découpage, emboutissage",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2561Z",
+        "Description": "Traitement et revêtement des métaux",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2562A",
+        "Description": "Décolletage",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2562B",
+        "Description": "Mécanique industrielle",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2571Z",
+        "Description": "Fabrication de coutellerie",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2572Z",
+        "Description": "Fabrication de serrures et de ferrures",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2573A",
+        "Description": "Fabrication de moules et modèles",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2573B",
+        "Description": "Fabrication d'autres outillages",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2591Z",
+        "Description": "Fabrication de fûts et emballages métalliques similaires",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2592Z",
+        "Description": "Fabrication d'emballages métalliques légers",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2593Z",
+        "Description": "Fabrication d'articles en fils métalliques, de chaînes et de ressorts",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2594Z",
+        "Description": "Fabrication de vis et de boulons",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2599A",
+        "Description": "Fabrication d'articles métalliques ménagers",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2599B",
+        "Description": "Fabrication d'autres articles métalliques",
+        "Section": 25,
+        "Description section": "Fabrication de produits métalliques, à l’exception des machines et des équipements"
+    },
+    {
+        "Code NAF / APE": "2611Z",
+        "Description": "Fabrication de composants électroniques",
+        "Section": 26,
+        "Description section": "Fabrication de produits informatiques, électroniques et optiques"
+    },
+    {
+        "Code NAF / APE": "2612Z",
+        "Description": "Fabrication de cartes électroniques assemblées",
+        "Section": 26,
+        "Description section": "Fabrication de produits informatiques, électroniques et optiques"
+    },
+    {
+        "Code NAF / APE": "2620Z",
+        "Description": "Fabrication d'ordinateurs et d'équipements périphériques",
+        "Section": 26,
+        "Description section": "Fabrication de produits informatiques, électroniques et optiques"
+    },
+    {
+        "Code NAF / APE": "2630Z",
+        "Description": "Fabrication d'équipements de communication",
+        "Section": 26,
+        "Description section": "Fabrication de produits informatiques, électroniques et optiques"
+    },
+    {
+        "Code NAF / APE": "2640Z",
+        "Description": "Fabrication de produits électroniques grand public",
+        "Section": 26,
+        "Description section": "Fabrication de produits informatiques, électroniques et optiques"
+    },
+    {
+        "Code NAF / APE": "2651A",
+        "Description": "Fabrication d'équipements d'aide à la navigation",
+        "Section": 26,
+        "Description section": "Fabrication de produits informatiques, électroniques et optiques"
+    },
+    {
+        "Code NAF / APE": "2651B",
+        "Description": "Fabrication d'instrumentation scientifique et technique",
+        "Section": 26,
+        "Description section": "Fabrication de produits informatiques, électroniques et optiques"
+    },
+    {
+        "Code NAF / APE": "2652Z",
+        "Description": "Horlogerie",
+        "Section": 26,
+        "Description section": "Fabrication de produits informatiques, électroniques et optiques"
+    },
+    {
+        "Code NAF / APE": "2660Z",
+        "Description": "Fabrication d'équipements d'irradiation médicale, d'équipements électromédicaux et électrothérapeutiques",
+        "Section": 26,
+        "Description section": "Fabrication de produits informatiques, électroniques et optiques"
+    },
+    {
+        "Code NAF / APE": "2670Z",
+        "Description": "Fabrication de matériels optique et photographique",
+        "Section": 26,
+        "Description section": "Fabrication de produits informatiques, électroniques et optiques"
+    },
+    {
+        "Code NAF / APE": "2680Z",
+        "Description": "Fabrication de supports magnétiques et optiques",
+        "Section": 26,
+        "Description section": "Fabrication de produits informatiques, électroniques et optiques"
+    },
+    {
+        "Code NAF / APE": "2711Z",
+        "Description": "Fabrication de moteurs, génératrices et transformateurs électriques",
+        "Section": 27,
+        "Description section": "Fabrication d'équipements électriques"
+    },
+    {
+        "Code NAF / APE": "2712Z",
+        "Description": "Fabrication de matériel de distribution et de commande électrique",
+        "Section": 27,
+        "Description section": "Fabrication d'équipements électriques"
+    },
+    {
+        "Code NAF / APE": "2720Z",
+        "Description": "Fabrication de piles et d'accumulateurs électriques",
+        "Section": 27,
+        "Description section": "Fabrication d'équipements électriques"
+    },
+    {
+        "Code NAF / APE": "2731Z",
+        "Description": "Fabrication de câbles de fibres optiques",
+        "Section": 27,
+        "Description section": "Fabrication d'équipements électriques"
+    },
+    {
+        "Code NAF / APE": "2732Z",
+        "Description": "Fabrication d'autres fils et câbles électroniques ou électriques",
+        "Section": 27,
+        "Description section": "Fabrication d'équipements électriques"
+    },
+    {
+        "Code NAF / APE": "2733Z",
+        "Description": "Fabrication de matériel d'installation électrique",
+        "Section": 27,
+        "Description section": "Fabrication d'équipements électriques"
+    },
+    {
+        "Code NAF / APE": "2740Z",
+        "Description": "Fabrication d'appareils d'éclairage électrique",
+        "Section": 27,
+        "Description section": "Fabrication d'équipements électriques"
+    },
+    {
+        "Code NAF / APE": "2751Z",
+        "Description": "Fabrication d'appareils électroménagers",
+        "Section": 27,
+        "Description section": "Fabrication d'équipements électriques"
+    },
+    {
+        "Code NAF / APE": "2752Z",
+        "Description": "Fabrication d'appareils ménagers non électriques",
+        "Section": 27,
+        "Description section": "Fabrication d'équipements électriques"
+    },
+    {
+        "Code NAF / APE": "2790Z",
+        "Description": "Fabrication d'autres matériels électriques",
+        "Section": 27,
+        "Description section": "Fabrication d'équipements électriques"
+    },
+    {
+        "Code NAF / APE": "2811Z",
+        "Description": "Fabrication de moteurs et turbines, à l'exception des moteurs d’avions et de véhicules",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2812Z",
+        "Description": "Fabrication d'équipements hydrauliques et pneumatiques",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2813Z",
+        "Description": "Fabrication d'autres pompes et compresseurs",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2814Z",
+        "Description": "Fabrication d'autres articles de robinetterie",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2815Z",
+        "Description": "Fabrication d'engrenages et d'organes mécaniques de transmission",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2821Z",
+        "Description": "Fabrication de fours et brûleurs",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2822Z",
+        "Description": "Fabrication de matériel de levage et de manutention",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2823Z",
+        "Description": "Fabrication de machines et d'équipements de bureau (à l'exception des ordinateurs et équipements périphériques)",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2824Z",
+        "Description": "Fabrication d'outillage portatif à moteur incorporé",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2825Z",
+        "Description": "Fabrication d'équipements aérauliques et frigorifiques industriels",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2829A",
+        "Description": "Fabrication d'équipements d'emballage, de conditionnement et de pesage",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2829B",
+        "Description": "Fabrication d'autres machines d'usage général",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2830Z",
+        "Description": "Fabrication de machines agricoles et forestières",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2841Z",
+        "Description": "Fabrication de machines-outils pour le travail des métaux",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2849Z",
+        "Description": "Fabrication d'autres machines-outils",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2891Z",
+        "Description": "Fabrication de machines pour la métallurgie",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2892Z",
+        "Description": "Fabrication de machines pour l'extraction ou la construction",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2893Z",
+        "Description": "Fabrication de machines pour l'industrie agro-alimentaire",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2894Z",
+        "Description": "Fabrication de machines pour les industries textiles",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2895Z",
+        "Description": "Fabrication de machines pour les industries du papier et du carton",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2896Z",
+        "Description": "Fabrication de machines pour le travail du caoutchouc ou des plastiques",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2899A",
+        "Description": "Fabrication de machines d'imprimerie",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2899B",
+        "Description": "Fabrication d'autres machines spécialisées",
+        "Section": 28,
+        "Description section": "Fabrication de machines et équipements n.c.a."
+    },
+    {
+        "Code NAF / APE": "2910Z",
+        "Description": "Construction de véhicules automobiles",
+        "Section": 29,
+        "Description section": "Industrie automobile"
+    },
+    {
+        "Code NAF / APE": "2920Z",
+        "Description": "Fabrication de carrosseries et remorques",
+        "Section": 29,
+        "Description section": "Industrie automobile"
+    },
+    {
+        "Code NAF / APE": "2931Z",
+        "Description": "Fabrication d'équipements électriques et électroniques automobiles",
+        "Section": 29,
+        "Description section": "Industrie automobile"
+    },
+    {
+        "Code NAF / APE": "2932Z",
+        "Description": "Fabrication d'autres équipements automobiles",
+        "Section": 29,
+        "Description section": "Industrie automobile"
+    },
+    {
+        "Code NAF / APE": "3011Z",
+        "Description": "Construction de navires et de structures flottantes",
+        "Section": 30,
+        "Description section": "Fabrication d'autres matériels de transport"
+    },
+    {
+        "Code NAF / APE": "3012Z",
+        "Description": "Construction de bateaux de plaisance",
+        "Section": 30,
+        "Description section": "Fabrication d'autres matériels de transport"
+    },
+    {
+        "Code NAF / APE": "3020Z",
+        "Description": "Construction de locomotives et d'autre matériel ferroviaire roulant",
+        "Section": 30,
+        "Description section": "Fabrication d'autres matériels de transport"
+    },
+    {
+        "Code NAF / APE": "3030Z",
+        "Description": "Construction aéronautique et spatiale",
+        "Section": 30,
+        "Description section": "Fabrication d'autres matériels de transport"
+    },
+    {
+        "Code NAF / APE": "3040Z",
+        "Description": "Construction de véhicules militaires de combat",
+        "Section": 30,
+        "Description section": "Fabrication d'autres matériels de transport"
+    },
+    {
+        "Code NAF / APE": "3091Z",
+        "Description": "Fabrication de motocycles",
+        "Section": 30,
+        "Description section": "Fabrication d'autres matériels de transport"
+    },
+    {
+        "Code NAF / APE": "3092Z",
+        "Description": "Fabrication de bicyclettes et de véhicules pour invalides",
+        "Section": 30,
+        "Description section": "Fabrication d'autres matériels de transport"
+    },
+    {
+        "Code NAF / APE": "3099Z",
+        "Description": "Fabrication d’autres équipements de transport nca",
+        "Section": 30,
+        "Description section": "Fabrication d'autres matériels de transport"
+    },
+    {
+        "Code NAF / APE": "3101Z",
+        "Description": "Fabrication de meubles de bureau et de magasin",
+        "Section": 31,
+        "Description section": "Fabrication de meubles"
+    },
+    {
+        "Code NAF / APE": "3102Z",
+        "Description": "Fabrication de meubles de cuisine",
+        "Section": 31,
+        "Description section": "Fabrication de meubles"
+    },
+    {
+        "Code NAF / APE": "3103Z",
+        "Description": "Fabrication de matelas",
+        "Section": 31,
+        "Description section": "Fabrication de meubles"
+    },
+    {
+        "Code NAF / APE": "3109A",
+        "Description": "Fabrication de sièges d'ameublement d'intérieur",
+        "Section": 31,
+        "Description section": "Fabrication de meubles"
+    },
+    {
+        "Code NAF / APE": "3109B",
+        "Description": "Fabrication d’autres meubles et industries connexes de l’ameublement",
+        "Section": 31,
+        "Description section": "Fabrication de meubles"
+    },
+    {
+        "Code NAF / APE": "3109B",
+        "Description": "Fabrication d'autres meubles et industries connexes de l'ameublement",
+        "Section": 31,
+        "Description section": "Fabrication de meubles"
+    },
+    {
+        "Code NAF / APE": "3211Z",
+        "Description": "Frappe de monnaie",
+        "Section": 32,
+        "Description section": "Autres industries manufacturières"
+    },
+    {
+        "Code NAF / APE": "3212Z",
+        "Description": "Fabrication d’articles de joaillerie et bijouterie",
+        "Section": 32,
+        "Description section": "Autres industries manufacturières"
+    },
+    {
+        "Code NAF / APE": "3213Z",
+        "Description": "Fabrication d’articles de bijouterie fantaisie et articles similaires",
+        "Section": 32,
+        "Description section": "Autres industries manufacturières"
+    },
+    {
+        "Code NAF / APE": "3220Z",
+        "Description": "Fabrication d'instruments de musique",
+        "Section": 32,
+        "Description section": "Autres industries manufacturières"
+    },
+    {
+        "Code NAF / APE": "3230Z",
+        "Description": "Fabrication d'articles de sport",
+        "Section": 32,
+        "Description section": "Autres industries manufacturières"
+    },
+    {
+        "Code NAF / APE": "3240Z",
+        "Description": "Fabrication de jeux et jouets",
+        "Section": 32,
+        "Description section": "Autres industries manufacturières"
+    },
+    {
+        "Code NAF / APE": "3250A",
+        "Description": "Fabrication de matériel chirurgical et dentaire",
+        "Section": 32,
+        "Description section": "Autres industries manufacturières"
+    },
+    {
+        "Code NAF / APE": "3250A",
+        "Description": "Fabrication de matériel médico-chirurgical et dentaire",
+        "Section": 32,
+        "Description section": "Autres industries manufacturières"
+    },
+    {
+        "Code NAF / APE": "3250A",
+        "Description": "Fabrication de matériels médico-chirurgical et dentaire",
+        "Section": 32,
+        "Description section": "Autres industries manufacturières"
+    },
+    {
+        "Code NAF / APE": "3250B",
+        "Description": "Fabrication de lunettes",
+        "Section": 32,
+        "Description section": "Autres industries manufacturières"
+    },
+    {
+        "Code NAF / APE": "3291Z",
+        "Description": "Fabrication d’articles de brosserie",
+        "Section": 32,
+        "Description section": "Autres industries manufacturières"
+    },
+    {
+        "Code NAF / APE": "3299Z",
+        "Description": "Autres activités manufacturières nca",
+        "Section": 32,
+        "Description section": "Autres industries manufacturières"
+    },
+    {
+        "Code NAF / APE": "3311Z",
+        "Description": "Réparation d'ouvrages en métaux",
+        "Section": 33,
+        "Description section": "Réparation et installation de machines et d'équipements "
+    },
+    {
+        "Code NAF / APE": "3312Z",
+        "Description": "Réparation de machines et équipements mécaniques",
+        "Section": 33,
+        "Description section": "Réparation et installation de machines et d'équipements "
+    },
+    {
+        "Code NAF / APE": "3313Z",
+        "Description": "Réparation de matériels électroniques et optiques",
+        "Section": 33,
+        "Description section": "Réparation et installation de machines et d'équipements "
+    },
+    {
+        "Code NAF / APE": "3314Z",
+        "Description": "Réparation d'équipements électriques",
+        "Section": 33,
+        "Description section": "Réparation et installation de machines et d'équipements "
+    },
+    {
+        "Code NAF / APE": "3315Z",
+        "Description": "Réparation et maintenance navale",
+        "Section": 33,
+        "Description section": "Réparation et installation de machines et d'équipements "
+    },
+    {
+        "Code NAF / APE": "3316Z",
+        "Description": "Réparation et maintenance d'aéronefs et d'engins spatiaux",
+        "Section": 33,
+        "Description section": "Réparation et installation de machines et d'équipements "
+    },
+    {
+        "Code NAF / APE": "3317Z",
+        "Description": "Réparation et maintenance d'autres équipements de transport",
+        "Section": 33,
+        "Description section": "Réparation et installation de machines et d'équipements "
+    },
+    {
+        "Code NAF / APE": "3319Z",
+        "Description": "Réparation d'autres équipements",
+        "Section": 33,
+        "Description section": "Réparation et installation de machines et d'équipements "
+    },
+    {
+        "Code NAF / APE": "3320A",
+        "Description": "Installation de structures métalliques, chaudronnées et de tuyauterie",
+        "Section": 33,
+        "Description section": "Réparation et installation de machines et d'équipements "
+    },
+    {
+        "Code NAF / APE": "3320B",
+        "Description": "Installation de machines et équipements mécaniques",
+        "Section": 33,
+        "Description section": "Réparation et installation de machines et d'équipements "
+    },
+    {
+        "Code NAF / APE": "3320C",
+        "Description": "Conception d'ensemble et assemblage sur site industriel d'équipements de contrôle des processus industriels",
+        "Section": 33,
+        "Description section": "Réparation et installation de machines et d'équipements "
+    },
+    {
+        "Code NAF / APE": "3320D",
+        "Description": "Installation d'équipements électriques, de matériels électroniques et optiques ou d'autres matériels",
+        "Section": 33,
+        "Description section": "Réparation et installation de machines et d'équipements "
+    },
+    {
+        "Code NAF / APE": "3511Z",
+        "Description": "Production d'électricité",
+        "Section": 35,
+        "Description section": "Production et distribution d'électricité, de gaz, de vapeur et d'air conditionné"
+    },
+    {
+        "Code NAF / APE": "3512Z",
+        "Description": "Transport d'électricité",
+        "Section": 35,
+        "Description section": "Production et distribution d'électricité, de gaz, de vapeur et d'air conditionné"
+    },
+    {
+        "Code NAF / APE": "3513Z",
+        "Description": "Distribution d'électricité",
+        "Section": 35,
+        "Description section": "Production et distribution d'électricité, de gaz, de vapeur et d'air conditionné"
+    },
+    {
+        "Code NAF / APE": "3514Z",
+        "Description": "Commerce d'électricité",
+        "Section": 35,
+        "Description section": "Production et distribution d'électricité, de gaz, de vapeur et d'air conditionné"
+    },
+    {
+        "Code NAF / APE": "3521Z",
+        "Description": "Production de combustibles gazeux",
+        "Section": 35,
+        "Description section": "Production et distribution d'électricité, de gaz, de vapeur et d'air conditionné"
+    },
+    {
+        "Code NAF / APE": "3522Z",
+        "Description": "Distribution de combustibles gazeux par conduites",
+        "Section": 35,
+        "Description section": "Production et distribution d'électricité, de gaz, de vapeur et d'air conditionné"
+    },
+    {
+        "Code NAF / APE": "3523Z",
+        "Description": "Commerce de combustibles gazeux par conduites",
+        "Section": 35,
+        "Description section": "Production et distribution d'électricité, de gaz, de vapeur et d'air conditionné"
+    },
+    {
+        "Code NAF / APE": "3530Z",
+        "Description": "Production et distribution de vapeur et d'air conditionné",
+        "Section": 35,
+        "Description section": "Production et distribution d'électricité, de gaz, de vapeur et d'air conditionné"
+    },
+    {
+        "Code NAF / APE": "3600Z",
+        "Description": "Captage, traitement et distribution d'eau",
+        "Section": 36,
+        "Description section": "Captage, traitement et distribution d'eau "
+    },
+    {
+        "Code NAF / APE": "3700Z",
+        "Description": "Collecte et traitement des eaux usées",
+        "Section": 37,
+        "Description section": "Collecte et traitement des eaux usées"
+    },
+    {
+        "Code NAF / APE": "3811Z",
+        "Description": "Collecte des déchets non dangereux",
+        "Section": 38,
+        "Description section": "Collecte, traitement et élimination des déchets ; récupération"
+    },
+    {
+        "Code NAF / APE": "3812Z",
+        "Description": "Collecte des déchets dangereux",
+        "Section": 38,
+        "Description section": "Collecte, traitement et élimination des déchets ; récupération"
+    },
+    {
+        "Code NAF / APE": "3821Z",
+        "Description": "Traitement et élimination des déchets non dangereux",
+        "Section": 38,
+        "Description section": "Collecte, traitement et élimination des déchets ; récupération"
+    },
+    {
+        "Code NAF / APE": "3822Z",
+        "Description": "Traitement et élimination des déchets dangereux",
+        "Section": 38,
+        "Description section": "Collecte, traitement et élimination des déchets ; récupération"
+    },
+    {
+        "Code NAF / APE": "3831Z",
+        "Description": "Démantèlement d'épaves",
+        "Section": 38,
+        "Description section": "Collecte, traitement et élimination des déchets ; récupération"
+    },
+    {
+        "Code NAF / APE": "3832Z",
+        "Description": "Récupération de déchets triés",
+        "Section": 38,
+        "Description section": "Collecte, traitement et élimination des déchets ; récupération"
+    },
+    {
+        "Code NAF / APE": "3900Z",
+        "Description": "Dépollution et autres services de gestion des déchets",
+        "Section": 39,
+        "Description section": "Dépollution et autres services de gestion des déchets"
+    },
+    {
+        "Code NAF / APE": "4110A",
+        "Description": "Promotion immobilière de logements",
+        "Section": 41,
+        "Description section": "Construction de bâtiments "
+    },
+    {
+        "Code NAF / APE": "4110B",
+        "Description": "Promotion immobilière de bureaux",
+        "Section": 41,
+        "Description section": "Construction de bâtiments "
+    },
+    {
+        "Code NAF / APE": "4110C",
+        "Description": "Promotion immobilière d'autres bâtiments",
+        "Section": 41,
+        "Description section": "Construction de bâtiments "
+    },
+    {
+        "Code NAF / APE": "4110D",
+        "Description": "Supports juridiques de programmes",
+        "Section": 41,
+        "Description section": "Construction de bâtiments "
+    },
+    {
+        "Code NAF / APE": "4120A",
+        "Description": "Construction de maisons individuelles",
+        "Section": 41,
+        "Description section": "Construction de bâtiments "
+    },
+    {
+        "Code NAF / APE": "4120B",
+        "Description": "Construction d'autres bâtiments",
+        "Section": 41,
+        "Description section": "Construction de bâtiments "
+    },
+    {
+        "Code NAF / APE": "4211Z",
+        "Description": "Construction de routes et autoroutes",
+        "Section": 42,
+        "Description section": "Génie civil"
+    },
+    {
+        "Code NAF / APE": "4212Z",
+        "Description": "Construction de voies ferrées de surface et souterraines",
+        "Section": 42,
+        "Description section": "Génie civil"
+    },
+    {
+        "Code NAF / APE": "4213A",
+        "Description": "Construction d'ouvrages d'art",
+        "Section": 42,
+        "Description section": "Génie civil"
+    },
+    {
+        "Code NAF / APE": "4213B",
+        "Description": "Construction et entretien de tunnels",
+        "Section": 42,
+        "Description section": "Génie civil"
+    },
+    {
+        "Code NAF / APE": "4221Z",
+        "Description": "Construction de réseaux pour fluides",
+        "Section": 42,
+        "Description section": "Génie civil"
+    },
+    {
+        "Code NAF / APE": "4222Z",
+        "Description": "Construction de réseaux électriques et de télécommunications",
+        "Section": 42,
+        "Description section": "Génie civil"
+    },
+    {
+        "Code NAF / APE": "4291Z",
+        "Description": "Construction d'ouvrages maritimes et fluviaux",
+        "Section": 42,
+        "Description section": "Génie civil"
+    },
+    {
+        "Code NAF / APE": "4299Z",
+        "Description": "Construction d'autres ouvrages de génie civil nca",
+        "Section": 42,
+        "Description section": "Génie civil"
+    },
+    {
+        "Code NAF / APE": "4311Z",
+        "Description": "Travaux de démolition",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4312A",
+        "Description": "Travaux de terrassement courants et travaux préparatoires",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4312B",
+        "Description": "Travaux de terrassement spécialisés ou de grande masse",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4313Z",
+        "Description": "Forages et sondages",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4321A",
+        "Description": "Travaux d'installation électrique dans tous locaux",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4321B",
+        "Description": "Travaux d'installation électrique sur la voie publique",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4322A",
+        "Description": "Travaux d'installation d'eau et de gaz en tous locaux",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4322B",
+        "Description": "Travaux d' installation d'équipements thermiques et de climatisation",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4329A",
+        "Description": "Travaux d'isolation",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4329B",
+        "Description": "Autres travaux d'installation nca",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4331Z",
+        "Description": "Travaux de plâtrerie",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4332A",
+        "Description": "Travaux de menuiserie bois et PVC",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4332B",
+        "Description": "Travaux de menuiserie métallique et serrurerie",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4332C",
+        "Description": "Agencement de lieux de vente",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4333Z",
+        "Description": "Travaux de revêtement des sols et des murs",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4334Z",
+        "Description": "Travaux de peinture et vitrerie",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4339Z",
+        "Description": "Autres travaux de finition",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4391A",
+        "Description": "Travaux de charpente",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4391B",
+        "Description": "Travaux de couverture par éléments",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4399A",
+        "Description": "Travaux d'étanchéification",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4399B",
+        "Description": "Travaux de montage de structures métalliques",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4399C",
+        "Description": "Travaux de maçonnerie générale et gros œuvre de bâtiment",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4399D",
+        "Description": "Autres travaux spécialisés de construction",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4399E",
+        "Description": "Location avec opérateur de matériel de construction",
+        "Section": 43,
+        "Description section": "Travaux de construction spécialisés "
+    },
+    {
+        "Code NAF / APE": "4511Z",
+        "Description": "Commerce de voitures et de véhicules automobiles légers",
+        "Section": 45,
+        "Description section": "Commerce et réparation d'automobiles et de motocycles"
+    },
+    {
+        "Code NAF / APE": "4519Z",
+        "Description": "Commerce d'autres véhicules automobiles",
+        "Section": 45,
+        "Description section": "Commerce et réparation d'automobiles et de motocycles"
+    },
+    {
+        "Code NAF / APE": "4520A",
+        "Description": "Entretien et réparation de véhicules automobiles légers",
+        "Section": 45,
+        "Description section": "Commerce et réparation d'automobiles et de motocycles"
+    },
+    {
+        "Code NAF / APE": "4520B",
+        "Description": "Entretien et réparation d'autres véhicules automobiles",
+        "Section": 45,
+        "Description section": "Commerce et réparation d'automobiles et de motocycles"
+    },
+    {
+        "Code NAF / APE": "4531Z",
+        "Description": "Commerce de gros d'équipements automobiles",
+        "Section": 45,
+        "Description section": "Commerce et réparation d'automobiles et de motocycles"
+    },
+    {
+        "Code NAF / APE": "4532Z",
+        "Description": "Commerce de détail d'équipements automobiles",
+        "Section": 45,
+        "Description section": "Commerce et réparation d'automobiles et de motocycles"
+    },
+    {
+        "Code NAF / APE": "4540Z",
+        "Description": "Commerce et réparation de motocycles",
+        "Section": 45,
+        "Description section": "Commerce et réparation d'automobiles et de motocycles"
+    },
+    {
+        "Code NAF / APE": "4611Z",
+        "Description": "Intermédiaires du commerce en matières premières agricoles, animaux vivants, matières premières textiles et produits semi-finis",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4612A",
+        "Description": "Centrales d'achat de carburant",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4612B",
+        "Description": "Autres intermédiaires du commerce en combustibles, métaux, minéraux et produits chimiques",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4613Z",
+        "Description": "Intermédiaires du commerce en bois et matériaux de construction",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4614Z",
+        "Description": "Intermédiaires du commerce en machines, équipements industriels, navires et avions",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4615Z",
+        "Description": "Intermédiaires du commerce en meubles, articles de ménage et quincaillerie",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4616Z",
+        "Description": "Intermédiaires du commerce en textiles, habillement, fourrures, chaussures et articles en cuir",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4617A",
+        "Description": "Centrales d'achat alimentaires",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4617B",
+        "Description": "Autres intermédiaires du commerce en denrées, boissons et tabac",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4618Z",
+        "Description": "Intermédiaires spécialisés dans le commerce d'autres produits spécifiques",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4619A",
+        "Description": "Centrales d'achat non alimentaires",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4619B",
+        "Description": "Autres intermédiaires du commerce en produits divers",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4621Z",
+        "Description": "Commerce de gros (commerce interentreprises) de céréales, de tabac non manufacturé, de semences et d'aliments pour le bétail",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4622Z",
+        "Description": "Commerce de gros (commerce interentreprises) de fleurs et plantes",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4623Z",
+        "Description": "Commerce de gros (commerce interentreprises) d'animaux vivants",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4624Z",
+        "Description": "Commerce de gros (commerce interentreprises) de cuirs et peaux",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4631Z",
+        "Description": "Commerce de gros (commerce interentreprises) de fruits et légumes",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4632A",
+        "Description": "Commerce de gros (commerce interentreprises) de viandes de boucherie",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4632B",
+        "Description": "Commerce de gros (commerce interentreprises) de produits à base de viande",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4632C",
+        "Description": "Commerce de gros (commerce interentreprises) de volailles et gibier",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4633Z",
+        "Description": "Commerce de gros (commerce interentreprises) de produits laitiers, œufs, huiles et matières grasses comestibles",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4634Z",
+        "Description": "Commerce de gros (commerce interentreprises) de boissons",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4635Z",
+        "Description": "Commerce de gros (commerce interentreprises) de produits à base de tabac",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4636Z",
+        "Description": "Commerce de gros (commerce interentreprises) de sucre, chocolat et confiserie",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4637Z",
+        "Description": "Commerce de gros (commerce interentreprises) de café, thé, cacao et épices",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4638A",
+        "Description": "Commerce de gros (commerce interentreprises) de poissons, crustacés et mollusques",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4638B",
+        "Description": "Commerce de gros (commerce interentreprises) alimentaire spécialisé divers",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4639A",
+        "Description": "Commerce de gros (commerce interentreprises) de produits surgelés",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4639B",
+        "Description": "Commerce de gros (commerce interentreprises) alimentaire non spécialisé",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4641Z",
+        "Description": "Commerce de gros (commerce interentreprises) de textiles",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4642Z",
+        "Description": "Commerce de gros (commerce interentreprises) d'habillement et de chaussures",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4643Z",
+        "Description": "Commerce de gros (commerce interentreprises) d'appareils électroménagers",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4644Z",
+        "Description": "Commerce de gros (commerce interentreprises) de vaisselle, verrerie et produits d'entretien",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4645Z",
+        "Description": "Commerce de gros (commerce interentreprises) de parfumerie et de produits de beauté",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4646Z",
+        "Description": "Commerce de gros (commerce interentreprises) de produits pharmaceutiques",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4647Z",
+        "Description": "Commerce de gros (commerce interentreprises) de meubles, de tapis et d'appareils d'éclairage",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4648Z",
+        "Description": "Commerce de gros (commerce interentreprises) d'articles d'horlogerie et de bijouterie",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4649Z",
+        "Description": "Commerce de gros (commerce interentreprises) d'autres biens domestiques",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4651Z",
+        "Description": "Commerce de gros (commerce interentreprises) d'ordinateurs, d'équipements informatiques périphériques et de logiciels",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4652Z",
+        "Description": "Commerce de gros (commerce interentreprises) de composants et d'équipements électroniques et de télécommunication",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4661Z",
+        "Description": "Commerce de gros (commerce interentreprises) de matériel agricole",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4662Z",
+        "Description": "Commerce de gros (commerce interentreprises) de machines-outils",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4663Z",
+        "Description": "Commerce de gros (commerce interentreprises) de machines pour l'extraction, la construction et le génie civil",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4664Z",
+        "Description": "Commerce de gros (commerce interentreprises) de machines pour l'industrie textile et l'habillement",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4665Z",
+        "Description": "Commerce de gros (commerce interentreprises) de mobilier de bureau",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4666Z",
+        "Description": "Commerce de gros (commerce interentreprises) d'autres machines et équipements de bureau",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4669A",
+        "Description": "Commerce de gros (commerce interentreprises) de matériel électrique",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4669B",
+        "Description": "Commerce de gros (commerce interentreprises) de fournitures et équipements industriels divers",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4669C",
+        "Description": "Commerce de gros (commerce interentreprises) de fournitures et équipements divers pour le commerce et les services",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4671Z",
+        "Description": "Commerce de gros (commerce interentreprises) de combustibles et de produits annexes",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4672Z",
+        "Description": "Commerce de gros (commerce interentreprises) de minerais et métaux",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4673A",
+        "Description": "Commerce de gros (commerce interentreprises) de bois et de matériaux de construction",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4673B",
+        "Description": "Commerce de gros (commerce interentreprises) d'appareils sanitaires et de produits de décoration",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4674A",
+        "Description": "Commerce de gros (commerce interentreprises) de quincaillerie",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4674B",
+        "Description": "Commerce de gros (commerce interentreprises) de fournitures pour la plomberie et le chauffage",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4675Z",
+        "Description": "Commerce de gros (commerce interentreprises) de produits chimiques",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4676Z",
+        "Description": "Commerce de gros (commerce interentreprises) d'autres produits intermédiaires",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4677Z",
+        "Description": "Commerce de gros (commerce interentreprises) de déchets et débris",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4690Z",
+        "Description": "Commerce de gros (commerce interentreprises) non spécialisé",
+        "Section": 46,
+        "Description section": "Commerce de gros, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4711A",
+        "Description": "Commerce de détail de produits surgelés",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4711B",
+        "Description": "Commerce d'alimentation générale",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4711C",
+        "Description": "Supérettes",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4711D",
+        "Description": "Supermarchés",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4711E",
+        "Description": "Magasins multi-commerces",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4711F",
+        "Description": "Hypermarchés",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4719A",
+        "Description": "Grands magasins",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4719B",
+        "Description": "Autres commerces de détail en magasin non spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4721Z",
+        "Description": "Commerce de détail de fruits et légumes en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4722Z",
+        "Description": "Commerce de détail de viandes et de produits à base de viande en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4723Z",
+        "Description": "Commerce de détail de poissons, crustacés et mollusques en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4724Z",
+        "Description": "Commerce de détail de pain, pâtisserie et confiserie en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4725Z",
+        "Description": "Commerce de détail de boissons en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4726Z",
+        "Description": "Commerce de détail de produits à base de tabac en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4729Z",
+        "Description": "Autres commerces de détail alimentaires en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4730Z",
+        "Description": "Commerce de détail de carburants en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4741Z",
+        "Description": "Commerce de détail d'ordinateurs, d'unités périphériques et de logiciels en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4742Z",
+        "Description": "Commerce de détail de matériels de télécommunication en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4743Z",
+        "Description": "Commerce de détail de matériels audio et vidéo en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4751Z",
+        "Description": "Commerce de détail de textiles en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4752A",
+        "Description": "Commerce de détail de quincaillerie, peintures et verres en petites surfaces (moins de 400 m2)",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4752B",
+        "Description": "Commerce de détail de quincaillerie, peintures et verres en grandes surfaces (400 m2 et plus)",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4753Z",
+        "Description": "Commerce de détail de tapis, moquettes et revêtements de murs et de sols en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4754Z",
+        "Description": "Commerce de détail d'appareils électroménagers en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4759A",
+        "Description": "Commerce de détail de meubles",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4759B",
+        "Description": "Commerce de détail d'autres équipements du foyer",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4761Z",
+        "Description": "Commerce de détail de livres en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4762Z",
+        "Description": "Commerce de détail de journaux et papeterie en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4763Z",
+        "Description": "Commerce de détail d'enregistrements musicaux et vidéo en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4764Z",
+        "Description": "Commerce de détail d'articles de sport en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4765Z",
+        "Description": "Commerce de détail de jeux et jouets en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4771Z",
+        "Description": "Commerce de détail d'habillement en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4772A",
+        "Description": "Commerce de détail de la chaussure",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4772B",
+        "Description": "Commerce de détail de maroquinerie et d'articles de voyage",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4773Z",
+        "Description": "Commerce de détail de produits pharmaceutiques en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4774Z",
+        "Description": "Commerce de détail d'articles médicaux et orthopédiques en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4775Z",
+        "Description": "Commerce de détail de parfumerie et de produits de beauté en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4776Z",
+        "Description": "Commerce de détail de fleurs, plantes, graines, engrais, animaux de compagnie et aliments pour ces animaux en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4777Z",
+        "Description": "Commerce de détail d'articles d'horlogerie et de bijouterie en magasin spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4778A",
+        "Description": "Commerces de détail d'optique",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4778B",
+        "Description": "Commerces de détail de charbons et combustibles",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4778C",
+        "Description": "Autres commerces de détail spécialisés divers",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4779Z",
+        "Description": "Commerce de détail de biens d'occasion en magasin",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4781Z",
+        "Description": "Commerce de détail alimentaire sur éventaires et marchés",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4782Z",
+        "Description": "Commerce de détail de textiles, d'habillement et de chaussures sur éventaires et marchés",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4789Z",
+        "Description": "Autres commerces de détail sur éventaires et marchés",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4791A",
+        "Description": "Vente à distance sur catalogue général",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4791B",
+        "Description": "Vente à distance sur catalogue spécialisé",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4799A",
+        "Description": "Vente à domicile",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4799B",
+        "Description": "Vente par automates et autres commerces de détail hors magasin, éventaires ou marchés nca",
+        "Section": 47,
+        "Description section": "Commerce de détail, à l’exception des automobiles et des motocycles"
+    },
+    {
+        "Code NAF / APE": "4910Z",
+        "Description": "Transport ferroviaire interurbain de voyageurs",
+        "Section": 49,
+        "Description section": "Transports terrestres et transport par conduites"
+    },
+    {
+        "Code NAF / APE": "4920Z",
+        "Description": "Transports ferroviaires de fret",
+        "Section": 49,
+        "Description section": "Transports terrestres et transport par conduites"
+    },
+    {
+        "Code NAF / APE": "4931Z",
+        "Description": "Transports urbains et suburbains de voyageurs",
+        "Section": 49,
+        "Description section": "Transports terrestres et transport par conduites"
+    },
+    {
+        "Code NAF / APE": "4932Z",
+        "Description": "Transports de voyageurs par taxis",
+        "Section": 49,
+        "Description section": "Transports terrestres et transport par conduites"
+    },
+    {
+        "Code NAF / APE": "4939A",
+        "Description": "Transports routiers réguliers de voyageurs",
+        "Section": 49,
+        "Description section": "Transports terrestres et transport par conduites"
+    },
+    {
+        "Code NAF / APE": "4939B",
+        "Description": "Autres transports routiers de voyageurs",
+        "Section": 49,
+        "Description section": "Transports terrestres et transport par conduites"
+    },
+    {
+        "Code NAF / APE": "4939C",
+        "Description": "Téléphériques et remontées mécaniques",
+        "Section": 49,
+        "Description section": "Transports terrestres et transport par conduites"
+    },
+    {
+        "Code NAF / APE": "4941A",
+        "Description": "Transports routiers de fret interurbains",
+        "Section": 49,
+        "Description section": "Transports terrestres et transport par conduites"
+    },
+    {
+        "Code NAF / APE": "4941B",
+        "Description": "Transports routiers de fret de proximité",
+        "Section": 49,
+        "Description section": "Transports terrestres et transport par conduites"
+    },
+    {
+        "Code NAF / APE": "4941C",
+        "Description": "Location de camions avec chauffeur",
+        "Section": 49,
+        "Description section": "Transports terrestres et transport par conduites"
+    },
+    {
+        "Code NAF / APE": "4942Z",
+        "Description": "Services de déménagement",
+        "Section": 49,
+        "Description section": "Transports terrestres et transport par conduites"
+    },
+    {
+        "Code NAF / APE": "4950Z",
+        "Description": "Transports par conduites",
+        "Section": 49,
+        "Description section": "Transports terrestres et transport par conduites"
+    },
+    {
+        "Code NAF / APE": "5010Z",
+        "Description": "Transports maritimes et côtiers de passagers",
+        "Section": 50,
+        "Description section": "Transports par eau"
+    },
+    {
+        "Code NAF / APE": "5020Z",
+        "Description": "Transports maritimes et côtiers de fret",
+        "Section": 50,
+        "Description section": "Transports par eau"
+    },
+    {
+        "Code NAF / APE": "5030Z",
+        "Description": "Transports fluviaux de passagers",
+        "Section": 50,
+        "Description section": "Transports par eau"
+    },
+    {
+        "Code NAF / APE": "5040Z",
+        "Description": "Transports fluviaux de fret",
+        "Section": 50,
+        "Description section": "Transports par eau"
+    },
+    {
+        "Code NAF / APE": "5110Z",
+        "Description": "Transports aériens de passagers",
+        "Section": 51,
+        "Description section": "Transports aériens"
+    },
+    {
+        "Code NAF / APE": "5121Z",
+        "Description": "Transports aériens de fret",
+        "Section": 51,
+        "Description section": "Transports aériens"
+    },
+    {
+        "Code NAF / APE": "5122Z",
+        "Description": "Transports spatiaux",
+        "Section": 51,
+        "Description section": "Transports aériens"
+    },
+    {
+        "Code NAF / APE": "5210A",
+        "Description": "Entreposage et stockage frigorifique",
+        "Section": 52,
+        "Description section": "Entreposage et services auxiliaires des transports"
+    },
+    {
+        "Code NAF / APE": "5210B",
+        "Description": "Entreposage et stockage non frigorifique",
+        "Section": 52,
+        "Description section": "Entreposage et services auxiliaires des transports"
+    },
+    {
+        "Code NAF / APE": "5221Z",
+        "Description": "Services auxiliaires des transports terrestres",
+        "Section": 52,
+        "Description section": "Entreposage et services auxiliaires des transports"
+    },
+    {
+        "Code NAF / APE": "5222Z",
+        "Description": "Services auxiliaires des transports par eau",
+        "Section": 52,
+        "Description section": "Entreposage et services auxiliaires des transports"
+    },
+    {
+        "Code NAF / APE": "5223Z",
+        "Description": "Services auxiliaires des transports aériens",
+        "Section": 52,
+        "Description section": "Entreposage et services auxiliaires des transports"
+    },
+    {
+        "Code NAF / APE": "5224A",
+        "Description": "Manutention portuaire",
+        "Section": 52,
+        "Description section": "Entreposage et services auxiliaires des transports"
+    },
+    {
+        "Code NAF / APE": "5224B",
+        "Description": "Manutention non portuaire",
+        "Section": 52,
+        "Description section": "Entreposage et services auxiliaires des transports"
+    },
+    {
+        "Code NAF / APE": "5229A",
+        "Description": "Messagerie, fret express",
+        "Section": 52,
+        "Description section": "Entreposage et services auxiliaires des transports"
+    },
+    {
+        "Code NAF / APE": "5229B",
+        "Description": "Affrètement et organisation des transports",
+        "Section": 52,
+        "Description section": "Entreposage et services auxiliaires des transports"
+    },
+    {
+        "Code NAF / APE": "5310Z",
+        "Description": "Activités de poste dans le cadre d'une obligation de service universel",
+        "Section": 53,
+        "Description section": "Activités de poste et de courrier"
+    },
+    {
+        "Code NAF / APE": "5320Z",
+        "Description": "Autres activités de poste et de courrier",
+        "Section": 53,
+        "Description section": "Activités de poste et de courrier"
+    },
+    {
+        "Code NAF / APE": "5510Z",
+        "Description": "Hôtels et hébergement similaire",
+        "Section": 55,
+        "Description section": "Hébergement"
+    },
+    {
+        "Code NAF / APE": "5520Z",
+        "Description": "Hébergement touristique et autre hébergement de courte durée",
+        "Section": 55,
+        "Description section": "Hébergement"
+    },
+    {
+        "Code NAF / APE": "5530Z",
+        "Description": "Terrains de camping et parcs pour caravanes ou véhicules de loisirs",
+        "Section": 55,
+        "Description section": "Hébergement"
+    },
+    {
+        "Code NAF / APE": "5590Z",
+        "Description": "Autres hébergements",
+        "Section": 55,
+        "Description section": "Hébergement"
+    },
+    {
+        "Code NAF / APE": "5610A",
+        "Description": "Restauration traditionnelle",
+        "Section": 56,
+        "Description section": "Restauration"
+    },
+    {
+        "Code NAF / APE": "5610B",
+        "Description": "Cafétérias et autres libres-services",
+        "Section": 56,
+        "Description section": "Restauration"
+    },
+    {
+        "Code NAF / APE": "5610C",
+        "Description": "Restauration de type rapide",
+        "Section": 56,
+        "Description section": "Restauration"
+    },
+    {
+        "Code NAF / APE": "5621Z",
+        "Description": "Services des traiteurs",
+        "Section": 56,
+        "Description section": "Restauration"
+    },
+    {
+        "Code NAF / APE": "5629A",
+        "Description": "Restauration collective sous contrat",
+        "Section": 56,
+        "Description section": "Restauration"
+    },
+    {
+        "Code NAF / APE": "5629B",
+        "Description": "Autres services de restauration nca",
+        "Section": 56,
+        "Description section": "Restauration"
+    },
+    {
+        "Code NAF / APE": "5630Z",
+        "Description": "Débits de boissons",
+        "Section": 56,
+        "Description section": "Restauration"
+    },
+    {
+        "Code NAF / APE": "5811Z",
+        "Description": "Édition de livres",
+        "Section": 58,
+        "Description section": "Édition"
+    },
+    {
+        "Code NAF / APE": "5812Z",
+        "Description": "Édition de répertoires et de fichiers d'adresses",
+        "Section": 58,
+        "Description section": "Édition"
+    },
+    {
+        "Code NAF / APE": "5813Z",
+        "Description": "Édition de journaux",
+        "Section": 58,
+        "Description section": "Édition"
+    },
+    {
+        "Code NAF / APE": "5814Z",
+        "Description": "Édition de revues et périodiques",
+        "Section": 58,
+        "Description section": "Édition"
+    },
+    {
+        "Code NAF / APE": "5819Z",
+        "Description": "Autres activités d'édition",
+        "Section": 58,
+        "Description section": "Édition"
+    },
+    {
+        "Code NAF / APE": "5821Z",
+        "Description": "Édition de jeux électroniques",
+        "Section": 58,
+        "Description section": "Édition"
+    },
+    {
+        "Code NAF / APE": "5829A",
+        "Description": "Édition de logiciels système et de réseau",
+        "Section": 58,
+        "Description section": "Édition"
+    },
+    {
+        "Code NAF / APE": "5829B",
+        "Description": "Edition de logiciels outils de développement et de langages",
+        "Section": 58,
+        "Description section": "Édition"
+    },
+    {
+        "Code NAF / APE": "5829C",
+        "Description": "Edition de logiciels applicatifs",
+        "Section": 58,
+        "Description section": "Édition"
+    },
+    {
+        "Code NAF / APE": "5911A",
+        "Description": "Production de films et de programmes pour la télévision",
+        "Section": 59,
+        "Description section": "Production de films cinématographiques, de vidéo et de programmes de télévision ; enregistrement sonore et édition musicale"
+    },
+    {
+        "Code NAF / APE": "5911B",
+        "Description": "Production de films institutionnels et publicitaires",
+        "Section": 59,
+        "Description section": "Production de films cinématographiques, de vidéo et de programmes de télévision ; enregistrement sonore et édition musicale"
+    },
+    {
+        "Code NAF / APE": "5911C",
+        "Description": "Production de films pour le cinéma",
+        "Section": 59,
+        "Description section": "Production de films cinématographiques, de vidéo et de programmes de télévision ; enregistrement sonore et édition musicale"
+    },
+    {
+        "Code NAF / APE": "5912Z",
+        "Description": "Post-production de films cinématographiques, de vidéo et de programmes de télévision",
+        "Section": 59,
+        "Description section": "Production de films cinématographiques, de vidéo et de programmes de télévision ; enregistrement sonore et édition musicale"
+    },
+    {
+        "Code NAF / APE": "5913A",
+        "Description": "Distribution de films cinématographiques",
+        "Section": 59,
+        "Description section": "Production de films cinématographiques, de vidéo et de programmes de télévision ; enregistrement sonore et édition musicale"
+    },
+    {
+        "Code NAF / APE": "5913B",
+        "Description": "Edition et distribution vidéo",
+        "Section": 59,
+        "Description section": "Production de films cinématographiques, de vidéo et de programmes de télévision ; enregistrement sonore et édition musicale"
+    },
+    {
+        "Code NAF / APE": "5914Z",
+        "Description": "Projection de films cinématographiques",
+        "Section": 59,
+        "Description section": "Production de films cinématographiques, de vidéo et de programmes de télévision ; enregistrement sonore et édition musicale"
+    },
+    {
+        "Code NAF / APE": "5920Z",
+        "Description": "Enregistrement sonore et édition musicale",
+        "Section": 59,
+        "Description section": "Production de films cinématographiques, de vidéo et de programmes de télévision ; enregistrement sonore et édition musicale"
+    },
+    {
+        "Code NAF / APE": "6010Z",
+        "Description": "Édition et diffusion de programmes radio",
+        "Section": 60,
+        "Description section": "Programmation et diffusion"
+    },
+    {
+        "Code NAF / APE": "6020A",
+        "Description": "Edition de chaînes généralistes",
+        "Section": 60,
+        "Description section": "Programmation et diffusion"
+    },
+    {
+        "Code NAF / APE": "6020B",
+        "Description": "Edition de chaînes thématiques",
+        "Section": 60,
+        "Description section": "Programmation et diffusion"
+    },
+    {
+        "Code NAF / APE": "6110Z",
+        "Description": "Télécommunications filaires",
+        "Section": 61,
+        "Description section": "Télécommunications"
+    },
+    {
+        "Code NAF / APE": "6120Z",
+        "Description": "Télécommunications sans fil",
+        "Section": 61,
+        "Description section": "Télécommunications"
+    },
+    {
+        "Code NAF / APE": "6130Z",
+        "Description": "Télécommunications par satellite",
+        "Section": 61,
+        "Description section": "Télécommunications"
+    },
+    {
+        "Code NAF / APE": "6190Z",
+        "Description": "Autres activités de télécommunication",
+        "Section": 61,
+        "Description section": "Télécommunications"
+    },
+    {
+        "Code NAF / APE": "6201Z",
+        "Description": "Programmation informatique",
+        "Section": 62,
+        "Description section": "Programmation, conseil et autres activités informatiques "
+    },
+    {
+        "Code NAF / APE": "6202A",
+        "Description": "Conseil en systèmes et logiciels informatiques",
+        "Section": 62,
+        "Description section": "Programmation, conseil et autres activités informatiques "
+    },
+    {
+        "Code NAF / APE": "6202B",
+        "Description": "Tierce maintenance de systèmes et d’applications informatiques",
+        "Section": 62,
+        "Description section": "Programmation, conseil et autres activités informatiques "
+    },
+    {
+        "Code NAF / APE": "6203Z",
+        "Description": "Gestion d'installations informatiques",
+        "Section": 62,
+        "Description section": "Programmation, conseil et autres activités informatiques "
+    },
+    {
+        "Code NAF / APE": "6209Z",
+        "Description": "Autres activités informatiques",
+        "Section": 62,
+        "Description section": "Programmation, conseil et autres activités informatiques "
+    },
+    {
+        "Code NAF / APE": "6311Z",
+        "Description": "Traitement de données, hébergement et activités connexes",
+        "Section": 63,
+        "Description section": "Services d'information"
+    },
+    {
+        "Code NAF / APE": "6312Z",
+        "Description": "Portails Internet",
+        "Section": 63,
+        "Description section": "Services d'information"
+    },
+    {
+        "Code NAF / APE": "6391Z",
+        "Description": "Activités des agences de presse",
+        "Section": 63,
+        "Description section": "Services d'information"
+    },
+    {
+        "Code NAF / APE": "6399Z",
+        "Description": "Autres services d'information nca",
+        "Section": 63,
+        "Description section": "Services d'information"
+    },
+    {
+        "Code NAF / APE": "6411Z",
+        "Description": "Activités de banque centrale",
+        "Section": 64,
+        "Description section": "Activités des services financiers, hors assurance et caisses de retraite"
+    },
+    {
+        "Code NAF / APE": "6419Z",
+        "Description": "Autres intermédiations monétaires",
+        "Section": 64,
+        "Description section": "Activités des services financiers, hors assurance et caisses de retraite"
+    },
+    {
+        "Code NAF / APE": "6420Z",
+        "Description": "Activités des sociétés holding",
+        "Section": 64,
+        "Description section": "Activités des services financiers, hors assurance et caisses de retraite"
+    },
+    {
+        "Code NAF / APE": "6430Z",
+        "Description": "Fonds de placement et entités financières similaires",
+        "Section": 64,
+        "Description section": "Activités des services financiers, hors assurance et caisses de retraite"
+    },
+    {
+        "Code NAF / APE": "6491Z",
+        "Description": "Crédit-bail",
+        "Section": 64,
+        "Description section": "Activités des services financiers, hors assurance et caisses de retraite"
+    },
+    {
+        "Code NAF / APE": "6492Z",
+        "Description": "Autre distribution de crédit",
+        "Section": 64,
+        "Description section": "Activités des services financiers, hors assurance et caisses de retraite"
+    },
+    {
+        "Code NAF / APE": "6499Z",
+        "Description": "Autres activités des services financiers, hors assurance et caisses de retraite, nca",
+        "Section": 64,
+        "Description section": "Activités des services financiers, hors assurance et caisses de retraite"
+    },
+    {
+        "Code NAF / APE": "6511Z",
+        "Description": "Assurance vie",
+        "Section": 65,
+        "Description section": "Assurance"
+    },
+    {
+        "Code NAF / APE": "6512Z",
+        "Description": "Autres assurances",
+        "Section": 65,
+        "Description section": "Assurance"
+    },
+    {
+        "Code NAF / APE": "6520Z",
+        "Description": "Réassurance",
+        "Section": 65,
+        "Description section": "Assurance"
+    },
+    {
+        "Code NAF / APE": "6530Z",
+        "Description": "Caisses de retraite",
+        "Section": 65,
+        "Description section": "Assurance"
+    },
+    {
+        "Code NAF / APE": "6611Z",
+        "Description": "Administration de marchés financiers",
+        "Section": 66,
+        "Description section": "Activités auxiliaires de services financiers et d'assurance "
+    },
+    {
+        "Code NAF / APE": "6612Z",
+        "Description": "Courtage de valeurs mobilières et de marchandises",
+        "Section": 66,
+        "Description section": "Activités auxiliaires de services financiers et d'assurance "
+    },
+    {
+        "Code NAF / APE": "6619A",
+        "Description": "Supports juridiques de gestion de patrimoine mobilier",
+        "Section": 66,
+        "Description section": "Activités auxiliaires de services financiers et d'assurance "
+    },
+    {
+        "Code NAF / APE": "6619B",
+        "Description": "Autres activités auxiliaires de services financiers, hors assurance et caisses de retraite, nca",
+        "Section": 66,
+        "Description section": "Activités auxiliaires de services financiers et d'assurance "
+    },
+    {
+        "Code NAF / APE": "6621Z",
+        "Description": "Évaluation des risques et dommages",
+        "Section": 66,
+        "Description section": "Activités auxiliaires de services financiers et d'assurance "
+    },
+    {
+        "Code NAF / APE": "6622Z",
+        "Description": "Activités des agents et courtiers d'assurances",
+        "Section": 66,
+        "Description section": "Activités auxiliaires de services financiers et d'assurance "
+    },
+    {
+        "Code NAF / APE": "6629Z",
+        "Description": "Autres activités auxiliaires d'assurance et de caisses de retraite",
+        "Section": 66,
+        "Description section": "Activités auxiliaires de services financiers et d'assurance "
+    },
+    {
+        "Code NAF / APE": "6630Z",
+        "Description": "Gestion de fonds",
+        "Section": 66,
+        "Description section": "Activités auxiliaires de services financiers et d'assurance "
+    },
+    {
+        "Code NAF / APE": "6810Z",
+        "Description": "Activités des marchands de biens immobiliers",
+        "Section": 68,
+        "Description section": "Activités immobilières"
+    },
+    {
+        "Code NAF / APE": "6820A",
+        "Description": "Location de logements",
+        "Section": 68,
+        "Description section": "Activités immobilières"
+    },
+    {
+        "Code NAF / APE": "6820B",
+        "Description": "Location de terrains et d'autres biens immobiliers",
+        "Section": 68,
+        "Description section": "Activités immobilières"
+    },
+    {
+        "Code NAF / APE": "6831Z",
+        "Description": "Agences immobilières",
+        "Section": 68,
+        "Description section": "Activités immobilières"
+    },
+    {
+        "Code NAF / APE": "6832A",
+        "Description": "Administration d'immeubles et autres biens immobiliers",
+        "Section": 68,
+        "Description section": "Activités immobilières"
+    },
+    {
+        "Code NAF / APE": "6832B",
+        "Description": "Supports juridiques de gestion de patrimoine immobilier",
+        "Section": 68,
+        "Description section": "Activités immobilières"
+    },
+    {
+        "Code NAF / APE": "6910Z",
+        "Description": "Activités juridiques",
+        "Section": 69,
+        "Description section": "Activités juridiques et comptables"
+    },
+    {
+        "Code NAF / APE": "6920Z",
+        "Description": "Activités comptables",
+        "Section": 69,
+        "Description section": "Activités juridiques et comptables"
+    },
+    {
+        "Code NAF / APE": "7010Z",
+        "Description": "Activités des sièges sociaux",
+        "Section": 70,
+        "Description section": "Activités des sièges sociaux ; conseil de gestion"
+    },
+    {
+        "Code NAF / APE": "7021Z",
+        "Description": "Conseil en relations publiques et communication",
+        "Section": 70,
+        "Description section": "Activités des sièges sociaux ; conseil de gestion"
+    },
+    {
+        "Code NAF / APE": "7022Z",
+        "Description": "Conseil pour les affaires et autres conseils de gestion",
+        "Section": 70,
+        "Description section": "Activités des sièges sociaux ; conseil de gestion"
+    },
+    {
+        "Code NAF / APE": "7111Z",
+        "Description": "Activités d'architecture",
+        "Section": 71,
+        "Description section": "Activités d'architecture et d'ingénierie ; activités de contrôle et analyses techniques"
+    },
+    {
+        "Code NAF / APE": "7112A",
+        "Description": "Activité des géomètres",
+        "Section": 71,
+        "Description section": "Activités d'architecture et d'ingénierie ; activités de contrôle et analyses techniques"
+    },
+    {
+        "Code NAF / APE": "7112B",
+        "Description": "Ingénierie, études techniques",
+        "Section": 71,
+        "Description section": "Activités d'architecture et d'ingénierie ; activités de contrôle et analyses techniques"
+    },
+    {
+        "Code NAF / APE": "7120A",
+        "Description": "Contrôle technique automobile",
+        "Section": 71,
+        "Description section": "Activités d'architecture et d'ingénierie ; activités de contrôle et analyses techniques"
+    },
+    {
+        "Code NAF / APE": "7120B",
+        "Description": "Analyses, essais et inspections techniques",
+        "Section": 71,
+        "Description section": "Activités d'architecture et d'ingénierie ; activités de contrôle et analyses techniques"
+    },
+    {
+        "Code NAF / APE": "7211Z",
+        "Description": "Recherche-développement en biotechnologie",
+        "Section": 72,
+        "Description section": "Recherche-développement scientifique"
+    },
+    {
+        "Code NAF / APE": "7219Z",
+        "Description": "Recherche-développement en autres sciences physiques et naturelles",
+        "Section": 72,
+        "Description section": "Recherche-développement scientifique"
+    },
+    {
+        "Code NAF / APE": "7220Z",
+        "Description": "Recherche-développement en sciences humaines et sociales",
+        "Section": 72,
+        "Description section": "Recherche-développement scientifique"
+    },
+    {
+        "Code NAF / APE": "7311Z",
+        "Description": "Activités des agences de publicité",
+        "Section": 73,
+        "Description section": "Publicité et études de marché"
+    },
+    {
+        "Code NAF / APE": "7312Z",
+        "Description": "Régie publicitaire de médias",
+        "Section": 73,
+        "Description section": "Publicité et études de marché"
+    },
+    {
+        "Code NAF / APE": "7320Z",
+        "Description": "Études de marché et sondages",
+        "Section": 73,
+        "Description section": "Publicité et études de marché"
+    },
+    {
+        "Code NAF / APE": "7410Z",
+        "Description": "Activités spécialisées de design",
+        "Section": 74,
+        "Description section": "Autres activités spécialisées, scientifiques et techniques"
+    },
+    {
+        "Code NAF / APE": "7420Z",
+        "Description": "Activités photographiques",
+        "Section": 74,
+        "Description section": "Autres activités spécialisées, scientifiques et techniques"
+    },
+    {
+        "Code NAF / APE": "7430Z",
+        "Description": "Traduction et interprétation",
+        "Section": 74,
+        "Description section": "Autres activités spécialisées, scientifiques et techniques"
+    },
+    {
+        "Code NAF / APE": "7490A",
+        "Description": "Activité des économistes de la construction",
+        "Section": 74,
+        "Description section": "Autres activités spécialisées, scientifiques et techniques"
+    },
+    {
+        "Code NAF / APE": "7490B",
+        "Description": "Activités spécialisées, scientifiques et techniques diverses",
+        "Section": 74,
+        "Description section": "Autres activités spécialisées, scientifiques et techniques"
+    },
+    {
+        "Code NAF / APE": "7500Z",
+        "Description": "Activités vétérinaires",
+        "Section": 75,
+        "Description section": "Activités vétérinaires"
+    },
+    {
+        "Code NAF / APE": "7711A",
+        "Description": "Location de courte durée de voitures et de véhicules automobiles légers",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7711B",
+        "Description": "Location de longue durée de voitures et de véhicules automobiles légers",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7712Z",
+        "Description": "Location et location-bail de camions",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7721Z",
+        "Description": "Location et location-bail d'articles de loisirs et de sport",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7722Z",
+        "Description": "Location de vidéocassettes et disques vidéo",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7729Z",
+        "Description": "Location et location-bail d'autres biens personnels et domestiques",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7731Z",
+        "Description": "Location et location-bail de machines et équipements agricoles",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7732Z",
+        "Description": "Location et location-bail de machines et équipements pour la construction",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7733Z",
+        "Description": "Location et location-bail de machines de bureau et de matériel informatique",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7734Z",
+        "Description": "Location et location-bail de matériels de transport par eau",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7735Z",
+        "Description": "Location et location-bail de matériels de transport aérien",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7739Z",
+        "Description": "Location et location-bail d'autres machines, équipements et biens matériels nca",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7740Z",
+        "Description": "Location-bail de propriété intellectuelle et de produits similaires, à l'exception des œuvres soumises à copyright",
+        "Section": 77,
+        "Description section": "Activités de location et location-bail"
+    },
+    {
+        "Code NAF / APE": "7810Z",
+        "Description": "Activités des agences de placement de main-d'œuvre",
+        "Section": 78,
+        "Description section": "Activités liées à l'emploi"
+    },
+    {
+        "Code NAF / APE": "7820Z",
+        "Description": "Activités des agences de travail temporaire",
+        "Section": 78,
+        "Description section": "Activités liées à l'emploi"
+    },
+    {
+        "Code NAF / APE": "7830Z",
+        "Description": "Autre mise à disposition de ressources humaines",
+        "Section": 78,
+        "Description section": "Activités liées à l'emploi"
+    },
+    {
+        "Code NAF / APE": "7911Z",
+        "Description": "Activités des agences de voyage",
+        "Section": 79,
+        "Description section": "Activités des agences de voyage, voyagistes, services de réservation et activités connexes"
+    },
+    {
+        "Code NAF / APE": "7912Z",
+        "Description": "Activités des voyagistes",
+        "Section": 79,
+        "Description section": "Activités des agences de voyage, voyagistes, services de réservation et activités connexes"
+    },
+    {
+        "Code NAF / APE": "7990Z",
+        "Description": "Autres services de réservation et activités connexes",
+        "Section": 79,
+        "Description section": "Activités des agences de voyage, voyagistes, services de réservation et activités connexes"
+    },
+    {
+        "Code NAF / APE": "8010Z",
+        "Description": "Activités de sécurité privée",
+        "Section": 80,
+        "Description section": "Enquêtes et sécurité"
+    },
+    {
+        "Code NAF / APE": "8020Z",
+        "Description": "Activités liées aux systèmes de sécurité",
+        "Section": 80,
+        "Description section": "Enquêtes et sécurité"
+    },
+    {
+        "Code NAF / APE": "8030Z",
+        "Description": "Activités d'enquête",
+        "Section": 80,
+        "Description section": "Enquêtes et sécurité"
+    },
+    {
+        "Code NAF / APE": "8110Z",
+        "Description": "Activités combinées de soutien lié aux bâtiments",
+        "Section": 81,
+        "Description section": "Services relatifs aux bâtiments et aménagement paysager"
+    },
+    {
+        "Code NAF / APE": "8121Z",
+        "Description": "Nettoyage courant des bâtiments",
+        "Section": 81,
+        "Description section": "Services relatifs aux bâtiments et aménagement paysager"
+    },
+    {
+        "Code NAF / APE": "8122Z",
+        "Description": "Autres activités de nettoyage des bâtiments et nettoyage industriel",
+        "Section": 81,
+        "Description section": "Services relatifs aux bâtiments et aménagement paysager"
+    },
+    {
+        "Code NAF / APE": "8129A",
+        "Description": "Désinfection, désinsectisation, dératisation",
+        "Section": 81,
+        "Description section": "Services relatifs aux bâtiments et aménagement paysager"
+    },
+    {
+        "Code NAF / APE": "8129B",
+        "Description": "Autres activités de nettoyage nca",
+        "Section": 81,
+        "Description section": "Services relatifs aux bâtiments et aménagement paysager"
+    },
+    {
+        "Code NAF / APE": "8130Z",
+        "Description": "Services d'aménagement paysager",
+        "Section": 81,
+        "Description section": "Services relatifs aux bâtiments et aménagement paysager"
+    },
+    {
+        "Code NAF / APE": "8211Z",
+        "Description": "Services administratifs combinés de bureau",
+        "Section": 82,
+        "Description section": "Activités administratives et autres activités de soutien aux entreprises"
+    },
+    {
+        "Code NAF / APE": "8219Z",
+        "Description": "Photocopie, préparation de documents et autres activités spécialisées de soutien de bureau",
+        "Section": 82,
+        "Description section": "Activités administratives et autres activités de soutien aux entreprises"
+    },
+    {
+        "Code NAF / APE": "8220Z",
+        "Description": "Activités de centres d'appels",
+        "Section": 82,
+        "Description section": "Activités administratives et autres activités de soutien aux entreprises"
+    },
+    {
+        "Code NAF / APE": "8230Z",
+        "Description": "Organisation de foires, salons professionnels et congrès",
+        "Section": 82,
+        "Description section": "Activités administratives et autres activités de soutien aux entreprises"
+    },
+    {
+        "Code NAF / APE": "8291Z",
+        "Description": "Activités des agences de recouvrement de factures et des sociétés d'information financière sur la clientèle",
+        "Section": 82,
+        "Description section": "Activités administratives et autres activités de soutien aux entreprises"
+    },
+    {
+        "Code NAF / APE": "8292Z",
+        "Description": "Activités de conditionnement",
+        "Section": 82,
+        "Description section": "Activités administratives et autres activités de soutien aux entreprises"
+    },
+    {
+        "Code NAF / APE": "8299Z",
+        "Description": "Autres activités de soutien aux entreprises nca",
+        "Section": 82,
+        "Description section": "Activités administratives et autres activités de soutien aux entreprises"
+    },
+    {
+        "Code NAF / APE": "8411Z",
+        "Description": "Administration publique générale",
+        "Section": 84,
+        "Description section": "Administration publique et défense ; sécurité sociale obligatoire"
+    },
+    {
+        "Code NAF / APE": "8412Z",
+        "Description": "Administration publique (tutelle) de la santé, de la formation, de la culture et des services sociaux, autre que sécurité sociale",
+        "Section": 84,
+        "Description section": "Administration publique et défense ; sécurité sociale obligatoire"
+    },
+    {
+        "Code NAF / APE": "8413Z",
+        "Description": "Administration publique (tutelle) des activités économiques",
+        "Section": 84,
+        "Description section": "Administration publique et défense ; sécurité sociale obligatoire"
+    },
+    {
+        "Code NAF / APE": "8421Z",
+        "Description": "Affaires étrangères",
+        "Section": 84,
+        "Description section": "Administration publique et défense ; sécurité sociale obligatoire"
+    },
+    {
+        "Code NAF / APE": "8422Z",
+        "Description": "Défense",
+        "Section": 84,
+        "Description section": "Administration publique et défense ; sécurité sociale obligatoire"
+    },
+    {
+        "Code NAF / APE": "8423Z",
+        "Description": "Justice",
+        "Section": 84,
+        "Description section": "Administration publique et défense ; sécurité sociale obligatoire"
+    },
+    {
+        "Code NAF / APE": "8424Z",
+        "Description": "Activités d’ordre public et de sécurité",
+        "Section": 84,
+        "Description section": "Administration publique et défense ; sécurité sociale obligatoire"
+    },
+    {
+        "Code NAF / APE": "8425Z",
+        "Description": "Services du feu et de secours",
+        "Section": 84,
+        "Description section": "Administration publique et défense ; sécurité sociale obligatoire"
+    },
+    {
+        "Code NAF / APE": "8430A",
+        "Description": "Activités générales de sécurité sociale",
+        "Section": 84,
+        "Description section": "Administration publique et défense ; sécurité sociale obligatoire"
+    },
+    {
+        "Code NAF / APE": "8430B",
+        "Description": "Gestion des retraites complémentaires",
+        "Section": 84,
+        "Description section": "Administration publique et défense ; sécurité sociale obligatoire"
+    },
+    {
+        "Code NAF / APE": "8430C",
+        "Description": "Distribution sociale de revenus",
+        "Section": 84,
+        "Description section": "Administration publique et défense ; sécurité sociale obligatoire"
+    },
+    {
+        "Code NAF / APE": "8510Z",
+        "Description": "Enseignement pré-primaire",
+        "Section": 85,
+        "Description section": "Enseignement"
+    },
+    {
+        "Code NAF / APE": "8520Z",
+        "Description": "Enseignement primaire",
+        "Section": 85,
+        "Description section": "Enseignement"
+    },
+    {
+        "Code NAF / APE": "8531Z",
+        "Description": "Enseignement secondaire général",
+        "Section": 85,
+        "Description section": "Enseignement"
+    },
+    {
+        "Code NAF / APE": "8532Z",
+        "Description": "Enseignement secondaire technique ou professionnel",
+        "Section": 85,
+        "Description section": "Enseignement"
+    },
+    {
+        "Code NAF / APE": "8541Z",
+        "Description": "Enseignement post-secondaire non supérieur",
+        "Section": 85,
+        "Description section": "Enseignement"
+    },
+    {
+        "Code NAF / APE": "8542Z",
+        "Description": "Enseignement supérieur",
+        "Section": 85,
+        "Description section": "Enseignement"
+    },
+    {
+        "Code NAF / APE": "8551Z",
+        "Description": "Enseignement de disciplines sportives et d'activités de loisirs",
+        "Section": 85,
+        "Description section": "Enseignement"
+    },
+    {
+        "Code NAF / APE": "8552Z",
+        "Description": "Enseignement culturel",
+        "Section": 85,
+        "Description section": "Enseignement"
+    },
+    {
+        "Code NAF / APE": "8553Z",
+        "Description": "Enseignement de la conduite",
+        "Section": 85,
+        "Description section": "Enseignement"
+    },
+    {
+        "Code NAF / APE": "8559A",
+        "Description": "Formation continue d'adultes",
+        "Section": 85,
+        "Description section": "Enseignement"
+    },
+    {
+        "Code NAF / APE": "8559B",
+        "Description": "Autres enseignements",
+        "Section": 85,
+        "Description section": "Enseignement"
+    },
+    {
+        "Code NAF / APE": "8560Z",
+        "Description": "Activités de soutien à l'enseignement",
+        "Section": 85,
+        "Description section": "Enseignement"
+    },
+    {
+        "Code NAF / APE": "8610Z",
+        "Description": "Activités hospitalières",
+        "Section": 86,
+        "Description section": "Activités pour la santé humaine"
+    },
+    {
+        "Code NAF / APE": "8621Z",
+        "Description": "Activité des médecins généralistes",
+        "Section": 86,
+        "Description section": "Activités pour la santé humaine"
+    },
+    {
+        "Code NAF / APE": "8622A",
+        "Description": "Activités de radiodiagnostic et de radiothérapie",
+        "Section": 86,
+        "Description section": "Activités pour la santé humaine"
+    },
+    {
+        "Code NAF / APE": "8622B",
+        "Description": "Activités chirurgicales",
+        "Section": 86,
+        "Description section": "Activités pour la santé humaine"
+    },
+    {
+        "Code NAF / APE": "8622C",
+        "Description": "Autres activités des médecins spécialistes",
+        "Section": 86,
+        "Description section": "Activités pour la santé humaine"
+    },
+    {
+        "Code NAF / APE": "8623Z",
+        "Description": "Pratique dentaire",
+        "Section": 86,
+        "Description section": "Activités pour la santé humaine"
+    },
+    {
+        "Code NAF / APE": "8690A",
+        "Description": "Ambulances",
+        "Section": 86,
+        "Description section": "Activités pour la santé humaine"
+    },
+    {
+        "Code NAF / APE": "8690B",
+        "Description": "Laboratoires d'analyses médicales",
+        "Section": 86,
+        "Description section": "Activités pour la santé humaine"
+    },
+    {
+        "Code NAF / APE": "8690C",
+        "Description": "Centres de collecte et banques d'organes",
+        "Section": 86,
+        "Description section": "Activités pour la santé humaine"
+    },
+    {
+        "Code NAF / APE": "8690D",
+        "Description": "Activités des infirmiers et des sages-femmes",
+        "Section": 86,
+        "Description section": "Activités pour la santé humaine"
+    },
+    {
+        "Code NAF / APE": "8690E",
+        "Description": "Activités des professionnels de la rééducation, de l’appareillage et des pédicures-podologues",
+        "Section": 86,
+        "Description section": "Activités pour la santé humaine"
+    },
+    {
+        "Code NAF / APE": "8690F",
+        "Description": "Activités de santé humaine non classées ailleurs",
+        "Section": 86,
+        "Description section": "Activités pour la santé humaine"
+    },
+    {
+        "Code NAF / APE": "8710A",
+        "Description": "Hébergement médicalisé pour personnes âgées",
+        "Section": 87,
+        "Description section": "Hébergement médico-social et social"
+    },
+    {
+        "Code NAF / APE": "8710B",
+        "Description": "Hébergement médicalisés pour enfants handicapés",
+        "Section": 87,
+        "Description section": "Hébergement médico-social et social"
+    },
+    {
+        "Code NAF / APE": "8710C",
+        "Description": "Hébergement médicalisé pour adultes handicapés et autre hébergement médicalisé ",
+        "Section": 87,
+        "Description section": "Hébergement médico-social et social"
+    },
+    {
+        "Code NAF / APE": "8720A",
+        "Description": "Hébergement social pour handicapés mentaux et malades mentaux",
+        "Section": 87,
+        "Description section": "Hébergement médico-social et social"
+    },
+    {
+        "Code NAF / APE": "8720B",
+        "Description": "Hébergement social pour toxicomanes",
+        "Section": 87,
+        "Description section": "Hébergement médico-social et social"
+    },
+    {
+        "Code NAF / APE": "8730A",
+        "Description": "Hébergement social pour personnes âgées",
+        "Section": 87,
+        "Description section": "Hébergement médico-social et social"
+    },
+    {
+        "Code NAF / APE": "8730B",
+        "Description": "Hébergement social pour handicapés physiques",
+        "Section": 87,
+        "Description section": "Hébergement médico-social et social"
+    },
+    {
+        "Code NAF / APE": "8790A",
+        "Description": "Hébergement social pour enfants en difficultés",
+        "Section": 87,
+        "Description section": "Hébergement médico-social et social"
+    },
+    {
+        "Code NAF / APE": "8790B",
+        "Description": "Hébergement social pour adultes et familles en difficultés et autre hébergement social",
+        "Section": 87,
+        "Description section": "Hébergement médico-social et social"
+    },
+    {
+        "Code NAF / APE": "8810A",
+        "Description": "Aide à domicile",
+        "Section": 88,
+        "Description section": "Action sociale sans hébergement"
+    },
+    {
+        "Code NAF / APE": "8810B",
+        "Description": "Accueil ou accompagnement sans hébergement d’adultes handicapés ou de personnes âgées",
+        "Section": 88,
+        "Description section": "Action sociale sans hébergement"
+    },
+    {
+        "Code NAF / APE": "8810C",
+        "Description": "Aide par le travail",
+        "Section": 88,
+        "Description section": "Action sociale sans hébergement"
+    },
+    {
+        "Code NAF / APE": "8891A",
+        "Description": "Accueil de jeunes enfants",
+        "Section": 88,
+        "Description section": "Action sociale sans hébergement"
+    },
+    {
+        "Code NAF / APE": "8891B",
+        "Description": "Accueil ou accompagnement sans hébergement d’enfants handicapés",
+        "Section": 88,
+        "Description section": "Action sociale sans hébergement"
+    },
+    {
+        "Code NAF / APE": "8899A",
+        "Description": "Autre accueil ou accompagnement sans hébergement ?\u0019enfants et d’adolescents ",
+        "Section": 88,
+        "Description section": "Action sociale sans hébergement"
+    },
+    {
+        "Code NAF / APE": "8899B",
+        "Description": "Action sociale sans hébergement nca",
+        "Section": 88,
+        "Description section": "Action sociale sans hébergement"
+    },
+    {
+        "Code NAF / APE": "9001Z",
+        "Description": "Arts du spectacle vivant",
+        "Section": 90,
+        "Description section": "Activités créatives, artistiques et de spectacle "
+    },
+    {
+        "Code NAF / APE": "9002Z",
+        "Description": "Activités de soutien au spectacle vivant",
+        "Section": 90,
+        "Description section": "Activités créatives, artistiques et de spectacle "
+    },
+    {
+        "Code NAF / APE": "9003A",
+        "Description": "Création artistique relevant des arts plastiques",
+        "Section": 90,
+        "Description section": "Activités créatives, artistiques et de spectacle "
+    },
+    {
+        "Code NAF / APE": "9003B",
+        "Description": "Autre création artistique",
+        "Section": 90,
+        "Description section": "Activités créatives, artistiques et de spectacle "
+    },
+    {
+        "Code NAF / APE": "9004Z",
+        "Description": "Gestion de salles de spectacles",
+        "Section": 90,
+        "Description section": "Activités créatives, artistiques et de spectacle "
+    },
+    {
+        "Code NAF / APE": "9101Z",
+        "Description": "Gestion des bibliothèques et des archives",
+        "Section": 91,
+        "Description section": "Bibliothèques, archives, musées et autres activités culturelles"
+    },
+    {
+        "Code NAF / APE": "9102Z",
+        "Description": "Gestion des musées",
+        "Section": 91,
+        "Description section": "Bibliothèques, archives, musées et autres activités culturelles"
+    },
+    {
+        "Code NAF / APE": "9103Z",
+        "Description": "Gestion des sites et monuments historiques et des attractions touristiques similaires",
+        "Section": 91,
+        "Description section": "Bibliothèques, archives, musées et autres activités culturelles"
+    },
+    {
+        "Code NAF / APE": "9104Z",
+        "Description": "Gestion des jardins botaniques et zoologiques et des réserves naturelles",
+        "Section": 91,
+        "Description section": "Bibliothèques, archives, musées et autres activités culturelles"
+    },
+    {
+        "Code NAF / APE": "9200Z",
+        "Description": "Organisation de jeux de hasard et d'argent",
+        "Section": 92,
+        "Description section": "Organisation de jeux de hasard et d'argent"
+    },
+    {
+        "Code NAF / APE": "9311Z",
+        "Description": "Gestion d'installations sportives",
+        "Section": 93,
+        "Description section": "Activités sportives, récréatives et de loisirs"
+    },
+    {
+        "Code NAF / APE": "9312Z",
+        "Description": "Activités de clubs de sports",
+        "Section": 93,
+        "Description section": "Activités sportives, récréatives et de loisirs"
+    },
+    {
+        "Code NAF / APE": "9313Z",
+        "Description": "Activités des centres de culture physique",
+        "Section": 93,
+        "Description section": "Activités sportives, récréatives et de loisirs"
+    },
+    {
+        "Code NAF / APE": "9319Z",
+        "Description": "Autres activités liées au sport",
+        "Section": 93,
+        "Description section": "Activités sportives, récréatives et de loisirs"
+    },
+    {
+        "Code NAF / APE": "9321Z",
+        "Description": "Activités des parcs d'attractions et parcs à thèmes",
+        "Section": 93,
+        "Description section": "Activités sportives, récréatives et de loisirs"
+    },
+    {
+        "Code NAF / APE": "9329Z",
+        "Description": "Autres activités récréatives et de loisirs",
+        "Section": 93,
+        "Description section": "Activités sportives, récréatives et de loisirs"
+    },
+    {
+        "Code NAF / APE": "9411Z",
+        "Description": "Activités des organisations patronales et consulaires",
+        "Section": 94,
+        "Description section": "Activités des organisations associatives"
+    },
+    {
+        "Code NAF / APE": "9412Z",
+        "Description": "Activités des organisations professionnelles",
+        "Section": 94,
+        "Description section": "Activités des organisations associatives"
+    },
+    {
+        "Code NAF / APE": "9420Z",
+        "Description": "Activités des syndicats de salariés",
+        "Section": 94,
+        "Description section": "Activités des organisations associatives"
+    },
+    {
+        "Code NAF / APE": "9491Z",
+        "Description": "Activités des organisations religieuses",
+        "Section": 94,
+        "Description section": "Activités des organisations associatives"
+    },
+    {
+        "Code NAF / APE": "9492Z",
+        "Description": "Activités des organisations politiques",
+        "Section": 94,
+        "Description section": "Activités des organisations associatives"
+    },
+    {
+        "Code NAF / APE": "9499Z",
+        "Description": "Autres organisations fonctionnant par adhésion volontaire",
+        "Section": 94,
+        "Description section": "Activités des organisations associatives"
+    },
+    {
+        "Code NAF / APE": "9511Z",
+        "Description": "Réparation d'ordinateurs et d'équipements périphériques",
+        "Section": 95,
+        "Description section": "Réparation d'ordinateurs et de biens personnels et domestiques"
+    },
+    {
+        "Code NAF / APE": "9512Z",
+        "Description": "Réparation d'équipements de communication",
+        "Section": 95,
+        "Description section": "Réparation d'ordinateurs et de biens personnels et domestiques"
+    },
+    {
+        "Code NAF / APE": "9521Z",
+        "Description": "Réparation de produits électroniques grand public",
+        "Section": 95,
+        "Description section": "Réparation d'ordinateurs et de biens personnels et domestiques"
+    },
+    {
+        "Code NAF / APE": "9522Z",
+        "Description": "Réparation d'appareils électroménagers et d'équipements pour la maison et le jardin",
+        "Section": 95,
+        "Description section": "Réparation d'ordinateurs et de biens personnels et domestiques"
+    },
+    {
+        "Code NAF / APE": "9523Z",
+        "Description": "Réparation de chaussures et d'articles en cuir",
+        "Section": 95,
+        "Description section": "Réparation d'ordinateurs et de biens personnels et domestiques"
+    },
+    {
+        "Code NAF / APE": "9524Z",
+        "Description": "Réparation de meubles et d'équipements du foyer",
+        "Section": 95,
+        "Description section": "Réparation d'ordinateurs et de biens personnels et domestiques"
+    },
+    {
+        "Code NAF / APE": "9525Z",
+        "Description": "Réparation d'articles d'horlogerie et de bijouterie",
+        "Section": 95,
+        "Description section": "Réparation d'ordinateurs et de biens personnels et domestiques"
+    },
+    {
+        "Code NAF / APE": "9529Z",
+        "Description": "Réparation d'autres biens personnels et domestiques",
+        "Section": 95,
+        "Description section": "Réparation d'ordinateurs et de biens personnels et domestiques"
+    },
+    {
+        "Code NAF / APE": "9601A",
+        "Description": "Blanchisserie-teinturerie de gros",
+        "Section": 96,
+        "Description section": "Autres services personnels"
+    },
+    {
+        "Code NAF / APE": "9601B",
+        "Description": "Blanchisserie-teinturerie de détail",
+        "Section": 96,
+        "Description section": "Autres services personnels"
+    },
+    {
+        "Code NAF / APE": "9602A",
+        "Description": "Coiffure",
+        "Section": 96,
+        "Description section": "Autres services personnels"
+    },
+    {
+        "Code NAF / APE": "9602B",
+        "Description": "Soins de beauté",
+        "Section": 96,
+        "Description section": "Autres services personnels"
+    },
+    {
+        "Code NAF / APE": "9603Z",
+        "Description": "Services funéraires",
+        "Section": 96,
+        "Description section": "Autres services personnels"
+    },
+    {
+        "Code NAF / APE": "9604Z",
+        "Description": "Entretien corporel",
+        "Section": 96,
+        "Description section": "Autres services personnels"
+    },
+    {
+        "Code NAF / APE": "9609Z",
+        "Description": "Autres services personnels nca",
+        "Section": 96,
+        "Description section": "Autres services personnels"
+    },
+    {
+        "Code NAF / APE": "9700Z",
+        "Description": "Activités des ménages en tant qu'employeurs de personnel domestique",
+        "Section": 97,
+        "Description section": "Activités des ménages en tant qu'employeurs de personnel domestique"
+    },
+    {
+        "Code NAF / APE": "9810Z",
+        "Description": "Activités indifférenciées des ménages en tant que producteurs de biens pour usage propre",
+        "Section": 98,
+        "Description section": "Activités indifférenciées des ménages en tant que producteurs de biens et services pour usage propre"
+    },
+    {
+        "Code NAF / APE": "9820Z",
+        "Description": "Activités indifférenciées des ménages en tant que producteurs de services pour usage propre",
+        "Section": 98,
+        "Description section": "Activités indifférenciées des ménages en tant que producteurs de biens et services pour usage propre"
+    },
+    {
+        "Code NAF / APE": "9900Z",
+        "Description": "Activités des organisations et organismes extraterritoriaux",
+        "Section": 99,
+        "Description section": "Activités des organisations et organismes extraterritoriaux"
+    }
+]

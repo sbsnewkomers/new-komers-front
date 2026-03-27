@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Select } from "@/components/ui/Select";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
+import { ApeCodeSelect } from "./ApeCodeSelect";
 const STEPS = [
   { id: 1, title: "Informations Générales" },
   { id: 2, title: "Détails Administratifs" },
@@ -34,16 +35,17 @@ const MODELE_OPTIONS = [
 
 export type CompanyWizardForm = {
   name: string;
+  siret: string;
   fiscal_year_start: string;
   fiscal_year_end: string;
-  siret: string;
   address: string;
-  groupId: string;
-  workspaceId: string;
   ape_code: string;
   main_activity: string;
   size: string;
   model: string;
+  groupId?: string;
+  workspaceId?: string;
+  logo?: File;
 };
 
 const defaultForm: CompanyWizardForm = {
@@ -58,6 +60,7 @@ const defaultForm: CompanyWizardForm = {
   main_activity: "",
   size: "SMALL",
   model: "SUBSIDIARY",
+  logo: undefined,
 };
 
 type CompanyCreateWizardProps = {
@@ -72,6 +75,34 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
   const [step, setStep] = React.useState(1);
   const [form, setForm] = React.useState<CompanyWizardForm>(defaultForm);
   const [loading, setLoading] = React.useState(false);
+
+  // Fonctions utilitaires pour valider les dates d'exercice
+  const handleFiscalYearStartChange = (newStartDate: string) => {
+    setForm((f) => {
+      // Si une date de fin existe, ne permettre que les dates antérieures
+      if (f.fiscal_year_end && newStartDate >= f.fiscal_year_end) {
+        return f; // Ne pas mettre à jour si la date de début n'est pas antérieure à la date de fin
+      }
+      const updated = { ...f, fiscal_year_start: newStartDate };
+      // Si la date de fin est antérieure ou égale à la nouvelle date de début, ajuster la date de fin
+      if (f.fiscal_year_end && f.fiscal_year_end <= newStartDate) {
+        const nextDay = new Date(newStartDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        updated.fiscal_year_end = nextDay.toISOString().split('T')[0];
+      }
+      return updated;
+    });
+  };
+
+  const handleFiscalYearEndChange = (newEndDate: string) => {
+    setForm((f) => {
+      // Ne permettre que les dates postérieures à la date de début
+      if (f.fiscal_year_start && newEndDate <= f.fiscal_year_start) {
+        return f; // Ne pas mettre à jour si la date de fin n'est pas valide
+      }
+      return { ...f, fiscal_year_end: newEndDate };
+    });
+  };
 
   // Fonction pour trouver l'workspace d'un groupe
   const getworkspaceFromGroup = React.useCallback((groupId: string) => {
@@ -187,7 +218,8 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
               <Input
                 type="date"
                 value={form.fiscal_year_start}
-                onChange={(e) => setForm((f) => ({ ...f, fiscal_year_start: e.target.value }))}
+                onChange={(e) => handleFiscalYearStartChange(e.target.value)}
+                max={form.fiscal_year_end ? new Date(form.fiscal_year_end).toISOString().split('T')[0] : undefined}
                 required
               />
             </div>
@@ -196,7 +228,8 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
               <Input
                 type="date"
                 value={form.fiscal_year_end}
-                onChange={(e) => setForm((f) => ({ ...f, fiscal_year_end: e.target.value }))}
+                onChange={(e) => handleFiscalYearEndChange(e.target.value)}
+                min={form.fiscal_year_start ? new Date(form.fiscal_year_start).toISOString().split('T')[0] : undefined}
                 required
               />
             </div>
@@ -214,6 +247,30 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
               value={form.address}
               onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
             />
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Logo de l&apos;entreprise</label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setForm((f) => ({ ...f, logo: file }));
+                  }
+                }}
+              />
+              {form.logo && (
+                <div className="mt-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={URL.createObjectURL(form.logo)}
+                    alt="Logo preview"
+                    className="h-16 w-16 object-cover rounded"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">{form.logo.name}</p>
+                </div>
+              )}
+            </div>
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Rattachement à un groupe</label>
               <Select
@@ -246,15 +303,20 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
 
         {step === 3 && (
           <div className="space-y-4 py-2">
-            <Input
-              placeholder="Code APE"
-              value={form.ape_code}
-              onChange={(e) => setForm((f) => ({ ...f, ape_code: e.target.value }))}
-            />
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Code APE</label>
+              <ApeCodeSelect
+                value={form.ape_code}
+                onChange={(value) => setForm((f) => ({ ...f, ape_code: value }))}
+                onDescriptionChange={(description) => setForm((f) => ({ ...f, main_activity: description }))}
+              />
+            </div>
             <Input
               placeholder="Activité principale"
               value={form.main_activity}
               onChange={(e) => setForm((f) => ({ ...f, main_activity: e.target.value }))}
+              readOnly
+              className="bg-gray-50 cursor-not-allowed"
             />
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Taille</label>
