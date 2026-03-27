@@ -221,8 +221,15 @@ export default function StructurePage() {
     siret: "",
     fiscal_year_start: "",
     fiscal_year_end: "",
+    address: "",
+    ape_code: "",
+    main_activity: "",
+    size: "SMALL",
+    model: "SUBSIDIARY",
+    logo: "",
   });
   const [addCompanyLoading, setAddCompanyLoading] = useState(false);
+  const [addCompanyLogoFile, setAddCompanyLogoFile] = useState<File | null>(null);
 
   const [addBUOpen, setAddBUOpen] = useState(false);
   const [addBUCompanyId, setAddBUCompanyId] = useState<string | null>(null);
@@ -777,7 +784,7 @@ export default function StructurePage() {
       });
     }
 
-    console.log('Final treeRows order:', rows.map(r => `${r.type}: ${r.name}`));
+    console.log('Final treeRows order:', rows.map(r => `${r.type}: ${r.name || 'Sans nom'}`));
     return rows;
   }, [filteredTreeData, expandedCompanyIds, user]);
 
@@ -1176,20 +1183,38 @@ export default function StructurePage() {
         form.model === "INDEPENDANT"
           ? "SUBSIDIARY"
           : (form.model as "HOLDING" | "SUBSIDIARY");
+
+      // Créer FormData pour gérer le fichier logo
+      const formData = new FormData();
+      
+      // Debug: vérifier les valeurs
+      console.log('Form data being sent:', {
+        groupId: form.groupId,
+        workspaceId: form.workspaceId,
+        hasLogo: !!form.logo
+      });
+      
+      // Ajouter les champs texte
+      if (form.groupId) formData.append('groupId', form.groupId);
+      if (form.workspaceId) formData.append('workspace_id', form.workspaceId);
+      formData.append('name', form.name);
+      formData.append('fiscal_year_start', form.fiscal_year_start);
+      formData.append('fiscal_year_end', form.fiscal_year_end);
+      formData.append('siret', form.siret);
+      if (form.address) formData.append('address', form.address);
+      if (form.ape_code) formData.append('ape_code', form.ape_code);
+      if (form.main_activity) formData.append('main_activity', form.main_activity);
+      formData.append('size', size);
+      formData.append('model', model);
+      
+      // Ajouter le logo s'il existe
+      if (form.logo) {
+        formData.append('logo', form.logo);
+      }
+
       await apiFetch("/companies", {
         method: "POST",
-        body: JSON.stringify({
-          groupId: form.groupId,
-          name: form.name,
-          fiscal_year_start: form.fiscal_year_start,
-          fiscal_year_end: form.fiscal_year_end,
-          siret: form.siret,
-          address: form.address || undefined,
-          ape_code: form.ape_code || undefined,
-          main_activity: form.main_activity || undefined,
-          size,
-          model,
-        }),
+        body: formData,
         snackbar: { showSuccess: true, successMessage: "Entreprise créée" },
       });
       await loadTree();
@@ -1198,20 +1223,78 @@ export default function StructurePage() {
   );
 
   const handleAddCompanyToGroup = async () => {
-    if (!addCompanyGroupId || !addCompanyForm.name.trim()) return;
+    console.log('handleAddCompanyToGroup called with:', {
+      addCompanyGroupId,
+      addCompanyForm
+    });
+    
+    if (!addCompanyGroupId || !addCompanyForm.name?.trim()) {
+      console.error('Missing required fields:', { 
+        groupId: addCompanyGroupId, 
+        name: addCompanyForm.name 
+      });
+      return;
+    }
+    
+    // Vérifier que le groupe existe
+    const group = groupList.find((g) => g.id === addCompanyGroupId);
+    if (!group) {
+      console.error('Group not found:', addCompanyGroupId);
+      return;
+    }
+    
+    // Validation supplémentaire
+    if (!addCompanyForm.fiscal_year_start || !addCompanyForm.fiscal_year_end) {
+      console.error('Les dates d\'exercice sont requises');
+      return;
+    }
+    
+    console.log('Creating company in group:', group.name);
     setAddCompanyLoading(true);
     try {
-      await apiFetch("/companies", {
+      const formData = new FormData();
+      formData.append('groupId', addCompanyGroupId);
+      
+      // Ajouter workspace_id depuis le groupe
+      if (group.workspaceId) {
+        formData.append('workspace_id', group.workspaceId);
+      }
+      
+      formData.append('name', addCompanyForm.name);
+      if (addCompanyForm.siret) {
+        formData.append('siret', addCompanyForm.siret);
+      }
+      formData.append('fiscal_year_start', addCompanyForm.fiscal_year_start);
+      formData.append('fiscal_year_end', addCompanyForm.fiscal_year_end);
+      if (addCompanyForm.address) {
+        formData.append('address', addCompanyForm.address);
+      }
+      if (addCompanyForm.ape_code) {
+        formData.append('ape_code', addCompanyForm.ape_code);
+      }
+      if (addCompanyForm.main_activity) {
+        formData.append('main_activity', addCompanyForm.main_activity);
+      }
+      formData.append('size', addCompanyForm.size);
+      formData.append('model', addCompanyForm.model);
+      if (addCompanyLogoFile) {
+        console.log('Adding logo file:', addCompanyLogoFile.name, addCompanyLogoFile.size, addCompanyLogoFile.type);
+        formData.append('logo', addCompanyLogoFile, addCompanyLogoFile.name);
+      }
+
+      console.log('Sending FormData:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      const response = await apiFetch("/companies", {
         method: "POST",
-        body: JSON.stringify({
-          groupId: addCompanyGroupId,
-          name: addCompanyForm.name,
-          siret: addCompanyForm.siret,
-          fiscal_year_start: addCompanyForm.fiscal_year_start,
-          fiscal_year_end: addCompanyForm.fiscal_year_end,
-        }),
+        body: formData,
+        headers: {}, // Important: ne pas définir Content-Type pour FormData
         snackbar: { showSuccess: true, successMessage: "Entreprise créée" },
       });
+      
+      console.log('Company created successfully:', response);
       await loadTree();
       setAddCompanyOpen(false);
       setAddCompanyForm({
@@ -1219,9 +1302,21 @@ export default function StructurePage() {
         siret: "",
         fiscal_year_start: "",
         fiscal_year_end: "",
+        address: "",
+        ape_code: "",
+        main_activity: "",
+        size: "SMALL",
+        model: "SUBSIDIARY",
+        logo: "",
       });
-    } catch {
-      /* snackbar handles */
+      setAddCompanyLogoFile(null);
+    } catch (error) {
+      console.error('Error creating company:', error);
+      // Gestion d'erreur plus détaillée
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
     } finally {
       setAddCompanyLoading(false);
     }
@@ -1881,12 +1976,23 @@ export default function StructurePage() {
                                   <DropdownMenuItem
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      if (!node.id) {
+                                        console.error('Group node ID is undefined:', node);
+                                        return;
+                                      }
+                                      console.log('Setting addCompanyGroupId to:', node.id);
                                       setAddCompanyGroupId(node.id);
                                       setAddCompanyForm({
                                         name: "",
                                         siret: "",
                                         fiscal_year_start: "",
                                         fiscal_year_end: "",
+                                        address: "",
+                                        ape_code: "",
+                                        main_activity: "",
+                                        size: "SMALL",
+                                        model: "SUBSIDIARY",
+                                        logo: "",
                                       });
                                       setAddCompanyOpen(true);
                                     }}
@@ -2138,18 +2244,32 @@ export default function StructurePage() {
                 value={editGroup.fiscal_year_start}
                 editing={editing}
                 type="date"
-                onChange={(v) =>
-                  setEditGroup((f) => ({ ...f, fiscal_year_start: v }))
-                }
+                onChange={(v) => {
+                  setEditGroup((f) => {
+                    const updated = { ...f, fiscal_year_start: v };
+                    // Si la date de fin est antérieure ou égale à la nouvelle date de début, ajuster la date de fin
+                    if (f.fiscal_year_end && f.fiscal_year_end <= v) {
+                      const nextDay = new Date(v);
+                      nextDay.setDate(nextDay.getDate() + 1);
+                      updated.fiscal_year_end = nextDay.toISOString().split('T')[0];
+                    }
+                    return updated;
+                  });
+                }}
               />
               <Field
                 label="Fin d'exercice"
                 value={editGroup.fiscal_year_end}
                 editing={editing}
                 type="date"
-                onChange={(v) =>
-                  setEditGroup((f) => ({ ...f, fiscal_year_end: v }))
-                }
+                min={editGroup.fiscal_year_start ? new Date(editGroup.fiscal_year_start).toISOString().split('T')[0] : undefined}
+                onChange={(v) => {
+                  // Ne permettre que les dates postérieures à la date de début
+                  if (editGroup.fiscal_year_start && v <= editGroup.fiscal_year_start) {
+                    return; // Ne pas mettre à jour si la date de fin n'est pas valide
+                  }
+                  setEditGroup((f) => ({ ...f, fiscal_year_end: v }));
+                }}
               />
               <Field
                 label="Activité principale"
@@ -2262,18 +2382,32 @@ export default function StructurePage() {
                 value={editCompany.fiscal_year_start}
                 editing={editing}
                 type="date"
-                onChange={(v) =>
-                  setEditCompany((f) => ({ ...f, fiscal_year_start: v }))
-                }
+                onChange={(v) => {
+                  setEditCompany((f) => {
+                    const updated = { ...f, fiscal_year_start: v };
+                    // Si la date de fin est antérieure ou égale à la nouvelle date de début, ajuster la date de fin
+                    if (f.fiscal_year_end && f.fiscal_year_end <= v) {
+                      const nextDay = new Date(v);
+                      nextDay.setDate(nextDay.getDate() + 1);
+                      updated.fiscal_year_end = nextDay.toISOString().split('T')[0];
+                    }
+                    return updated;
+                  });
+                }}
               />
               <Field
                 label="Fin d'exercice"
                 value={editCompany.fiscal_year_end}
                 editing={editing}
                 type="date"
-                onChange={(v) =>
-                  setEditCompany((f) => ({ ...f, fiscal_year_end: v }))
-                }
+                min={editCompany.fiscal_year_start ? new Date(editCompany.fiscal_year_start).toISOString().split('T')[0] : undefined}
+                onChange={(v) => {
+                  // Ne permettre que les dates postérieures à la date de début
+                  if (editCompany.fiscal_year_start && v <= editCompany.fiscal_year_start) {
+                    return; // Ne pas mettre à jour si la date de fin n'est pas valide
+                  }
+                  setEditCompany((f) => ({ ...f, fiscal_year_end: v }));
+                }}
               />
               <Field
                 label="Taille"
@@ -2888,12 +3022,19 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={addGroupForm.fiscal_year_start}
-                  onChange={(e) =>
-                    setAddGroupForm((f) => ({
-                      ...f,
-                      fiscal_year_start: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => {
+                    const newStartDate = e.target.value;
+                    setAddGroupForm((f) => {
+                      const updated = { ...f, fiscal_year_start: newStartDate };
+                      // Si la date de fin est antérieure à la nouvelle date de début, ajuster la date de fin
+                      if (f.fiscal_year_end && f.fiscal_year_end <= newStartDate) {
+                        const nextDay = new Date(newStartDate);
+                        nextDay.setDate(nextDay.getDate() + 1);
+                        updated.fiscal_year_end = nextDay.toISOString().split('T')[0];
+                      }
+                      return updated;
+                    });
+                  }}
                 />
               </div>
               <div>
@@ -2903,12 +3044,18 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={addGroupForm.fiscal_year_end}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const newEndDate = e.target.value;
+                    // Ne permettre que les dates postérieures à la date de début
+                    if (addGroupForm.fiscal_year_start && newEndDate <= addGroupForm.fiscal_year_start) {
+                      return; // Ne pas mettre à jour si la date de fin n'est pas valide
+                    }
                     setAddGroupForm((f) => ({
                       ...f,
-                      fiscal_year_end: e.target.value,
-                    }))
-                  }
+                      fiscal_year_end: newEndDate,
+                    }));
+                  }}
+                  min={addGroupForm.fiscal_year_start ? new Date(addGroupForm.fiscal_year_start).toISOString().split('T')[0] : undefined}
                 />
               </div>
             </div>
@@ -3035,7 +3182,7 @@ export default function StructurePage() {
 
       {/* Add Company to Group Modal */}
       <Dialog open={addCompanyOpen} onOpenChange={setAddCompanyOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-slate-700" />
@@ -3045,7 +3192,7 @@ export default function StructurePage() {
           <p className="text-sm text-slate-500">
             Dans le groupe :{" "}
             <strong>
-              {groupList.find((g) => g.id === addCompanyGroupId)?.name}
+              {groupList.find((g) => g.id === addCompanyGroupId)?.name || "Groupe inconnu"}
             </strong>
           </p>
           <div className="space-y-4 py-2">
@@ -3061,18 +3208,113 @@ export default function StructurePage() {
                 placeholder="Nom de l'entreprise"
               />
             </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  SIRET
+                </label>
+                <SiretInput
+                  value={addCompanyForm.siret}
+                  onChange={(value) =>
+                    setAddCompanyForm((f) => ({ ...f, siret: value }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Code APE
+                </label>
+                <Input
+                  value={addCompanyForm.ape_code}
+                  onChange={(e) =>
+                    setAddCompanyForm((f) => ({ ...f, ape_code: e.target.value }))
+                  }
+                  placeholder="Code APE"
+                />
+              </div>
+            </div>
+            
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                SIRET
+                Adresse
               </label>
-              <SiretInput
-                value={addCompanyForm.siret}
-                onChange={(value) =>
-                  setAddCompanyForm((f) => ({ ...f, siret: value }))
+              <Textarea
+                value={addCompanyForm.address}
+                onChange={(e) =>
+                  setAddCompanyForm((f) => ({ ...f, address: e.target.value }))
                 }
+                placeholder="Adresse de l'entreprise"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Activité principale
+              </label>
+              <Input
+                value={addCompanyForm.main_activity}
+                onChange={(e) =>
+                  setAddCompanyForm((f) => ({ ...f, main_activity: e.target.value }))
+                }
+                placeholder="Activité principale"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Taille
+                </label>
+                <Select
+                  value={addCompanyForm.size}
+                  onValueChange={(value) =>
+                    setAddCompanyForm((f) => ({ ...f, size: value }))
+                  }
+                >
+                  <option value="SMALL">TPE</option>
+                  <option value="MEDIUM">PME</option>
+                  <option value="MEDIUM_ETI">ETI</option>
+                  <option value="LARGE">Grand Groupe</option>
+                </Select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Modèle
+                </label>
+                <Select
+                  value={addCompanyForm.model}
+                  onValueChange={(value) =>
+                    setAddCompanyForm((f) => ({ ...f, model: value }))
+                  }
+                >
+                  <option value="HOLDING">Holding</option>
+                  <option value="SUBSIDIARY">Filiale</option>
+                  <option value="INDEPENDANT">Indépendant</option>
+                </Select>
+              </div>
+            </div>
+            
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Logo
+              </label>
+              <FileUpload
+                value={addCompanyForm.logo}
+                onChange={(file) => {
+                  setAddCompanyLogoFile(file);
+                  if (file) {
+                    setAddCompanyForm((f) => ({ ...f, logo: file.name }));
+                  } else {
+                    setAddCompanyForm((f) => ({ ...f, logo: "" }));
+                  }
+                }}
+                placeholder="Uploader une image de logo"
+                accept="image/*"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Début exercice
@@ -3080,12 +3322,19 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={addCompanyForm.fiscal_year_start}
-                  onChange={(e) =>
-                    setAddCompanyForm((f) => ({
-                      ...f,
-                      fiscal_year_start: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => {
+                    const newStartDate = e.target.value;
+                    setAddCompanyForm((f) => {
+                      const updated = { ...f, fiscal_year_start: newStartDate };
+                      // Si la date de fin est antérieure ou égale à la nouvelle date de début, ajuster la date de fin
+                      if (f.fiscal_year_end && f.fiscal_year_end <= newStartDate) {
+                        const nextDay = new Date(newStartDate);
+                        nextDay.setDate(nextDay.getDate() + 1);
+                        updated.fiscal_year_end = nextDay.toISOString().split('T')[0];
+                      }
+                      return updated;
+                    });
+                  }}
                 />
               </div>
               <div>
@@ -3095,12 +3344,18 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={addCompanyForm.fiscal_year_end}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const newEndDate = e.target.value;
+                    // Ne permettre que les dates postérieures à la date de début
+                    if (addCompanyForm.fiscal_year_start && newEndDate <= addCompanyForm.fiscal_year_start) {
+                      return; // Ne pas mettre à jour si la date de fin n'est pas valide
+                    }
                     setAddCompanyForm((f) => ({
                       ...f,
-                      fiscal_year_end: e.target.value,
-                    }))
-                  }
+                      fiscal_year_end: newEndDate,
+                    }));
+                  }}
+                  min={addCompanyForm.fiscal_year_start ? new Date(addCompanyForm.fiscal_year_start).toISOString().split('T')[0] : undefined}
                 />
               </div>
             </div>

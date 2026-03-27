@@ -34,16 +34,17 @@ const MODELE_OPTIONS = [
 
 export type CompanyWizardForm = {
   name: string;
+  siret: string;
   fiscal_year_start: string;
   fiscal_year_end: string;
-  siret: string;
   address: string;
-  groupId: string;
-  workspaceId: string;
   ape_code: string;
   main_activity: string;
   size: string;
   model: string;
+  groupId?: string;
+  workspaceId?: string;
+  logo?: File;
 };
 
 const defaultForm: CompanyWizardForm = {
@@ -58,6 +59,7 @@ const defaultForm: CompanyWizardForm = {
   main_activity: "",
   size: "SMALL",
   model: "SUBSIDIARY",
+  logo: undefined,
 };
 
 type CompanyCreateWizardProps = {
@@ -187,7 +189,19 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
               <Input
                 type="date"
                 value={form.fiscal_year_start}
-                onChange={(e) => setForm((f) => ({ ...f, fiscal_year_start: e.target.value }))}
+                onChange={(e) => {
+                  const newStartDate = e.target.value;
+                  setForm((f) => {
+                    const updated = { ...f, fiscal_year_start: newStartDate };
+                    // Si la date de fin est antérieure ou égale à la nouvelle date de début, ajuster la date de fin
+                    if (f.fiscal_year_end && f.fiscal_year_end <= newStartDate) {
+                      const nextDay = new Date(newStartDate);
+                      nextDay.setDate(nextDay.getDate() + 1);
+                      updated.fiscal_year_end = nextDay.toISOString().split('T')[0];
+                    }
+                    return updated;
+                  });
+                }}
                 required
               />
             </div>
@@ -196,7 +210,15 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
               <Input
                 type="date"
                 value={form.fiscal_year_end}
-                onChange={(e) => setForm((f) => ({ ...f, fiscal_year_end: e.target.value }))}
+                onChange={(e) => {
+                  const newEndDate = e.target.value;
+                  // Ne permettre que les dates postérieures à la date de début
+                  if (form.fiscal_year_start && newEndDate <= form.fiscal_year_start) {
+                    return; // Ne pas mettre à jour si la date de fin n'est pas valide
+                  }
+                  setForm((f) => ({ ...f, fiscal_year_end: newEndDate }));
+                }}
+                min={form.fiscal_year_start ? new Date(form.fiscal_year_start).toISOString().split('T')[0] : undefined}
                 required
               />
             </div>
@@ -214,6 +236,30 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
               value={form.address}
               onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
             />
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Logo de l&apos;entreprise</label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setForm((f) => ({ ...f, logo: file }));
+                  }
+                }}
+              />
+              {form.logo && (
+                <div className="mt-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={URL.createObjectURL(form.logo)}
+                    alt="Logo preview"
+                    className="h-16 w-16 object-cover rounded"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">{form.logo.name}</p>
+                </div>
+              )}
+            </div>
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Rattachement à un groupe</label>
               <Select
