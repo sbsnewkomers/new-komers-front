@@ -70,6 +70,7 @@ type BusinessUnit = {
   code: string;
   activity: string;
   siret: string;
+  logo?: string;
   company_id?: string;
 };
 
@@ -240,8 +241,10 @@ export default function StructurePage() {
     code: "",
     activity: "",
     siret: "",
+    logo: "",
   });
   const [addBULoading, setAddBULoading] = useState(false);
+  const [addBULogoFile, setAddBULogoFile] = useState<File | null>(null);
 
   const [addGroupOpen, setAddGroupOpen] = useState(false);
   const [addGroupForm, setAddGroupForm] = useState({
@@ -252,6 +255,7 @@ export default function StructurePage() {
     fiscal_year_end: "",
     mainActivity: "",
     workspaceId: "",
+    logo: undefined,
   });
   const [addGroupLoading, setAddGroupLoading] = useState(false);
 
@@ -276,7 +280,9 @@ export default function StructurePage() {
   });
   const [editworkspaceLogoFile, setEditworkspaceLogoFile] = useState<File | null>(null);
   const [editGroupLogoFile, setEditGroupLogoFile] = useState<File | null>(null);
+  const [addGroupLogoFile, setAddGroupLogoFile] = useState<File | null>(null);
   const [editCompanyLogoFile, setEditCompanyLogoFile] = useState<File | null>(null);
+  const [editBULogoFile, setEditBULogoFile] = useState<File | null>(null);
   const [editGroup, setEditGroup] = useState({
     name: "",
     siret: "",
@@ -304,6 +310,7 @@ export default function StructurePage() {
     code: "",
     activity: "",
     siret: "",
+    logo: "",
   });
   const [nodeUsers, setNodeUsers] = useState<NodeUsersByRole | null>(null);
   const [nodeUsersOpen, setNodeUsersOpen] = useState(false);
@@ -895,6 +902,7 @@ export default function StructurePage() {
             code: cached.code,
             activity: cached.activity,
             siret: cached.siret,
+            logo: cached.logo || "",
           });
         } else {
           setEditBU({
@@ -902,6 +910,7 @@ export default function StructurePage() {
             code: node.code,
             activity: "",
             siret: "",
+            logo: "",
           });
           const freshBUs = await loadBUsForCompany(node.companyId);
           const bu = freshBUs.find((b) => b.id === node.id);
@@ -911,6 +920,7 @@ export default function StructurePage() {
               code: bu.code,
               activity: bu.activity,
               siret: bu.siret,
+              logo: bu.logo || "",
             });
           }
         }
@@ -1058,6 +1068,7 @@ export default function StructurePage() {
         },
       });
       setEditCompanyLogoFile(null);
+      setEditBULogoFile(null);
       // Mettre à jour l'état local avec le logo retourné par le serveur
       if (updatedCompany) {
         setEditCompany(prev => ({
@@ -1066,17 +1077,33 @@ export default function StructurePage() {
         }));
       }
     } else if (selectedNode.type === "bu") {
+      const formData = new FormData();
+      formData.append('name', editBU.name);
+      if (editBU.code) {
+        formData.append('code', editBU.code);
+      }
+      if (editBU.activity) {
+        formData.append('activity', editBU.activity);
+      }
+      if (editBU.siret) {
+        formData.append('siret', editBU.siret);
+      }
+      if (editBULogoFile) {
+        formData.append('logo', editBULogoFile);
+      }
+      
       await apiFetch(
         `/companies/${selectedNode.companyId}/business-units/${selectedNode.id}`,
         {
           method: "PUT",
-          body: JSON.stringify(editBU),
+          body: formData,
           snackbar: {
             showSuccess: true,
             successMessage: "Business unit mise à jour",
           },
         },
       );
+      setEditBULogoFile(null);
     }
     setEditing(false);
     setDetailOpen(false);
@@ -1335,15 +1362,32 @@ export default function StructurePage() {
     if (!addBUCompanyId || !addBUForm.name.trim()) return;
     setAddBULoading(true);
     try {
+      const formData = new FormData();
+      formData.append('name', addBUForm.name);
+      if (addBUForm.code) {
+        formData.append('code', addBUForm.code);
+      }
+      if (addBUForm.activity) {
+        formData.append('activity', addBUForm.activity);
+      }
+      if (addBUForm.siret) {
+        formData.append('siret', addBUForm.siret);
+      }
+      if (addBULogoFile) {
+        formData.append('logo', addBULogoFile);
+      }
+
       await apiFetch(`/companies/${addBUCompanyId}/business-units`, {
         method: "POST",
-        body: JSON.stringify(addBUForm),
+        body: formData,
+        headers: {}, // Important: ne pas définir Content-Type pour FormData
         snackbar: { showSuccess: true, successMessage: "Business unit créée" },
       });
       await loadTree();
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
-      setAddBUForm({ name: "", code: "", activity: "", siret: "" });
+      setAddBUForm({ name: "", code: "", activity: "", siret: "", logo: "" });
+      setAddBULogoFile(null);
     } catch {
       /* snackbar handles */
     } finally {
@@ -1355,17 +1399,34 @@ export default function StructurePage() {
     if (!addGroupForm.name.trim()) return;
     setAddGroupLoading(true);
     try {
+      const formData = new FormData();
+      formData.append('name', addGroupForm.name);
+      if (addGroupForm.siret) {
+        formData.append('siret', addGroupForm.siret);
+      }
+      if (addGroupForm.ape_code) {
+        formData.append('ape_code', addGroupForm.ape_code);
+      }
+      if (addGroupForm.fiscal_year_start) {
+        formData.append('fiscal_year_start', addGroupForm.fiscal_year_start);
+      }
+      if (addGroupForm.fiscal_year_end) {
+        formData.append('fiscal_year_end', addGroupForm.fiscal_year_end);
+      }
+      if (addGroupForm.mainActivity) {
+        formData.append('mainActivity', addGroupForm.mainActivity);
+      }
+      if (addGroupForm.workspaceId) {
+        formData.append('workspace_id', addGroupForm.workspaceId);
+      }
+      if (addGroupLogoFile) {
+        formData.append('logo', addGroupLogoFile);
+      }
+
       await apiFetch("/groups", {
         method: "POST",
-        body: JSON.stringify({
-          name: addGroupForm.name,
-          siret: addGroupForm.siret || undefined,
-          ape_code: addGroupForm.ape_code || undefined,
-          fiscal_year_start: addGroupForm.fiscal_year_start || undefined,
-          fiscal_year_end: addGroupForm.fiscal_year_end || undefined,
-          mainActivity: addGroupForm.mainActivity || undefined,
-          workspace_id: addGroupForm.workspaceId || undefined,
-        }),
+        body: formData,
+        headers: {}, // Important: ne pas définir Content-Type pour FormData
         snackbar: { showSuccess: true, successMessage: "Groupe créé" },
       });
       await loadTree();
@@ -1378,7 +1439,9 @@ export default function StructurePage() {
         fiscal_year_end: "",
         mainActivity: "",
         workspaceId: "",
+        logo: "",
       });
+      setAddGroupLogoFile(null);
     } catch {
       /* snackbar handles */
     } finally {
@@ -1976,7 +2039,9 @@ export default function StructurePage() {
                                         fiscal_year_start: "",
                                         fiscal_year_end: "",
                                         workspaceId: "",
+                                        logo: "",
                                       });
+                                      setAddGroupLogoFile(null);
                                       setAddGroupOpen(true);
                                     }}
                                   >
@@ -2032,7 +2097,9 @@ export default function StructurePage() {
                                           code: "",
                                           activity: "",
                                           siret: "",
+                                          logo: "",
                                         });
+                                        setAddBULogoFile(null);
                                         setAddBUOpen(true);
                                       }}
                                     >
@@ -2549,18 +2616,36 @@ export default function StructurePage() {
                 editing={editing}
                 onChange={(v) => setEditBU((f) => ({ ...f, name: v }))}
               />
-              <Field
-                label="Code"
-                value={editBU.code}
-                editing={editing}
-                onChange={(v) => setEditBU((f) => ({ ...f, code: v }))}
-              />
-              <Field
-                label="Activité"
-                value={editBU.activity}
-                editing={editing}
-                onChange={(v) => setEditBU((f) => ({ ...f, activity: v }))}
-              />
+              {editing ? (
+                <div className="space-y-2">
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Code APE
+                  </label>
+                  <ApeCodeSelect
+                    value={editBU.code}
+                    onChange={(value) => setEditBU((f) => ({ ...f, code: value }))}
+                    onDescriptionChange={(description) => setEditBU((f) => ({ ...f, activity: description }))}
+                  />
+                </div>
+              ) : (
+                <Field
+                  label="Code APE"
+                  value={editBU.code}
+                  editing={false}
+                  onChange={(v) => setEditBU((f) => ({ ...f, code: v }))}
+                />
+              )}
+              <div className="space-y-2">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Activité
+                </label>
+                <Input
+                  value={editBU.activity}
+                  readOnly
+                  className="bg-gray-50 cursor-not-allowed"
+                  placeholder="Activité principale"
+                />
+              </div>
               <Field
                 label="SIRET"
                 value={editBU.siret}
@@ -2568,6 +2653,57 @@ export default function StructurePage() {
                 validate={validateSiret}
                 onChange={(v) => setEditBU((f) => ({ ...f, siret: v }))}
               />
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Logo
+                </label>
+                {editing ? (
+                  <FileUpload
+                    key={editBU.logo}
+                    value={editBU.logo}
+                    onChange={(file) => {
+                      setEditBULogoFile(file);
+                      if (file) {
+                        setEditBU((f) => ({ ...f, logo: file.name }));
+                      } else {
+                        setEditBU((f) => ({ ...f, logo: "" }));
+                      }
+                    }}
+                    placeholder="Uploader une image de logo"
+                    accept="image/*"
+                  />
+                ) : (
+                  <div className="space-y-2">
+                    {editBU.logo ? (
+                      <>
+                        {editBU.logo.startsWith('http') ? (
+                          <img 
+                            src={editBU.logo} 
+                            alt="Logo de la business unit" 
+                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            onError={(e) => {
+                              console.error('Erreur chargement image URL:', editBU.logo);
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <img 
+                            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editBU.logo}`} 
+                            alt="Logo de la business unit" 
+                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            onError={(e) => {
+                              console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editBU.logo}`);
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-sm font-medium text-primary">—</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -3044,6 +3180,24 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Logo
+              </label>
+              <FileUpload
+                value={addGroupForm.logo}
+                onChange={(file) => {
+                  setAddGroupLogoFile(file);
+                  if (file) {
+                    setAddGroupForm((f) => ({ ...f, logo: file.name }));
+                  } else {
+                    setAddGroupForm((f) => ({ ...f, logo: "" }));
+                  }
+                }}
+                placeholder="Uploader une image de logo"
+                accept="image/*"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Activité principale
               </label>
               <Input
@@ -3487,6 +3641,24 @@ export default function StructurePage() {
                 onChange={(value) =>
                   setAddBUForm((f) => ({ ...f, siret: value }))
                 }
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Logo
+              </label>
+              <FileUpload
+                value={addBUForm.logo}
+                onChange={(file) => {
+                  setAddBULogoFile(file);
+                  if (file) {
+                    setAddBUForm((f) => ({ ...f, logo: file.name }));
+                  } else {
+                    setAddBUForm((f) => ({ ...f, logo: "" }));
+                  }
+                }}
+                placeholder="Uploader une image de logo"
+                accept="image/*"
               />
             </div>
           </div>
