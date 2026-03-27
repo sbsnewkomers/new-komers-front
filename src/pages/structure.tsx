@@ -150,6 +150,46 @@ export default function StructurePage() {
     user?.role === "ADMIN" ||
     user?.role === "MANAGER";
   const canCreateCompany = can("companies", CRUD_ACTION.CREATE);
+
+  // Fonction utilitaire pour valider et ajuster les dates d'exercice
+  const handleFiscalYearStartChange = (
+    value: string,
+    currentEndDate: string,
+    updateForm: (updater: (prev: any) => any) => void,
+    endDateField: string = 'fiscal_year_end'
+  ) => {
+    // Si une date de fin existe, ne permettre que les dates antérieures
+    if (currentEndDate && value >= currentEndDate) {
+      return; // Ne pas mettre à jour si la date de début n'est pas antérieure à la date de fin
+    }
+    updateForm((prev: any) => {
+      const updated = { ...prev, fiscal_year_start: value };
+      // Si la date de fin est antérieure ou égale à la nouvelle date de début, ajuster la date de fin
+      if (currentEndDate && currentEndDate <= value) {
+        const nextDay = new Date(value);
+        nextDay.setDate(nextDay.getDate() + 1);
+        updated[endDateField] = nextDay.toISOString().split('T')[0];
+      }
+      return updated;
+    });
+  };
+
+  const handleFiscalYearEndChange = (
+    value: string,
+    currentStartDate: string,
+    updateForm: (updater: (prev: any) => any) => void,
+    startDateField: string = 'fiscal_year_start'
+  ) => {
+    // Ne permettre que les dates postérieures à la date de début
+    if (currentStartDate && value <= currentStartDate) {
+      return; // Ne pas mettre à jour si la date de fin n'est pas valide
+    }
+    updateForm((prev: any) => ({
+      ...prev,
+      fiscal_year_end: value,
+    }));
+  };
+
   const [tree, setTree] = useState<StructureTree | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeError, setTreeError] = useState<string | null>(null);
@@ -2324,38 +2364,40 @@ export default function StructurePage() {
                 editing={editing}
                 onChange={(v) => setEditGroup((f) => ({ ...f, ape_code: v }))}
               />
-              <Field
-                label="Début d'exercice"
-                value={editGroup.fiscal_year_start}
-                editing={editing}
-                type="date"
-                onChange={(v) => {
-                  setEditGroup((f) => {
-                    const updated = { ...f, fiscal_year_start: v };
-                    // Si la date de fin est antérieure ou égale à la nouvelle date de début, ajuster la date de fin
-                    if (f.fiscal_year_end && f.fiscal_year_end <= v) {
-                      const nextDay = new Date(v);
-                      nextDay.setDate(nextDay.getDate() + 1);
-                      updated.fiscal_year_end = nextDay.toISOString().split('T')[0];
-                    }
-                    return updated;
-                  });
-                }}
-              />
-              <Field
-                label="Fin d'exercice"
-                value={editGroup.fiscal_year_end}
-                editing={editing}
-                type="date"
-                min={editGroup.fiscal_year_start ? new Date(editGroup.fiscal_year_start).toISOString().split('T')[0] : undefined}
-                onChange={(v) => {
-                  // Ne permettre que les dates postérieures à la date de début
-                  if (editGroup.fiscal_year_start && v <= editGroup.fiscal_year_start) {
-                    return; // Ne pas mettre à jour si la date de fin n'est pas valide
-                  }
-                  setEditGroup((f) => ({ ...f, fiscal_year_end: v }));
-                }}
-              />
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Début d'exercice
+                </label>
+                <Input
+                  type="date"
+                  value={editGroup.fiscal_year_start}
+                  onChange={(v) => handleFiscalYearStartChange(
+                    v,
+                    editGroup.fiscal_year_end,
+                    setEditGroup
+                  )}
+                  max={editGroup.fiscal_year_end ? new Date(editGroup.fiscal_year_end).toISOString().split('T')[0] : undefined}
+                  disabled={!editing}
+                  className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Fin d&apos;exercice
+                </label>
+                <Input
+                  type="date"
+                  value={editGroup.fiscal_year_end}
+                  onChange={(v) => handleFiscalYearEndChange(
+                    v,
+                    editGroup.fiscal_year_start,
+                    setEditGroup
+                  )}
+                  min={editGroup.fiscal_year_start ? new Date(editGroup.fiscal_year_start).toISOString().split('T')[0] : undefined}
+                  disabled={!editing}
+                  className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
+                />
+              </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Activité principale
@@ -2473,38 +2515,40 @@ export default function StructurePage() {
                   className="bg-gray-50 cursor-not-allowed"
                 />
               </div>
-              <Field
-                label="Début d'exercice"
-                value={editCompany.fiscal_year_start}
-                editing={editing}
-                type="date"
-                onChange={(v) => {
-                  setEditCompany((f) => {
-                    const updated = { ...f, fiscal_year_start: v };
-                    // Si la date de fin est antérieure ou égale à la nouvelle date de début, ajuster la date de fin
-                    if (f.fiscal_year_end && f.fiscal_year_end <= v) {
-                      const nextDay = new Date(v);
-                      nextDay.setDate(nextDay.getDate() + 1);
-                      updated.fiscal_year_end = nextDay.toISOString().split('T')[0];
-                    }
-                    return updated;
-                  });
-                }}
-              />
-              <Field
-                label="Fin d'exercice"
-                value={editCompany.fiscal_year_end}
-                editing={editing}
-                type="date"
-                min={editCompany.fiscal_year_start ? new Date(editCompany.fiscal_year_start).toISOString().split('T')[0] : undefined}
-                onChange={(v) => {
-                  // Ne permettre que les dates postérieures à la date de début
-                  if (editCompany.fiscal_year_start && v <= editCompany.fiscal_year_start) {
-                    return; // Ne pas mettre à jour si la date de fin n'est pas valide
-                  }
-                  setEditCompany((f) => ({ ...f, fiscal_year_end: v }));
-                }}
-              />
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Début d&apos;exercice
+                </label>
+                <Input
+                  type="date"
+                  value={editCompany.fiscal_year_start}
+                  onChange={(v) => handleFiscalYearStartChange(
+                    v,
+                    editCompany.fiscal_year_end,
+                    setEditCompany
+                  )}
+                  max={editCompany.fiscal_year_end ? new Date(editCompany.fiscal_year_end).toISOString().split('T')[0] : undefined}
+                  disabled={!editing}
+                  className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Fin d&apos;exercice
+                </label>
+                <Input
+                  type="date"
+                  value={editCompany.fiscal_year_end}
+                  onChange={(v) => handleFiscalYearEndChange(
+                    v,
+                    editCompany.fiscal_year_start,
+                    setEditCompany
+                  )}
+                  min={editCompany.fiscal_year_start ? new Date(editCompany.fiscal_year_start).toISOString().split('T')[0] : undefined}
+                  disabled={!editing}
+                  className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
+                />
+              </div>
               <Field
                 label="Taille"
                 value={editCompany.size}
@@ -3221,19 +3265,12 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={addGroupForm.fiscal_year_start}
-                  onChange={(e) => {
-                    const newStartDate = e.target.value;
-                    setAddGroupForm((f) => {
-                      const updated = { ...f, fiscal_year_start: newStartDate };
-                      // Si la date de fin est antérieure à la nouvelle date de début, ajuster la date de fin
-                      if (f.fiscal_year_end && f.fiscal_year_end <= newStartDate) {
-                        const nextDay = new Date(newStartDate);
-                        nextDay.setDate(nextDay.getDate() + 1);
-                        updated.fiscal_year_end = nextDay.toISOString().split('T')[0];
-                      }
-                      return updated;
-                    });
-                  }}
+                  onChange={(e) => handleFiscalYearStartChange(
+                    e.target.value,
+                    addGroupForm.fiscal_year_end,
+                    setAddGroupForm
+                  )}
+                  max={addGroupForm.fiscal_year_end ? new Date(addGroupForm.fiscal_year_end).toISOString().split('T')[0] : undefined}
                 />
               </div>
               <div>
@@ -3243,17 +3280,11 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={addGroupForm.fiscal_year_end}
-                  onChange={(e) => {
-                    const newEndDate = e.target.value;
-                    // Ne permettre que les dates postérieures à la date de début
-                    if (addGroupForm.fiscal_year_start && newEndDate <= addGroupForm.fiscal_year_start) {
-                      return; // Ne pas mettre à jour si la date de fin n'est pas valide
-                    }
-                    setAddGroupForm((f) => ({
-                      ...f,
-                      fiscal_year_end: newEndDate,
-                    }));
-                  }}
+                  onChange={(e) => handleFiscalYearEndChange(
+                    e.target.value,
+                    addGroupForm.fiscal_year_start,
+                    setAddGroupForm
+                  )}
                   min={addGroupForm.fiscal_year_start ? new Date(addGroupForm.fiscal_year_start).toISOString().split('T')[0] : undefined}
                 />
               </div>
@@ -3530,19 +3561,12 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={addCompanyForm.fiscal_year_start}
-                  onChange={(e) => {
-                    const newStartDate = e.target.value;
-                    setAddCompanyForm((f) => {
-                      const updated = { ...f, fiscal_year_start: newStartDate };
-                      // Si la date de fin est antérieure ou égale à la nouvelle date de début, ajuster la date de fin
-                      if (f.fiscal_year_end && f.fiscal_year_end <= newStartDate) {
-                        const nextDay = new Date(newStartDate);
-                        nextDay.setDate(nextDay.getDate() + 1);
-                        updated.fiscal_year_end = nextDay.toISOString().split('T')[0];
-                      }
-                      return updated;
-                    });
-                  }}
+                  onChange={(e) => handleFiscalYearStartChange(
+                    e.target.value,
+                    addCompanyForm.fiscal_year_end,
+                    setAddCompanyForm
+                  )}
+                  max={addCompanyForm.fiscal_year_end ? new Date(addCompanyForm.fiscal_year_end).toISOString().split('T')[0] : undefined}
                 />
               </div>
               <div>
@@ -3552,17 +3576,11 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={addCompanyForm.fiscal_year_end}
-                  onChange={(e) => {
-                    const newEndDate = e.target.value;
-                    // Ne permettre que les dates postérieures à la date de début
-                    if (addCompanyForm.fiscal_year_start && newEndDate <= addCompanyForm.fiscal_year_start) {
-                      return; // Ne pas mettre à jour si la date de fin n'est pas valide
-                    }
-                    setAddCompanyForm((f) => ({
-                      ...f,
-                      fiscal_year_end: newEndDate,
-                    }));
-                  }}
+                  onChange={(e) => handleFiscalYearEndChange(
+                    e.target.value,
+                    addCompanyForm.fiscal_year_start,
+                    setAddCompanyForm
+                  )}
                   min={addCompanyForm.fiscal_year_start ? new Date(addCompanyForm.fiscal_year_start).toISOString().split('T')[0] : undefined}
                 />
               </div>

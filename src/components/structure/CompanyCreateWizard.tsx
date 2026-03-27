@@ -76,6 +76,34 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
   const [form, setForm] = React.useState<CompanyWizardForm>(defaultForm);
   const [loading, setLoading] = React.useState(false);
 
+  // Fonctions utilitaires pour valider les dates d'exercice
+  const handleFiscalYearStartChange = (newStartDate: string) => {
+    setForm((f) => {
+      // Si une date de fin existe, ne permettre que les dates antérieures
+      if (f.fiscal_year_end && newStartDate >= f.fiscal_year_end) {
+        return f; // Ne pas mettre à jour si la date de début n'est pas antérieure à la date de fin
+      }
+      const updated = { ...f, fiscal_year_start: newStartDate };
+      // Si la date de fin est antérieure ou égale à la nouvelle date de début, ajuster la date de fin
+      if (f.fiscal_year_end && f.fiscal_year_end <= newStartDate) {
+        const nextDay = new Date(newStartDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        updated.fiscal_year_end = nextDay.toISOString().split('T')[0];
+      }
+      return updated;
+    });
+  };
+
+  const handleFiscalYearEndChange = (newEndDate: string) => {
+    setForm((f) => {
+      // Ne permettre que les dates postérieures à la date de début
+      if (f.fiscal_year_start && newEndDate <= f.fiscal_year_start) {
+        return f; // Ne pas mettre à jour si la date de fin n'est pas valide
+      }
+      return { ...f, fiscal_year_end: newEndDate };
+    });
+  };
+
   // Fonction pour trouver l'workspace d'un groupe
   const getworkspaceFromGroup = React.useCallback((groupId: string) => {
     const group = groups.find(g => g.id === groupId);
@@ -190,19 +218,8 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
               <Input
                 type="date"
                 value={form.fiscal_year_start}
-                onChange={(e) => {
-                  const newStartDate = e.target.value;
-                  setForm((f) => {
-                    const updated = { ...f, fiscal_year_start: newStartDate };
-                    // Si la date de fin est antérieure ou égale à la nouvelle date de début, ajuster la date de fin
-                    if (f.fiscal_year_end && f.fiscal_year_end <= newStartDate) {
-                      const nextDay = new Date(newStartDate);
-                      nextDay.setDate(nextDay.getDate() + 1);
-                      updated.fiscal_year_end = nextDay.toISOString().split('T')[0];
-                    }
-                    return updated;
-                  });
-                }}
+                onChange={(e) => handleFiscalYearStartChange(e.target.value)}
+                max={form.fiscal_year_end ? new Date(form.fiscal_year_end).toISOString().split('T')[0] : undefined}
                 required
               />
             </div>
@@ -211,14 +228,7 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
               <Input
                 type="date"
                 value={form.fiscal_year_end}
-                onChange={(e) => {
-                  const newEndDate = e.target.value;
-                  // Ne permettre que les dates postérieures à la date de début
-                  if (form.fiscal_year_start && newEndDate <= form.fiscal_year_start) {
-                    return; // Ne pas mettre à jour si la date de fin n'est pas valide
-                  }
-                  setForm((f) => ({ ...f, fiscal_year_end: newEndDate }));
-                }}
+                onChange={(e) => handleFiscalYearEndChange(e.target.value)}
                 min={form.fiscal_year_start ? new Date(form.fiscal_year_start).toISOString().split('T')[0] : undefined}
                 required
               />
