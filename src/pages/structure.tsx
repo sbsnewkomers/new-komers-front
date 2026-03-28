@@ -1133,7 +1133,7 @@ export default function StructurePage() {
         formData.append('logo', editBULogoFile);
       }
       
-      await apiFetch(
+      const updatedBU = await apiFetch(
         `/companies/${selectedNode.companyId}/business-units/${selectedNode.id}`,
         {
           method: "PUT",
@@ -1145,6 +1145,21 @@ export default function StructurePage() {
         },
       );
       setEditBULogoFile(null);
+      
+      // Mettre à jour l'état local avec les données retournées par le serveur
+      if (updatedBU) {
+        setEditBU(prev => ({
+          ...prev,
+          name: updatedBU.name,
+          code: updatedBU.code,
+          activity: updatedBU.activity,
+          siret: updatedBU.siret,
+          logo: updatedBU.logo || ""
+        }));
+        
+        // Recharger les BUs pour mettre à jour l'affichage dans l'arbre
+        await loadBUsForCompany(selectedNode.companyId);
+      }
     }
     setEditing(false);
     setDetailOpen(false);
@@ -2222,16 +2237,21 @@ export default function StructurePage() {
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
           <DialogHeader className="flex-row items-center justify-between sticky top-0 bg-white z-10 pb-4">
-            <DialogTitle className="flex items-center gap-2">
-              <span className="text-lg">
-                {selectedNode?.type === "workspace"
-                  ? "🏢"
+            <DialogTitle className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                selectedNode?.type === "workspace"
+                  ? "bg-gradient-to-br from-purple-500 to-purple-600"
                   : selectedNode?.type === "group"
-                    ? "📁"
+                    ? "bg-gradient-to-br from-blue-500 to-blue-600"
                     : selectedNode?.type === "company"
-                      ? "🏢"
-                      : "📦"}
-              </span>
+                      ? "bg-gradient-to-br from-slate-600 to-slate-700"
+                      : "bg-gradient-to-br from-emerald-500 to-emerald-600"
+              }`}>
+                {selectedNode?.type === "workspace" && <Building2 className="h-5 w-5 text-white" />}
+                {selectedNode?.type === "group" && <Layers className="h-5 w-5 text-white" />}
+                {selectedNode?.type === "company" && <Building className="h-5 w-5 text-white" />}
+                {selectedNode?.type === "bu" && <Briefcase className="h-5 w-5 text-white" />}
+              </div>
               {editing ? `Modifier ${typeLabel}` : typeLabel}
             </DialogTitle>
             {nodeUsers &&
@@ -2248,7 +2268,7 @@ export default function StructurePage() {
           {selectedNode?.type === "workspace" && (
             <div className="space-y-4 py-2">
               <div className="space-y-2">
-                <h3 className="text-sm font-medium text-slate-700">Informations de l&apos;workspace</h3>
+                <h3 className="text-sm font-medium text-slate-700">Informations sur l&apos;espace de travail</h3>
                 <div className="bg-slate-50 rounded-lg p-4 space-y-4">
                   <Field
                     label="Nom"
@@ -2498,58 +2518,44 @@ export default function StructurePage() {
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Code APE
                 </label>
-                <ApeCodeSelect
-                  value={editCompany.ape_code}
-                  onChange={(value) => setEditCompany((f) => ({ ...f, ape_code: value }))}
-                  onDescriptionChange={(description) => setEditCompany((f) => ({ ...f, main_activity: description }))}
-                />
+                {editing ? (
+                  <ApeCodeSelect
+                    value={editCompany.ape_code}
+                    onChange={(value) => setEditCompany((f) => ({ ...f, ape_code: value }))}
+                    onDescriptionChange={(description) => setEditCompany((f) => ({ ...f, main_activity: description }))}
+                  />
+                ) : (
+                  <p className="text-sm font-medium text-primary">{editCompany.ape_code || "—"}</p>
+                )}
               </div>
-              <div className="space-y-2">
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Activité principale
-                </label>
-                <Input
-                  placeholder="Activité principale"
-                  value={editCompany.main_activity}
-                  onChange={(e) => setEditCompany((f) => ({ ...f, main_activity: e.target.value }))}
-                  readOnly
-                  className="bg-gray-50 cursor-not-allowed"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Début d&apos;exercice
-                </label>
-                <Input
-                  type="date"
-                  value={editCompany.fiscal_year_start}
-                  onChange={(v) => handleFiscalYearStartChange(
-                    v,
-                    editCompany.fiscal_year_end,
-                    setEditCompany
-                  )}
-                  max={editCompany.fiscal_year_end ? new Date(editCompany.fiscal_year_end).toISOString().split('T')[0] : undefined}
-                  disabled={!editing}
-                  className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Fin d&apos;exercice
-                </label>
-                <Input
-                  type="date"
-                  value={editCompany.fiscal_year_end}
-                  onChange={(v) => handleFiscalYearEndChange(
-                    v,
-                    editCompany.fiscal_year_start,
-                    setEditCompany
-                  )}
-                  min={editCompany.fiscal_year_start ? new Date(editCompany.fiscal_year_start).toISOString().split('T')[0] : undefined}
-                  disabled={!editing}
-                  className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
-                />
-              </div>
+              <Field
+                label="Activité principale"
+                value={editCompany.main_activity}
+                editing={false} // Always read-only like in the original
+                onChange={() => {}} // Non-modifiable
+              />
+              <Field
+                label="Début d&apos;exercice"
+                value={editCompany.fiscal_year_start}
+                editing={editing}
+                type="date"
+                onChange={(v) => handleFiscalYearStartChange(
+                  v,
+                  editCompany.fiscal_year_end,
+                  setEditCompany
+                )}
+              />
+              <Field
+                label="Fin d&apos;exercice"
+                value={editCompany.fiscal_year_end}
+                editing={editing}
+                type="date"
+                onChange={(v) => handleFiscalYearEndChange(
+                  v,
+                  editCompany.fiscal_year_start,
+                  setEditCompany
+                )}
+              />
               <Field
                 label="Taille"
                 value={editCompany.size}
@@ -2680,17 +2686,26 @@ export default function StructurePage() {
                   onChange={(v) => setEditBU((f) => ({ ...f, code: v }))}
                 />
               )}
-              <div className="space-y-2">
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Activité
-                </label>
-                <Input
+              {editing ? (
+                <div className="space-y-2">
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Activité
+                  </label>
+                  <Input
+                    value={editBU.activity}
+                    readOnly
+                    className="bg-white border-gray-300"
+                    placeholder="Activité principale"
+                  />
+                </div>
+              ) : (
+                <Field
+                  label="Activité"
                   value={editBU.activity}
-                  readOnly
-                  className="bg-gray-50 cursor-not-allowed"
-                  placeholder="Activité principale"
+                  editing={false} // Always read-only like in company
+                  onChange={() => {}} // Non-modifiable
                 />
-              </div>
+              )}
               <Field
                 label="SIRET"
                 value={editBU.siret}
