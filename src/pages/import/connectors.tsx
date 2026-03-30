@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
-import { useCompanies } from "@/hooks";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -31,8 +30,6 @@ const SYNC_FREQUENCIES = [
 ];
 
 export default function ImportConnectorsPage() {
-  const companies = useCompanies();
-  const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [configOpen, setConfigOpen] = useState(false);
   const [selectedConnector, setSelectedConnector] = useState<typeof CONNECTORS[0] | null>(null);
   const [form, setForm] = useState({
@@ -40,12 +37,6 @@ export default function ImportConnectorsPage() {
     apiKey: "",
     frequency: "manual",
   });
-
-  useEffect(() => {
-    companies.fetchList();
-  }, []);
-
-  const companyList = companies.list ?? [];
 
   const openConfig = (connector: typeof CONNECTORS[0]) => {
     setSelectedConnector(connector);
@@ -59,12 +50,7 @@ export default function ImportConnectorsPage() {
   };
 
   return (
-    <AppLayout
-      title="Import"
-      companies={companyList}
-      selectedCompanyId={selectedCompanyId}
-      onCompanyChange={setSelectedCompanyId}
-    >
+    <AppLayout title="Import">
       <Head>
         <title>Connecteurs — Import</title>
       </Head>

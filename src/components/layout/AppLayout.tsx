@@ -35,17 +35,9 @@ type AppLayoutProps = {
 
   children: React.ReactNode;
 
-  /** Optional: companies for global company selector */
-
-  companies?: { id: string; name: string }[];
-
   /** Optional: workspaces for workspace display */
 
   workspaces?: { id: string; name: string }[];
-
-  selectedCompanyId?: string;
-
-  onCompanyChange?: (id: string) => void;
 };
 
 export function AppLayout({

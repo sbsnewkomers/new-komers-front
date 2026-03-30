@@ -3,7 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useCompanies } from "@/hooks";
+import { useFiscalYears } from "@/hooks/useFiscalYears";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { Progress } from "@/components/ui/Progress";
@@ -16,6 +18,7 @@ import {
   TableCell,
 } from "@/components/ui/Table";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { Card, CardContent } from "@/components/ui/Card";
 import {
   Dialog,
@@ -24,7 +27,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/Dialog";
-import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import {
   AlertDialog,
@@ -34,6 +36,8 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
+import { uploadFecFile, FecImportResponse } from "@/lib/fecApi";
+import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import {
   FileText,
   Sheet,
@@ -180,7 +184,10 @@ function UploadZone({
 }
 
 export default function ImportPage() {
+  const router = useRouter();
   const companies = useCompanies();
+  const fiscalYears = useFiscalYears();
+  const { user } = usePermissionsContext();
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [activeTab, setActiveTab] = useState("fec");
   const [importsInProgress, setImportsInProgress] = useState<
@@ -215,11 +222,36 @@ export default function ImportPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [rollbackTarget, setRollbackTarget] = useState<ImportHistoryRow | null>(null);
   const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false);
+  
+  // États pour l'import FEC
+  const [isFecImporting, setIsFecImporting] = useState(false);
+  const [fecImportResult, setFecImportResult] = useState<FecImportResponse | null>(null);
+  const [fecResultModalOpen, setFecResultModalOpen] = useState(false);
+  const [selectedFiscalYearId, setSelectedFiscalYearId] = useState("");
 
 
   useEffect(() => {
     companies.fetchList();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Tableau vide pour ne l'exécuter qu'une seule fois
+
+  // Récupérer les exercices fiscaux quand une entreprise est sélectionnée
+  useEffect(() => {
+    if (selectedCompanyId) {
+      fiscalYears.fetchByCompany(selectedCompanyId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCompanyId]); // Uniquement selectedCompanyId
+
+  // Gérer le paramètre d'URL pour activer le bon tab
+  useEffect(() => {
+    if (router.isReady && router.query.tab) {
+      const tab = router.query.tab as string;
+      if (['fec', 'excel', 'api'].includes(tab)) {
+        setActiveTab(tab);
+      }
+    }
+  }, [router.isReady, router.query]);
 
   const companyList = companies.list ?? [];
 
@@ -277,24 +309,137 @@ export default function ImportPage() {
         window.alert("Veuillez exporter ce fichier en CSV pour l'import.");
         return;
       }
-      setCsvFile(f);
-      const reader = new FileReader();
-      reader.onload = () => {
-        const text = reader.result as string;
-        const firstLine = text.split("\n")[0];
-        const headers = firstLine.split(/[,\t]/).map((h) => h.trim());
-        setCsvHeaders(headers);
-        const initial: Record<string, string> = {};
-        headers.forEach((h) => {
-          initial[h] = REQUIRED_FIELDS.includes(h) ? h : "";
-        });
-        setMapping(initial);
-        setMappingOpen(true);
-      };
-      reader.readAsText(f, "UTF-8");
+      
+      if (type === "fec") {
+        // Pour les FEC, on stocke directement le fichier pour l'import
+        setCsvFile(f);
+      } else {
+        // Pour Excel, on garde la logique existante de mapping
+        setCsvFile(f);
+        const reader = new FileReader();
+        reader.onload = () => {
+          const text = reader.result as string;
+          const firstLine = text.split("\n")[0];
+          const headers = firstLine.split(/[,\t]/).map((h) => h.trim());
+          setCsvHeaders(headers);
+          const initial: Record<string, string> = {};
+          headers.forEach((h) => {
+            initial[h] = REQUIRED_FIELDS.includes(h) ? h : "";
+          });
+          setMapping(initial);
+          setMappingOpen(true);
+        };
+        reader.readAsText(f, "UTF-8");
+      }
     },
     []
   );
+
+  // Fonction pour télécharger le template FEC
+  const downloadFecTemplate = useCallback(() => {
+    // Utiliser les colonnes FEC définies dans le backend
+    const fecColumns = [
+      { name: 'JournalCode', type: 'string', required: true },
+      { name: 'JournalLib', type: 'string', required: true },
+      { name: 'EcritureNum', type: 'string', required: true },
+      { name: 'EcritureDate', type: 'date', required: true },
+      { name: 'CompteNum', type: 'string', required: true },
+      { name: 'CompteLib', type: 'string', required: true },
+      { name: 'CompteAuxNum', type: 'string', required: false },
+      { name: 'CompteAuxLib', type: 'string', required: false },
+      { name: 'PieceRef', type: 'string', required: true },
+      { name: 'PieceDate', type: 'date', required: true },
+      { name: 'EcritureLib', type: 'string', required: true },
+      { name: 'Debit', type: 'number', required: true },
+      { name: 'Credit', type: 'number', required: true },
+      { name: 'EcritureLet', type: 'string', required: false },
+      { name: 'DateLet', type: 'date', required: false },
+      { name: 'ValidDate', type: 'date', required: true },
+      { name: 'Montantdevise', type: 'number', required: false },
+      { name: 'Idevise', type: 'string', required: false },
+    ];
+    
+    const headers = fecColumns.map(col => col.name);
+    
+    // Créer un template avec une seule ligne d'exemple pour éviter les erreurs
+    const sampleData = [
+      [
+        'AC', 'Achat', 'AC001', '20240115',
+        '607000', 'Achat marchandises', '', '',
+        'FA001', '20240115', 'Achat fournisseur DUPONT', '1000.00', '0.00',
+        '', '', '20240120', '', ''
+      ]
+    ];
+    
+    // Créer le contenu CSV avec tabulation comme séparateur (plus standard pour FEC)
+    const csvRows = [];
+    
+    // Ajouter l'en-tête sans guillemets
+    csvRows.push(headers.join('\t'));
+    
+    // Ajouter les données sans guillemets
+    sampleData.forEach(row => {
+      csvRows.push(row.join('\t'));
+    });
+    
+    const csvContent = csvRows.join('\n');
+    
+    // Créer le blob sans BOM pour éviter les problèmes d'encodage
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'template_fec.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, []);
+
+  // Fonction d'import FEC
+  const handleFecImport = useCallback(async () => {
+    if (!csvFile || !selectedCompanyId || !selectedFiscalYearId) {
+      alert("Veuillez sélectionner une entreprise, un exercice fiscal et un fichier FEC.");
+      return;
+    }
+
+    setIsFecImporting(true);
+    try {
+      // Utiliser l'ID utilisateur depuis le contexte d'authentification
+      const userId = user?.id || '';
+      
+      if (!userId) {
+        alert("Erreur: utilisateur non authentifié");
+        return;
+      }
+      
+      const result = await uploadFecFile({
+        file: csvFile,
+        companyId: selectedCompanyId,
+        fiscalYearId: selectedFiscalYearId,
+        userId,
+      });
+
+      setFecImportResult(result);
+      setFecResultModalOpen(true);
+      
+      // Ajouter à l'historique
+      const newHistoryItem: ImportHistoryRow = {
+        id: Date.now().toString(),
+        file: csvFile.name,
+        date: new Date().toISOString().split('T')[0],
+        status: result.success ? "Terminé" : "Erreur",
+        user: user?.email || "utilisateur",
+      };
+      setHistory(prev => [newHistoryItem, ...prev]);
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'import FEC:', error);
+    } finally {
+      setIsFecImporting(false);
+    }
+  }, [csvFile, selectedCompanyId, selectedFiscalYearId, user]);
 
   const runValidation = () => {
     const errors: ValidationError[] = [];
@@ -341,9 +486,6 @@ export default function ImportPage() {
   return (
     <AppLayout
       title="Import"
-      companies={companyList}
-      selectedCompanyId={selectedCompanyId}
-      onCompanyChange={setSelectedCompanyId}
     >
       <Head>
         <title>Import</title>
@@ -400,19 +542,167 @@ export default function ImportPage() {
 
           {/* FEC tab */}
           <TabsContent value="fec" className="mt-6">
-            <UploadZone
-              type="fec"
-              accept=".csv,.txt"
-              inputId="fec-upload"
-              title="Import FEC"
-              subtitle="Glissez-déposez votre fichier FEC ici"
-              formats=".csv, .txt"
-              dragOver={dragOver}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onFileInput={handleFileInput}
-            />
+            <div className="space-y-4">
+              <UploadZone
+                type="fec"
+                accept=".csv,.txt"
+                inputId="fec-upload"
+                title="Import FEC"
+                subtitle="Glissez-déposez votre fichier FEC ici"
+                formats=".csv, .txt"
+                dragOver={dragOver}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onFileInput={handleFileInput}
+              />
+              
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={downloadFecTemplate}
+                >
+                  <ArrowDown className="h-4 w-4" />
+                  Télécharger le template FEC
+                </Button>
+              </div>
+            </div>
+            
+            {csvFile && (
+              <div className="mt-6 space-y-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      {/* Indicateur d'étapes */}
+                      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                            csvFile ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
+                          }`}>
+                            {csvFile ? '✓' : '1'}
+                          </div>
+                          <span className={`text-sm font-medium ${csvFile ? 'text-emerald-700' : 'text-slate-500'}`}>
+                            Fichier FEC sélectionné
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                            selectedCompanyId ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
+                          }`}>
+                            {selectedCompanyId ? '✓' : '2'}
+                          </div>
+                          <span className={`text-sm font-medium ${selectedCompanyId ? 'text-emerald-700' : 'text-slate-500'}`}>
+                            Entreprise sélectionnée
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                            selectedFiscalYearId ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
+                          }`}>
+                            {selectedFiscalYearId ? '✓' : '3'}
+                          </div>
+                          <span className={`text-sm font-medium ${selectedFiscalYearId ? 'text-emerald-700' : 'text-slate-500'}`}>
+                            Exercice fiscal sélectionné
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Informations du fichier */}
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-muted-foreground">
+                          Fichier sélectionné
+                        </label>
+                        <p className="text-sm font-medium">{csvFile.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(csvFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      
+                      {/* Sélecteur d'entreprise */}
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-muted-foreground">
+                          Entreprise {!csvFile && <span className="text-xs text-slate-400">(sélectionnez d&apos;abord un fichier)</span>}
+                        </label>
+                        <Select
+                          value={selectedCompanyId}
+                          onValueChange={setSelectedCompanyId}
+                          disabled={!csvFile || companies.loading}
+                          className="w-full"
+                        >
+                          <option value="">
+                            {!csvFile ? "Sélectionnez d'abord un fichier" : 
+                             companies.loading ? "Chargement..." : "Sélectionner une entreprise"}
+                          </option>
+                          {companyList.map((company) => (
+                            <option key={company.id} value={company.id}>
+                              {company.name}
+                            </option>
+                          ))}
+                        </Select>
+                        {companies.error && (
+                          <p className="mt-1 text-xs text-red-600">
+                            Erreur: {companies.error}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-muted-foreground">
+                          Exercice fiscal {!selectedCompanyId && <span className="text-xs text-slate-400">(sélectionnez d&apos;abord une entreprise)</span>}
+                        </label>
+                        <Select
+                          value={selectedFiscalYearId}
+                          onValueChange={setSelectedFiscalYearId}
+                          disabled={!csvFile || !selectedCompanyId || fiscalYears.loading}
+                        >
+                          <option value="">
+                            {!csvFile ? "Sélectionnez d'abord un fichier" :
+                             !selectedCompanyId ? "Sélectionnez d'abord une entreprise" :
+                             fiscalYears.loading ? "Chargement..." : "Sélectionner un exercice fiscal"}
+                          </option>
+                          {fiscalYears.list?.map((fy) => (
+                            <option key={fy.id} value={fy.id}>
+                              {fy.year} ({new Date(fy.start_date).toLocaleDateString()} - {new Date(fy.end_date).toLocaleDateString()})
+                            </option>
+                          ))}
+                        </Select>
+                        {fiscalYears.error && (
+                          <p className="mt-1 text-xs text-red-600">
+                            Erreur: {fiscalYears.error}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={handleFecImport}
+                          disabled={isFecImporting || !selectedCompanyId || !selectedFiscalYearId || !csvFile}
+                          className="gap-2"
+                          title={!csvFile ? "Veuillez d'abord sélectionner un fichier FEC" : 
+                                  !selectedCompanyId ? "Veuillez sélectionner une entreprise" :
+                                  !selectedFiscalYearId ? "Veuillez sélectionner un exercice fiscal" : ""}
+                        >
+                          {isFecImporting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Import en cours...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4" />
+                              Importer le fichier FEC
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </TabsContent>
 
           {/* Excel/CSV tab */}
@@ -866,6 +1156,99 @@ export default function ImportPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ════════════════ FEC Import Result Modal ════════════════ */}
+      <Dialog open={fecResultModalOpen} onOpenChange={setFecResultModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {fecImportResult?.success ? (
+                <>
+                  <div className="rounded-lg bg-green-50 p-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  </div>
+                  Import réussi
+                </>
+              ) : (
+                <>
+                  <div className="rounded-lg bg-red-50 p-1.5">
+                    <XCircle className="h-4 w-4 text-red-500" />
+                  </div>
+                  Erreurs détectées
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {fecImportResult && (
+            <div className="space-y-4">
+              {/* Résumé */}
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-2xl font-bold">{fecImportResult.totalLines}</div>
+                    <p className="text-sm text-muted-foreground">Lignes totales</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-2xl font-bold text-green-600">{fecImportResult.validLinesCount}</div>
+                    <p className="text-sm text-muted-foreground">Lignes valides</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Message */}
+              <div className={`p-4 rounded-lg ${fecImportResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                {fecImportResult.message}
+              </div>
+
+              {/* Erreurs détaillées */}
+              {fecImportResult.errors.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">Erreurs de validation</h4>
+                  <div className="overflow-auto max-h-64 rounded-xl border border-red-100">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-red-50/50">
+                          <TableHead className="font-semibold text-red-700">Ligne</TableHead>
+                          <TableHead className="font-semibold text-red-700">Colonne</TableHead>
+                          <TableHead className="font-semibold text-red-700">Valeur</TableHead>
+                          <TableHead className="font-semibold text-red-700">Erreur</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {fecImportResult.errors.map((error, i) => (
+                          <TableRow key={i}>
+                            <TableCell className="font-mono text-red-600">{error.line}</TableCell>
+                            <TableCell className="font-mono text-red-600">{error.column}</TableCell>
+                            <TableCell className="text-red-600">{error.value}</TableCell>
+                            <TableCell className="text-red-600">{error.reason}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              onClick={() => {
+                setFecResultModalOpen(false);
+                setFecImportResult(null);
+                setCsvFile(null);
+                setSelectedFiscalYearId("");
+              }}
+            >
+              Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
