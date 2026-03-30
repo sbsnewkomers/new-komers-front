@@ -1,5 +1,4 @@
 import { getApiBaseUrl } from "@/lib/apiClient";
-import { PermissionAction } from "@/permissions/actions"; // not strictly needed but keeps enums aligned if reused later
 
 export type ImportSummary = {
   totalRows: number;
@@ -64,9 +63,13 @@ export async function downloadStructureTemplate(accessToken: string | null): Pro
 export async function validateStructureFile(
   file: File,
   accessToken: string | null,
+  workspaceId?: string,
 ): Promise<ImportReport> {
   const formData = new FormData();
   formData.append("file", file);
+  if (workspaceId) {
+    formData.append("workspaceId", workspaceId);
+  }
 
   const res = await fetch(`${getApiBaseUrl()}/structure/import/validate`, {
     method: "POST",
@@ -87,9 +90,13 @@ export async function validateStructureFile(
 export async function executeStructureImport(
   file: File,
   accessToken: string | null,
+  workspaceId?: string,
 ): Promise<ImportExecuteResult> {
   const formData = new FormData();
   formData.append("file", file);
+  if (workspaceId) {
+    formData.append("workspaceId", workspaceId);
+  }
 
   const res = await fetch(`${getApiBaseUrl()}/structure/import/execute`, {
     method: "POST",

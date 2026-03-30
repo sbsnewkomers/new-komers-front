@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import {
   downloadStructureTemplate,
@@ -13,10 +14,11 @@ import {
   ImportExecuteResult,
   validateStructureFile,
 } from "@/lib/structureImportApi";
+import { getWorkspaces, Workspace } from "@/lib/workspaceApi";
 import { Download, Upload } from "lucide-react";
 
 export default function StructureImportUploadPage() {
-  const { accessToken } = usePermissionsContext();
+  const { accessToken, user } = usePermissionsContext();
   const [dragOver, setDragOver] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +27,30 @@ export default function StructureImportUploadPage() {
   const [report, setReport] = useState<ImportReport | null>(null);
   const [executeResult, setExecuteResult] =
     useState<ImportExecuteResult | null>(null);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>("");
+  const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
+
+  // Check if user is super admin or admin
+  const canSelectWorkspace = user?.role === "SUPER_ADMIN" || user?.role === "ADMIN";
+
+  // Load workspaces for super admin and admin users
+  useEffect(() => {
+    if (canSelectWorkspace && accessToken) {
+      setIsLoadingWorkspaces(true);
+      getWorkspaces(accessToken)
+        .then((data) => {
+          setWorkspaces(data);
+        })
+        .catch((err) => {
+          console.error("Failed to load workspaces:", err);
+          setError("Impossible de charger la liste des workspaces");
+        })
+        .finally(() => {
+          setIsLoadingWorkspaces(false);
+        });
+    }
+  }, [canSelectWorkspace, accessToken]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -88,11 +114,19 @@ export default function StructureImportUploadPage() {
 
   const handleValidate = async () => {
     if (!file) return;
+    
+    // Validate workspace selection for super admin and admin
+    if (canSelectWorkspace && !selectedWorkspaceId) {
+      setError("Veuillez sélectionner un workspace avant de valider le fichier.");
+      return;
+    }
+    
     try {
       setIsValidating(true);
       setError(null);
       setExecuteResult(null);
-      const rep = await validateStructureFile(file, accessToken);
+      const workspaceId = canSelectWorkspace ? selectedWorkspaceId : undefined;
+      const rep = await validateStructureFile(file, accessToken, workspaceId);
       setReport(rep);
       if (rep.errors.length > 0) {
         // Marquer clairement qu'il y a des erreurs
@@ -114,10 +148,18 @@ export default function StructureImportUploadPage() {
 
   const handleExecute = async () => {
     if (!file) return;
+    
+    // Validate workspace selection for super admin and admin
+    if (canSelectWorkspace && !selectedWorkspaceId) {
+      setError("Veuillez sélectionner un workspace avant de lancer l'import.");
+      return;
+    }
+    
     try {
       setIsExecuting(true);
       setError(null);
-      const rep = await executeStructureImport(file, accessToken);
+      const workspaceId = canSelectWorkspace ? selectedWorkspaceId : undefined;
+      const rep = await executeStructureImport(file, accessToken, workspaceId);
       setExecuteResult(rep);
     } catch (err) {
       const msg =
@@ -182,6 +224,39 @@ export default function StructureImportUploadPage() {
             </Button>
           </div>
         </div>
+
+        {/* Workspace Selector for Super Admin and Admin */}
+        {canSelectWorkspace && (
+          <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Sélectionner un workspace
+              </label>
+              <p className="text-sm text-muted-foreground">
+                En tant que {user?.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}, vous pouvez importer la structure dans un workspace spécifique.
+              </p>
+              {isLoadingWorkspaces ? (
+                <div className="text-sm text-muted-foreground">Chargement des workspaces...</div>
+              ) : workspaces.length > 0 ? (
+                <Select
+                  value={selectedWorkspaceId}
+                  onValueChange={setSelectedWorkspaceId}
+                  placeholder="Sélectionner un workspace"
+                >
+                  <option value="">-- Sélectionner un workspace --</option>
+                  {workspaces.map((workspace) => (
+                    <option key={workspace.id} value={workspace.id}>
+                      {workspace.name}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <div className="text-sm text-muted-foreground">Aucun workspace disponible</div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -219,14 +294,14 @@ export default function StructureImportUploadPage() {
             type="button"
             variant="outline"
             onClick={handleValidate}
-            disabled={!file || isValidating}
+            disabled={!file || isValidating || (canSelectWorkspace && !selectedWorkspaceId)}
           >
             {isValidating ? "Validation en cours…" : "Valider le fichier"}
           </Button>
           <Button
             type="button"
             onClick={handleExecute}
-            disabled={!file || !hasNoErrors || isExecuting}
+            disabled={!file || !hasNoErrors || isExecuting || (canSelectWorkspace && !selectedWorkspaceId)}
           >
             {isExecuting ? "Import en cours…" : "Lancer l'import"}
           </Button>
