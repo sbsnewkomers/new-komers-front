@@ -1,10 +1,11 @@
 import { apiFetch } from "./apiClient";
 
 export interface FecUploadRequest {
-  companyId: string;
+  entityId: string; // Changé de companyId à entityId
   fiscalYearId: string;
   userId: string;
   file: File;
+  entityType: 'Company' | 'Group' | 'BusinessUnit';
 }
 
 export interface FecValidationError {
@@ -26,9 +27,10 @@ export interface FecImportResponse {
 export async function uploadFecFile(data: FecUploadRequest): Promise<FecImportResponse> {
   const formData = new FormData();
   formData.append('file', data.file);
-  formData.append('companyId', data.companyId);
+  formData.append('entityId', data.entityId); // Changé de companyId à entityId
   formData.append('fiscalYearId', data.fiscalYearId);
   formData.append('userId', data.userId);
+  formData.append('entityType', data.entityType);
 
   return apiFetch<FecImportResponse>('/fec/import', {
     method: 'POST',

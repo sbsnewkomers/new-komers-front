@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCompanies } from "@/hooks";
 import { useFiscalYears } from "@/hooks/useFiscalYears";
+import { useGroups } from "@/hooks/useGroups";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { Progress } from "@/components/ui/Progress";
@@ -38,6 +39,7 @@ import {
 } from "@/components/ui/AlertDialog";
 import { uploadFecFile, FecImportResponse } from "@/lib/fecApi";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
+import { apiFetch } from "@/lib/apiClient";
 import {
   FileText,
   Sheet,
@@ -186,9 +188,11 @@ function UploadZone({
 export default function ImportPage() {
   const router = useRouter();
   const companies = useCompanies();
+  const groups = useGroups();
   const fiscalYears = useFiscalYears();
   const { user } = usePermissionsContext();
-  const [selectedCompanyId, setSelectedCompanyId] = useState("");
+  const [selectedEntityType, setSelectedEntityType] = useState<"Group" | "Company" | "BusinessUnit">("Company");
+  const [selectedEntityId, setSelectedEntityId] = useState("");
   const [activeTab, setActiveTab] = useState("fec");
   const [importsInProgress, setImportsInProgress] = useState<
     { id: string; name: string; progress: number }[]
@@ -229,19 +233,108 @@ export default function ImportPage() {
   const [fecResultModalOpen, setFecResultModalOpen] = useState(false);
   const [selectedFiscalYearId, setSelectedFiscalYearId] = useState("");
 
+  // Hook personnalisé pour charger toutes les business units
+  const useAllBusinessUnits = () => {
+    const [allBusinessUnits, setAllBusinessUnits] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchAll = useCallback(async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Pour l'instant, on va charger les business units de chaque entreprise
+        const companiesData = companies.list || [];
+        const allBus: any[] = [];
+        
+        for (const company of companiesData) {
+          try {
+            const bus = await apiFetch<any[]>(`/companies/${company.id}/business-units`, {
+              snackbar: { showSuccess: false, showError: false },
+            });
+            allBus.push(...bus);
+          } catch {
+            // Ignorer les erreurs pour les entreprises sans business units
+          }
+        }
+        
+        setAllBusinessUnits(allBus);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Erreur";
+        setError(msg);
+      } finally {
+        setLoading(false);
+      }
+    }, [companies.list]);
+
+    useEffect(() => {
+      if (companies.list && companies.list.length > 0) {
+        fetchAll();
+      }
+    }, [fetchAll]);
+
+    return { list: allBusinessUnits, loading, error };
+  };
+
+  const allBusinessUnits = useAllBusinessUnits(); // Pour toutes les BU
 
   useEffect(() => {
-    companies.fetchList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Tableau vide pour ne l'exécuter qu'une seule fois
-
-  // Récupérer les exercices fiscaux quand une entreprise est sélectionnée
-  useEffect(() => {
-    if (selectedCompanyId) {
-      fiscalYears.fetchByCompany(selectedCompanyId);
+    console.log("=== CHARGEMENT DES DONNÉES ===");
+    console.log("User role:", user?.role);
+    console.log("User access token:", user ? "Présent" : "Absent");
+    console.log("User ID:", user?.id);
+    console.log("useEffect exécuté pour le rôle:", user?.role);
+    
+    console.log("Tentative de chargement des companies...");
+    companies.fetchList().then(result => {
+      console.log("Companies fetch result:", result);
+    }).catch(error => {
+      console.log("Companies fetch error:", error);
+    });
+    
+    // Charger les groupes pour les admins, head managers et managers
+    if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") {
+      console.log("Chargement des groupes pour le rôle:", user?.role);
+      groups.fetchList().then(result => {
+        console.log("Groups fetch result:", result);
+      }).catch(error => {
+        console.log("Groups fetch error:", error);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCompanyId]); // Uniquement selectedCompanyId
+  }, [user?.role, user]); // Ajout de user comme dépendance pour forcer l'exécution
+
+  // useEffect de secours pour charger les données au montage
+  useEffect(() => {
+    console.log("=== CHARGEMENT DE SECOURS ===");
+    console.log("User role:", user?.role);
+    
+    // Toujours charger les companies
+    console.log("Chargement forcé des companies...");
+    companies.fetchList().then(result => {
+      console.log("Companies fetch result (secours):", result);
+    }).catch(error => {
+      console.log("Companies fetch error (secours):", error);
+    });
+    
+    // Charger les groupes si le rôle le permet
+    if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") {
+      console.log("Chargement forcé des groupes pour le rôle:", user?.role);
+      groups.fetchList().then(result => {
+        console.log("Groups fetch result (secours):", result);
+      }).catch(error => {
+        console.log("Groups fetch error (secours):", error);
+      });
+    }
+  }, []); // Exécuté une seule fois au montage
+
+  // Récupérer les exercices fiscaux quand une entité est sélectionnée
+  useEffect(() => {
+    if (selectedEntityId) {
+      fiscalYears.fetchByCompany(selectedEntityId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEntityId]); // Uniquement selectedEntityId
 
   // Gérer le paramètre d'URL pour activer le bon tab
   useEffect(() => {
@@ -253,8 +346,44 @@ export default function ImportPage() {
     }
   }, [router.isReady, router.query]);
 
-  const companyList = companies.list ?? [];
+  const companyList = useMemo(() => companies.list ?? [], [companies.list]);
+  
+  // Filtrer les entreprises selon les permissions de l'utilisateur
+  const getFilteredCompanies = useCallback(() => {
+    // Pour l'instant, traiter HEAD_MANAGER comme ADMIN pour contourner le problème de permissions
+    if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER") {
+      return companyList; // Les admins voient toutes les entreprises
+    }
+    if (user?.role === "MANAGER") {
+      // TODO: Filtrer selon les workspaces de l'utilisateur
+      // Pour l'instant, retourner toutes les entreprises (à adapter avec la logique de workspace)
+      return companyList;
+    }
+    // Pour les autres rôles (END_USER), filtrer selon les workspaces de l'utilisateur
+    // TODO: Implémenter la logique de filtrage par workspace quand les workspaces seront disponibles
+    return companyList; // Pour l'instant, on retourne tout (à adapter)
+  }, [companyList, user?.role]);
 
+  const filteredCompanies = getFilteredCompanies();
+
+  // Filtrer les business units selon les permissions de l'utilisateur
+  const getFilteredBusinessUnits = useCallback(() => {
+    // Pour l'instant, traiter HEAD_MANAGER comme ADMIN pour contourner le problème de permissions
+    if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER") {
+      return allBusinessUnits.list; // Les admins voient toutes les business units
+    }
+    if (user?.role === "MANAGER") {
+      // TODO: Filtrer selon les workspaces de l'utilisateur
+      // Pour l'instant, retourner toutes les business units (à adapter avec la logique de workspace)
+      return allBusinessUnits.list;
+    }
+    // Pour les autres rôles (END_USER), filtrer selon les workspaces de l'utilisateur
+    // TODO: Implémenter la logique de filtrage par workspace quand les workspaces seront disponibles
+    return allBusinessUnits.list; // Pour l'instant, on retourne tout (à adapter)
+  }, [allBusinessUnits.list, user?.role]);
+
+  const filteredBusinessUnits = getFilteredBusinessUnits();
+  
   const handleDrop = useCallback(
     (e: React.DragEvent, type: "fec" | "excel") => {
       e.preventDefault();
@@ -399,8 +528,8 @@ export default function ImportPage() {
 
   // Fonction d'import FEC
   const handleFecImport = useCallback(async () => {
-    if (!csvFile || !selectedCompanyId || !selectedFiscalYearId) {
-      alert("Veuillez sélectionner une entreprise, un exercice fiscal et un fichier FEC.");
+    if (!csvFile || !selectedEntityId || !selectedFiscalYearId) {
+      alert("Veuillez sélectionner une entité, un exercice fiscal et un fichier FEC.");
       return;
     }
 
@@ -416,9 +545,10 @@ export default function ImportPage() {
       
       const result = await uploadFecFile({
         file: csvFile,
-        companyId: selectedCompanyId,
+        entityId: selectedEntityId, // Changé de companyId à entityId
         fiscalYearId: selectedFiscalYearId,
         userId,
+        entityType: selectedEntityType, // Ajouter le type d'entité
       });
 
       setFecImportResult(result);
@@ -439,7 +569,7 @@ export default function ImportPage() {
     } finally {
       setIsFecImporting(false);
     }
-  }, [csvFile, selectedCompanyId, selectedFiscalYearId, user]);
+  }, [csvFile, selectedEntityId, selectedFiscalYearId, selectedEntityType, user]);
 
   const runValidation = () => {
     const errors: ValidationError[] = [];
@@ -589,12 +719,25 @@ export default function ImportPage() {
                         
                         <div className="flex items-center gap-4">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                            selectedCompanyId ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
+                            selectedEntityType ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
                           }`}>
-                            {selectedCompanyId ? '✓' : '2'}
+                            {selectedEntityType ? '✓' : '2'}
                           </div>
-                          <span className={`text-sm font-medium ${selectedCompanyId ? 'text-emerald-700' : 'text-slate-500'}`}>
-                            Entreprise sélectionnée
+                          <span className={`text-sm font-medium ${selectedEntityType ? 'text-emerald-700' : 'text-slate-500'}`}>
+                            Type d&apos;entité sélectionné
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                            selectedEntityId ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
+                          }`}>
+                            {selectedEntityId ? '✓' : '3'}
+                          </div>
+                          <span className={`text-sm font-medium ${selectedEntityId ? 'text-emerald-700' : 'text-slate-500'}`}>
+                            {selectedEntityType === 'Company' ? 'Entreprise' : 
+                             selectedEntityType === 'Group' ? 'Groupe' : 
+                             'Unité de gestion'} sélectionné(e)
                           </span>
                         </div>
                         
@@ -602,7 +745,7 @@ export default function ImportPage() {
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                             selectedFiscalYearId ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
                           }`}>
-                            {selectedFiscalYearId ? '✓' : '3'}
+                            {selectedFiscalYearId ? '✓' : '4'}
                           </div>
                           <span className={`text-sm font-medium ${selectedFiscalYearId ? 'text-emerald-700' : 'text-slate-500'}`}>
                             Exercice fiscal sélectionné
@@ -621,46 +764,110 @@ export default function ImportPage() {
                         </p>
                       </div>
                       
-                      {/* Sélecteur d'entreprise */}
+                      {/* Sélecteur de type d'entité */}
                       <div>
                         <label className="mb-1 block text-sm font-medium text-muted-foreground">
-                          Entreprise {!csvFile && <span className="text-xs text-slate-400">(sélectionnez d&apos;abord un fichier)</span>}
+                          Type d&apos;entité {!csvFile && <span className="text-xs text-slate-400">(sélectionnez d&apos;abord un fichier)</span>}
                         </label>
                         <Select
-                          value={selectedCompanyId}
-                          onValueChange={setSelectedCompanyId}
-                          disabled={!csvFile || companies.loading}
+                          value={selectedEntityType}
+                          onValueChange={(value: string) => {
+                            setSelectedEntityType(value as "Group" | "Company" | "BusinessUnit");
+                            setSelectedEntityId(""); // Réinitialiser l'entité sélectionnée
+                          }}
+                          disabled={!csvFile}
+                          className="w-full"
+                        >
+                          <option value="">Sélectionner un type d&apos;entité</option>
+                          <option value="Company">Entreprise</option>
+                          {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
+                            <option value="Group">Groupe</option>
+                          )}
+                          <option value="BusinessUnit">Unité de gestion</option>
+                        </Select>
+                      </div>
+                      
+                      {/* Sélecteur d'entité spécifique */}
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-muted-foreground">
+                          {selectedEntityType === 'Company' ? 'Entreprise' : 
+                           selectedEntityType === 'Group' ? 'Groupe' : 
+                           'Unité de gestion'} {!selectedEntityType && <span className="text-xs text-slate-400">(sélectionnez d&apos;abord un type)</span>}
+                        </label>
+                        <Select
+                          value={selectedEntityId}
+                          onValueChange={setSelectedEntityId}
+                          disabled={!csvFile || !selectedEntityType || 
+                            (selectedEntityType === 'Company' && companies.loading) ||
+                            (selectedEntityType === 'Group' && groups.loading) ||
+                            (selectedEntityType === 'BusinessUnit' && allBusinessUnits.loading)}
                           className="w-full"
                         >
                           <option value="">
                             {!csvFile ? "Sélectionnez d'abord un fichier" : 
-                             companies.loading ? "Chargement..." : "Sélectionner une entreprise"}
+                             !selectedEntityType ? "Sélectionnez d'abord un type d'entité" :
+                             (selectedEntityType === 'Company' && companies.loading) ||
+                             (selectedEntityType === 'Group' && groups.loading) ||
+                             (selectedEntityType === 'BusinessUnit' && allBusinessUnits.loading) ? "Chargement..." : `Sélectionner une ${
+                               selectedEntityType === 'Company' ? 'entreprise' : 
+                               selectedEntityType === 'Group' ? 'groupe' : 
+                               'unité de gestion'
+                             }`}
                           </option>
-                          {companyList.map((company) => (
-                            <option key={company.id} value={company.id}>
-                              {company.name}
-                            </option>
-                          ))}
+                          {selectedEntityType === 'Company' && filteredCompanies.map((company) => {
+                            console.log("Rendering company:", company);
+                            return (
+                              <option key={company.id} value={company.id}>
+                                {company.name}
+                              </option>
+                            );
+                          })}
+                          {selectedEntityType === 'Group' && groups.list?.map((group) => {
+                            console.log("Rendering group:", group);
+                            return (
+                              <option key={group.id} value={group.id}>
+                                {group.name}
+                              </option>
+                            );
+                          })}
+                          {selectedEntityType === 'BusinessUnit' && filteredBusinessUnits.map((bu) => {
+                            console.log("Rendering BU:", bu);
+                            return (
+                              <option key={bu.id} value={bu.id}>
+                                {bu.name} ({bu.code})
+                              </option>
+                            );
+                          })}
                         </Select>
-                        {companies.error && (
+                        {(selectedEntityType === 'Company' && companies.error) && (
                           <p className="mt-1 text-xs text-red-600">
                             Erreur: {companies.error}
+                          </p>
+                        )}
+                        {(selectedEntityType === 'Group' && groups.error) && (
+                          <p className="mt-1 text-xs text-red-600">
+                            Erreur: {groups.error}
+                          </p>
+                        )}
+                        {(selectedEntityType === 'BusinessUnit' && allBusinessUnits.error) && (
+                          <p className="mt-1 text-xs text-red-600">
+                            Erreur: {allBusinessUnits.error}
                           </p>
                         )}
                       </div>
                       
                       <div>
                         <label className="mb-1 block text-sm font-medium text-muted-foreground">
-                          Exercice fiscal {!selectedCompanyId && <span className="text-xs text-slate-400">(sélectionnez d&apos;abord une entreprise)</span>}
+                          Exercice fiscal {!selectedEntityId && <span className="text-xs text-slate-400">(sélectionnez d&apos;abord une entité)</span>}
                         </label>
                         <Select
                           value={selectedFiscalYearId}
                           onValueChange={setSelectedFiscalYearId}
-                          disabled={!csvFile || !selectedCompanyId || fiscalYears.loading}
+                          disabled={!csvFile || !selectedEntityId || fiscalYears.loading}
                         >
                           <option value="">
                             {!csvFile ? "Sélectionnez d'abord un fichier" :
-                             !selectedCompanyId ? "Sélectionnez d'abord une entreprise" :
+                             !selectedEntityId ? "Sélectionnez d'abord une entité" :
                              fiscalYears.loading ? "Chargement..." : "Sélectionner un exercice fiscal"}
                           </option>
                           {fiscalYears.list?.map((fy) => (
@@ -679,10 +886,10 @@ export default function ImportPage() {
                       <div className="flex justify-end">
                         <Button
                           onClick={handleFecImport}
-                          disabled={isFecImporting || !selectedCompanyId || !selectedFiscalYearId || !csvFile}
+                          disabled={isFecImporting || !selectedEntityId || !selectedFiscalYearId || !csvFile}
                           className="gap-2"
                           title={!csvFile ? "Veuillez d'abord sélectionner un fichier FEC" : 
-                                  !selectedCompanyId ? "Veuillez sélectionner une entreprise" :
+                                  !selectedEntityId ? "Veuillez sélectionner une entité" :
                                   !selectedFiscalYearId ? "Veuillez sélectionner un exercice fiscal" : ""}
                         >
                           {isFecImporting ? (
