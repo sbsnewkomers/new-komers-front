@@ -63,6 +63,7 @@ import {
   ShareholderFormDialog,
   type ShareholderFormValues,
 } from "@/components/shareholders/ShareholderFormDialog";
+import Image from "next/image";
 
 type BusinessUnit = {
   id: string;
@@ -1596,7 +1597,7 @@ export default function StructurePage() {
             <div className="flex flex-col md:flex-row gap-2 items-center justify-between w-full">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
+                  <div className="h-10 w-10 rounded-xl bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
                     <Building2 className="h-6 w-6 text-white" />
                   </div>
                   <div>
@@ -1612,9 +1613,9 @@ export default function StructurePage() {
                     </p>
                   </div>
                 </div>
-                <p className="text-slate-600 max-w-2xl ml-13 font-medium">
+                <p className="text-slate-500 max-w-2xl font-medium">
                   Gérez la structure hiérarchique de votre workspace et pilotez 
-                  l&apos;ensemble de vos entités : groupes, entreprises et business units.
+                  l&apos;ensemble de vos entités.
                 </p>
               </div>
 
@@ -1878,7 +1879,7 @@ export default function StructurePage() {
               )}
 
               {tree?.workspaces && tree.workspaces.length > 0 && (
-                <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50/30 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-linear-to-r from-slate-50 to-blue-50/30 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
                   <div className="flex items-center">
                     Nom
                   </div>
@@ -2287,7 +2288,7 @@ export default function StructurePage() {
                         <>
                           {console.log('Logo à afficher:', editworkspace.logo)}
                           {editworkspace.logo.startsWith('http') ? (
-                            <img 
+                            <Image 
                               src={editworkspace.logo} 
                               alt="Logo de l'workspace" 
                               className="h-16 w-16 object-cover rounded-lg border border-slate-200"
@@ -2297,7 +2298,7 @@ export default function StructurePage() {
                               }}
                             />
                           ) : (
-                            <img 
+                            <Image 
                               src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`} 
                               alt="Logo de l'workspace" 
                               className="h-16 w-16 object-cover rounded-lg border border-slate-200"
@@ -3751,7 +3752,7 @@ export default function StructurePage() {
                 />
                 {logoPreview && (
                   <div className="mt-2">
-                    <img 
+                    <Image 
                       src={logoPreview} 
                       alt="Aperçu du logo" 
                       className="h-20 w-20 object-cover rounded-lg border border-slate-200"
