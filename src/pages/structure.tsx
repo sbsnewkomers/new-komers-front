@@ -221,7 +221,7 @@ export default function StructurePage() {
   const [addworkspaceForm, setAddworkspaceForm] = useState({
     name: "",
     description: "",
-    logo: "",
+    logo: undefined as string | undefined,
     address: "",
     contact_email: "",
     contact_phone: "",
@@ -271,7 +271,7 @@ export default function StructurePage() {
     main_activity: "",
     size: "SMALL",
     model: "SUBSIDIARY",
-    logo: "",
+    logo: undefined as string | undefined,
   });
   const [addCompanyLoading, setAddCompanyLoading] = useState(false);
   const [addCompanyLogoFile, setAddCompanyLogoFile] = useState<File | null>(null);
@@ -283,7 +283,7 @@ export default function StructurePage() {
     code: "",
     activity: "",
     siret: "",
-    logo: "",
+    logo: undefined as string | undefined,
   });
   const [addBULoading, setAddBULoading] = useState(false);
   const [addBULogoFile, setAddBULogoFile] = useState<File | null>(null);
@@ -297,7 +297,7 @@ export default function StructurePage() {
     fiscal_year_end: "",
     mainActivity: "",
     workspaceId: "",
-    logo: undefined,
+    logo: undefined as string | undefined,
   });
   const [addGroupLoading, setAddGroupLoading] = useState(false);
 
@@ -314,7 +314,7 @@ export default function StructurePage() {
   const [editworkspace, setEditworkspace] = useState({
     name: "",
     description: "",
-    logo: "",
+    logo: undefined as string | undefined,
     address: "",
     contact_email: "",
     contact_phone: "",
@@ -332,7 +332,7 @@ export default function StructurePage() {
     fiscal_year_start: "",
     fiscal_year_end: "",
     mainActivity: "",
-    logo: "",
+    logo: undefined as string | undefined,
   });
   const [editCompany, setEditCompany] = useState({
     name: "",
@@ -344,7 +344,7 @@ export default function StructurePage() {
     fiscal_year_end: "",
     size: "",
     model: "",
-    logo: "",
+    logo: undefined as string | undefined,
     completionPercentage: 0,
   });
   const [editBU, setEditBU] = useState({
@@ -352,7 +352,7 @@ export default function StructurePage() {
     code: "",
     activity: "",
     siret: "",
-    logo: "",
+    logo: undefined as string | undefined,
   });
   const [nodeUsers, setNodeUsers] = useState<NodeUsersByRole | null>(null);
   const [nodeUsersOpen, setNodeUsersOpen] = useState(false);
@@ -866,7 +866,7 @@ export default function StructurePage() {
           setEditworkspace({
             name: node.name,
             description: "",
-            logo: "",
+            logo: undefined as string | undefined,
             address: "",
             contact_email: "",
             contact_phone: "",
@@ -896,7 +896,7 @@ export default function StructurePage() {
             fiscal_year_start: "",
             fiscal_year_end: "",
             mainActivity: "",
-            logo: "",
+            logo: undefined as string | undefined,
           });
           setEditGroupLogoFile(null);
         }
@@ -929,7 +929,7 @@ export default function StructurePage() {
             fiscal_year_end: "",
             size: "",
             model: "",
-            logo: "",
+            logo: undefined as string | undefined,
             completionPercentage: 0,
           });
         }
@@ -952,7 +952,7 @@ export default function StructurePage() {
             code: node.code,
             activity: "",
             siret: "",
-            logo: "",
+            logo: undefined as string | undefined,
           });
           const freshBUs = await loadBUsForCompany(node.companyId);
           const bu = freshBUs.find((b) => b.id === node.id);
@@ -1134,7 +1134,7 @@ export default function StructurePage() {
         formData.append('logo', editBULogoFile);
       }
       
-      await apiFetch(
+      const updatedBU = await apiFetch<BusinessUnit>(
         `/companies/${selectedNode.companyId}/business-units/${selectedNode.id}`,
         {
           method: "PUT",
@@ -1146,6 +1146,21 @@ export default function StructurePage() {
         },
       );
       setEditBULogoFile(null);
+      
+      // Mettre à jour l'état local avec les données retournées par le serveur
+      if (updatedBU) {
+        setEditBU(prev => ({
+          ...prev,
+          name: updatedBU.name,
+          code: updatedBU.code,
+          activity: updatedBU.activity,
+          siret: updatedBU.siret,
+          logo: updatedBU.logo || ""
+        }));
+        
+        // Recharger les BUs pour mettre à jour l'affichage dans l'arbre
+        await loadBUsForCompany(selectedNode.companyId);
+      }
     }
     setEditing(false);
     setDetailOpen(false);
@@ -1208,7 +1223,7 @@ export default function StructurePage() {
       setAddworkspaceForm({ 
         name: "", 
         description: "", 
-        logo: "",
+        logo: undefined as string | undefined,
         address: "",
         contact_email: "",
         contact_phone: "",
@@ -1385,7 +1400,7 @@ export default function StructurePage() {
         main_activity: "",
         size: "SMALL",
         model: "SUBSIDIARY",
-        logo: "",
+        logo: undefined as string | undefined,
       });
       setAddCompanyLogoFile(null);
     } catch (error) {
@@ -1428,7 +1443,7 @@ export default function StructurePage() {
       await loadTree();
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
-      setAddBUForm({ name: "", code: "", activity: "", siret: "", logo: "" });
+      setAddBUForm({ name: "", code: "", activity: "", siret: "", logo: undefined });
       setAddBULogoFile(null);
     } catch {
       /* snackbar handles */
@@ -1481,7 +1496,7 @@ export default function StructurePage() {
         fiscal_year_end: "",
         mainActivity: "",
         workspaceId: "",
-        logo: "",
+        logo: undefined as string | undefined,
       });
       setAddGroupLogoFile(null);
     } catch {
@@ -2081,7 +2096,7 @@ export default function StructurePage() {
                                         fiscal_year_start: "",
                                         fiscal_year_end: "",
                                         workspaceId: "",
-                                        logo: "",
+                                        logo: undefined as string | undefined,
                                       });
                                       setAddGroupLogoFile(null);
                                       setAddGroupOpen(true);
@@ -2111,7 +2126,7 @@ export default function StructurePage() {
                                         main_activity: "",
                                         size: "SMALL",
                                         model: "SUBSIDIARY",
-                                        logo: "",
+                                        logo: undefined as string | undefined,
                                       });
                                       setAddCompanyOpen(true);
                                     }}
@@ -2139,7 +2154,7 @@ export default function StructurePage() {
                                           code: "",
                                           activity: "",
                                           siret: "",
-                                          logo: "",
+                                          logo: undefined as string | undefined,
                                         });
                                         setAddBULogoFile(null);
                                         setAddBUOpen(true);
@@ -2223,16 +2238,21 @@ export default function StructurePage() {
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
           <DialogHeader className="flex-row items-center justify-between sticky top-0 bg-white z-10 pb-4">
-            <DialogTitle className="flex items-center gap-2">
-              <span className="text-lg">
-                {selectedNode?.type === "workspace"
-                  ? "🏢"
+            <DialogTitle className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                selectedNode?.type === "workspace"
+                  ? "bg-gradient-to-br from-purple-500 to-purple-600"
                   : selectedNode?.type === "group"
-                    ? "📁"
+                    ? "bg-gradient-to-br from-blue-500 to-blue-600"
                     : selectedNode?.type === "company"
-                      ? "🏢"
-                      : "📦"}
-              </span>
+                      ? "bg-gradient-to-br from-slate-600 to-slate-700"
+                      : "bg-gradient-to-br from-emerald-500 to-emerald-600"
+              }`}>
+                {selectedNode?.type === "workspace" && <Building2 className="h-5 w-5 text-white" />}
+                {selectedNode?.type === "group" && <Layers className="h-5 w-5 text-white" />}
+                {selectedNode?.type === "company" && <Building className="h-5 w-5 text-white" />}
+                {selectedNode?.type === "bu" && <Briefcase className="h-5 w-5 text-white" />}
+              </div>
               {editing ? `Modifier ${typeLabel}` : typeLabel}
             </DialogTitle>
             {nodeUsers &&
@@ -2249,7 +2269,7 @@ export default function StructurePage() {
           {selectedNode?.type === "workspace" && (
             <div className="space-y-4 py-2">
               <div className="space-y-2">
-                <h3 className="text-sm font-medium text-slate-700">Informations de l&apos;workspace</h3>
+                <h3 className="text-sm font-medium text-slate-700">Informations sur l&apos;espace de travail</h3>
                 <div className="bg-slate-50 rounded-lg p-4 space-y-4">
                   <Field
                     label="Nom"
@@ -2276,7 +2296,7 @@ export default function StructurePage() {
                         if (file) {
                           setEditworkspace((f) => ({ ...f, logo: file.name }));
                         } else {
-                          setEditworkspace((f) => ({ ...f, logo: "" }));
+                          setEditworkspace((f) => ({ ...f, logo: undefined }));
                         }
                       }}
                       placeholder="Uploader une image de logo"
@@ -2373,8 +2393,8 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={editGroup.fiscal_year_start}
-                  onChange={(v) => handleFiscalYearStartChange(
-                    v,
+                  onChange={(e) => handleFiscalYearStartChange(
+                    e.target.value,
                     editGroup.fiscal_year_end,
                     setEditGroup
                   )}
@@ -2390,8 +2410,8 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={editGroup.fiscal_year_end}
-                  onChange={(v) => handleFiscalYearEndChange(
-                    v,
+                  onChange={(e) => handleFiscalYearEndChange(
+                    e.target.value,
                     editGroup.fiscal_year_start,
                     setEditGroup
                   )}
@@ -2424,7 +2444,7 @@ export default function StructurePage() {
                       if (file) {
                         setEditGroup((f) => ({ ...f, logo: file.name }));
                       } else {
-                        setEditGroup((f) => ({ ...f, logo: "" }));
+                        setEditGroup((f) => ({ ...f, logo: undefined }));
                       }
                     }}
                     placeholder="Uploader une image de logo"
@@ -2499,58 +2519,44 @@ export default function StructurePage() {
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Code APE
                 </label>
-                <ApeCodeSelect
-                  value={editCompany.ape_code}
-                  onChange={(value) => setEditCompany((f) => ({ ...f, ape_code: value }))}
-                  onDescriptionChange={(description) => setEditCompany((f) => ({ ...f, main_activity: description }))}
-                />
+                {editing ? (
+                  <ApeCodeSelect
+                    value={editCompany.ape_code}
+                    onChange={(value) => setEditCompany((f) => ({ ...f, ape_code: value }))}
+                    onDescriptionChange={(description) => setEditCompany((f) => ({ ...f, main_activity: description }))}
+                  />
+                ) : (
+                  <p className="text-sm font-medium text-primary">{editCompany.ape_code || "—"}</p>
+                )}
               </div>
-              <div className="space-y-2">
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Activité principale
-                </label>
-                <Input
-                  placeholder="Activité principale"
-                  value={editCompany.main_activity}
-                  onChange={(e) => setEditCompany((f) => ({ ...f, main_activity: e.target.value }))}
-                  readOnly
-                  className="bg-gray-50 cursor-not-allowed"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Début d&apos;exercice
-                </label>
-                <Input
-                  type="date"
-                  value={editCompany.fiscal_year_start}
-                  onChange={(v) => handleFiscalYearStartChange(
-                    v,
-                    editCompany.fiscal_year_end,
-                    setEditCompany
-                  )}
-                  max={editCompany.fiscal_year_end ? new Date(editCompany.fiscal_year_end).toISOString().split('T')[0] : undefined}
-                  disabled={!editing}
-                  className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Fin d&apos;exercice
-                </label>
-                <Input
-                  type="date"
-                  value={editCompany.fiscal_year_end}
-                  onChange={(v) => handleFiscalYearEndChange(
-                    v,
-                    editCompany.fiscal_year_start,
-                    setEditCompany
-                  )}
-                  min={editCompany.fiscal_year_start ? new Date(editCompany.fiscal_year_start).toISOString().split('T')[0] : undefined}
-                  disabled={!editing}
-                  className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
-                />
-              </div>
+              <Field
+                label="Activité principale"
+                value={editCompany.main_activity}
+                editing={false} // Always read-only like in the original
+                onChange={() => {}} // Non-modifiable
+              />
+              <Field
+                label="Début d&apos;exercice"
+                value={editCompany.fiscal_year_start}
+                editing={editing}
+                type="date"
+                onChange={(v) => handleFiscalYearStartChange(
+                  v,
+                  editCompany.fiscal_year_end,
+                  setEditCompany
+                )}
+              />
+              <Field
+                label="Fin d&apos;exercice"
+                value={editCompany.fiscal_year_end}
+                editing={editing}
+                type="date"
+                onChange={(v) => handleFiscalYearEndChange(
+                  v,
+                  editCompany.fiscal_year_start,
+                  setEditCompany
+                )}
+              />
               <Field
                 label="Taille"
                 value={editCompany.size}
@@ -2589,7 +2595,7 @@ export default function StructurePage() {
                       if (file) {
                         setEditCompany((f) => ({ ...f, logo: file.name }));
                       } else {
-                        setEditCompany((f) => ({ ...f, logo: "" }));
+                        setEditCompany((f) => ({ ...f, logo: undefined }));
                       }
                     }}
                     placeholder="Uploader une image de logo"
@@ -2681,17 +2687,26 @@ export default function StructurePage() {
                   onChange={(v) => setEditBU((f) => ({ ...f, code: v }))}
                 />
               )}
-              <div className="space-y-2">
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Activité
-                </label>
-                <Input
+              {editing ? (
+                <div className="space-y-2">
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Activité
+                  </label>
+                  <Input
+                    value={editBU.activity}
+                    readOnly
+                    className="bg-white border-gray-300"
+                    placeholder="Activité principale"
+                  />
+                </div>
+              ) : (
+                <Field
+                  label="Activité"
                   value={editBU.activity}
-                  readOnly
-                  className="bg-gray-50 cursor-not-allowed"
-                  placeholder="Activité principale"
+                  editing={false} // Always read-only like in company
+                  onChange={() => {}} // Non-modifiable
                 />
-              </div>
+              )}
               <Field
                 label="SIRET"
                 value={editBU.siret}
@@ -2712,7 +2727,7 @@ export default function StructurePage() {
                       if (file) {
                         setEditBU((f) => ({ ...f, logo: file.name }));
                       } else {
-                        setEditBU((f) => ({ ...f, logo: "" }));
+                        setEditBU((f) => ({ ...f, logo: undefined }));
                       }
                     }}
                     placeholder="Uploader une image de logo"
@@ -3235,7 +3250,7 @@ export default function StructurePage() {
                   if (file) {
                     setAddGroupForm((f) => ({ ...f, logo: file.name }));
                   } else {
-                    setAddGroupForm((f) => ({ ...f, logo: "" }));
+                    setAddGroupForm((f) => ({ ...f, logo: undefined }));
                   }
                 }}
                 placeholder="Uploader une image de logo"
@@ -3547,7 +3562,7 @@ export default function StructurePage() {
                   if (file) {
                     setAddCompanyForm((f) => ({ ...f, logo: file.name }));
                   } else {
-                    setAddCompanyForm((f) => ({ ...f, logo: "" }));
+                    setAddCompanyForm((f) => ({ ...f, logo: undefined }));
                   }
                 }}
                 placeholder="Uploader une image de logo"
@@ -3674,7 +3689,7 @@ export default function StructurePage() {
                   if (file) {
                     setAddBUForm((f) => ({ ...f, logo: file.name }));
                   } else {
-                    setAddBUForm((f) => ({ ...f, logo: "" }));
+                    setAddBUForm((f) => ({ ...f, logo: undefined }));
                   }
                 }}
                 placeholder="Uploader une image de logo"
