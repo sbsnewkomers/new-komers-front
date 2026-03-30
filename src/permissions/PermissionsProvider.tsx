@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { apiFetch, setAccessTokenGetter } from "@/lib/apiClient";
 import { logout as authLogout, refreshTokens, type TokenPair } from "@/lib/authApi";
 import type { PermissionGrant, PermissionsUser } from "@/permissions/types";
+import { useAuthRevalidator } from "@/hooks/useAuthRevalidator";
 
 type PermissionsContextValue = {
   user: PermissionsUser | null;
@@ -126,7 +127,7 @@ export function PermissionsProvider(props: {
         setIsLoading(false);
       }
     },
-    [],
+    [refreshToken, setTokens],
   );
 
   useEffect(() => {
@@ -158,6 +159,9 @@ export function PermissionsProvider(props: {
       setTokens(null);
     }
   }, [setTokens]);
+
+  // Activate session revalidation
+  useAuthRevalidator(refreshMe, isAuthReady, !!accessToken);
 
   const value = useMemo<PermissionsContextValue>(
     () => ({

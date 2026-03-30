@@ -415,21 +415,21 @@ export default function StructurePage() {
   }, [isAuthReady, user, isTreeLoaded, loadTree]);
 
   // Keep structure in sync when returning to the tab/page (e.g. after imports or other changes).
-  useEffect(() => {
-    if (!isAuthReady || !user) return;
+  // useEffect(() => {
+  //   if (!isAuthReady || !user) return;
 
-    const refresh = () => {
-      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
-      void loadTree();
-    };
+  //   const refresh = () => {
+  //     if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+  //     void loadTree();
+  //   };
 
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", refresh);
-    return () => {
-      window.removeEventListener("focus", refresh);
-      window.removeEventListener("visibilitychange", refresh);
-    };
-  }, [isAuthReady, user, loadTree]);
+  //   window.addEventListener("focus", refresh);
+  //   document.addEventListener("visibilitychange", refresh);
+  //   return () => {
+  //     window.removeEventListener("focus", refresh);
+  //     window.removeEventListener("visibilitychange", refresh);
+  //   };
+  // }, [isAuthReady, user, loadTree]);
 
   
   const loadBUsForCompany = useCallback(async (companyId: string) => {
@@ -2241,12 +2241,12 @@ export default function StructurePage() {
             <DialogTitle className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                 selectedNode?.type === "workspace"
-                  ? "bg-gradient-to-br from-purple-500 to-purple-600"
+                  ? "bg-linear-to-br from-purple-500 to-purple-600"
                   : selectedNode?.type === "group"
-                    ? "bg-gradient-to-br from-blue-500 to-blue-600"
+                    ? "bg-linear-to-br from-blue-500 to-blue-600"
                     : selectedNode?.type === "company"
-                      ? "bg-gradient-to-br from-slate-600 to-slate-700"
-                      : "bg-gradient-to-br from-emerald-500 to-emerald-600"
+                      ? "bg-linear-to-br from-slate-600 to-slate-700"
+                      : "bg-linear-to-br from-emerald-500 to-emerald-600"
               }`}>
                 {selectedNode?.type === "workspace" && <Building2 className="h-5 w-5 text-white" />}
                 {selectedNode?.type === "group" && <Layers className="h-5 w-5 text-white" />}
@@ -2388,7 +2388,7 @@ export default function StructurePage() {
               />
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Début d'exercice
+                  Début d&apos;exercice
                 </label>
                 <Input
                   type="date"
@@ -2455,7 +2455,7 @@ export default function StructurePage() {
                     {editGroup.logo ? (
                       <>
                         {editGroup.logo.startsWith('http') ? (
-                          <img 
+                          <Image 
                             src={editGroup.logo} 
                             alt="Logo du groupe" 
                             className="h-16 w-16 object-cover rounded-lg border border-slate-200"
@@ -2465,7 +2465,7 @@ export default function StructurePage() {
                             }}
                           />
                         ) : (
-                          <img 
+                          <Image 
                             src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editGroup.logo}`} 
                             alt="Logo du groupe" 
                             className="h-16 w-16 object-cover rounded-lg border border-slate-200"
@@ -2606,7 +2606,7 @@ export default function StructurePage() {
                     {editCompany.logo ? (
                       <>
                         {editCompany.logo.startsWith('http') ? (
-                          <img 
+                          <Image 
                             src={editCompany.logo} 
                             alt="Logo de l'entreprise" 
                             className="h-16 w-16 object-cover rounded-lg border border-slate-200"
@@ -2616,7 +2616,7 @@ export default function StructurePage() {
                             }}
                           />
                         ) : (
-                          <img 
+                          <Image 
                             src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editCompany.logo}`} 
                             alt="Logo de l'entreprise" 
                             className="h-16 w-16 object-cover rounded-lg border border-slate-200"
@@ -2738,7 +2738,7 @@ export default function StructurePage() {
                     {editBU.logo ? (
                       <>
                         {editBU.logo.startsWith('http') ? (
-                          <img 
+                          <Image 
                             src={editBU.logo} 
                             alt="Logo de la business unit" 
                             className="h-16 w-16 object-cover rounded-lg border border-slate-200"
@@ -2748,7 +2748,7 @@ export default function StructurePage() {
                             }}
                           />
                         ) : (
-                          <img 
+                          <Image 
                             src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editBU.logo}`} 
                             alt="Logo de la business unit" 
                             className="h-16 w-16 object-cover rounded-lg border border-slate-200"

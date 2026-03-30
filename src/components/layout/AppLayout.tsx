@@ -223,11 +223,11 @@ export function AppLayout({
 
                 <div className="flex flex-col overflow-hidden">
                   <span className="truncate text-sm font-semibold text-primary">
-                    {user?.email?.split("@")[0] || "James Wilson"}
+                    {user?.email?.split("@")[0] || "-----"}
                   </span>
 
                   <span className="truncate text-[10px] font-medium text-slate-500 uppercase tracking-wider">
-                    {user?.role?.replace("_", " ") || "CFO ADMIN"}
+                    {user?.role?.replace("_", " ") || "----"}
                   </span>
                 </div>
               </button>

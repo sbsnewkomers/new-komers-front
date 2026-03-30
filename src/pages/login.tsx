@@ -64,7 +64,7 @@ export default function LoginPage() {
       const queryReturnTo = typeof router.query.returnTo === "string" ? router.query.returnTo : null;
       router.push(redirectTo || queryReturnTo || "/dashboard");
     } catch (err) {
-      const raw = err instanceof Error ? err.message : "Identifiants invalides";
+      const raw = err instanceof Error ? err.message : "Erreur de système lors de la connexion";
 
       // Try to extract backend message from JSON (Nest error shape)
       let backendMessage: string | undefined;
