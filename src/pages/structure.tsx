@@ -1381,7 +1381,12 @@ export default function StructurePage() {
 
   const handleDelete = async () => {
     if (!selectedNode) return;
-    if (selectedNode.type === "group") {
+    if (selectedNode.type === "workspace") {
+      await apiFetch(`/workspaces/${selectedNode.id}`, {
+        method: "DELETE",
+        snackbar: { showSuccess: true, successMessage: "Workspace supprimée" },
+      });
+    } else if (selectedNode.type === "group") {
       await apiFetch(`/groups/${selectedNode.id}`, {
         method: "DELETE",
         snackbar: { showSuccess: true, successMessage: "Groupe supprimé" },
