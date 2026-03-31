@@ -241,6 +241,10 @@ export default function StructurePage() {
     contact_email: "",
     contact_phone: "",
   });
+  const [editWorkspaceErrors, setEditWorkspaceErrors] = useState({
+    contact_email: "",
+    contact_phone: "",
+  });
 
   // Gérer le changement de fichier logo
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -302,6 +306,32 @@ export default function StructurePage() {
       }));
     } else {
       setWorkspaceErrors((prev) => ({ ...prev, contact_phone: "" }));
+    }
+  };
+
+  // Fonctions de validation pour l'édition
+  const handleEditEmailChange = (value: string) => {
+    setEditworkspace((f) => ({ ...f, contact_email: value }));
+    if (!validateEmail(value)) {
+      setEditWorkspaceErrors((prev) => ({
+        ...prev,
+        contact_email: "Veuillez entrer un email valide",
+      }));
+    } else {
+      setEditWorkspaceErrors((prev) => ({ ...prev, contact_email: "" }));
+    }
+  };
+
+  const handleEditPhoneChange = (value: string) => {
+    setEditworkspace((f) => ({ ...f, contact_phone: value }));
+    
+    if (!validatePhone(value)) {
+      setEditWorkspaceErrors((prev) => ({
+        ...prev,
+        contact_phone: "Veuillez entrer un numéro de téléphone valide",
+      }));
+    } else {
+      setEditWorkspaceErrors((prev) => ({ ...prev, contact_phone: "" }));
     }
   };
 
@@ -932,6 +962,7 @@ export default function StructurePage() {
             manager_id: org.manager_id ?? "",
           });
           setEditworkspaceLogoFile(null);
+          setEditWorkspaceErrors({ contact_email: "", contact_phone: "" });
         } catch {
           setEditworkspace({
             name: node.name,
@@ -943,6 +974,7 @@ export default function StructurePage() {
             manager_id: "",
           });
           setEditworkspaceLogoFile(null);
+          setEditWorkspaceErrors({ contact_email: "", contact_phone: "" });
         }
       } else if (node.type === "group") {
         try {
@@ -1070,6 +1102,19 @@ export default function StructurePage() {
   const handleSave = async () => {
     if (!selectedNode) return;
     if (selectedNode.type === "workspace") {
+      // Valider l'email et le téléphone
+      const emailValid = validateEmail(editworkspace.contact_email);
+      const phoneValid = validatePhone(editworkspace.contact_phone);
+      
+      if (!emailValid || !phoneValid) {
+        // Mettre à jour les erreurs
+        setEditWorkspaceErrors({
+          contact_email: emailValid ? "" : "Veuillez entrer un email valide",
+          contact_phone: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        });
+        return;
+      }
+
       const formData = new FormData();
       formData.append('name', editworkspace.name);
       if (editworkspace.description) {
@@ -1098,6 +1143,7 @@ export default function StructurePage() {
         snackbar: { showSuccess: true, successMessage: "Workspace mise à jour" },
       });
       setEditworkspaceLogoFile(null);
+      setEditWorkspaceErrors({ contact_email: "", contact_phone: "" });
       // Mettre à jour l'état local avec le logo retourné par le serveur
       if (updatedOrg) {
         setEditworkspace(prev => ({
@@ -2455,18 +2501,52 @@ export default function StructurePage() {
                     editing={editing}
                     onChange={(v) => setEditworkspace((f) => ({ ...f, address: v }))}
                   />
-                  <Field
-                    label="Email de contact"
-                    value={editworkspace.contact_email}
-                    editing={editing}
-                    onChange={(v) => setEditworkspace((f) => ({ ...f, contact_email: v }))}
-                  />
-                  <Field
-                    label="Téléphone de contact"
-                    value={editworkspace.contact_phone}
-                    editing={editing}
-                    onChange={(v) => setEditworkspace((f) => ({ ...f, contact_phone: v }))}
-                  />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Email de contact
+                    </label>
+                    {editing ? (
+                      <div>
+                        <Input
+                          type="email"
+                          value={editworkspace.contact_email}
+                          onChange={(e) => handleEditEmailChange(e.target.value)}
+                          placeholder="email@exemple.com"
+                          className={editWorkspaceErrors.contact_email ? "border-red-500" : ""}
+                        />
+                        {editWorkspaceErrors.contact_email && (
+                          <p className="mt-1 text-xs text-red-500">{editWorkspaceErrors.contact_email}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm font-medium text-primary">{editworkspace.contact_email || "—"}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Téléphone de contact
+                    </label>
+                    {editing ? (
+                      <div>
+                        <PhoneInput
+                          international
+                          countryCallingCodeEditable={false}
+                          defaultCountry="FR"
+                          value={editworkspace.contact_phone}
+                          onChange={(value) => handleEditPhoneChange(value || "")}
+                          className={editWorkspaceErrors.contact_phone ? "border-red-500" : ""}
+                          numberInputProps={{
+                            className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.contact_phone ? "border-red-500" : ""}`
+                          }}
+                        />
+                        {editWorkspaceErrors.contact_phone && (
+                          <p className="mt-1 text-xs text-red-500">{editWorkspaceErrors.contact_phone}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm font-medium text-primary">{editworkspace.contact_phone || "—"}</p>
+                    )}
+                  </div>
                                   </div>
               </div>
             </div>
@@ -4019,7 +4099,7 @@ export default function StructurePage() {
             </Button>
             <Button
               onClick={handleCreateworkspace}
-              disabled={addworkspaceLoading || !addworkspaceForm.name.trim() || workspaceErrors.contact_email || workspaceErrors.contact_phone}
+              disabled={addworkspaceLoading || !addworkspaceForm.name.trim() || !!workspaceErrors.contact_email || !!workspaceErrors.contact_phone}
               className="bg-purple-600 text-white hover:bg-purple-700"
             >
               {addworkspaceLoading ? "Création..." : "Créer"}
