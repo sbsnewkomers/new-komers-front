@@ -22,6 +22,9 @@ import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { ApeCodeSelect } from "@/components/structure/ApeCodeSelect";
 import { CountrySelect } from "@/components/structure/CountrySelect";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import { isValidPhoneNumber } from "react-phone-number-input";
 import {
   Dialog,
   DialogContent,
@@ -234,6 +237,10 @@ export default function StructurePage() {
   const [addworkspaceLoading, setAddworkspaceLoading] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
+  const [workspaceErrors, setWorkspaceErrors] = useState({
+    contact_email: "",
+    contact_phone: "",
+  });
 
   // Gérer le changement de fichier logo
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -258,6 +265,43 @@ export default function StructurePage() {
         setLogoPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Fonctions de validation
+  const validateEmail = (email: string): boolean => {
+    if (!email.trim()) return true; // Champ optionnel
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone: string): boolean => {
+    if (!phone.trim()) return true; // Champ optionnel
+    return isValidPhoneNumber(phone);
+  };
+
+  const handleEmailChange = (value: string) => {
+    setAddworkspaceForm((f) => ({ ...f, contact_email: value }));
+    if (!validateEmail(value)) {
+      setWorkspaceErrors((prev) => ({
+        ...prev,
+        contact_email: "Veuillez entrer un email valide",
+      }));
+    } else {
+      setWorkspaceErrors((prev) => ({ ...prev, contact_email: "" }));
+    }
+  };
+
+  const handlePhoneChange = (value: string) => {
+    setAddworkspaceForm((f) => ({ ...f, contact_phone: value }));
+    
+    if (!validatePhone(value)) {
+      setWorkspaceErrors((prev) => ({
+        ...prev,
+        contact_phone: "Veuillez entrer un numéro de téléphone valide",
+      }));
+    } else {
+      setWorkspaceErrors((prev) => ({ ...prev, contact_phone: "" }));
     }
   };
 
@@ -1209,6 +1253,19 @@ export default function StructurePage() {
   const handleCreateworkspace = async () => {
     if (!addworkspaceForm.name.trim()) return;
     
+    // Valider l'email et le téléphone
+    const emailValid = validateEmail(addworkspaceForm.contact_email);
+    const phoneValid = validatePhone(addworkspaceForm.contact_phone);
+    
+    if (!emailValid || !phoneValid) {
+      // Mettre à jour les erreurs
+      setWorkspaceErrors({
+        contact_email: emailValid ? "" : "Veuillez entrer un email valide",
+        contact_phone: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+      });
+      return;
+    }
+    
     setAddworkspaceLoading(true);
     try {
       // Créer FormData pour l'upload du fichier
@@ -1269,6 +1326,7 @@ export default function StructurePage() {
       });
       setLogoFile(null);
       setLogoPreview("");
+      setWorkspaceErrors({ contact_email: "", contact_phone: "" });
       void loadTree();
     } finally {
       setAddworkspaceLoading(false);
@@ -3919,23 +3977,32 @@ export default function StructurePage() {
               <Input
                 type="email"
                 value={addworkspaceForm.contact_email}
-                onChange={(e) =>
-                  setAddworkspaceForm((f) => ({ ...f, contact_email: e.target.value }))
-                }
+                onChange={(e) => handleEmailChange(e.target.value)}
                 placeholder="email@exemple.com"
+                className={workspaceErrors.contact_email ? "border-red-500" : ""}
               />
+              {workspaceErrors.contact_email && (
+                <p className="text-xs text-red-500">{workspaceErrors.contact_email}</p>
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">
                 Téléphone de contact
               </label>
-              <Input
+              <PhoneInput
+                international
+                countryCallingCodeEditable={false}
+                defaultCountry="FR"
                 value={addworkspaceForm.contact_phone}
-                onChange={(e) =>
-                  setAddworkspaceForm((f) => ({ ...f, contact_phone: e.target.value }))
-                }
-                placeholder="+33 1 23 45 67 89"
+                onChange={(value) => handlePhoneChange(value || "")}
+                className={workspaceErrors.contact_phone ? "border-red-500" : ""}
+                numberInputProps={{
+                  className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.contact_phone ? "border-red-500" : ""}`
+                }}
               />
+              {workspaceErrors.contact_phone && (
+                <p className="text-xs text-red-500">{workspaceErrors.contact_phone}</p>
+              )}
             </div>
           </div>
           <DialogFooter>
@@ -3945,13 +4012,14 @@ export default function StructurePage() {
                 setAddworkspaceOpen(false);
                 setLogoFile(null);
                 setLogoPreview("");
+                setWorkspaceErrors({ contact_email: "", contact_phone: "" });
               }}
             >
               Annuler
             </Button>
             <Button
               onClick={handleCreateworkspace}
-              disabled={addworkspaceLoading || !addworkspaceForm.name.trim()}
+              disabled={addworkspaceLoading || !addworkspaceForm.name.trim() || workspaceErrors.contact_email || workspaceErrors.contact_phone}
               className="bg-purple-600 text-white hover:bg-purple-700"
             >
               {addworkspaceLoading ? "Création..." : "Créer"}
