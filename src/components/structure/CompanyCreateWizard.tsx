@@ -43,6 +43,7 @@ export type CompanyWizardForm = {
   main_activity: string;
   size: string;
   model: string;
+  country: string;
   groupId?: string;
   workspaceId?: string;
   logo?: File;
@@ -54,6 +55,7 @@ const defaultForm: CompanyWizardForm = {
   fiscal_year_end: "",
   siret: "",
   address: "",
+  country: "",
   groupId: "",
   workspaceId: "",
   ape_code: "",
@@ -246,6 +248,12 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
               placeholder="Adresse"
               value={form.address}
               onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+            />
+            <Input
+              placeholder="Pays"
+              value={form.country}
+              onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
+              required
             />
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Logo de l&apos;entreprise</label>

@@ -71,6 +71,7 @@ type BusinessUnit = {
   code: string;
   activity: string;
   siret: string;
+  country: string;
   logo?: string;
   company_id?: string;
 };
@@ -83,6 +84,7 @@ type GroupFull = {
   fiscal_year_start: string;
   fiscal_year_end: string;
   mainActivity?: string;
+  country?: string;
   logo?: string;
 };
 
@@ -110,6 +112,7 @@ type CompanyFull = {
   fiscal_year_start: string;
   fiscal_year_end: string;
   address?: string;
+  country: string;
   ape_code?: string;
   main_activity?: string;
   size?: string;
@@ -267,6 +270,7 @@ export default function StructurePage() {
     fiscal_year_start: "",
     fiscal_year_end: "",
     address: "",
+    country: "",
     ape_code: "",
     main_activity: "",
     size: "SMALL",
@@ -283,6 +287,7 @@ export default function StructurePage() {
     code: "",
     activity: "",
     siret: "",
+    country: "",
     logo: undefined as string | undefined,
   });
   const [addBULoading, setAddBULoading] = useState(false);
@@ -296,6 +301,7 @@ export default function StructurePage() {
     fiscal_year_start: "",
     fiscal_year_end: "",
     mainActivity: "",
+    country: "",
     workspaceId: "",
     logo: undefined as string | undefined,
   });
@@ -332,12 +338,14 @@ export default function StructurePage() {
     fiscal_year_start: "",
     fiscal_year_end: "",
     mainActivity: "",
+    country: "",
     logo: undefined as string | undefined,
   });
   const [editCompany, setEditCompany] = useState({
     name: "",
     siret: "",
     address: "",
+    country: "",
     ape_code: "",
     main_activity: "",
     fiscal_year_start: "",
@@ -352,6 +360,7 @@ export default function StructurePage() {
     code: "",
     activity: "",
     siret: "",
+    country: "",
     logo: undefined as string | undefined,
   });
   const [nodeUsers, setNodeUsers] = useState<NodeUsersByRole | null>(null);
@@ -438,6 +447,7 @@ export default function StructurePage() {
         `/companies/${companyId}/business-units`,
         { snackbar: { showSuccess: false, showError: true } },
       );
+      console.log('Raw BU data from API:', data); // Debug log
       setBusByCompany((prev) => ({ ...prev, [companyId]: data }));
       return data;
     } catch {
@@ -843,9 +853,23 @@ export default function StructurePage() {
 
   const openDetail = useCallback(
     async (node: TreeNode) => {
+      console.log('=== OUVERTURE MODAL ===');
+      console.log('Node clicked:', node);
+      console.log('Current editBU before update:', editBU);
+      
       setSelectedNode(node);
       setEditing(false);
       setNodeUsers(null);
+
+      // Réinitialiser editBU avec des valeurs vides AVANT de charger les nouvelles données
+      setEditBU({
+        name: "",
+        code: "",
+        activity: "",
+        siret: "",
+        country: "",
+        logo: undefined as string | undefined,
+      });
 
       if (node.type === "workspace") {
         try {
@@ -886,6 +910,7 @@ export default function StructurePage() {
             fiscal_year_start: g.fiscal_year_start ?? "",
             fiscal_year_end: g.fiscal_year_end ?? "",
             mainActivity: g.mainActivity ?? "",
+            country: g.country ?? "",
             logo: g.logo ?? "",
           });
         } catch {
@@ -896,6 +921,7 @@ export default function StructurePage() {
             fiscal_year_start: "",
             fiscal_year_end: "",
             mainActivity: "",
+            country: "",
             logo: undefined as string | undefined,
           });
           setEditGroupLogoFile(null);
@@ -909,6 +935,7 @@ export default function StructurePage() {
             name: c.name,
             siret: c.siret ?? "",
             address: c.address ?? "",
+            country: c.country ?? "",
             ape_code: c.ape_code ?? "",
             main_activity: c.main_activity ?? "",
             fiscal_year_start: c.fiscal_year_start ?? "",
@@ -923,6 +950,7 @@ export default function StructurePage() {
             name: node.name,
             siret: "",
             address: "",
+            country: "",
             ape_code: "",
             main_activity: "",
             fiscal_year_start: "",
@@ -935,37 +963,36 @@ export default function StructurePage() {
         }
         loadBUsForCompany(node.id);
       } else if (node.type === "bu") {
-        const cached = busByCompany[node.companyId]?.find(
-          (b) => b.id === node.id,
-        );
-        if (cached) {
-          setEditBU({
-            name: cached.name,
-            code: cached.code,
-            activity: cached.activity,
-            siret: cached.siret,
-            logo: cached.logo || "",
-          });
+        // Forcer toujours le rechargement depuis l'API pour avoir les données complètes
+        const freshBUs = await loadBUsForCompany(node.companyId);
+        console.log('All BUs from API:', freshBUs); // Debug log
+        console.log('Looking for BU with ID:', node.id); // Debug log
+        const bu = freshBUs.find((b) => b.id === node.id);
+        console.log('Found BU:', bu); // Debug log
+        
+        if (bu) {
+          const updatedEditBU = {
+            name: bu.name,
+            code: bu.code,
+            activity: bu.activity || "",
+            siret: bu.siret || "",
+            country: bu.country || "",
+            logo: bu.logo || "",
+          };
+          console.log('Setting editBU to:', updatedEditBU); // Debug log
+          setEditBU(updatedEditBU);
         } else {
+          // Valeurs par défaut seulement si la BU n'est pas trouvée
           setEditBU({
             name: node.name,
             code: node.code,
             activity: "",
             siret: "",
+            country: "",
             logo: undefined as string | undefined,
           });
-          const freshBUs = await loadBUsForCompany(node.companyId);
-          const bu = freshBUs.find((b) => b.id === node.id);
-          if (bu) {
-            setEditBU({
-              name: bu.name,
-              code: bu.code,
-              activity: bu.activity,
-              siret: bu.siret,
-              logo: bu.logo || "",
-            });
-          }
         }
+        loadBUsForCompany(node.id);
       }
 
       // Load managers & users linked to this node
@@ -1050,6 +1077,9 @@ export default function StructurePage() {
       if (editGroup.mainActivity) {
         formData.append('mainActivity', editGroup.mainActivity);
       }
+      if (editGroup.country) {
+        formData.append('country', editGroup.country);
+      }
       if (editGroupLogoFile) {
         formData.append('logo', editGroupLogoFile);
       }
@@ -1076,6 +1106,9 @@ export default function StructurePage() {
       }
       if (editCompany.address) {
         formData.append('address', editCompany.address);
+      }
+       if (editCompany.country) {
+        formData.append('country', editCompany.country);
       }
       if (editCompany.ape_code) {
         formData.append('ape_code', editCompany.ape_code);
@@ -1129,6 +1162,9 @@ export default function StructurePage() {
       }
       if (editBU.siret) {
         formData.append('siret', editBU.siret);
+      }
+      if (editBU.country) {
+        formData.append('country', editBU.country);
       }
       if (editBULogoFile) {
         formData.append('logo', editBULogoFile);
@@ -1295,6 +1331,7 @@ export default function StructurePage() {
       formData.append('fiscal_year_end', form.fiscal_year_end);
       formData.append('siret', form.siret);
       if (form.address) formData.append('address', form.address);
+      if (form.country) formData.append('country', form.country);
       if (form.ape_code) formData.append('ape_code', form.ape_code);
       if (form.main_activity) formData.append('main_activity', form.main_activity);
       formData.append('size', size);
@@ -1368,6 +1405,9 @@ export default function StructurePage() {
       if (addCompanyForm.main_activity) {
         formData.append('main_activity', addCompanyForm.main_activity);
       }
+      if (addCompanyForm.country) {
+        formData.append('country', addCompanyForm.country);
+      }
       formData.append('size', addCompanyForm.size);
       formData.append('model', addCompanyForm.model);
       if (addCompanyLogoFile) {
@@ -1430,6 +1470,9 @@ export default function StructurePage() {
       if (addBUForm.siret) {
         formData.append('siret', addBUForm.siret);
       }
+      if (addBUForm.country) {
+        formData.append('country', addBUForm.country);
+      }
       if (addBULogoFile) {
         formData.append('logo', addBULogoFile);
       }
@@ -1472,6 +1515,9 @@ export default function StructurePage() {
       }
       if (addGroupForm.mainActivity) {
         formData.append('mainActivity', addGroupForm.mainActivity);
+      }
+      if (addGroupForm.country) {
+        formData.append('country', addGroupForm.country);
       }
       if (addGroupForm.workspaceId) {
         formData.append('workspace_id', addGroupForm.workspaceId);
@@ -2420,6 +2466,12 @@ export default function StructurePage() {
                   className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
                 />
               </div>
+              <Field
+                label="Pays"
+                value={editGroup.country}
+                editing={editing}
+                onChange={(v) => setEditGroup((f) => ({ ...f, country: v }))}
+              />
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Activité principale
@@ -2515,6 +2567,12 @@ export default function StructurePage() {
                 editing={editing}
                 onChange={(v) => setEditCompany((f) => ({ ...f, address: v }))}
               />
+              <Field
+                label="Pays"
+                value={editCompany.country}
+                editing={editing}
+                onChange={(v) => setEditCompany((f) => ({ ...f, country: v }))}
+              />
               <div className="space-y-2">
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Code APE
@@ -2609,7 +2667,7 @@ export default function StructurePage() {
                           <Image 
                             src={editCompany.logo} 
                             alt="Logo de l'entreprise" 
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            className="h-16 w-16 object-cover rounded-lg border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image URL:', editCompany.logo);
                               e.currentTarget.style.display = 'none';
@@ -2619,7 +2677,7 @@ export default function StructurePage() {
                           <Image 
                             src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editCompany.logo}`} 
                             alt="Logo de l'entreprise" 
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            className="h-16 w-16 object-cover rounded-lg border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editCompany.logo}`);
                               e.currentTarget.style.display = 'none';
@@ -2713,6 +2771,12 @@ export default function StructurePage() {
                 editing={editing}
                 validate={validateSiret}
                 onChange={(v) => setEditBU((f) => ({ ...f, siret: v }))}
+              />
+              <Field
+                label="Pays"
+                value={editBU.country}
+                editing={editing}
+                onChange={(v) => setEditBU((f) => ({ ...f, country: v }))}
               />
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -3259,6 +3323,18 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Pays *
+              </label>
+              <Input
+                value={addGroupForm.country}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({ ...f, country: e.target.value }))
+                }
+                placeholder="Pays du groupe"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Activité principale
               </label>
               <Input
@@ -3514,6 +3590,20 @@ export default function StructurePage() {
                   setAddCompanyForm((f) => ({ ...f, address: e.target.value }))
                 }
                 placeholder="Adresse de l'entreprise"
+              />
+            </div>
+            
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Pays
+              </label>
+              <Input
+                placeholder="Pays de l'entreprise"
+                value={addCompanyForm.country}
+                onChange={(e) =>
+                  setAddCompanyForm((f) => ({ ...f, country: e.target.value }))
+                }
+                required
               />
             </div>
             
@@ -3867,6 +3957,11 @@ function Field({
   validate?: (v: string) => boolean;
 }) {
   const [error, setError] = useState<string>("");
+
+  // Debug log pour le champ pays
+  if (label === "Pays") {
+    console.log('Field component - Pays value:', `"${value}"`, 'Type:', typeof value);
+  }
 
   const handleChange = (newValue: string) => {
     if (validate) {
