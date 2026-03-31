@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Select } from "@/components/ui/Select";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
 import { ApeCodeSelect } from "./ApeCodeSelect";
+import { CountrySelect } from "./CountrySelect";
 const STEPS = [
   { id: 1, title: "Informations Générales" },
   { id: 2, title: "Détails Administratifs" },
@@ -249,11 +250,10 @@ export function CompanyCreateWizard({ open, onOpenChange, groups, workspaces, on
               value={form.address}
               onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
             />
-            <Input
+            <CountrySelect
               placeholder="Pays"
               value={form.country}
-              onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
-              required
+              onChange={(value) => setForm((f) => ({ ...f, country: value }))}
             />
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Logo de l&apos;entreprise</label>

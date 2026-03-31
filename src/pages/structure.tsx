@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { ApeCodeSelect } from "@/components/structure/ApeCodeSelect";
+import { CountrySelect } from "@/components/structure/CountrySelect";
 import {
   Dialog,
   DialogContent,
@@ -313,6 +314,7 @@ export default function StructurePage() {
     code: "",
     activity: "",
     siret: "",
+    country: "",
     companyId: "",
   });
   const [addBUStandaloneLoading, setAddBUStandaloneLoading] = useState(false);
@@ -1436,6 +1438,7 @@ export default function StructurePage() {
         fiscal_year_start: "",
         fiscal_year_end: "",
         address: "",
+        country: "",
         ape_code: "",
         main_activity: "",
         size: "SMALL",
@@ -1486,7 +1489,7 @@ export default function StructurePage() {
       await loadTree();
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
-      setAddBUForm({ name: "", code: "", activity: "", siret: "", logo: undefined });
+      setAddBUForm({ name: "", code: "", activity: "", siret: "", country: "", logo: undefined });
       setAddBULogoFile(null);
     } catch {
       /* snackbar handles */
@@ -1541,6 +1544,7 @@ export default function StructurePage() {
         fiscal_year_start: "",
         fiscal_year_end: "",
         mainActivity: "",
+        country: "",
         workspaceId: "",
         logo: undefined as string | undefined,
       });
@@ -1566,6 +1570,7 @@ export default function StructurePage() {
             code: addBUStandaloneForm.code,
             activity: addBUStandaloneForm.activity,
             siret: addBUStandaloneForm.siret,
+            country: addBUStandaloneForm.country,
           }),
           snackbar: {
             showSuccess: true,
@@ -1583,6 +1588,7 @@ export default function StructurePage() {
         code: "",
         activity: "",
         siret: "",
+        country: "",
         companyId: "",
       });
     } catch {
@@ -2139,6 +2145,7 @@ export default function StructurePage() {
                                         siret: "",
                                         ape_code: "",
                                         mainActivity: "",
+                                        country: "",
                                         fiscal_year_start: "",
                                         fiscal_year_end: "",
                                         workspaceId: "",
@@ -2168,6 +2175,7 @@ export default function StructurePage() {
                                         fiscal_year_start: "",
                                         fiscal_year_end: "",
                                         address: "",
+                                        country: "",
                                         ape_code: "",
                                         main_activity: "",
                                         size: "SMALL",
@@ -2200,6 +2208,7 @@ export default function StructurePage() {
                                           code: "",
                                           activity: "",
                                           siret: "",
+                                          country: "",
                                           logo: undefined as string | undefined,
                                         });
                                         setAddBULogoFile(null);
@@ -2466,7 +2475,7 @@ export default function StructurePage() {
                   className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
                 />
               </div>
-              <Field
+              <FieldCountry
                 label="Pays"
                 value={editGroup.country}
                 editing={editing}
@@ -2567,7 +2576,7 @@ export default function StructurePage() {
                 editing={editing}
                 onChange={(v) => setEditCompany((f) => ({ ...f, address: v }))}
               />
-              <Field
+              <FieldCountry
                 label="Pays"
                 value={editCompany.country}
                 editing={editing}
@@ -2772,7 +2781,7 @@ export default function StructurePage() {
                 validate={validateSiret}
                 onChange={(v) => setEditBU((f) => ({ ...f, siret: v }))}
               />
-              <Field
+              <FieldCountry
                 label="Pays"
                 value={editBU.country}
                 editing={editing}
@@ -3325,10 +3334,10 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Pays *
               </label>
-              <Input
+              <CountrySelect
                 value={addGroupForm.country}
-                onChange={(e) =>
-                  setAddGroupForm((f) => ({ ...f, country: e.target.value }))
+                onChange={(value) =>
+                  setAddGroupForm((f) => ({ ...f, country: value }))
                 }
                 placeholder="Pays du groupe"
               />
@@ -3488,6 +3497,18 @@ export default function StructurePage() {
                 }
               />
             </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Pays *
+              </label>
+              <CountrySelect
+                value={addBUStandaloneForm.country}
+                onChange={(value) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, country: value }))
+                }
+                placeholder="Pays de la Business Unit"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -3501,6 +3522,7 @@ export default function StructurePage() {
               disabled={
                 addBUStandaloneLoading ||
                 !addBUStandaloneForm.name.trim() ||
+                !addBUStandaloneForm.country.trim() ||
                 !addBUStandaloneForm.companyId.trim()
               }
             >
@@ -3597,13 +3619,12 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Pays
               </label>
-              <Input
+              <CountrySelect
                 placeholder="Pays de l'entreprise"
                 value={addCompanyForm.country}
-                onChange={(e) =>
-                  setAddCompanyForm((f) => ({ ...f, country: e.target.value }))
+                onChange={(value) =>
+                  setAddCompanyForm((f) => ({ ...f, country: value }))
                 }
-                required
               />
             </div>
             
@@ -3770,6 +3791,18 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Pays *
+              </label>
+              <CountrySelect
+                value={addBUForm.country}
+                onChange={(value) =>
+                  setAddBUForm((f) => ({ ...f, country: value }))
+                }
+                placeholder="Pays de la Business Unit"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Logo
               </label>
               <FileUpload
@@ -3796,6 +3829,7 @@ export default function StructurePage() {
               disabled={
                 addBULoading ||
                 !addBUForm.name.trim() ||
+                !addBUForm.country.trim() ||
                 !can("business-units", CRUD_ACTION.CREATE)
               }
               className="disabled:cursor-not-allowed disabled:opacity-60"
@@ -3958,11 +3992,6 @@ function Field({
 }) {
   const [error, setError] = useState<string>("");
 
-  // Debug log pour le champ pays
-  if (label === "Pays") {
-    console.log('Field component - Pays value:', `"${value}"`, 'Type:', typeof value);
-  }
-
   const handleChange = (newValue: string) => {
     if (validate) {
       if (!validate(newValue)) {
@@ -3989,6 +4018,35 @@ function Field({
           />
           {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
         </div>
+      ) : (
+        <p className="text-sm font-medium text-primary">{value || "—"}</p>
+      )}
+    </div>
+  );
+}
+
+function FieldCountry({
+  label,
+  value,
+  editing,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  editing: boolean;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+        {label}
+      </label>
+      {editing ? (
+        <CountrySelect
+          value={value}
+          onChange={onChange}
+          placeholder="Sélectionner un pays"
+        />
       ) : (
         <p className="text-sm font-medium text-primary">{value || "—"}</p>
       )}
