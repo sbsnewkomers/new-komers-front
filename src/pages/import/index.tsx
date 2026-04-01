@@ -231,7 +231,7 @@ export default function ImportPage() {
   const [isFecImporting, setIsFecImporting] = useState(false);
   const [fecImportResult, setFecImportResult] = useState<FecImportResponse | null>(null);
   const [fecResultModalOpen, setFecResultModalOpen] = useState(false);
-  const [selectedFiscalYearId, setSelectedFiscalYearId] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
 
   // Hook personnalisé pour charger toutes les business units
   const useAllBusinessUnits = () => {
@@ -528,7 +528,7 @@ export default function ImportPage() {
 
   // Fonction d'import FEC
   const handleFecImport = useCallback(async () => {
-    if (!csvFile || !selectedEntityId || !selectedFiscalYearId) {
+    if (!csvFile || !selectedEntityId || !selectedYear) {
       alert("Veuillez sélectionner une entité, un exercice fiscal et un fichier FEC.");
       return;
     }
@@ -546,7 +546,7 @@ export default function ImportPage() {
       const result = await uploadFecFile({
         file: csvFile,
         entityId: selectedEntityId, // Changé de companyId à entityId
-        fiscalYearId: selectedFiscalYearId,
+        year: selectedYear,
         userId,
         entityType: selectedEntityType, // Ajouter le type d'entité
       });
@@ -569,7 +569,7 @@ export default function ImportPage() {
     } finally {
       setIsFecImporting(false);
     }
-  }, [csvFile, selectedEntityId, selectedFiscalYearId, selectedEntityType, user]);
+  }, [csvFile, selectedEntityId, selectedYear, selectedEntityType, user]);
 
   const runValidation = () => {
     const errors: ValidationError[] = [];
@@ -743,11 +743,11 @@ export default function ImportPage() {
                         
                         <div className="flex items-center gap-4">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                            selectedFiscalYearId ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
+                            selectedYear ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
                           }`}>
-                            {selectedFiscalYearId ? '✓' : '4'}
+                            {selectedYear ? '✓' : '4'}
                           </div>
-                          <span className={`text-sm font-medium ${selectedFiscalYearId ? 'text-emerald-700' : 'text-slate-500'}`}>
+                          <span className={`text-sm font-medium ${selectedYear ? 'text-emerald-700' : 'text-slate-500'}`}>
                             Exercice fiscal sélectionné
                           </span>
                         </div>
@@ -858,21 +858,37 @@ export default function ImportPage() {
                       
                       <div>
                         <label className="mb-1 block text-sm font-medium text-muted-foreground">
-                          Exercice fiscal {!selectedEntityId && <span className="text-xs text-slate-400">(sélectionnez d&apos;abord une entité)</span>}
+                          Année de l&apos;exercice comptable {!selectedEntityId && <span className="text-xs text-slate-400">(sélectionnez d&apos;abord une entité)</span>}
                         </label>
                         <Select
-                          value={selectedFiscalYearId}
-                          onValueChange={setSelectedFiscalYearId}
-                          disabled={!csvFile || !selectedEntityId || fiscalYears.loading}
+                          value={selectedYear}
+                          onValueChange={setSelectedYear}
+                          disabled={!csvFile || !selectedEntityId}
                         >
                           <option value="">
                             {!csvFile ? "Sélectionnez d'abord un fichier" :
                              !selectedEntityId ? "Sélectionnez d'abord une entité" :
-                             fiscalYears.loading ? "Chargement..." : "Sélectionner un exercice fiscal"}
+                             "Sélectionner une année de l'exercice comptable"}
                           </option>
-                          {fiscalYears.list?.map((fy) => (
-                            <option key={fy.id} value={fy.id}>
-                              {fy.year} ({new Date(fy.start_date).toLocaleDateString()} - {new Date(fy.end_date).toLocaleDateString()})
+                          {(() => {
+                            const currentYear = new Date().getFullYear();
+                            const years = [];
+                            
+                            // Ajouter l'année actuelle
+                            years.push(currentYear);
+                            
+                            // Ajouter les 9 années précédentes
+                            for (let i = 1; i <= 9; i++) {
+                              years.push(currentYear - i);
+                            }
+                            
+                            // Dédoublonner et trier
+                            return Array.from(new Set(years))
+                              .sort((a, b) => b - a);
+                          })()
+                          .map((year) => (
+                            <option key={year} value={year}>
+                              {year}
                             </option>
                           ))}
                         </Select>
@@ -886,11 +902,11 @@ export default function ImportPage() {
                       <div className="flex justify-end">
                         <Button
                           onClick={handleFecImport}
-                          disabled={isFecImporting || !selectedEntityId || !selectedFiscalYearId || !csvFile}
+                          disabled={isFecImporting || !selectedEntityId || !selectedYear || !csvFile}
                           className="gap-2"
                           title={!csvFile ? "Veuillez d'abord sélectionner un fichier FEC" : 
                                   !selectedEntityId ? "Veuillez sélectionner une entité" :
-                                  !selectedFiscalYearId ? "Veuillez sélectionner un exercice fiscal" : ""}
+                                  !selectedYear ? "Veuillez sélectionner une année" : ""}
                         >
                           {isFecImporting ? (
                             <>
@@ -1448,7 +1464,7 @@ export default function ImportPage() {
                 setFecResultModalOpen(false);
                 setFecImportResult(null);
                 setCsvFile(null);
-                setSelectedFiscalYearId("");
+                setSelectedYear("");
               }}
             >
               Fermer
