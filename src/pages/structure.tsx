@@ -2446,26 +2446,35 @@ export default function StructurePage() {
                       {editworkspace.logo ? (
                         <>
                           {console.log('Logo à afficher:', editworkspace.logo)}
+                          {console.log('NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL)}
                           {editworkspace.logo.startsWith('http') ? (
                             <Image 
                               src={editworkspace.logo} 
                               alt="Logo de l'workspace" 
-                              className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                              width={64}
+                              height={64}
+                              className="object-cover rounded-lg border border-slate-200"
                               onError={(e) => {
                                 console.error('Erreur chargement image URL:', editworkspace.logo);
                                 e.currentTarget.style.display = 'none';
                               }}
                             />
                           ) : (
-                            <Image 
-                              src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`} 
-                              alt="Logo de l'workspace" 
-                              className="h-16 w-16 object-cover rounded-lg border border-slate-200"
-                              onError={(e) => {
-                                console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`);
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
+                            <>
+                              {console.log('URL complète générée:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`)}
+                              <Image 
+                                src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`} 
+                                alt="Logo de l'workspace" 
+                                width={64}
+                                height={64}
+                                unoptimized={true}
+                                className="object-cover rounded-lg border border-slate-200"
+                                onError={(e) => {
+                                  console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`);
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </>
                           )}
                           <p className="text-xs text-slate-500">{editworkspace.logo}</p>
                         </>
@@ -2637,7 +2646,9 @@ export default function StructurePage() {
                           <Image 
                             src={editGroup.logo} 
                             alt="Logo du groupe" 
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            width={64}
+                            height={64}
+                            className="object-cover rounded-lg border border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image URL:', editGroup.logo);
                               e.currentTarget.style.display = 'none';
@@ -2647,7 +2658,10 @@ export default function StructurePage() {
                           <Image 
                             src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editGroup.logo}`} 
                             alt="Logo du groupe" 
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            width={64}
+                            height={64}
+                            unoptimized={true}
+                            className="object-cover rounded-lg border border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editGroup.logo}`);
                               e.currentTarget.style.display = 'none';
@@ -2794,7 +2808,9 @@ export default function StructurePage() {
                           <Image 
                             src={editCompany.logo} 
                             alt="Logo de l'entreprise" 
-                            className="h-16 w-16 object-cover rounded-lg border-slate-200"
+                            width={64}
+                            height={64}
+                            className="object-cover rounded-lg border border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image URL:', editCompany.logo);
                               e.currentTarget.style.display = 'none';
@@ -2804,14 +2820,17 @@ export default function StructurePage() {
                           <Image 
                             src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editCompany.logo}`} 
                             alt="Logo de l'entreprise" 
-                            className="h-16 w-16 object-cover rounded-lg border-slate-200"
+                            width={64}
+                            height={64}
+                            unoptimized={true}
+                            className="object-cover rounded-lg border border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editCompany.logo}`);
                               e.currentTarget.style.display = 'none';
                             }}
                           />
                         )}
-                                              </>
+                      </>
                     ) : (
                       <p className="text-sm font-medium text-primary">—</p>
                     )}
@@ -2932,7 +2951,9 @@ export default function StructurePage() {
                           <Image 
                             src={editBU.logo} 
                             alt="Logo de la business unit" 
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            width={64}
+                            height={64}
+                            className="object-cover rounded-lg border border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image URL:', editBU.logo);
                               e.currentTarget.style.display = 'none';
@@ -2942,7 +2963,10 @@ export default function StructurePage() {
                           <Image 
                             src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editBU.logo}`} 
                             alt="Logo de la business unit" 
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            width={64}
+                            height={64}
+                            unoptimized={true}
+                            className="object-cover rounded-lg border border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editBU.logo}`);
                               e.currentTarget.style.display = 'none';
@@ -4012,7 +4036,9 @@ export default function StructurePage() {
                     <Image 
                       src={logoPreview} 
                       alt="Aperçu du logo" 
-                      className="h-20 w-20 object-cover rounded-lg border border-slate-200"
+                      width={80}
+                      height={80}
+                      className="object-cover rounded-lg border border-slate-200"
                     />
                   </div>
                 )}
