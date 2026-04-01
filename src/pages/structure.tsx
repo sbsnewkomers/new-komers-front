@@ -1327,38 +1327,13 @@ export default function StructurePage() {
         formData.append('logo', logoFile);
       }
       
-      // Pour l'upload de fichiers, on doit utiliser fetch directement car apiFetch force JSON
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      // Récupérer le token depuis le storage correct
-      let token = null;
-      try {
-        const raw = window.localStorage.getItem("nk-auth-tokens");
-        if (raw) {
-          const parsed = JSON.parse(raw) as { accessToken?: string };
-          token = parsed.accessToken || null;
-        }
-      } catch {
-        token = null;
-      }
-      console.log('Token d accès:', token); // Ajout d'un log pour vérifier le token
-      const response = await fetch(`${baseUrl}/workspaces`, {
+      // Utiliser apiFetch pour avoir le snackbar de succès
+      await apiFetch("/workspaces", {
         method: 'POST',
         body: formData,
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          // Ne PAS définir Content-Type pour FormData
-        },
+        headers: {}, // Important: ne pas définir Content-Type pour FormData
+        snackbar: { showSuccess: true, successMessage: "Workspace créée avec succès" },
       });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Erreur création workspace:', response.status, errorText);
-        alert(`Erreur lors de la création: ${response.status} ${errorText}`);
-        return;
-      }
-      
-      // Afficher un message de succès
-      alert("Workspace créée avec succès");
       
       setAddworkspaceOpen(false);
       setAddworkspaceForm({ 
