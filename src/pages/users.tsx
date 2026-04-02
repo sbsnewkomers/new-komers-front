@@ -80,6 +80,12 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/DropdownMenu";
 
+// Validation d'email
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
 const roleBadgeColor: Record<UserRole, string> = {
   SUPER_ADMIN: "bg-purple-50 text-purple-700 border-purple-200",
   ADMIN: "bg-blue-50 text-blue-700 border-blue-200",
@@ -826,11 +832,14 @@ export default function UsersPage() {
               </div>
             </div> */}
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Email *</label>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Email <span className="text-red-500">*</span></label>
               <Input type="email" value={inviteForm.email} onChange={(e) => setInviteForm((f) => ({ ...f, email: e.target.value }))} placeholder="john@exemple.com" required />
+              {inviteForm.email && !isValidEmail(inviteForm.email) && (
+                <p className="mt-1 text-xs text-red-500">Veuillez entrer une adresse email valide</p>
+              )}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le *</label>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le <span className="text-red-500">*</span></label>
               <Select
                 value={inviteForm.role}
                 onValueChange={(v) => {
@@ -848,7 +857,7 @@ export default function UsersPage() {
             {/* Data Perimeter */}
             {inviteForm.role !== "ADMIN" && (
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">P&eacute;rim&egrave;tre d&rsquo;acc&egrave;s</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">P&eacute;rim&egrave;tre d&rsquo;acc&egrave;s <span className="text-red-500">*</span></label>
                 <p className="mb-3 text-xs text-slate-400">
                   {inviteForm.role === "HEAD_MANAGER" 
                     ? "Définir l'workspace accessible (obligatoire). L'héritage hiérarchique s'applique automatiquement."
@@ -933,7 +942,9 @@ export default function UsersPage() {
               disabled={
                 inviteLoading ||
                 !inviteForm.email ||
+                !isValidEmail(inviteForm.email) ||
                 (inviteForm.role === "END_USER" && invitePerimeter.length === 0) ||
+                (inviteForm.role === "MANAGER" && invitePerimeter.length === 0) ||
                 (inviteForm.role === "HEAD_MANAGER" && invitePerimeter.length === 0)
               }
             >
