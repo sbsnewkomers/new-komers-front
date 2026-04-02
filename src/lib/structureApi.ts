@@ -4,6 +4,7 @@ export type TreeBU = {
   id: string;
   name: string;
   code: string;
+  country: string;
 };
 
 export type TreeCompany = {

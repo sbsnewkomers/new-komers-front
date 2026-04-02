@@ -84,20 +84,20 @@ export async function apiFetch<T>(
     let parsed: unknown;
     let backendMessage: string | undefined;
     
-    // For 400/500 errors, the response might not be valid JSON
-    if (res.status === 400 || res.status === 500) {
-      backendMessage = text; // Use raw text for client/server errors
-    } else {
-      try {
-        parsed = text ? JSON.parse(text) : undefined;
-        // Add safety check for parsed object
-        if (parsed && typeof parsed === 'object' && parsed !== null && 'message' in parsed) {
-          const m = (parsed as { message?: string | string[] } | undefined)?.message;
-          backendMessage = Array.isArray(m) ? m.join(", ") : m;
-        }
-      } catch {
-        parsed = undefined;
+    try {
+      parsed = text ? JSON.parse(text) : undefined;
+      // Add safety check for parsed object
+      if (parsed && typeof parsed === 'object' && parsed !== null && 'message' in parsed) {
+        const m = (parsed as { message?: string | string[] } | undefined)?.message;
+        backendMessage = Array.isArray(m) ? m.join(", ") : m;
       }
+    } catch {
+      parsed = undefined;
+    }
+
+    // If JSON parsing failed or no message found, use raw text
+    if (!backendMessage) {
+      backendMessage = text;
     }
 
     const displayMessage = snackbar?.errorMessage ?? backendMessage ?? (text || defaultMessage);

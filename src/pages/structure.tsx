@@ -21,6 +21,10 @@ import { Textarea } from "@/components/ui/Textarea";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { ApeCodeSelect } from "@/components/structure/ApeCodeSelect";
+import { CountrySelect } from "@/components/structure/CountrySelect";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import { isValidPhoneNumber } from "react-phone-number-input";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +75,7 @@ type BusinessUnit = {
   code: string;
   activity: string;
   siret: string;
+  country: string;
   logo?: string;
   company_id?: string;
 };
@@ -83,6 +88,7 @@ type GroupFull = {
   fiscal_year_start: string;
   fiscal_year_end: string;
   mainActivity?: string;
+  country?: string;
   logo?: string;
 };
 
@@ -110,6 +116,7 @@ type CompanyFull = {
   fiscal_year_start: string;
   fiscal_year_end: string;
   address?: string;
+  country: string;
   ape_code?: string;
   main_activity?: string;
   size?: string;
@@ -230,6 +237,14 @@ export default function StructurePage() {
   const [addworkspaceLoading, setAddworkspaceLoading] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
+  const [workspaceErrors, setWorkspaceErrors] = useState({
+    contact_email: "",
+    contact_phone: "",
+  });
+  const [editWorkspaceErrors, setEditWorkspaceErrors] = useState({
+    contact_email: "",
+    contact_phone: "",
+  });
 
   // Gérer le changement de fichier logo
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,6 +272,69 @@ export default function StructurePage() {
     }
   };
 
+  // Fonctions de validation
+  const validateEmail = (email: string): boolean => {
+    if (!email.trim()) return true; // Champ optionnel
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone: string): boolean => {
+    if (!phone.trim()) return true; // Champ optionnel
+    return isValidPhoneNumber(phone);
+  };
+
+  const handleEmailChange = (value: string) => {
+    setAddworkspaceForm((f) => ({ ...f, contact_email: value }));
+    if (!validateEmail(value)) {
+      setWorkspaceErrors((prev) => ({
+        ...prev,
+        contact_email: "Veuillez entrer un email valide",
+      }));
+    } else {
+      setWorkspaceErrors((prev) => ({ ...prev, contact_email: "" }));
+    }
+  };
+
+  const handlePhoneChange = (value: string) => {
+    setAddworkspaceForm((f) => ({ ...f, contact_phone: value }));
+    
+    if (!validatePhone(value)) {
+      setWorkspaceErrors((prev) => ({
+        ...prev,
+        contact_phone: "Veuillez entrer un numéro de téléphone valide",
+      }));
+    } else {
+      setWorkspaceErrors((prev) => ({ ...prev, contact_phone: "" }));
+    }
+  };
+
+  // Fonctions de validation pour l'édition
+  const handleEditEmailChange = (value: string) => {
+    setEditworkspace((f) => ({ ...f, contact_email: value }));
+    if (!validateEmail(value)) {
+      setEditWorkspaceErrors((prev) => ({
+        ...prev,
+        contact_email: "Veuillez entrer un email valide",
+      }));
+    } else {
+      setEditWorkspaceErrors((prev) => ({ ...prev, contact_email: "" }));
+    }
+  };
+
+  const handleEditPhoneChange = (value: string) => {
+    setEditworkspace((f) => ({ ...f, contact_phone: value }));
+    
+    if (!validatePhone(value)) {
+      setEditWorkspaceErrors((prev) => ({
+        ...prev,
+        contact_phone: "Veuillez entrer un numéro de téléphone valide",
+      }));
+    } else {
+      setEditWorkspaceErrors((prev) => ({ ...prev, contact_phone: "" }));
+    }
+  };
+
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   const [addCompanyGroupId, setAddCompanyGroupId] = useState<string | null>(
     null,
@@ -267,6 +345,7 @@ export default function StructurePage() {
     fiscal_year_start: "",
     fiscal_year_end: "",
     address: "",
+    country: "",
     ape_code: "",
     main_activity: "",
     size: "SMALL",
@@ -283,6 +362,7 @@ export default function StructurePage() {
     code: "",
     activity: "",
     siret: "",
+    country: "",
     logo: undefined as string | undefined,
   });
   const [addBULoading, setAddBULoading] = useState(false);
@@ -296,6 +376,7 @@ export default function StructurePage() {
     fiscal_year_start: "",
     fiscal_year_end: "",
     mainActivity: "",
+    country: "",
     workspaceId: "",
     logo: undefined as string | undefined,
   });
@@ -307,6 +388,7 @@ export default function StructurePage() {
     code: "",
     activity: "",
     siret: "",
+    country: "",
     companyId: "",
   });
   const [addBUStandaloneLoading, setAddBUStandaloneLoading] = useState(false);
@@ -332,12 +414,14 @@ export default function StructurePage() {
     fiscal_year_start: "",
     fiscal_year_end: "",
     mainActivity: "",
+    country: "",
     logo: undefined as string | undefined,
   });
   const [editCompany, setEditCompany] = useState({
     name: "",
     siret: "",
     address: "",
+    country: "",
     ape_code: "",
     main_activity: "",
     fiscal_year_start: "",
@@ -352,6 +436,7 @@ export default function StructurePage() {
     code: "",
     activity: "",
     siret: "",
+    country: "",
     logo: undefined as string | undefined,
   });
   const [nodeUsers, setNodeUsers] = useState<NodeUsersByRole | null>(null);
@@ -438,6 +523,7 @@ export default function StructurePage() {
         `/companies/${companyId}/business-units`,
         { snackbar: { showSuccess: false, showError: true } },
       );
+      console.log('Raw BU data from API:', data); // Debug log
       setBusByCompany((prev) => ({ ...prev, [companyId]: data }));
       return data;
     } catch {
@@ -843,9 +929,23 @@ export default function StructurePage() {
 
   const openDetail = useCallback(
     async (node: TreeNode) => {
+      console.log('=== OUVERTURE MODAL ===');
+      console.log('Node clicked:', node);
+      console.log('Current editBU before update:', editBU);
+      
       setSelectedNode(node);
       setEditing(false);
       setNodeUsers(null);
+
+      // Réinitialiser editBU avec des valeurs vides AVANT de charger les nouvelles données
+      setEditBU({
+        name: "",
+        code: "",
+        activity: "",
+        siret: "",
+        country: "",
+        logo: undefined as string | undefined,
+      });
 
       if (node.type === "workspace") {
         try {
@@ -862,6 +962,7 @@ export default function StructurePage() {
             manager_id: org.manager_id ?? "",
           });
           setEditworkspaceLogoFile(null);
+          setEditWorkspaceErrors({ contact_email: "", contact_phone: "" });
         } catch {
           setEditworkspace({
             name: node.name,
@@ -873,6 +974,7 @@ export default function StructurePage() {
             manager_id: "",
           });
           setEditworkspaceLogoFile(null);
+          setEditWorkspaceErrors({ contact_email: "", contact_phone: "" });
         }
       } else if (node.type === "group") {
         try {
@@ -886,6 +988,7 @@ export default function StructurePage() {
             fiscal_year_start: g.fiscal_year_start ?? "",
             fiscal_year_end: g.fiscal_year_end ?? "",
             mainActivity: g.mainActivity ?? "",
+            country: g.country ?? "",
             logo: g.logo ?? "",
           });
         } catch {
@@ -896,6 +999,7 @@ export default function StructurePage() {
             fiscal_year_start: "",
             fiscal_year_end: "",
             mainActivity: "",
+            country: "",
             logo: undefined as string | undefined,
           });
           setEditGroupLogoFile(null);
@@ -909,6 +1013,7 @@ export default function StructurePage() {
             name: c.name,
             siret: c.siret ?? "",
             address: c.address ?? "",
+            country: c.country ?? "",
             ape_code: c.ape_code ?? "",
             main_activity: c.main_activity ?? "",
             fiscal_year_start: c.fiscal_year_start ?? "",
@@ -923,6 +1028,7 @@ export default function StructurePage() {
             name: node.name,
             siret: "",
             address: "",
+            country: "",
             ape_code: "",
             main_activity: "",
             fiscal_year_start: "",
@@ -935,37 +1041,36 @@ export default function StructurePage() {
         }
         loadBUsForCompany(node.id);
       } else if (node.type === "bu") {
-        const cached = busByCompany[node.companyId]?.find(
-          (b) => b.id === node.id,
-        );
-        if (cached) {
-          setEditBU({
-            name: cached.name,
-            code: cached.code,
-            activity: cached.activity,
-            siret: cached.siret,
-            logo: cached.logo || "",
-          });
+        // Forcer toujours le rechargement depuis l'API pour avoir les données complètes
+        const freshBUs = await loadBUsForCompany(node.companyId);
+        console.log('All BUs from API:', freshBUs); // Debug log
+        console.log('Looking for BU with ID:', node.id); // Debug log
+        const bu = freshBUs.find((b) => b.id === node.id);
+        console.log('Found BU:', bu); // Debug log
+        
+        if (bu) {
+          const updatedEditBU = {
+            name: bu.name,
+            code: bu.code,
+            activity: bu.activity || "",
+            siret: bu.siret || "",
+            country: bu.country || "",
+            logo: bu.logo || "",
+          };
+          console.log('Setting editBU to:', updatedEditBU); // Debug log
+          setEditBU(updatedEditBU);
         } else {
+          // Valeurs par défaut seulement si la BU n'est pas trouvée
           setEditBU({
             name: node.name,
             code: node.code,
             activity: "",
             siret: "",
+            country: "",
             logo: undefined as string | undefined,
           });
-          const freshBUs = await loadBUsForCompany(node.companyId);
-          const bu = freshBUs.find((b) => b.id === node.id);
-          if (bu) {
-            setEditBU({
-              name: bu.name,
-              code: bu.code,
-              activity: bu.activity,
-              siret: bu.siret,
-              logo: bu.logo || "",
-            });
-          }
         }
+        loadBUsForCompany(node.id);
       }
 
       // Load managers & users linked to this node
@@ -997,6 +1102,19 @@ export default function StructurePage() {
   const handleSave = async () => {
     if (!selectedNode) return;
     if (selectedNode.type === "workspace") {
+      // Valider l'email et le téléphone
+      const emailValid = validateEmail(editworkspace.contact_email);
+      const phoneValid = validatePhone(editworkspace.contact_phone);
+      
+      if (!emailValid || !phoneValid) {
+        // Mettre à jour les erreurs
+        setEditWorkspaceErrors({
+          contact_email: emailValid ? "" : "Veuillez entrer un email valide",
+          contact_phone: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        });
+        return;
+      }
+
       const formData = new FormData();
       formData.append('name', editworkspace.name);
       if (editworkspace.description) {
@@ -1025,6 +1143,7 @@ export default function StructurePage() {
         snackbar: { showSuccess: true, successMessage: "Workspace mise à jour" },
       });
       setEditworkspaceLogoFile(null);
+      setEditWorkspaceErrors({ contact_email: "", contact_phone: "" });
       // Mettre à jour l'état local avec le logo retourné par le serveur
       if (updatedOrg) {
         setEditworkspace(prev => ({
@@ -1049,6 +1168,9 @@ export default function StructurePage() {
       }
       if (editGroup.mainActivity) {
         formData.append('mainActivity', editGroup.mainActivity);
+      }
+      if (editGroup.country) {
+        formData.append('country', editGroup.country);
       }
       if (editGroupLogoFile) {
         formData.append('logo', editGroupLogoFile);
@@ -1076,6 +1198,9 @@ export default function StructurePage() {
       }
       if (editCompany.address) {
         formData.append('address', editCompany.address);
+      }
+       if (editCompany.country) {
+        formData.append('country', editCompany.country);
       }
       if (editCompany.ape_code) {
         formData.append('ape_code', editCompany.ape_code);
@@ -1130,6 +1255,9 @@ export default function StructurePage() {
       if (editBU.siret) {
         formData.append('siret', editBU.siret);
       }
+      if (editBU.country) {
+        formData.append('country', editBU.country);
+      }
       if (editBULogoFile) {
         formData.append('logo', editBULogoFile);
       }
@@ -1171,6 +1299,19 @@ export default function StructurePage() {
   const handleCreateworkspace = async () => {
     if (!addworkspaceForm.name.trim()) return;
     
+    // Valider l'email et le téléphone
+    const emailValid = validateEmail(addworkspaceForm.contact_email);
+    const phoneValid = validatePhone(addworkspaceForm.contact_phone);
+    
+    if (!emailValid || !phoneValid) {
+      // Mettre à jour les erreurs
+      setWorkspaceErrors({
+        contact_email: emailValid ? "" : "Veuillez entrer un email valide",
+        contact_phone: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+      });
+      return;
+    }
+    
     setAddworkspaceLoading(true);
     try {
       // Créer FormData pour l'upload du fichier
@@ -1186,38 +1327,13 @@ export default function StructurePage() {
         formData.append('logo', logoFile);
       }
       
-      // Pour l'upload de fichiers, on doit utiliser fetch directement car apiFetch force JSON
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      // Récupérer le token depuis le storage correct
-      let token = null;
-      try {
-        const raw = window.localStorage.getItem("nk-auth-tokens");
-        if (raw) {
-          const parsed = JSON.parse(raw) as { accessToken?: string };
-          token = parsed.accessToken || null;
-        }
-      } catch {
-        token = null;
-      }
-      console.log('Token d accès:', token); // Ajout d'un log pour vérifier le token
-      const response = await fetch(`${baseUrl}/workspaces`, {
+      // Utiliser apiFetch pour avoir le snackbar de succès
+      await apiFetch("/workspaces", {
         method: 'POST',
         body: formData,
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          // Ne PAS définir Content-Type pour FormData
-        },
+        headers: {}, // Important: ne pas définir Content-Type pour FormData
+        snackbar: { showSuccess: true, successMessage: "Workspace créée avec succès" },
       });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Erreur création workspace:', response.status, errorText);
-        alert(`Erreur lors de la création: ${response.status} ${errorText}`);
-        return;
-      }
-      
-      // Afficher un message de succès
-      alert("Workspace créée avec succès");
       
       setAddworkspaceOpen(false);
       setAddworkspaceForm({ 
@@ -1231,6 +1347,7 @@ export default function StructurePage() {
       });
       setLogoFile(null);
       setLogoPreview("");
+      setWorkspaceErrors({ contact_email: "", contact_phone: "" });
       void loadTree();
     } finally {
       setAddworkspaceLoading(false);
@@ -1239,7 +1356,12 @@ export default function StructurePage() {
 
   const handleDelete = async () => {
     if (!selectedNode) return;
-    if (selectedNode.type === "group") {
+    if (selectedNode.type === "workspace") {
+      await apiFetch(`/workspaces/${selectedNode.id}`, {
+        method: "DELETE",
+        snackbar: { showSuccess: true, successMessage: "Workspace supprimée" },
+      });
+    } else if (selectedNode.type === "group") {
       await apiFetch(`/groups/${selectedNode.id}`, {
         method: "DELETE",
         snackbar: { showSuccess: true, successMessage: "Groupe supprimé" },
@@ -1295,6 +1417,7 @@ export default function StructurePage() {
       formData.append('fiscal_year_end', form.fiscal_year_end);
       formData.append('siret', form.siret);
       if (form.address) formData.append('address', form.address);
+      if (form.country) formData.append('country', form.country);
       if (form.ape_code) formData.append('ape_code', form.ape_code);
       if (form.main_activity) formData.append('main_activity', form.main_activity);
       formData.append('size', size);
@@ -1368,6 +1491,9 @@ export default function StructurePage() {
       if (addCompanyForm.main_activity) {
         formData.append('main_activity', addCompanyForm.main_activity);
       }
+      if (addCompanyForm.country) {
+        formData.append('country', addCompanyForm.country);
+      }
       formData.append('size', addCompanyForm.size);
       formData.append('model', addCompanyForm.model);
       if (addCompanyLogoFile) {
@@ -1396,6 +1522,7 @@ export default function StructurePage() {
         fiscal_year_start: "",
         fiscal_year_end: "",
         address: "",
+        country: "",
         ape_code: "",
         main_activity: "",
         size: "SMALL",
@@ -1430,6 +1557,9 @@ export default function StructurePage() {
       if (addBUForm.siret) {
         formData.append('siret', addBUForm.siret);
       }
+      if (addBUForm.country) {
+        formData.append('country', addBUForm.country);
+      }
       if (addBULogoFile) {
         formData.append('logo', addBULogoFile);
       }
@@ -1443,7 +1573,7 @@ export default function StructurePage() {
       await loadTree();
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
-      setAddBUForm({ name: "", code: "", activity: "", siret: "", logo: undefined });
+      setAddBUForm({ name: "", code: "", activity: "", siret: "", country: "", logo: undefined });
       setAddBULogoFile(null);
     } catch {
       /* snackbar handles */
@@ -1473,6 +1603,9 @@ export default function StructurePage() {
       if (addGroupForm.mainActivity) {
         formData.append('mainActivity', addGroupForm.mainActivity);
       }
+      if (addGroupForm.country) {
+        formData.append('country', addGroupForm.country);
+      }
       if (addGroupForm.workspaceId) {
         formData.append('workspace_id', addGroupForm.workspaceId);
       }
@@ -1495,6 +1628,7 @@ export default function StructurePage() {
         fiscal_year_start: "",
         fiscal_year_end: "",
         mainActivity: "",
+        country: "",
         workspaceId: "",
         logo: undefined as string | undefined,
       });
@@ -1520,6 +1654,7 @@ export default function StructurePage() {
             code: addBUStandaloneForm.code,
             activity: addBUStandaloneForm.activity,
             siret: addBUStandaloneForm.siret,
+            country: addBUStandaloneForm.country,
           }),
           snackbar: {
             showSuccess: true,
@@ -1537,6 +1672,7 @@ export default function StructurePage() {
         code: "",
         activity: "",
         siret: "",
+        country: "",
         companyId: "",
       });
     } catch {
@@ -2093,6 +2229,7 @@ export default function StructurePage() {
                                         siret: "",
                                         ape_code: "",
                                         mainActivity: "",
+                                        country: "",
                                         fiscal_year_start: "",
                                         fiscal_year_end: "",
                                         workspaceId: "",
@@ -2122,6 +2259,7 @@ export default function StructurePage() {
                                         fiscal_year_start: "",
                                         fiscal_year_end: "",
                                         address: "",
+                                        country: "",
                                         ape_code: "",
                                         main_activity: "",
                                         size: "SMALL",
@@ -2154,6 +2292,7 @@ export default function StructurePage() {
                                           code: "",
                                           activity: "",
                                           siret: "",
+                                          country: "",
                                           logo: undefined as string | undefined,
                                         });
                                         setAddBULogoFile(null);
@@ -2307,26 +2446,35 @@ export default function StructurePage() {
                       {editworkspace.logo ? (
                         <>
                           {console.log('Logo à afficher:', editworkspace.logo)}
+                          {console.log('NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL)}
                           {editworkspace.logo.startsWith('http') ? (
                             <Image 
                               src={editworkspace.logo} 
                               alt="Logo de l'workspace" 
-                              className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                              width={64}
+                              height={64}
+                              className="object-cover rounded-lg border border-slate-200"
                               onError={(e) => {
                                 console.error('Erreur chargement image URL:', editworkspace.logo);
                                 e.currentTarget.style.display = 'none';
                               }}
                             />
                           ) : (
-                            <Image 
-                              src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`} 
-                              alt="Logo de l'workspace" 
-                              className="h-16 w-16 object-cover rounded-lg border border-slate-200"
-                              onError={(e) => {
-                                console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`);
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
+                            <>
+                              {console.log('URL complète générée:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`)}
+                              <Image 
+                                src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`} 
+                                alt="Logo de l'workspace" 
+                                width={64}
+                                height={64}
+                                unoptimized={true}
+                                className="object-cover rounded-lg border border-slate-200"
+                                onError={(e) => {
+                                  console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`);
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </>
                           )}
                           <p className="text-xs text-slate-500">{editworkspace.logo}</p>
                         </>
@@ -2342,18 +2490,52 @@ export default function StructurePage() {
                     editing={editing}
                     onChange={(v) => setEditworkspace((f) => ({ ...f, address: v }))}
                   />
-                  <Field
-                    label="Email de contact"
-                    value={editworkspace.contact_email}
-                    editing={editing}
-                    onChange={(v) => setEditworkspace((f) => ({ ...f, contact_email: v }))}
-                  />
-                  <Field
-                    label="Téléphone de contact"
-                    value={editworkspace.contact_phone}
-                    editing={editing}
-                    onChange={(v) => setEditworkspace((f) => ({ ...f, contact_phone: v }))}
-                  />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Email de contact
+                    </label>
+                    {editing ? (
+                      <div>
+                        <Input
+                          type="email"
+                          value={editworkspace.contact_email}
+                          onChange={(e) => handleEditEmailChange(e.target.value)}
+                          placeholder="email@exemple.com"
+                          className={editWorkspaceErrors.contact_email ? "border-red-500" : ""}
+                        />
+                        {editWorkspaceErrors.contact_email && (
+                          <p className="mt-1 text-xs text-red-500">{editWorkspaceErrors.contact_email}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm font-medium text-primary">{editworkspace.contact_email || "—"}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Téléphone de contact
+                    </label>
+                    {editing ? (
+                      <div>
+                        <PhoneInput
+                          international
+                          countryCallingCodeEditable={false}
+                          defaultCountry="FR"
+                          value={editworkspace.contact_phone}
+                          onChange={(value) => handleEditPhoneChange(value || "")}
+                          className={editWorkspaceErrors.contact_phone ? "border-red-500" : ""}
+                          numberInputProps={{
+                            className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.contact_phone ? "border-red-500" : ""}`
+                          }}
+                        />
+                        {editWorkspaceErrors.contact_phone && (
+                          <p className="mt-1 text-xs text-red-500">{editWorkspaceErrors.contact_phone}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm font-medium text-primary">{editworkspace.contact_phone || "—"}</p>
+                    )}
+                  </div>
                                   </div>
               </div>
             </div>
@@ -2420,6 +2602,12 @@ export default function StructurePage() {
                   className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
                 />
               </div>
+              <FieldCountry
+                label="Pays"
+                value={editGroup.country}
+                editing={editing}
+                onChange={(v) => setEditGroup((f) => ({ ...f, country: v }))}
+              />
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Activité principale
@@ -2458,7 +2646,9 @@ export default function StructurePage() {
                           <Image 
                             src={editGroup.logo} 
                             alt="Logo du groupe" 
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            width={64}
+                            height={64}
+                            className="object-cover rounded-lg border border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image URL:', editGroup.logo);
                               e.currentTarget.style.display = 'none';
@@ -2468,7 +2658,10 @@ export default function StructurePage() {
                           <Image 
                             src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editGroup.logo}`} 
                             alt="Logo du groupe" 
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            width={64}
+                            height={64}
+                            unoptimized={true}
+                            className="object-cover rounded-lg border border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editGroup.logo}`);
                               e.currentTarget.style.display = 'none';
@@ -2514,6 +2707,12 @@ export default function StructurePage() {
                 value={editCompany.address}
                 editing={editing}
                 onChange={(v) => setEditCompany((f) => ({ ...f, address: v }))}
+              />
+              <FieldCountry
+                label="Pays"
+                value={editCompany.country}
+                editing={editing}
+                onChange={(v) => setEditCompany((f) => ({ ...f, country: v }))}
               />
               <div className="space-y-2">
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -2609,7 +2808,9 @@ export default function StructurePage() {
                           <Image 
                             src={editCompany.logo} 
                             alt="Logo de l'entreprise" 
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            width={64}
+                            height={64}
+                            className="object-cover rounded-lg border border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image URL:', editCompany.logo);
                               e.currentTarget.style.display = 'none';
@@ -2619,14 +2820,17 @@ export default function StructurePage() {
                           <Image 
                             src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editCompany.logo}`} 
                             alt="Logo de l'entreprise" 
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            width={64}
+                            height={64}
+                            unoptimized={true}
+                            className="object-cover rounded-lg border border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editCompany.logo}`);
                               e.currentTarget.style.display = 'none';
                             }}
                           />
                         )}
-                                              </>
+                      </>
                     ) : (
                       <p className="text-sm font-medium text-primary">—</p>
                     )}
@@ -2714,6 +2918,12 @@ export default function StructurePage() {
                 validate={validateSiret}
                 onChange={(v) => setEditBU((f) => ({ ...f, siret: v }))}
               />
+              <FieldCountry
+                label="Pays"
+                value={editBU.country}
+                editing={editing}
+                onChange={(v) => setEditBU((f) => ({ ...f, country: v }))}
+              />
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Logo
@@ -2741,7 +2951,9 @@ export default function StructurePage() {
                           <Image 
                             src={editBU.logo} 
                             alt="Logo de la business unit" 
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            width={64}
+                            height={64}
+                            className="object-cover rounded-lg border border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image URL:', editBU.logo);
                               e.currentTarget.style.display = 'none';
@@ -2751,7 +2963,10 @@ export default function StructurePage() {
                           <Image 
                             src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editBU.logo}`} 
                             alt="Logo de la business unit" 
-                            className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                            width={64}
+                            height={64}
+                            unoptimized={true}
+                            className="object-cover rounded-lg border border-slate-200"
                             onError={(e) => {
                               console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editBU.logo}`);
                               e.currentTarget.style.display = 'none';
@@ -3259,6 +3474,18 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Pays *
+              </label>
+              <CountrySelect
+                value={addGroupForm.country}
+                onChange={(value) =>
+                  setAddGroupForm((f) => ({ ...f, country: value }))
+                }
+                placeholder="Pays du groupe"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Activité principale
               </label>
               <Input
@@ -3412,6 +3639,18 @@ export default function StructurePage() {
                 }
               />
             </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Pays *
+              </label>
+              <CountrySelect
+                value={addBUStandaloneForm.country}
+                onChange={(value) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, country: value }))
+                }
+                placeholder="Pays de la Business Unit"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -3425,6 +3664,7 @@ export default function StructurePage() {
               disabled={
                 addBUStandaloneLoading ||
                 !addBUStandaloneForm.name.trim() ||
+                !addBUStandaloneForm.country.trim() ||
                 !addBUStandaloneForm.companyId.trim()
               }
             >
@@ -3514,6 +3754,19 @@ export default function StructurePage() {
                   setAddCompanyForm((f) => ({ ...f, address: e.target.value }))
                 }
                 placeholder="Adresse de l'entreprise"
+              />
+            </div>
+            
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Pays
+              </label>
+              <CountrySelect
+                placeholder="Pays de l'entreprise"
+                value={addCompanyForm.country}
+                onChange={(value) =>
+                  setAddCompanyForm((f) => ({ ...f, country: value }))
+                }
               />
             </div>
             
@@ -3680,6 +3933,18 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Pays *
+              </label>
+              <CountrySelect
+                value={addBUForm.country}
+                onChange={(value) =>
+                  setAddBUForm((f) => ({ ...f, country: value }))
+                }
+                placeholder="Pays de la Business Unit"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Logo
               </label>
               <FileUpload
@@ -3706,6 +3971,7 @@ export default function StructurePage() {
               disabled={
                 addBULoading ||
                 !addBUForm.name.trim() ||
+                !addBUForm.country.trim() ||
                 !can("business-units", CRUD_ACTION.CREATE)
               }
               className="disabled:cursor-not-allowed disabled:opacity-60"
@@ -3770,7 +4036,9 @@ export default function StructurePage() {
                     <Image 
                       src={logoPreview} 
                       alt="Aperçu du logo" 
-                      className="h-20 w-20 object-cover rounded-lg border border-slate-200"
+                      width={80}
+                      height={80}
+                      className="object-cover rounded-lg border border-slate-200"
                     />
                   </div>
                 )}
@@ -3795,23 +4063,32 @@ export default function StructurePage() {
               <Input
                 type="email"
                 value={addworkspaceForm.contact_email}
-                onChange={(e) =>
-                  setAddworkspaceForm((f) => ({ ...f, contact_email: e.target.value }))
-                }
+                onChange={(e) => handleEmailChange(e.target.value)}
                 placeholder="email@exemple.com"
+                className={workspaceErrors.contact_email ? "border-red-500" : ""}
               />
+              {workspaceErrors.contact_email && (
+                <p className="text-xs text-red-500">{workspaceErrors.contact_email}</p>
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">
                 Téléphone de contact
               </label>
-              <Input
+              <PhoneInput
+                international
+                countryCallingCodeEditable={false}
+                defaultCountry="FR"
                 value={addworkspaceForm.contact_phone}
-                onChange={(e) =>
-                  setAddworkspaceForm((f) => ({ ...f, contact_phone: e.target.value }))
-                }
-                placeholder="+33 1 23 45 67 89"
+                onChange={(value) => handlePhoneChange(value || "")}
+                className={workspaceErrors.contact_phone ? "border-red-500" : ""}
+                numberInputProps={{
+                  className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.contact_phone ? "border-red-500" : ""}`
+                }}
               />
+              {workspaceErrors.contact_phone && (
+                <p className="text-xs text-red-500">{workspaceErrors.contact_phone}</p>
+              )}
             </div>
           </div>
           <DialogFooter>
@@ -3821,13 +4098,14 @@ export default function StructurePage() {
                 setAddworkspaceOpen(false);
                 setLogoFile(null);
                 setLogoPreview("");
+                setWorkspaceErrors({ contact_email: "", contact_phone: "" });
               }}
             >
               Annuler
             </Button>
             <Button
               onClick={handleCreateworkspace}
-              disabled={addworkspaceLoading || !addworkspaceForm.name.trim()}
+              disabled={addworkspaceLoading || !addworkspaceForm.name.trim() || !!workspaceErrors.contact_email || !!workspaceErrors.contact_phone}
               className="bg-purple-600 text-white hover:bg-purple-700"
             >
               {addworkspaceLoading ? "Création..." : "Créer"}
@@ -3894,6 +4172,35 @@ function Field({
           />
           {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
         </div>
+      ) : (
+        <p className="text-sm font-medium text-primary">{value || "—"}</p>
+      )}
+    </div>
+  );
+}
+
+function FieldCountry({
+  label,
+  value,
+  editing,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  editing: boolean;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+        {label}
+      </label>
+      {editing ? (
+        <CountrySelect
+          value={value}
+          onChange={onChange}
+          placeholder="Sélectionner un pays"
+        />
       ) : (
         <p className="text-sm font-medium text-primary">{value || "—"}</p>
       )}

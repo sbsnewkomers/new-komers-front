@@ -80,6 +80,12 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/DropdownMenu";
 
+// Validation d'email
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
 const roleBadgeColor: Record<UserRole, string> = {
   SUPER_ADMIN: "bg-purple-50 text-purple-700 border-purple-200",
   ADMIN: "bg-blue-50 text-blue-700 border-blue-200",
@@ -826,11 +832,14 @@ export default function UsersPage() {
               </div>
             </div> */}
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Email *</label>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Email <span className="text-red-500">*</span></label>
               <Input type="email" value={inviteForm.email} onChange={(e) => setInviteForm((f) => ({ ...f, email: e.target.value }))} placeholder="john@exemple.com" required />
+              {inviteForm.email && !isValidEmail(inviteForm.email) && (
+                <p className="mt-1 text-xs text-red-500">Veuillez entrer une adresse email valide</p>
+              )}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le *</label>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le <span className="text-red-500">*</span></label>
               <Select
                 value={inviteForm.role}
                 onValueChange={(v) => {
@@ -848,7 +857,7 @@ export default function UsersPage() {
             {/* Data Perimeter */}
             {inviteForm.role !== "ADMIN" && (
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">P&eacute;rim&egrave;tre d&rsquo;acc&egrave;s</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">P&eacute;rim&egrave;tre d&rsquo;acc&egrave;s <span className="text-red-500">*</span></label>
                 <p className="mb-3 text-xs text-slate-400">
                   {inviteForm.role === "HEAD_MANAGER" 
                     ? "Définir l'workspace accessible (obligatoire). L'héritage hiérarchique s'applique automatiquement."
@@ -856,7 +865,7 @@ export default function UsersPage() {
                   }
                 </p>
 
-                {invitePerimeter.length > 0 && (
+                {invitePerimeter.length > 0 && inviteForm.role !== "HEAD_MANAGER" && (
                   <ul className="mb-3 space-y-1.5">
                     {invitePerimeter.map((item, idx) => (
                       <li key={idx} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
@@ -872,57 +881,80 @@ export default function UsersPage() {
                   </ul>
                 )}
 
-                <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-3">
-                  <div className="flex flex-wrap items-end gap-2">
-                    <div>
-                      <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Type</label>
-                      <select
-                        value={perimNodeType}
-                        onChange={(e) => { setPerimNodeType(e.target.value as NodeType); setPerimNodeId(""); if (e.target.value !== "BUSINESS_UNIT") setPerimCompanyId(""); }}
-                        className="h-8 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
-                      >
-                        {inviteForm.role === "HEAD_MANAGER" ? (
-                          <option value="WORKSPACE">Workspace</option>
-                        ) : (
+                {inviteForm.role === "HEAD_MANAGER" ? (
+                  <div>
+                    <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Workspace</label>
+                    <select
+                      value={invitePerimeter.length > 0 ? invitePerimeter[0].nodeId : ""}
+                      onChange={(e) => {
+                        const workspaceId = e.target.value;
+                        if (workspaceId) {
+                          const selectedWorkspace = perimNodeOptions.find(n => n.id === workspaceId);
+                          if (selectedWorkspace) {
+                            setInvitePerimeter([{
+                              nodeId: selectedWorkspace.id,
+                              nodeType: "WORKSPACE"
+                            }]);
+                          }
+                        } else {
+                          setInvitePerimeter([]);
+                        }
+                      }}
+                      className="h-8 w-full rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
+                    >
+                      <option value="">Choisir un workspace&hellip;</option>
+                      {perimNodeOptions.map((n: { id: string; name: string }) => <option key={n.id} value={n.id}>{n.name}</option>)}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-3">
+                    <div className="flex flex-wrap items-end gap-2">
+                      <div>
+                        <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Type</label>
+                        <select
+                          value={perimNodeType}
+                          onChange={(e) => { setPerimNodeType(e.target.value as NodeType); setPerimNodeId(""); if (e.target.value !== "BUSINESS_UNIT") setPerimCompanyId(""); }}
+                          className="h-8 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
+                        >
                           <>
                             <option value="GROUP">Groupe</option>
                             <option value="COMPANY">Entreprise</option>
                             <option value="WORKSPACE">Workspace</option>
                             <option value="BUSINESS_UNIT">Unit&eacute; d&rsquo;affaires</option>
                           </>
-                        )}
-                      </select>
-                    </div>
-                    {perimNodeType === "BUSINESS_UNIT" && (
-                      <div>
-                        <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Entreprise</label>
-                        <select
-                          value={perimCompanyId}
-                          onChange={(e) => { setPerimCompanyId(e.target.value); setPerimNodeId(""); }}
-                          className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
-                        >
-                          <option value="">Choisir&hellip;</option>
-                          {(companiesHook.list ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                       </div>
-                    )}
-                    <div>
-                      <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">&Eacute;l&eacute;ment</label>
-                      <select
-                        value={perimNodeId}
-                        onChange={(e) => setPerimNodeId(e.target.value)}
-                        disabled={perimNodeType === "BUSINESS_UNIT" && !perimCompanyId}
-                        className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 disabled:opacity-50"
-                      >
-                        <option value="">Choisir&hellip;</option>
-                        {perimNodeOptions.map((n: { id: string; name: string }) => <option key={n.id} value={n.id}>{n.name}</option>)}
-                      </select>
+                      {perimNodeType === "BUSINESS_UNIT" && (
+                        <div>
+                          <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Entreprise</label>
+                          <select
+                            value={perimCompanyId}
+                            onChange={(e) => { setPerimCompanyId(e.target.value); setPerimNodeId(""); }}
+                            className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
+                          >
+                            <option value="">Choisir&hellip;</option>
+                            {(companiesHook.list ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                          </select>
+                        </div>
+                      )}
+                      <div>
+                        <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">&Eacute;l&eacute;ment</label>
+                        <select
+                          value={perimNodeId}
+                          onChange={(e) => setPerimNodeId(e.target.value)}
+                          disabled={perimNodeType === "BUSINESS_UNIT" && !perimCompanyId}
+                          className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 disabled:opacity-50"
+                        >
+                          <option value="">Choisir&hellip;</option>
+                          {perimNodeOptions.map((n: { id: string; name: string }) => <option key={n.id} value={n.id}>{n.name}</option>)}
+                        </select>
+                      </div>
+                      <Button onClick={addPerimeterItem} disabled={!perimNodeId} className="h-8 px-3 text-xs">
+                        <Plus className="mr-1 h-3 w-3" /> Ajouter
+                      </Button>
                     </div>
-                    <Button onClick={addPerimeterItem} disabled={!perimNodeId} className="h-8 px-3 text-xs">
-                      <Plus className="mr-1 h-3 w-3" /> Ajouter
-                    </Button>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>
@@ -933,7 +965,9 @@ export default function UsersPage() {
               disabled={
                 inviteLoading ||
                 !inviteForm.email ||
+                !isValidEmail(inviteForm.email) ||
                 (inviteForm.role === "END_USER" && invitePerimeter.length === 0) ||
+                (inviteForm.role === "MANAGER" && invitePerimeter.length === 0) ||
                 (inviteForm.role === "HEAD_MANAGER" && invitePerimeter.length === 0)
               }
             >

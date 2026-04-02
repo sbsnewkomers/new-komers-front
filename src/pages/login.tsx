@@ -79,11 +79,11 @@ export default function LoginPage() {
       const msg = backendMessage?.toString() ?? "";
       const lower = msg.toLowerCase();
 
-      if (msg && msg.includes("Compte en attente de validation") || lower.includes("compte en attente")) {
+      if (msg && (msg.includes("Compte en attente de validation") || lower.includes("compte en attente") || lower.includes("attente de validation"))) {
         setStatusMessage("PENDING");
         return;
       }
-      if (msg && (lower.includes("désactivé") || lower.includes("desactive") || lower.includes("suspendu"))) {
+      if (msg && (msg.includes("Compte suspendu") || lower.includes("compte suspendu") || lower.includes("suspendu"))) {
         setStatusMessage("SUSPENDED");
         return;
       }
