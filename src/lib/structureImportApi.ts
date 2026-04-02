@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from "@/lib/apiClient";
+import { apiFetch } from "@/lib/apiClient";
 
 export type ImportSummary = {
   totalRows: number;
@@ -32,26 +32,14 @@ export type ImportExecuteResult = {
   };
 };
 
-type AuthHeaders = { accessToken: string | null };
-
-function authHeaders({ accessToken }: AuthHeaders): HeadersInit {
-  return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-}
-
 export async function downloadStructureTemplate(accessToken: string | null): Promise<void> {
-  const res = await fetch(`${getApiBaseUrl()}/structure/import/template`, {
+  const res = await apiFetch(`/structure/import/template`, {
     method: "GET",
-    headers: {
-      ...authHeaders({ accessToken }),
-    },
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
   });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Échec du téléchargement du modèle (${res.status})`);
-  }
-
-  const blob = await res.blob();
+  // Convert response to blob for download
+  const blob = new Blob([res as ArrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -71,20 +59,12 @@ export async function validateStructureFile(
     formData.append("workspaceId", workspaceId);
   }
 
-  const res = await fetch(`${getApiBaseUrl()}/structure/import/validate`, {
+  return apiFetch<ImportReport>(`/structure/import/validate`, {
     method: "POST",
-    headers: {
-      ...authHeaders({ accessToken }),
-    },
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
     body: formData,
+    snackbar: { showError: true }
   });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Validation échouée (${res.status})`);
-  }
-
-  return (await res.json()) as ImportReport;
 }
 
 export async function executeStructureImport(
@@ -98,19 +78,11 @@ export async function executeStructureImport(
     formData.append("workspaceId", workspaceId);
   }
 
-  const res = await fetch(`${getApiBaseUrl()}/structure/import/execute`, {
+  return apiFetch<ImportExecuteResult>(`/structure/import/execute`, {
     method: "POST",
-    headers: {
-      ...authHeaders({ accessToken }),
-    },
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
     body: formData,
+    snackbar: { showError: true }
   });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Import échoué (${res.status})`);
-  }
-
-  return (await res.json()) as ImportExecuteResult;
 }
 

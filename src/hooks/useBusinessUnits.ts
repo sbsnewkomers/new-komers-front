@@ -7,6 +7,8 @@ type BusinessUnit = {
   code: string;
   activity: string;
   siret: string;
+  country: string;
+  logo?: string;
   company_id?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -17,6 +19,7 @@ type CreateBusinessUnitDto = {
   code: string;
   activity: string;
   siret: string;
+  country: string;
 };
 
 type UpdateBusinessUnitDto = Partial<CreateBusinessUnitDto>;
