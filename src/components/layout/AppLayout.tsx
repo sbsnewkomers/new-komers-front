@@ -128,7 +128,7 @@ export function AppLayout({
                   B2B SAAS PLATFORM
                 </span>
 
-                {workspaceName && (
+                {/* {workspaceName && (
                   <>
                     <ChevronRight className="h-4 w-4 text-slate-300" />
 
@@ -137,7 +137,7 @@ export function AppLayout({
                       {workspaceName}
                     </span>
                   </>
-                )}
+                )} */}
               </div>
             </Link>
           </div>
@@ -282,30 +282,31 @@ export function AppLayout({
               <Menu className="h-5 w-5" />
             </button>
 
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <span
+            <div className="flex items-center gap-1 text-sm text-slate-500">
+              {/* <span
                 className="cursor-pointer hover:text-primary transition-colors"
                 onClick={() => void router.push("/")}
               >
                 NewKomers
               </span>
 
-              <ChevronRight className="h-4 w-4 text-slate-300" />
+              <ChevronRight className="h-4 w-4 text-slate-300" /> */}
+
+              {workspaceName && (
+                <>
+                  <Building className="size-9 p-1.5 text-white bg-linear-to-r from-cyan-400 to-blue-600 rounded-full" />
+                  <span className="font-semibold text-blue-600 drop-shadow-sm">
+                    {workspaceName}
+                  </span>
+                  
+                  <ChevronRight className="h-4 w-4 text-slate-300" />
+                </>
+              )}
 
               <span className="font-medium text-primary line-clamp-1">
                 {title}
               </span>
 
-              {workspaceName && (
-                <>
-                  <ChevronRight className="h-4 w-4 text-slate-300" />
-
-                  <span className="text-xs font-semibold text-white bg-linear-to-r from-blue-600 to-purple-600 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
-                    <Building className="h-3 w-3" />
-                    {workspaceName}
-                  </span>
-                </>
-              )}
             </div>
           </div>
 

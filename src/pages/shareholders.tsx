@@ -211,7 +211,7 @@ export default function ShareholdersPage() {
               Chargement des actionnaires...
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-visible">
               <table className="min-w-full divide-y divide-slate-100 text-sm">
                 <thead className="bg-slate-50/60">
                   <tr>

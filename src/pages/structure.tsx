@@ -1778,7 +1778,7 @@ export default function StructurePage() {
         </div>
 
         {/* Main content */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-visible">
           {treeError && (
             <div className="m-6 p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
               <div className="h-4 w-4 rounded-full bg-red-100 flex items-center justify-center">

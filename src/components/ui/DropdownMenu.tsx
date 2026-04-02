@@ -73,7 +73,7 @@ export function DropdownMenuContent({
   return (
     <div
       ref={ref}
-      className={`absolute z-50 mt-1 min-w-[8rem] rounded-md border border-border bg-background p-1 shadow-lg ${alignClass} ${className ?? ""}`}
+      className={`absolute z-50 bottom-0 mt-1 min-w-[8rem] rounded-md border border-border bg-background p-1 shadow-lg ${alignClass} ${className ?? ""}`}
     >
       {children}
     </div>

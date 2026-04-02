@@ -511,7 +511,7 @@ export default function UsersPage() {
                   <p className="mt-1 text-sm text-slate-500">{search || roleFilter || statusFilter ? "Essayez de modifier vos filtres." : "Invitez votre premier utilisateur."}</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-visible">
                   <table className="min-w-full">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50/50">
