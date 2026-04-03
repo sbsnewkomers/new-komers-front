@@ -381,7 +381,9 @@ export default function UsersPage() {
   // ── Permissions handlers (unchanged) ──
   const openPermissions = async (u: UserItem) => {
     setPermUser(u); setPermOpen(true); setPermLoading(true);
-    setAddNodeType("GROUP"); setAddNodeId(""); setAddActions([]); setCompanyIdForBU("");
+    // Pour HEAD_MANAGER, le type par défaut est WORKSPACE
+    const defaultNodeType = u.role === "HEAD_MANAGER" ? "WORKSPACE" : "GROUP";
+    setAddNodeType(defaultNodeType); setAddNodeId(""); setAddActions([]); setCompanyIdForBU("");
     groupsHook.fetchList(); companiesHook.fetchList();
     try { setPermDetail(await fetchUserPermissionDetail(u.id)); } catch { setPermDetail(null); } finally { setPermLoading(false); }
   };
@@ -400,7 +402,18 @@ export default function UsersPage() {
   };
   const handleRemoveNode = async (accessId: string) => { if (!permUser) return; await removeNodeAccess(permUser.id, accessId); refreshPerm(); };
   const hasEntityPerm = (nt: PermNodeType, a: PermissionAction) => permDetail?.entityPermissions?.some((p) => p.nodeType === nt && p.action === a) ?? false;
-  const permNodeOptions = addNodeType === "GROUP" ? (groupsHook.list ?? []) : addNodeType === "COMPANY" ? (companiesHook.list ?? []) : addNodeType === "WORKSPACE" ? (structureTree?.workspaces ?? []) : (busHook.list ?? []);
+  const permNodeOptions = useMemo(() => {
+    // Pour les HEAD_MANAGER, n'afficher que les workspaces
+    if (permUser?.role === "HEAD_MANAGER") {
+      return structureTree?.workspaces ?? [];
+    }
+    
+    // Pour les autres rôles, afficher toutes les options
+    return addNodeType === "GROUP" ? (groupsHook.list ?? []) : 
+           addNodeType === "COMPANY" ? (companiesHook.list ?? []) : 
+           addNodeType === "WORKSPACE" ? (structureTree?.workspaces ?? []) : 
+           (busHook.list ?? []);
+  }, [addNodeType, groupsHook.list, companiesHook.list, structureTree, busHook.list, permUser?.role]);
 
   // ── Filtered data ──
   const filtered = users.filter((u) => {
@@ -1142,9 +1155,15 @@ export default function UsersPage() {
                   <div className="flex flex-wrap items-end gap-3">
                     <div>
                       <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Type</label>
-                      <select value={addNodeType} onChange={(e) => { setAddNodeType(e.target.value as PermNodeType); setAddNodeId(""); if (e.target.value !== "BUSINESS_UNIT") setCompanyIdForBU(""); }} className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700">
-                        {NODE_TYPES.map((n) => <option key={n} value={n}>{nodeTypeLabel(n)}</option>)}
-                      </select>
+                      {permUser?.role === "HEAD_MANAGER" ? (
+                        <div className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700">
+                          Workspace uniquement
+                        </div>
+                      ) : (
+                        <select value={addNodeType} onChange={(e) => { setAddNodeType(e.target.value as PermNodeType); setAddNodeId(""); if (e.target.value !== "BUSINESS_UNIT") setCompanyIdForBU(""); }} className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700">
+                          {NODE_TYPES.map((n) => <option key={n} value={n}>{nodeTypeLabel(n)}</option>)}
+                        </select>
+                      )}
                     </div>
                     {addNodeType === "BUSINESS_UNIT" && (
                       <div>
