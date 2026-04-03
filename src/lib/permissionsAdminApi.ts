@@ -89,7 +89,10 @@ export async function removeNodeAccess(
     `/permissions/admin/users/${userId}/node-access/${accessId}`,
     {
       method: "DELETE",
-      snackbar: { successMessage: "Accès nœud supprimé." },
+      snackbar: { 
+        successMessage: "Accès nœud supprimé.",
+        errorMessage: "Impossible de supprimer l'accès. L'utilisateur doit avoir au moins un accès à un nœud."
+      },
     }
   );
 }
