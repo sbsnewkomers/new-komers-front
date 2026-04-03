@@ -7,7 +7,7 @@ export type PermissionAction =
   | "UPDATE"
   | "DELETE";
 
-export type NodeType = "GROUP" | "COMPANY" | "BUSINESS_UNIT";
+export type NodeType = "GROUP" | "COMPANY" | "BUSINESS_UNIT" | "WORKSPACE";
 
 export type UserListItem = {
   id: string;
@@ -132,7 +132,7 @@ export const ALL_ACTIONS: PermissionAction[] = [
   "DELETE",
 ];
 
-export const NODE_TYPES: NodeType[] = ["GROUP", "COMPANY", "BUSINESS_UNIT"];
+export const NODE_TYPES: NodeType[] = ["GROUP", "COMPANY", "BUSINESS_UNIT", "WORKSPACE"];
 
 export function actionLabel(a: PermissionAction): string {
   const labels: Record<PermissionAction, string> = {
@@ -150,6 +150,7 @@ export function nodeTypeLabel(n: NodeType): string {
     GROUP: "Groupe",
     COMPANY: "Entreprise",
     BUSINESS_UNIT: "Unité d'affaires",
+    WORKSPACE: "Workspace",
   };
   return labels[n] ?? n;
 }

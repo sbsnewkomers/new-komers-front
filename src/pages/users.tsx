@@ -176,8 +176,8 @@ export default function UsersPage() {
   // and reload when switching to the invitations tab to ensure freshness.
   useEffect(() => { loadInvitations(); }, [loadInvitations]);
   useEffect(() => { if (activeTab === "invitations") loadInvitations(); }, [activeTab, loadInvitations]);
-  useEffect(() => { if (companyIdForBU && permOpen) busHook.fetchList(); }, [companyIdForBU, permOpen]);
-  useEffect(() => { if (perimCompanyId && inviteOpen) perimBusHook.fetchList(); }, [perimCompanyId, inviteOpen]);
+  useEffect(() => { if (companyIdForBU && permOpen) busHook.fetchList(); }, [companyIdForBU, permOpen, busHook]);
+  useEffect(() => { if (perimCompanyId && inviteOpen) perimBusHook.fetchList(); }, [perimCompanyId, inviteOpen, perimBusHook]);
   useEffect(() => { if (inviteOpen) {
     // Load structure tree for workspaces and standalone companies
     fetchStructureTree().then(data => {
@@ -188,6 +188,14 @@ export default function UsersPage() {
       setStructureTree(data);
     });
   } }, [inviteOpen]);
+  useEffect(() => { if (permOpen) {
+    // Load structure tree for permissions modal
+    fetchStructureTree().then(data => {
+      console.log("Permissions structure tree:", data);
+      console.log("Permissions workspaces:", data?.workspaces);
+      setStructureTree(data);
+    });
+  } }, [permOpen]);
 
   // Reset perimeter type when role changes
   useEffect(() => {
@@ -392,7 +400,7 @@ export default function UsersPage() {
   };
   const handleRemoveNode = async (accessId: string) => { if (!permUser) return; await removeNodeAccess(permUser.id, accessId); refreshPerm(); };
   const hasEntityPerm = (nt: PermNodeType, a: PermissionAction) => permDetail?.entityPermissions?.some((p) => p.nodeType === nt && p.action === a) ?? false;
-  const permNodeOptions = addNodeType === "GROUP" ? (groupsHook.list ?? []) : addNodeType === "COMPANY" ? (companiesHook.list ?? []) : (busHook.list ?? []);
+  const permNodeOptions = addNodeType === "GROUP" ? (groupsHook.list ?? []) : addNodeType === "COMPANY" ? (companiesHook.list ?? []) : addNodeType === "WORKSPACE" ? (structureTree?.workspaces ?? []) : (busHook.list ?? []);
 
   // ── Filtered data ──
   const filtered = users.filter((u) => {
@@ -1106,11 +1114,11 @@ export default function UsersPage() {
               {/* Node-level */}
               <div>
                 <h3 className="mb-3 text-sm font-semibold text-slate-900">Acc&egrave;s par n&oelig;ud</h3>
-                <p className="mb-4 text-xs text-slate-500">Acc&egrave;s &agrave; un groupe, une entreprise ou une BU sp&eacute;cifique.</p>
+                <p className="mb-4 text-xs text-slate-500">Acc&egrave;s &agrave; un workspace, un groupe, une entreprise, ou une BU sp&eacute;cifique.</p>
                 {(permDetail.nodeAccesses?.length ?? 0) > 0 ? (
                   <ul className="mb-4 space-y-2">
                     {permDetail.nodeAccesses.map((na) => {
-                      const nodeName = na.nodeType === "GROUP" ? (groupsHook.list ?? []).find((g) => g.id === na.nodeId)?.name : na.nodeType === "COMPANY" ? (companiesHook.list ?? []).find((c) => c.id === na.nodeId)?.name : (busHook.list ?? []).find((b) => b.id === na.nodeId)?.name;
+                      const nodeName = na.nodeType === "GROUP" ? (groupsHook.list ?? []).find((g) => g.id === na.nodeId)?.name : na.nodeType === "COMPANY" ? (companiesHook.list ?? []).find((c) => c.id === na.nodeId)?.name : na.nodeType === "WORKSPACE" ? (structureTree?.workspaces ?? []).find((w) => w.id === na.nodeId)?.name : (busHook.list ?? []).find((b) => b.id === na.nodeId)?.name;
                       return (
                         <li key={na.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
                           <div>
