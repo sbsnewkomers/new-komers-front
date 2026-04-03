@@ -35,7 +35,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
-import { uploadFecFile, FecImportResponse } from "@/lib/fecApi";
+import { uploadFecFile, FecImportResponse, downloadErrorReport } from "@/lib/fecApi";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import {
   FileText,
@@ -56,6 +56,7 @@ import {
   RotateCcw,
   ChevronDown,
   ChevronUp,
+  Download,
 } from "lucide-react";
 
 const REQUIRED_FIELDS = ["Compte", "Débit", "Crédit"];
@@ -1247,7 +1248,29 @@ export default function ImportPage() {
               {/* Erreurs détaillées */}
               {fecImportResult.errors.length > 0 && (
                 <div>
-                  <h4 className="font-semibold mb-2">Erreurs de validation</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold">
+                      Erreurs de validation ({fecImportResult.errors.length} erreur{fecImportResult.errors.length > 1 ? 's' : ''})
+                    </h4>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await downloadErrorReport(fecImportResult.errors);
+                        } catch (error) {
+                          console.error('Erreur de téléchargement:', error);
+                          alert(`Erreur lors du téléchargement: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+                        }
+                      }}
+                      className="gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Télécharger le rapport CSV
+                    </Button>
+                  </div>
+                  
+                  {/* Afficher un extrait des 5 premières erreurs */}
                   <div className="overflow-auto max-h-64 rounded-xl border border-red-100">
                     <Table>
                       <TableHeader>
@@ -1259,7 +1282,7 @@ export default function ImportPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {fecImportResult.errors.map((error, i) => (
+                        {fecImportResult.errors.slice(0, 5).map((error, i) => (
                           <TableRow key={i}>
                             <TableCell className="font-mono text-red-600">{error.line}</TableCell>
                             <TableCell className="font-mono text-red-600">{error.column}</TableCell>
@@ -1267,9 +1290,22 @@ export default function ImportPage() {
                             <TableCell className="text-red-600">{error.reason}</TableCell>
                           </TableRow>
                         ))}
+                        {fecImportResult.errors.length > 5 && (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center text-red-600 font-medium">
+                              ... et {fecImportResult.errors.length - 5} autre{fecImportResult.errors.length - 5 > 1 ? 's' : ''} erreur{fecImportResult.errors.length - 5 > 1 ? 's' : ''}
+                            </TableCell>
+                          </TableRow>
+                        )}
                       </TableBody>
                     </Table>
                   </div>
+                  
+                  {fecImportResult.errors.length > 5 && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Les 5 premières erreurs sont affichées. Téléchargez le rapport CSV pour voir toutes les erreurs.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
