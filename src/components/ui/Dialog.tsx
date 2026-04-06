@@ -108,7 +108,7 @@ export function DialogContent({
         <div
           ref={ref}
           role="dialog"
-          className={`relative z-50 grid w-full max-w-lg gap-4 rounded-lg border border-border bg-background p-6 shadow-lg ${className ?? ""}`}
+          className={`relative z-50 grid w-full max-w-lg gap-4 rounded-lg border border-border bg-background shadow-lg ${className ?? ""}`}
           onClick={(e) => e.stopPropagation()}
         >
           {children}
@@ -119,7 +119,7 @@ export function DialogContent({
 }
 
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={`flex flex-col space-y-1.5 text-center sm:text-left ${className ?? ""}`} {...props} />;
+  return <div className={`flex flex-col space-y-1.5 text-center sm:text-left p-4 ${className ?? ""}`} {...props} />;
 }
 
 export function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {

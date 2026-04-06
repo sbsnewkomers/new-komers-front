@@ -1741,7 +1741,7 @@ export default function StructurePage() {
       <Head>
         <title>Structure de l&apos;workspace</title>
       </Head>
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Header section */}
         <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-6">
@@ -1764,49 +1764,18 @@ export default function StructurePage() {
                     </p>
                   </div>
                 </div>
-                <p className="text-slate-500 max-w-2xl font-medium">
+                <p className="text-slate-500 max-w-2xl font-medium text-sm">
                   Gérez la structure hiérarchique de votre workspace et pilotez 
                   l&apos;ensemble de vos entités.
                 </p>
               </div>
 
-              {/* Barre de recherche */}
-              <div className="relative max-w-md">
-                <div className="absolute top-1/3 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="h-4 w-4 text-slate-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setIsSearchFocused(false)}
-                  placeholder="Rechercher"
-                  className={`w-full pl-10 pr-4 py-2.5 text-sm border rounded-lg transition-all duration-200 ${
-                    isSearchFocused
-                      ? "border-primary ring-2 ring-primary/20 bg-white"
-                      : "border-slate-200 bg-slate-50 hover:border-slate-300"
-                  } focus:outline-none placeholder:text-slate-400`}
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
+              <div className="flex flex-col items-center gap-2">
+                {/* Barre de recherche */}
+                <div className="relative max-w-md">
+                  <div className="absolute top-1/3 left-0 pl-3 flex items-center pointer-events-none">
                     <svg
-                      className="h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors"
+                      className="h-4 w-4 text-slate-400"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -1815,18 +1784,148 @@ export default function StructurePage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                       />
                     </svg>
-                  </button>
-                )}
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setIsSearchFocused(false)}
+                    placeholder="Rechercher"
+                    className={`w-full pl-10 pr-4 py-2.5 text-sm border rounded-lg transition-all duration-200 ${
+                      isSearchFocused
+                        ? "border-primary ring-2 ring-primary/20 bg-white"
+                        : "border-slate-200 bg-slate-50 hover:border-slate-300"
+                    } focus:outline-none placeholder:text-slate-400`}
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      <svg
+                        className="h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end gap-3 w-full">
+                  {canImportStructure && (
+                    <Link
+                      href="/structure/import/upload"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-md"
+                    >
+                      <Upload className="size-4" />
+                      Importer
+                    </Link>
+                  )}
+                  {(user?.role === "SUPER_ADMIN" ||
+                    user?.role === "ADMIN" ||
+                    user?.role === "HEAD_MANAGER" ||
+                    user?.role === "MANAGER") && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button className="h-10 gap-2 bg-linear-to-br from-purple-500 to-purple-600 text-white hover:bg-purple-900! cursor-pointer shadow-sm transition-all hover:shadow-xl">
+                            <Plus className="size-4" />
+                            {/* <span className="hidden md:block">Ajouter</span> */}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
+                            <DropdownMenuItem
+                              onClick={() => setAddworkspaceOpen(true)}
+                              className="gap-2"
+                            >
+                              <Layers className="h-4 w-4 text-purple-600" />
+                              Workspace
+                            </DropdownMenuItem>
+                          )}
+
+                          {(user?.role === "SUPER_ADMIN" ||
+                            user?.role === "ADMIN" ||
+                            user?.role === "HEAD_MANAGER" ||
+                            user?.role === "MANAGER") && (
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() => setAddGroupOpen(true)}
+                                  disabled={
+                                    !canCreateCompany ||
+                                    !tree?.workspaces ||
+                                    tree.workspaces.length === 0
+                                  }
+                                  title={
+                                    !tree?.workspaces || tree.workspaces.length === 0
+                                      ? "Créez d'abord une workspace"
+                                      : ""
+                                  }
+                                  className="gap-2"
+                                >
+                                  <Building2 className="h-4 w-4 text-blue-600" />
+                                  Groupe
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setWizardOpen(true)}
+                                  disabled={
+                                    !canCreateCompany ||
+                                    !tree?.workspaces ||
+                                    tree.workspaces.length === 0
+                                  }
+                                  title={
+                                    !tree?.workspaces || tree.workspaces.length === 0
+                                      ? "Créez d'abord une workspace"
+                                      : ""
+                                  }
+                                  className="gap-2"
+                                >
+                                  <Building className="h-4 w-4 text-slate-700" />
+                                  Entreprise
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setAddBUStandaloneOpen(true)}
+                                  disabled={
+                                    !canCreateCompany ||
+                                    !tree?.workspaces ||
+                                    tree.workspaces.length === 0
+                                  }
+                                  title={
+                                    !tree?.workspaces || tree.workspaces.length === 0
+                                      ? "Créez d'abord une workspace"
+                                      : ""
+                                  }
+                                  className="gap-2"
+                                >
+                                  <Briefcase className="h-4 w-4 text-emerald-600" />
+                                  Business Unit
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                </div>
               </div>
+             
             </div>
-            <div className="flex items-center gap-4 justify-between w-full!">
-              <div className="flex items-center gap-4 text-sm text-slate-500">
+            {/* <div className="flex items-center gap-4 justify-between w-full!">
+              <div className="flex items-center gap-2 text-sm text-slate-500">
                 <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
                   <Layers className="h-4 w-4 text-blue-600" />
-                  <span className="font-medium text-blue-700">
+                  <span className="text-xs md:text-sm font-medium text-blue-700">
                     {searchQuery.trim()
                       ? filteredGroupList.length
                       : groupList.length}{" "}
@@ -1836,7 +1935,7 @@ export default function StructurePage() {
                 </div>
                 <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
                   <Building className="h-4 w-4 text-slate-600" />
-                  <span className="font-medium text-slate-700">
+                  <span className="text-xs font-medium text-slate-700">
                     {searchQuery.trim()
                       ? filteredAllTreeCompanies.length
                       : allTreeCompanies.length}{" "}
@@ -1846,7 +1945,7 @@ export default function StructurePage() {
                 </div>
                 <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
                   <Briefcase className="h-4 w-4 text-emerald-600" />
-                  <span className="font-medium text-emerald-700">
+                  <span className="text-xs font-medium text-emerald-700">
                     {searchQuery.trim()
                       ? treeRows.filter((r) => r.type === "bu").length
                       : totalBusinessUnits}{" "}
@@ -1855,61 +1954,7 @@ export default function StructurePage() {
                   </span>
                 </div>
               </div>
-
-              <div className="flex gap-3">
-                {canImportStructure && (
-                  <Link
-                    href="/structure/import/upload"
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-md"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Importer
-                  </Link>
-                )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
-                  <Button
-                    onClick={() => setAddworkspaceOpen(true)}
-                    className="h-10 gap-2 bg-purple-600 text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Workspace
-                  </Button>
-                )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
-                  <Button
-                    onClick={() => setAddGroupOpen(true)}
-                    className="h-10 gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                    disabled={!canCreateCompany || (!tree?.workspaces || tree.workspaces.length === 0)}
-                    title={!tree?.workspaces || tree.workspaces.length === 0 ? "Créez d'abord une workspace" : ""}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Groupe
-                  </Button>
-                )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
-                  <Button
-                    onClick={() => setWizardOpen(true)}
-                    className="h-10 gap-2 bg-primary text-white hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                    disabled={!canCreateCompany || (!tree?.workspaces || tree.workspaces.length === 0)}
-                    title={!tree?.workspaces || tree.workspaces.length === 0 ? "Créez d'abord une workspace" : ""}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Entreprise
-                  </Button>
-                )}
-                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" || user?.role === "MANAGER") && (
-                  <Button
-                    onClick={() => setAddBUStandaloneOpen(true)}
-                    className="h-10 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm transition-all hover:shadow-md"
-                    disabled={!canCreateCompany || (!tree?.workspaces || tree.workspaces.length === 0)}
-                    title={!tree?.workspaces || tree.workspaces.length === 0 ? "Créez d'abord une workspace" : ""}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Business Unit
-                  </Button>
-                )}
-              </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -2406,7 +2451,7 @@ export default function StructurePage() {
           </DialogHeader>
 
           {selectedNode?.type === "workspace" && (
-            <div className="space-y-4 py-2">
+            <div className="space-y-4 py-2 p-5">
               <div className="space-y-2">
                 <h3 className="text-sm font-medium text-slate-700">Informations sur l&apos;espace de travail</h3>
                 <div className="bg-slate-50 rounded-lg p-4 space-y-4">
@@ -2542,7 +2587,7 @@ export default function StructurePage() {
           )}
 
           {selectedNode?.type === "group" && (
-            <div className="space-y-4 py-2">
+            <div className="space-y-4 py-2 p-5">
               <Field
                 label="Nom"
                 value={editGroup.name}
@@ -2680,7 +2725,7 @@ export default function StructurePage() {
           )}
 
           {selectedNode?.type === "company" && (
-            <div className="space-y-4 py-2">
+            <div className="space-y-4 py-2 p-5">
               <Field
                 label="Nom"
                 value={editCompany.name}
@@ -2865,7 +2910,7 @@ export default function StructurePage() {
           )}
 
           {selectedNode?.type === "bu" && (
-            <div className="space-y-4 py-2">
+            <div className="space-y-4 py-2 p-5">
               <Field
                 label="Nom"
                 value={editBU.name}
@@ -2983,7 +3028,7 @@ export default function StructurePage() {
             </div>
           )}
 
-          <DialogFooter className="gap-2 sticky bottom-0 bg-white border-t pt-4 mt-4">
+          <DialogFooter className="gap-2 sticky bottom-0 bg-white border-t border-border pt-4 mt-4">
             {!editing ? (
               <>
                 {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "MANAGER" || user?.role === "HEAD_MANAGER") && (

@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/Dialog";
+import {
   Search,
   Download,
   Filter,
@@ -142,6 +149,41 @@ function summarizeDetails(details: unknown): string {
   return "";
 }
 
+function formatDetailsValue(v: unknown): string {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "string") return v || "—";
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (Array.isArray(v)) return `[${v.length}]`;
+  if (typeof v === "object") return "{…}";
+  return String(v);
+}
+
+function toKeyValueDetails(details: unknown): Array<{ key: string; value: string }> {
+  if (!details || typeof details !== "object" || Array.isArray(details)) return [];
+  const d = details as Record<string, unknown>;
+  const preferredOrder = [
+    "message",
+    "reason",
+    "email",
+    "role",
+    "name",
+    "code",
+    "ownerType",
+    "ownerId",
+    "percentage",
+    "companyId",
+    "companyIds",
+    "updatedFields",
+    "changes",
+  ];
+
+  const keys = Array.from(new Set([...preferredOrder, ...Object.keys(d)]))
+    .filter((k) => d[k] !== undefined)
+    .slice(0, 14);
+
+  return keys.map((key) => ({ key, value: formatDetailsValue(d[key]) }));
+}
+
 function mapBackendActionToUi(action: string): AuditActionUi {
   const a = action.toUpperCase();
   if (a === "LOGIN" || a === "LOGIN_FAILED") return "LOGIN";
@@ -226,6 +268,8 @@ export default function AuditPage() {
   const [statusFilter, setStatusFilter] = useState<"" | "success" | "failure">("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<AuditLogDto | null>(null);
 
   useEffect(() => {
     if (!isAuthReady) return;
@@ -268,6 +312,8 @@ export default function AuditPage() {
   }, [loadLogs, page]);
 
   const uiEntries = useMemo(() => logs.map(mapLogToEntry), [logs]);
+  const logsById = useMemo(() => new Map(logs.map((l) => [l.id, l])), [logs]);
+  const selectedEntry = useMemo(() => (selectedLog ? mapLogToEntry(selectedLog) : null), [selectedLog]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -494,7 +540,25 @@ export default function AuditPage() {
                       const cfg = actionConfig[entry.action];
                       const Icon = cfg.icon;
                       return (
-                        <tr key={entry.id} className="transition-colors hover:bg-slate-50/50">
+                        <tr
+                          key={entry.id}
+                          role="button"
+                          tabIndex={0}
+                          className="cursor-pointer transition-colors hover:bg-slate-50/50 focus:outline-hidden focus:ring-2 focus:ring-slate-300"
+                          onClick={() => {
+                            const log = logsById.get(entry.id) ?? null;
+                            setSelectedLog(log);
+                            setDetailOpen(true);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key !== "Enter" && e.key !== " ") return;
+                            e.preventDefault();
+                            const log = logsById.get(entry.id) ?? null;
+                            setSelectedLog(log);
+                            setDetailOpen(true);
+                          }}
+                          aria-label="Voir le détail de l'audit"
+                        >
                           <td className="whitespace-nowrap px-5 py-3 text-xs text-slate-500">
                             {formatTime(entry.timestamp)}
                           </td>
@@ -600,6 +664,87 @@ export default function AuditPage() {
             </>
           )}
         </div>
+
+        <Dialog
+          open={detailOpen}
+          onOpenChange={(open) => {
+            setDetailOpen(open);
+            if (!open) setSelectedLog(null);
+          }}
+        >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Détail audit</DialogTitle>
+              {selectedEntry && (
+                <p className="text-xs text-slate-500">
+                  {formatTime(selectedEntry.timestamp)} · {selectedEntry.user.email}
+                </p>
+              )}
+            </DialogHeader>
+
+            <div className="px-4 pb-1 space-y-4">
+              {!selectedLog || !selectedEntry ? (
+                <div className="text-sm text-slate-600">Aucun détail disponible.</div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Action</p>
+                      <p className="mt-1 text-sm text-slate-900">
+                        {actionConfig[selectedEntry.action]?.label ?? selectedEntry.action}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">{categoryLabels[selectedEntry.category]}</p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Statut</p>
+                      <p className="mt-1 text-sm text-slate-900">
+                        {selectedEntry.status === "success" ? "Succès" : "Échec"}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">IP: {selectedEntry.ip || "—"}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Ressource</p>
+                    <p className="mt-1 text-sm text-slate-900">{selectedEntry.resource || "—"}</p>
+                    <p className="mt-1 text-xs text-slate-500">{selectedEntry.detail || "—"}</p>
+                  </div>
+
+                  {toKeyValueDetails(selectedLog.details).length > 0 && (
+                    <div className="rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Détails</p>
+                      <dl className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {toKeyValueDetails(selectedLog.details).map((row) => (
+                          <div key={row.key} className="rounded-md bg-slate-50 px-3 py-2">
+                            <dt className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                              {row.key}
+                            </dt>
+                            <dd className="mt-0.5 text-xs text-slate-800 wrap-break-word">
+                              {row.value}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <DialogFooter className="p-4 pt-0">
+              <Button
+                variant="outline"
+                className="h-9"
+                onClick={() => {
+                  setDetailOpen(false);
+                  setSelectedLog(null);
+                }}
+              >
+                Fermer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
