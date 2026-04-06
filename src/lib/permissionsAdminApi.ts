@@ -7,7 +7,7 @@ export type PermissionAction =
   | "UPDATE"
   | "DELETE";
 
-export type NodeType = "GROUP" | "COMPANY" | "BUSINESS_UNIT";
+export type NodeType = "GROUP" | "COMPANY" | "BUSINESS_UNIT" | "WORKSPACE";
 
 export type UserListItem = {
   id: string;
@@ -89,7 +89,10 @@ export async function removeNodeAccess(
     `/permissions/admin/users/${userId}/node-access/${accessId}`,
     {
       method: "DELETE",
-      snackbar: { successMessage: "Accès nœud supprimé." },
+      snackbar: { 
+        successMessage: "Accès nœud supprimé.",
+        errorMessage: "Impossible de supprimer l'accès. L'utilisateur doit avoir au moins un accès à un nœud."
+      },
     }
   );
 }
@@ -132,7 +135,7 @@ export const ALL_ACTIONS: PermissionAction[] = [
   "DELETE",
 ];
 
-export const NODE_TYPES: NodeType[] = ["GROUP", "COMPANY", "BUSINESS_UNIT"];
+export const NODE_TYPES: NodeType[] = ["GROUP", "COMPANY", "BUSINESS_UNIT", "WORKSPACE"];
 
 export function actionLabel(a: PermissionAction): string {
   const labels: Record<PermissionAction, string> = {
@@ -150,6 +153,7 @@ export function nodeTypeLabel(n: NodeType): string {
     GROUP: "Groupe",
     COMPANY: "Entreprise",
     BUSINESS_UNIT: "Unité d'affaires",
+    WORKSPACE: "Workspace",
   };
   return labels[n] ?? n;
 }
