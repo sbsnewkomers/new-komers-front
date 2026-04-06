@@ -100,18 +100,27 @@ export async function apiFetch<T>(
       backendMessage = text;
     }
 
-    const displayMessage = snackbar?.errorMessage ?? backendMessage ?? (text || defaultMessage);
+    const displayMessage = snackbar?.errorMessage ?? backendMessage ?? text ?? defaultMessage ?? "Une erreur est survenue";
 
     if (snackbar?.showError !== false) {
-      emitSnackbar({ message: displayMessage, variant: "error" });
+      emitSnackbar({ message: (displayMessage && displayMessage.trim()) || "Une erreur est survenue", variant: "error" });
     }
 
     // Throw a richer error object, but with a clean .message for UI
-    const err = new Error(displayMessage);
-    (err as Error & { status: number }).status = res.status;
-    (err as Error & { payload: unknown }).payload = parsed ?? null;
-    (err as Error & { rawBody: string }).rawBody = text;
-    throw err;
+    let finalMessage = "Une erreur est survenue";
+    
+    // Essayer de construire le message de manière sécurisée
+    if (snackbar?.errorMessage && typeof snackbar.errorMessage === 'string') {
+      finalMessage = snackbar.errorMessage;
+    } else if (backendMessage && typeof backendMessage === 'string') {
+      finalMessage = backendMessage;
+    } else if (text && typeof text === 'string') {
+      finalMessage = text;
+    } else if (defaultMessage && typeof defaultMessage === 'string') {
+      finalMessage = defaultMessage;
+    }
+    
+    const err = new Error(finalMessage);
   }
 
   if (snackbar?.showSuccess) {
