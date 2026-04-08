@@ -140,10 +140,34 @@ export default function LoansPageOptimized() {
                     <ErrorDialog error={error} />
 
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
-                        <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="overview">Aperçu</TabsTrigger>
-                            <TabsTrigger value="list">Liste complète</TabsTrigger>
-                            <TabsTrigger value="create">Créer</TabsTrigger>
+                        <TabsList className="inline-flex h-12 items-center justify-center rounded-lg bg-transparent p-1 text-muted-foreground w-full">
+                            <TabsTrigger
+                                value="overview"
+                                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                            >
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                Aperçu
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="list"
+                                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                            >
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                </svg>
+                                Liste complète
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="create"
+                                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                            >
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Créer
+                            </TabsTrigger>
                         </TabsList>
 
                         {/* Overview Tab */}
@@ -204,16 +228,16 @@ export default function LoansPageOptimized() {
                             )}
                         </TabsContent>
 
-                        {/* Hidden tabs for specific creation methods */}
-                        <TabsContent value="calculator" style={{ display: 'none' }}>
+                        {/* Creation method tabs */}
+                        <TabsContent value="calculator">
                             <LoanCalculator onLoanCreated={handleLoanCreated} />
                         </TabsContent>
 
-                        <TabsContent value="import" style={{ display: 'none' }}>
+                        <TabsContent value="import">
                             <LoanImport onLoanImported={handleLoanCreated} />
                         </TabsContent>
 
-                        <TabsContent value="manual" style={{ display: 'none' }}>
+                        <TabsContent value="manual">
                             <ManualLoanEntry onLoanCreated={handleLoanCreated} />
                         </TabsContent>
                     </Tabs>
