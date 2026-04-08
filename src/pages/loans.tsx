@@ -12,6 +12,7 @@ import { LoanOverview } from '@/components/loans/LoanOverview';
 import { LoanList } from '@/components/loans/LoanList';
 import { LoanDetails } from '@/components/loans/LoanDetails';
 import { LoanCreate } from '@/components/loans/LoanCreate';
+import { LoanEdit } from '@/components/loans/LoanEdit';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 import { useLoans, useLoanDetails } from '@/hooks/useLoans';
@@ -28,6 +29,7 @@ export default function LoansPageOptimized() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<LoanStatus | 'all'>('all');
     const [filterEntityType, setFilterEntityType] = useState<EntityType | 'all'>('all');
+    const [editingLoanId, setEditingLoanId] = useState<string | null>(null);
 
     // Custom hooks
     const { loans, isLoading, error, setError } = useLoans();
@@ -102,6 +104,22 @@ export default function LoansPageOptimized() {
         setActiveTab('overview');
     };
 
+    const handleLoanEdit = (loanId: string) => {
+        setEditingLoanId(loanId);
+        setActiveTab('edit');
+    };
+
+    const handleLoanUpdated = (updatedLoan: Loan) => {
+        console.log('Loan updated:', updatedLoan);
+        // Recharger les données pour mettre à jour la liste
+        window.location.reload();
+    };
+
+    const handleEditBack = () => {
+        setEditingLoanId(null);
+        setActiveTab('list');
+    };
+
     return (
         <>
             <Head>
@@ -149,7 +167,7 @@ export default function LoansPageOptimized() {
                                 filterEntityType={filterEntityType}
                                 onFilterEntityTypeChange={setFilterEntityType}
                                 onLoanView={handleLoanSelect}
-                                onLoanEdit={() => { }}
+                                onLoanEdit={handleLoanEdit}
                                 onLoanDelete={handleLoanDelete}
                             />
                         </TabsContent>
@@ -168,8 +186,20 @@ export default function LoansPageOptimized() {
                                     loan={selectedLoan}
                                     loanStats={loanStats}
                                     onBack={handleBack}
-                                    onEdit={() => { }}
+                                    onEdit={handleLoanEdit}
                                     onDelete={handleLoanDelete}
+                                />
+                            )}
+                        </TabsContent>
+
+                        {/* Edit Tab */}
+                        <TabsContent value="edit">
+                            {editingLoanId && (
+                                <LoanEdit
+                                    loanId={editingLoanId}
+                                    onBack={handleEditBack}
+                                    onLoanUpdated={handleLoanUpdated}
+                                    onError={setError}
                                 />
                             )}
                         </TabsContent>
