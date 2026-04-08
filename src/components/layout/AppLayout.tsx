@@ -28,6 +28,7 @@ import {
   Menu,
   X,
   Building,
+  DollarSign,
 } from "lucide-react";
 
 type AppLayoutProps = {
@@ -156,14 +157,23 @@ export function AppLayout({
             {(user?.role === "SUPER_ADMIN" ||
               user?.role === "ADMIN" ||
               user?.role === "MANAGER") && (
-              <Link
-                href="/shareholders"
-                className={navLinkClass("/shareholders")}
-              >
-                <Users className="h-5 w-5" />
-                Shareholders
-              </Link>
-            )}
+                <Link
+                  href="/shareholders"
+                  className={navLinkClass("/shareholders")}
+                >
+                  <Users className="h-5 w-5" />
+                  Shareholders
+                </Link>
+              )}
+            {(user?.role === "SUPER_ADMIN" ||
+              user?.role === "ADMIN" ||
+              user?.role === "HEAD_MANAGER" ||
+              user?.role === "MANAGER") && (
+                <Link href="/loans" className={navLinkClass("/loans")}>
+                  <DollarSign className="h-5 w-5" />
+                  Emprunts
+                </Link>
+              )}
 
             {/* <Link href="/budget" className={navLinkClass("/budget")}>
               <BookOpen className="h-5 w-5" />
@@ -196,11 +206,11 @@ export function AppLayout({
               user?.role === "ADMIN" ||
               user?.role === "MANAGER" ||
               user?.role === "HEAD_MANAGER") && (
-              <Link href="/users" className={navLinkClass("/users")}>
-                <Users className="h-5 w-5" />
-                Users
-              </Link>
-            )}
+                <Link href="/users" className={navLinkClass("/users")}>
+                  <Users className="h-5 w-5" />
+                  Users
+                </Link>
+              )}
 
             <Link href="/settings" className={navLinkClass("/settings")}>
               <Settings className="h-5 w-5" />
@@ -298,7 +308,7 @@ export function AppLayout({
                   <span className="font-semibold text-blue-600 drop-shadow-sm">
                     {workspaceName}
                   </span>
-                  
+
                   <ChevronRight className="h-4 w-4 text-slate-300" />
                 </>
               )}
@@ -397,15 +407,29 @@ export function AppLayout({
               {(user?.role === "SUPER_ADMIN" ||
                 user?.role === "ADMIN" ||
                 user?.role === "MANAGER") && (
-                <Link
-                  href="/shareholders"
-                  className={navLinkClass("/shareholders")}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Users className="h-5 w-5" />
-                  Shareholders
-                </Link>
-              )}
+                  <Link
+                    href="/shareholders"
+                    className={navLinkClass("/shareholders")}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Users className="h-5 w-5" />
+                    Shareholders
+                  </Link>
+                )}
+
+              {(user?.role === "SUPER_ADMIN" ||
+                user?.role === "ADMIN" ||
+                user?.role === "HEAD_MANAGER" ||
+                user?.role === "MANAGER") && (
+                  <Link
+                    href="/loans"
+                    className={navLinkClass("/loans")}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <DollarSign className="h-5 w-5" />
+                    Emprunts
+                  </Link>
+                )}
 
               <Link
                 href="/budget"
@@ -449,15 +473,15 @@ export function AppLayout({
                 user?.role === "ADMIN" ||
                 user?.role === "MANAGER" ||
                 user?.role === "HEAD_MANAGER") && (
-                <Link
-                  href="/users"
-                  className={navLinkClass("/users")}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Users className="h-5 w-5" />
-                  Users
-                </Link>
-              )}
+                  <Link
+                    href="/users"
+                    className={navLinkClass("/users")}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Users className="h-5 w-5" />
+                    Users
+                  </Link>
+                )}
 
               <Link
                 href="/settings"

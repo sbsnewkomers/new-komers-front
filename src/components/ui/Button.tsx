@@ -1,7 +1,7 @@
 import * as React from "react";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "default" | "ghost" | "outline";
+  variant?: "default" | "ghost" | "outline" | "destructive";
   size?: "default" | "icon" | "sm" | "lg";
 };
 
@@ -9,6 +9,7 @@ const variants = {
   default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
   ghost: "hover:bg-slate-100 hover:text-slate-900",
   outline: "border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900",
+  destructive: "bg-red-600 text-white hover:bg-red-700 shadow-sm",
 };
 
 const sizes = {
