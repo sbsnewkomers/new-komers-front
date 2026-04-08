@@ -23,12 +23,24 @@ class EntitiesApi {
         return apiFetch<Group>(`/groups/${id}`);
     }
 
+    async getGroups(): Promise<Group[]> {
+        return apiFetch<Group[]>('/groups');
+    }
+
     async getCompany(id: string): Promise<Company> {
         return apiFetch<Company>(`/companies/${id}`);
     }
 
+    async getCompanies(): Promise<Company[]> {
+        return apiFetch<Company[]>('/companies');
+    }
+
     async getBusinessUnit(companyId: string, buId: string): Promise<BusinessUnit> {
         return apiFetch<BusinessUnit>(`/companies/${companyId}/business-units/${buId}`);
+    }
+
+    async getBusinessUnits(companyId: string): Promise<BusinessUnit[]> {
+        return apiFetch<BusinessUnit[]>(`/companies/${companyId}/business-units`);
     }
 
     async getEntityName(entityType: string, entityId: string): Promise<string> {

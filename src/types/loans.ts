@@ -95,6 +95,8 @@ export interface LoanCalculatorDto {
     monthlyInsuranceCost?: number;
     deferralPeriodMonths?: number;
     inputMethod?: LoanInputMethod;
+    entityType?: EntityType;
+    entityId?: string;
 }
 
 export interface LoanCalculatorResult {

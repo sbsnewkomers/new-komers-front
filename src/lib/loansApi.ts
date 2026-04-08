@@ -12,7 +12,7 @@ import {
     ImportResultDto,
     EntityType
 } from '../types/loans';
-import { apiFetch } from './apiClient';
+import { apiFetch, ApiFetchSnackbarOptions } from './apiClient';
 
 class ApiError extends Error {
     constructor(
@@ -60,10 +60,11 @@ class LoansApi {
     }
 
     // Calculator operations
-    async validateCalculatorParameters(calculatorDto: LoanCalculatorDto): Promise<CalculatorValidationResponse> {
+    async validateCalculatorParameters(calculatorDto: LoanCalculatorDto, options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<CalculatorValidationResponse> {
         return apiFetch<CalculatorValidationResponse>('/loans/calculator/validate', {
             method: 'POST',
             body: JSON.stringify(calculatorDto),
+            snackbar: options?.snackbar,
         });
     }
 
@@ -74,10 +75,11 @@ class LoansApi {
         });
     }
 
-    async createLoanFromCalculator(calculatorDto: LoanCalculatorDto): Promise<Loan> {
+    async createLoanFromCalculator(calculatorDto: LoanCalculatorDto, options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<Loan> {
         return apiFetch<Loan>('/loans/calculator/create', {
             method: 'POST',
             body: JSON.stringify(calculatorDto),
+            snackbar: options?.snackbar,
         });
     }
 

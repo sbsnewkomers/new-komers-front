@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from '@/components/ui/AlertDialog';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/AlertDialog';
 import { Calculator, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
 import { loansApi } from '@/lib/loansApi';
+import { entitiesApi, Group, Company, BusinessUnit } from '@/lib/entitiesApi';
+import { apiFetch } from '@/lib/apiClient';
 import {
     LoanCalculatorDto,
     CalculatorValidationResponse,
@@ -24,11 +26,14 @@ interface LoanCalculatorProps {
 }
 
 export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalculatorProps) {
-    const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
-    const [isLoading, setIsLoading] = useState(false);
+    const [currentStep, setCurrentStep] = useState<number>(1); // Corrigé le type de currentStep
+    const [isLoading, setIsLoading] = useState<boolean>(false); // Corrigé le type de isLoading
+    const [entities, setEntities] = useState<(Group[] | Company[] | BusinessUnit[])>([]);
+    const [selectedEntity, setSelectedEntity] = useState<string | null>(''); // Corrigé le type de selectedEntity
     const [validation, setValidation] = useState<CalculatorValidationResponse | null>(null);
     const [generation, setGeneration] = useState<CalculatorGenerationResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false); // Corrigé le type de showConfirmDialog
 
     // Form data
     const [formData, setFormData] = useState<LoanCalculatorDto>({
@@ -72,7 +77,14 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
             if (response.valid) {
                 setCurrentStep(2);
             } else {
-                setError(response.error || 'Validation failed');
+                // Show validation error via snackbar
+                apiFetch('/dummy', {
+                    method: 'POST',
+                    snackbar: {
+                        showError: true,
+                        errorMessage: response.error || 'Validation failed'
+                    }
+                });
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Validation failed');
@@ -99,6 +111,7 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
             const response = await loansApi.generateLoanSchedule(calculatorData);
             setGeneration(response);
             setCurrentStep(3);
+            // Success message handled by the API call
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Generation failed');
         } finally {
@@ -107,8 +120,8 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
     };
 
     const saveLoan = async () => {
-        if (!entityType || !entityId) {
-            setError('Entity type and entity ID are required');
+        if (!formData.entityType || !formData.entityId) {
+            setShowConfirmDialog(true);
             return;
         }
 
@@ -124,11 +137,40 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                 durationYears: Number(formData.durationYears) || 0,
                 monthlyInsuranceCost: Number(formData.monthlyInsuranceCost) || 0,
                 deferralPeriodMonths: Number(formData.deferralPeriodMonths) || 0,
-                entityType,
-                entityId,
+                entityType: formData.entityType,
+                entityId: formData.entityId,
             };
 
             const loan = await loansApi.createLoanFromCalculator(loanData);
+            onLoanCreated?.(loan.id);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to save loan');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const confirmSaveLoan = async () => {
+        setShowConfirmDialog(false);
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const loanData = {
+                ...formData,
+                principalAmount: Number(formData.principalAmount),
+                annualInterestRate: Number(formData.annualInterestRate),
+                durationMonths: Number(formData.durationMonths) || (Number(formData.durationYears) * 12),
+                durationYears: Number(formData.durationYears) || 0,
+                monthlyInsuranceCost: Number(formData.monthlyInsuranceCost) || 0,
+                deferralPeriodMonths: Number(formData.deferralPeriodMonths) || 0,
+                entityType: formData.entityType,
+                entityId: formData.entityId,
+            };
+
+            const loan = await loansApi.createLoanFromCalculator(loanData, {
+                snackbar: { showSuccess: true, successMessage: 'Emprunt créé avec succès !' }
+            });
             onLoanCreated?.(loan.id);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to save loan');
@@ -165,6 +207,51 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('fr-FR');
     };
+
+    const loadEntities = async (entityType: EntityType) => {
+        try {
+            let entitiesList: Group[] | Company[] | BusinessUnit[] = [];
+
+            switch (entityType) {
+                case 'group':
+                    entitiesList = await entitiesApi.getGroups();
+                    break;
+                case 'company':
+                    entitiesList = await entitiesApi.getCompanies();
+                    break;
+                case 'business unit':
+                    // For business units, we need to get companies first, then their business units
+                    const companies = await entitiesApi.getCompanies();
+                    const allBusinessUnits: BusinessUnit[] = [];
+                    for (const company of companies) {
+                        const businessUnits = await entitiesApi.getBusinessUnits(company.id);
+                        allBusinessUnits.push(...businessUnits);
+                    }
+                    entitiesList = allBusinessUnits;
+                    break;
+                default:
+                    entitiesList = [];
+            }
+
+            setEntities(entitiesList);
+        } catch (error) {
+            console.error('Error loading entities:', error);
+            setEntities([]);
+        }
+    };
+
+    // Initialize form data with props and pre-load entities if entityType is provided
+    useEffect(() => {
+        if (entityType) {
+            setFormData(prev => ({
+                ...prev,
+                entityType,
+                entityId: entityId || ''
+            }));
+            setSelectedEntity(entityId || '');
+            loadEntities(entityType);
+        }
+    }, [entityType, entityId]);
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -230,245 +317,332 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                         </AlertDialog>
                     )}
 
+                    {/* Confirmation Dialog */}
+                    {showConfirmDialog && (
+                        <AlertDialog open={true}>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle className="flex items-center gap-2 text-blue-600">
+                                        <div className="rounded-lg bg-blue-50 p-1.5">
+                                            <CheckCircle className="h-4 w-4 text-blue-500" />
+                                        </div>
+                                        Confirmer la sauvegarde
+                                    </AlertDialogTitle>
+                                </AlertDialogHeader>
+                                <AlertDialogDescription className="text-gray-700">
+                                    <div className="space-y-4">
+                                        <p className="font-medium">
+                                            Vous allez sauvegarder cet échéancier pour l&apos;entité suivante :
+                                        </p>
+                                        <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div>
+                                                    <span className="text-sm font-medium text-gray-600">Type d&apos;entité:</span>
+                                                    <select
+                                                        id="entityType"
+                                                        value={formData.entityType}
+                                                        onChange={(e) => {
+                                                            handleInputChange('entityType', e.target.value);
+                                                            loadEntities(e.target.value as EntityType);
+                                                            setSelectedEntity('');
+                                                        }}
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:ring-2"
+                                                    >
+                                                        <option value="group">Groupe</option>
+                                                        <option value="company">Entreprise</option>
+                                                        <option value="business unit">Unité commerciale</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <span className="text-sm font-medium text-gray-600">Entité:</span>
+                                                    <select
+                                                        id="selectedEntity"
+                                                        value={selectedEntity || ''}
+                                                        onChange={(e) => {
+                                                            setSelectedEntity(e.target.value);
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                entityId: e.target.value
+                                                            }));
+                                                        }}
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:ring-2"
+                                                        disabled={!formData.entityType}
+                                                    >
+                                                        <option value="">Sélectionner une entité...</option>
+                                                        {(entities || []).map((entity: Group | Company | BusinessUnit, index) => (
+                                                            <option key={index} value={entity.id}>
+                                                                {entity.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-gray-600 mt-4">
+                                        Voulez-vous confirmer la sauvegarde de cet échéancier ?
+                                    </p>
+                                </AlertDialogDescription>
+                                <AlertDialogFooter className="flex justify-end gap-3 pt-4">
+                                    <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+                                        Annuler
+                                    </Button>
+                                    <Button onClick={confirmSaveLoan} className="bg-blue-600 hover:bg-blue-700 text-white">
+                                        Confirmer la sauvegarde
+                                    </Button>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )
+                    }
+
                     {/* Step 1: Basic Information */}
-                    {currentStep === 1 && (
-                        <div className="space-y-6">
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4">Caractéristiques Principales</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="loanName">Nom de l&rsquo;emprunt</Label>
-                                        <Input
-                                            id="loanName"
-                                            placeholder="ex: Prêt BNP Agence X"
-                                            value={formData.name}
-                                            onChange={(e) => handleInputChange('name', e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="principalAmount">Montant du capital emprunté (EUR)</Label>
-                                        <Input
-                                            id="principalAmount"
-                                            type="number"
-                                            step="0.01"
-                                            min="0.01"
-                                            placeholder="ex: 200000"
-                                            value={formData.principalAmount || ''}
-                                            onChange={(e) => handleInputChange('principalAmount', e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="annualInterestRate">Taux d&apos;intérêt annuel (%)</Label>
-                                        <Input
-                                            id="annualInterestRate"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
-                                            placeholder="ex: 2.5"
-                                            value={formData.annualInterestRate || ''}
-                                            onChange={(e) => handleInputChange('annualInterestRate', e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="duration">Durée totale</Label>
-                                        <div className="flex gap-2">
+                    {
+                        currentStep === 1 && (
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-4">Caractéristiques Principales</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <Label htmlFor="loanName">Nom de l&rsquo;emprunt</Label>
                                             <Input
-                                                type="number"
-                                                min="1"
-                                                max="50"
-                                                placeholder="Années"
-                                                value={formData.durationYears || ''}
-                                                onChange={(e) => handleInputChange('durationYears', e.target.value)}
+                                                id="loanName"
+                                                placeholder="ex: Prêt BNP Agence X"
+                                                value={formData.name}
+                                                onChange={(e) => handleInputChange('name', e.target.value)}
                                             />
-                                            <span className="flex items-center text-muted-foreground">ou</span>
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="principalAmount">Montant du capital emprunté (EUR)</Label>
                                             <Input
+                                                id="principalAmount"
                                                 type="number"
-                                                min="1"
-                                                max="600"
-                                                placeholder="Mois"
-                                                value={formData.durationMonths || ''}
-                                                onChange={(e) => handleInputChange('durationMonths', e.target.value)}
+                                                step="0.01"
+                                                min="0.01"
+                                                placeholder="ex: 200000"
+                                                value={formData.principalAmount || ''}
+                                                onChange={(e) => handleInputChange('principalAmount', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="annualInterestRate">Taux d&apos;intérêt annuel (%)</Label>
+                                            <Input
+                                                id="annualInterestRate"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                max="100"
+                                                placeholder="ex: 2.5"
+                                                value={formData.annualInterestRate || ''}
+                                                onChange={(e) => handleInputChange('annualInterestRate', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="duration">Durée totale</Label>
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    max="50"
+                                                    placeholder="Années"
+                                                    value={formData.durationYears || ''}
+                                                    onChange={(e) => handleInputChange('durationYears', e.target.value)}
+                                                />
+                                                <span className="flex items-center text-muted-foreground">ou</span>
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    max="600"
+                                                    placeholder="Mois"
+                                                    value={formData.durationMonths || ''}
+                                                    onChange={(e) => handleInputChange('durationMonths', e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="firstInstallmentDate">Date de la première échéance</Label>
+                                            <Input
+                                                id="firstInstallmentDate"
+                                                type="date"
+                                                value={formData.firstInstallmentDate}
+                                                onChange={(e) => handleInputChange('firstInstallmentDate', e.target.value)}
                                             />
                                         </div>
                                     </div>
-                                    <div>
-                                        <Label htmlFor="firstInstallmentDate">Date de la première échéance</Label>
-                                        <Input
-                                            id="firstInstallmentDate"
-                                            type="date"
-                                            value={formData.firstInstallmentDate}
-                                            onChange={(e) => handleInputChange('firstInstallmentDate', e.target.value)}
-                                        />
-                                    </div>
+                                </div>
+
+                                <div className="flex justify-end">
+                                    <Button onClick={validateStep1} disabled={isLoading}>
+                                        {isLoading ? 'Validation...' : 'Continuer'}
+                                        <ArrowRight className="ml-2 h-4 w-4" />
+                                    </Button>
                                 </div>
                             </div>
-
-                            <div className="flex justify-end">
-                                <Button onClick={validateStep1} disabled={isLoading}>
-                                    {isLoading ? 'Validation...' : 'Continuer'}
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                    )}
+                        )
+                    }
 
                     {/* Step 2: Optional Parameters */}
-                    {currentStep === 2 && (
-                        <div className="space-y-6">
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4">Modalités Spécifiques (Optionnel)</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="monthlyInsuranceCost">Coût de l&apos;assurance mensuelle (EUR)</Label>
-                                        <Input
-                                            id="monthlyInsuranceCost"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            placeholder="ex: 50.00"
-                                            value={formData.monthlyInsuranceCost || ''}
-                                            onChange={(e) => handleInputChange('monthlyInsuranceCost', e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="deferralPeriodMonths">Période de différé (mois)</Label>
-                                        <Input
-                                            id="deferralPeriodMonths"
-                                            type="number"
-                                            min="0"
-                                            placeholder="ex: 6"
-                                            value={formData.deferralPeriodMonths || ''}
-                                            onChange={(e) => handleInputChange('deferralPeriodMonths', e.target.value)}
-                                        />
-                                        <p className="text-sm text-muted-foreground mt-1">
-                                            Durant cette période, seuls les intérêts et l&rsquo;assurance sont payés
-                                        </p>
+                    {
+                        currentStep === 2 && (
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-4">Modalités Spécifiques (Optionnel)</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <Label htmlFor="monthlyInsuranceCost">Coût de l&apos;assurance mensuelle (EUR)</Label>
+                                            <Input
+                                                id="monthlyInsuranceCost"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                placeholder="ex: 50.00"
+                                                value={formData.monthlyInsuranceCost || ''}
+                                                onChange={(e) => handleInputChange('monthlyInsuranceCost', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="deferralPeriodMonths">Période de différé (mois)</Label>
+                                            <Input
+                                                id="deferralPeriodMonths"
+                                                type="number"
+                                                min="0"
+                                                placeholder="ex: 6"
+                                                value={formData.deferralPeriodMonths || ''}
+                                                onChange={(e) => handleInputChange('deferralPeriodMonths', e.target.value)}
+                                            />
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                Durant cette période, seuls les intérêts et l&rsquo;assurance sont payés
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {validation && (
-                                <Card className="bg-blue-50 border-blue-200">
-                                    <CardContent className="pt-6">
-                                        <h4 className="font-semibold text-blue-900 mb-3">Résumé des paramètres saisis</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                            <div><span className="font-medium">Nom:</span> {validation.parameters.loanName}</div>
-                                            <div><span className="font-medium">Capital:</span> {formatCurrency(validation.parameters.principalAmount)}</div>
-                                            <div><span className="font-medium">Taux:</span> {validation.parameters.annualInterestRate}%</div>
-                                            <div><span className="font-medium">Durée:</span> {validation.parameters.durationInMonths} mois</div>
-                                            <div><span className="font-medium">Première échéance:</span> {formatDate(validation.parameters.firstInstallmentDate)}</div>
-                                            <div><span className="font-medium">Assurance:</span> {formatCurrency(validation.parameters.monthlyInsuranceCost)}/mois</div>
-                                            {validation.parameters.deferralPeriodMonths > 0 && (
-                                                <div><span className="font-medium">Différé:</span> {validation.parameters.deferralPeriodMonths} mois</div>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )}
-
-                            <div className="flex justify-between">
-                                <Button variant="outline" onClick={() => setCurrentStep(1)}>
-                                    Précédent
-                                </Button>
-                                <Button onClick={generateSchedule} disabled={isLoading}>
-                                    {isLoading ? 'Génération...' : 'Générer l&rsquo;échéancier'}
-                                    <Calculator className="ml-2 h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Step 3: Results and Save */}
-                    {currentStep === 3 && generation && (
-                        <div className="space-y-6">
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4">Échéancier Généré</h3>
-
-                                {/* Summary */}
-                                <Card className="bg-green-50 border-green-200 mb-6">
-                                    <CardContent className="pt-6">
-                                        <h4 className="font-semibold text-green-900 mb-3">Résumé de l&apos;emprunt</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                            <div>
-                                                <div className="text-sm text-green-700">Mensualité</div>
-                                                <div className="text-lg font-bold text-green-900">
-                                                    {formatCurrency(generation.summary.monthlyPayment)}
-                                                </div>
+                                {validation && (
+                                    <Card className="bg-blue-50 border-blue-200">
+                                        <CardContent className="pt-6">
+                                            <h4 className="font-semibold text-blue-900 mb-3">Résumé des paramètres saisis</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                                <div><span className="font-medium">Nom:</span> {validation.parameters.loanName}</div>
+                                                <div><span className="font-medium">Capital:</span> {formatCurrency(validation.parameters.principalAmount)}</div>
+                                                <div><span className="font-medium">Taux:</span> {validation.parameters.annualInterestRate}%</div>
+                                                <div><span className="font-medium">Durée:</span> {validation.parameters.durationInMonths} mois</div>
+                                                <div><span className="font-medium">Première échéance:</span> {formatDate(validation.parameters.firstInstallmentDate)}</div>
+                                                <div><span className="font-medium">Assurance:</span> {formatCurrency(validation.parameters.monthlyInsuranceCost)}/mois</div>
+                                                {validation.parameters.deferralPeriodMonths > 0 && (
+                                                    <div><span className="font-medium">Différé:</span> {validation.parameters.deferralPeriodMonths} mois</div>
+                                                )}
                                             </div>
-                                            <div>
-                                                <div className="text-sm text-green-700">Total des intérêts</div>
-                                                <div className="text-lg font-bold text-green-900">
-                                                    {formatCurrency(generation.summary.totalInterest)}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div className="text-sm text-green-700">Total assurance</div>
-                                                <div className="text-lg font-bold text-green-900">
-                                                    {formatCurrency(generation.summary.totalInsurance)}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div className="text-sm text-green-700">Total à rembourser</div>
-                                                <div className="text-lg font-bold text-green-900">
-                                                    {formatCurrency(generation.summary.totalPayment)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                        </CardContent>
+                                    </Card>
+                                )}
 
-                                {/* Amortization Table */}
-                                <div className="border rounded-lg">
-                                    <div className="max-h-96 overflow-y-auto">
-                                        <table className="w-full">
-                                            <thead className="bg-muted sticky top-0">
-                                                <tr>
-                                                    <th className="px-4 py-2 text-left">N°</th>
-                                                    <th className="px-4 py-2 text-left">Date</th>
-                                                    <th className="px-4 py-2 text-right">Capital</th>
-                                                    <th className="px-4 py-2 text-right">Intérêts</th>
-                                                    <th className="px-4 py-2 text-right">Assurance</th>
-                                                    <th className="px-4 py-2 text-right">Total</th>
-                                                    <th className="px-4 py-2 text-right">Restant dû</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {generation.amortizationTable.map((installment: LoanInstallmentCalculation) => (
-                                                    <tr key={installment.installmentNumber} className="border-b">
-                                                        <td className="px-4 py-2">{installment.installmentNumber}</td>
-                                                        <td className="px-4 py-2">{formatDate(installment.dueDate)}</td>
-                                                        <td className="px-4 py-2 text-right">{formatCurrency(installment.principalPayment)}</td>
-                                                        <td className="px-4 py-2 text-right">{formatCurrency(installment.interestPayment)}</td>
-                                                        <td className="px-4 py-2 text-right">{formatCurrency(installment.insurancePayment)}</td>
-                                                        <td className="px-4 py-2 text-right font-medium">{formatCurrency(installment.totalPayment)}</td>
-                                                        <td className="px-4 py-2 text-right">{formatCurrency(installment.remainingBalance)}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex justify-between">
-                                <div className="flex gap-2">
-                                    <Button variant="outline" onClick={resetCalculator}>
-                                        Nouveau calcul
-                                    </Button>
-                                    <Button variant="outline" onClick={() => setCurrentStep(2)}>
+                                <div className="flex justify-between">
+                                    <Button variant="outline" onClick={() => setCurrentStep(1)}>
                                         Précédent
                                     </Button>
+                                    <Button onClick={generateSchedule} disabled={isLoading}>
+                                        {isLoading ? 'Génération...' : 'Générer l\'échéancier'}
+                                        <Calculator className="ml-2 h-4 w-4" />
+                                    </Button>
                                 </div>
-                                <Button onClick={saveLoan} disabled={isLoading || !entityType || !entityId}>
-                                    {isLoading ? 'Sauvegarde...' : 'Sauvegarder cet échéancier'}
-                                    <CheckCircle className="ml-2 h-4 w-4" />
-                                </Button>
                             </div>
-                        </div>
-                    )}
-                </CardContent>
+                        )
+                    }
+
+                    {/* Step 3: Results and Save */}
+                    {
+                        currentStep === 3 && generation && (
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-4">Échéancier Généré</h3>
+
+                                    {/* Summary */}
+                                    <Card className="bg-green-50 border-green-200 mb-6">
+                                        <CardContent className="pt-6">
+                                            <h4 className="font-semibold text-green-900 mb-3">Résumé de l&apos;emprunt</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                <div>
+                                                    <div className="text-sm text-green-700">Mensualité</div>
+                                                    <div className="text-lg font-bold text-green-900">
+                                                        {formatCurrency(generation.summary.monthlyPayment)}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm text-green-700">Total des intérêts</div>
+                                                    <div className="text-lg font-bold text-green-900">
+                                                        {formatCurrency(generation.summary.totalInterest)}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm text-green-700">Total assurance</div>
+                                                    <div className="text-lg font-bold text-green-900">
+                                                        {formatCurrency(generation.summary.totalInsurance)}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm text-green-700">Total à rembourser</div>
+                                                    <div className="text-lg font-bold text-green-900">
+                                                        {formatCurrency(generation.summary.totalPayment)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Amortization Table */}
+                                    <div className="border rounded-lg">
+                                        <div className="max-h-96 overflow-y-auto">
+                                            <table className="w-full">
+                                                <thead className="bg-muted sticky top-0">
+                                                    <tr>
+                                                        <th className="px-4 py-2 text-left">N°</th>
+                                                        <th className="px-4 py-2 text-left">Date</th>
+                                                        <th className="px-4 py-2 text-right">Capital</th>
+                                                        <th className="px-4 py-2 text-right">Intérêts</th>
+                                                        <th className="px-4 py-2 text-right">Assurance</th>
+                                                        <th className="px-4 py-2 text-right">Total</th>
+                                                        <th className="px-4 py-2 text-right">Restant dû</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {generation.amortizationTable.map((installment: LoanInstallmentCalculation) => (
+                                                        <tr key={installment.installmentNumber} className="border-b">
+                                                            <td className="px-4 py-2">{installment.installmentNumber}</td>
+                                                            <td className="px-4 py-2">{formatDate(installment.dueDate)}</td>
+                                                            <td className="px-4 py-2 text-right">{formatCurrency(installment.principalPayment)}</td>
+                                                            <td className="px-4 py-2 text-right">{formatCurrency(installment.interestPayment)}</td>
+                                                            <td className="px-4 py-2 text-right">{formatCurrency(installment.insurancePayment)}</td>
+                                                            <td className="px-4 py-2 text-right font-medium">{formatCurrency(installment.totalPayment)}</td>
+                                                            <td className="px-4 py-2 text-right">{formatCurrency(installment.remainingBalance)}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-between">
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" onClick={resetCalculator}>
+                                            Nouveau calcul
+                                        </Button>
+                                        <Button variant="outline" onClick={() => setCurrentStep(2)}>
+                                            Précédent
+                                        </Button>
+                                    </div>
+                                    <Button onClick={saveLoan} disabled={isLoading}>
+                                        {isLoading ? 'Sauvegarde...' : 'Sauvegarder cet échéancier'}
+                                        <CheckCircle className="ml-2 h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )
+                    }
+                </CardContent >
             </Card >
         </div >
     );
 }
+
+export default LoanCalculator;
