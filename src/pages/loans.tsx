@@ -35,12 +35,23 @@ export default function LoansPageOptimized() {
     const { deleteConfirmOpen, loanToDelete, confirmDelete, cancelDelete, closeDialog } = useDeleteConfirm();
 
     // Overview stats
-    const overviewStats = useMemo(() => ({
-        totalLoans: loans.length,
-        activeLoans: loans.filter(loan => loan.status === 'ACTIVE').length,
-        totalPrincipal: loans.reduce((sum, loan) => sum + loan.principalAmount, 0),
-        averageRate: loans.length > 0 ? loans.reduce((sum, loan) => sum + loan.annualInterestRate, 0) / loans.length : 0,
-    }), [loans]);
+    const overviewStats = useMemo(() => {
+        console.log('Loans data:', loans);
+        console.log('Loans length:', loans.length);
+
+        const validLoans = loans.filter(loan => loan != null);
+        const stats = {
+            totalLoans: validLoans.length,
+            activeLoans: validLoans.filter(loan => loan.status === 'ACTIVE').length,
+            totalPrincipal: validLoans.reduce((sum, loan) => sum + (Number(loan.principalAmount) || 0), 0),
+            averageRate: validLoans.length > 0
+                ? validLoans.reduce((sum, loan) => sum + (Number(loan.annualInterestRate) || 0), 0) / validLoans.length
+                : 0,
+        };
+        console.log('Valid loans:', validLoans);
+        console.log('Calculated stats:', stats);
+        return stats;
+    }, [loans]);
 
     // Filtered loans
     const filteredLoans = useMemo(() => loans.filter(loan => {
