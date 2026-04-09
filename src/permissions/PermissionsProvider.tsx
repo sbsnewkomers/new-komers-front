@@ -3,6 +3,7 @@ import { apiFetch, setAccessTokenGetter } from "@/lib/apiClient";
 import { logout as authLogout, refreshTokens, type TokenPair } from "@/lib/authApi";
 import type { PermissionGrant, PermissionsUser } from "@/permissions/types";
 import { useAuthRevalidator } from "@/hooks/useAuthRevalidator";
+import { loansApi } from "@/lib/loansApi";
 
 type PermissionsContextValue = {
   user: PermissionsUser | null;
@@ -72,7 +73,9 @@ export function PermissionsProvider(props: {
 
   // Single getter that reads from ref so it always sees the latest token (including right after setTokens).
   useEffect(() => {
-    setAccessTokenGetter(() => tokensRef.current?.accessToken ?? null);
+    const tokenGetter = () => tokensRef.current?.accessToken ?? null;
+    setAccessTokenGetter(tokenGetter);
+    loansApi.setAccessTokenGetter(tokenGetter);
   }, []);
 
   const refreshMe = useCallback(

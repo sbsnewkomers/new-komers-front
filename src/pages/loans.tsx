@@ -94,6 +94,7 @@ export default function LoansPageOptimized() {
 
     const handleLoanCreated = (loanId: string) => {
         loadLoanDetails(loanId);
+        setActiveTab('details');
     };
 
     const handleMethodSelect = (method: 'calculator' | 'import' | 'manual') => {

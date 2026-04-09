@@ -1,21 +1,21 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Select } from '@/components/ui/Select';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from '@/components/ui/AlertDialog';
-import { FileSpreadsheet, Download, Upload, CheckCircle, ArrowRight } from 'lucide-react';
+import { AlertDialog, AlertDialogContent, AlertDialogDescription } from '@/components/ui/AlertDialog';
+import { FileSpreadsheet, Download, CheckCircle, ArrowRight } from 'lucide-react';
 import { loansApi } from '@/lib/loansApi';
+import { entitiesApi } from '@/lib/entitiesApi';
 import {
-    Loan,
+    type LoanImport,
     EntityType,
     ImportPreviewDto,
     ColumnMappingDto,
-    UploadLoanImportDto,
-    ImportFileFormat
+    ImportFileFormat,
 } from '@/types/loans';
 
 interface LoanImportProps {
@@ -36,31 +36,64 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
     const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
 
     // File upload state
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<ImportPreviewDto | null>(null);
     const [columnMapping, setColumnMapping] = useState<ColumnMappingDto[]>([]);
-    const [importResult, setImportResult] = useState<Loan | null>(null);
+    const [importResult, setImportResult] = useState<LoanImport | null>(null);
+    const [importId, setImportId] = useState<string | null>(null);
 
     // Form data
     const [loanName, setLoanName] = useState('');
     const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(entityType || EntityType.GROUP);
     const [selectedEntityId, setSelectedEntityId] = useState(entityId || '');
+    const [entities, setEntities] = useState<Array<{ id: string; name: string }>>([]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            setSelectedFile(file);
-            setError(null);
-            setSuccess(null);
+    // Load groups by default on component mount
+    useEffect(() => {
+        if (selectedEntityType === EntityType.GROUP) {
+            loadEntities(EntityType.GROUP);
         }
-    };
+    }, [selectedEntityType]);
 
-    const uploadFile = async () => {
+    // Auto-fill mapping when preview data is available
+    useEffect(() => {
+        console.log('useEffect triggered with preview:', preview);
+        if (preview && preview.detectedColumns && preview.detectedColumns.length > 0) {
+            console.log('Detected columns:', preview.detectedColumns);
+            // Create automatic mapping based on detected columns
+            const autoMapping: ColumnMappingDto[] = [];
+            const requiredFields = ['dueDate', 'principalPayment', 'interestPayment', 'insurancePayment'];
+
+            requiredFields.forEach(field => {
+                const matchedColumn = preview.detectedColumns.find(col =>
+                    col.toLowerCase().includes(field) ||
+                    (field === 'dueDate' && col.toLowerCase().includes('date')) ||
+                    (field === 'principalPayment' && col.toLowerCase().includes('capital')) ||
+                    (field === 'interestPayment' && col.toLowerCase().includes('intérêt')) ||
+                    (field === 'insurancePayment' && col.toLowerCase().includes('assurance'))
+                );
+
+                if (matchedColumn && !autoMapping.some(m => m.targetField === field)) {
+                    autoMapping.push({
+                        sourceColumn: matchedColumn,
+                        targetField: field as 'dueDate' | 'principalPayment' | 'interestPayment' | 'insurancePayment'
+                    });
+                    console.log(`Auto-mapped: ${field} -> ${matchedColumn}`);
+                }
+            });
+
+            if (autoMapping.length > 0) {
+                setColumnMapping(autoMapping);
+            }
+        }
+    }, [preview]);
+
+
+    const goToNextStep = async () => {
         if (!selectedFile || !loanName || !selectedEntityType || !selectedEntityId) {
             setError('Veuillez remplir tous les champs obligatoires');
             return;
@@ -70,38 +103,59 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         setError(null);
 
         try {
-            const uploadData: UploadLoanImportDto = {
+            const uploadDto = {
                 file: selectedFile,
                 loanName,
                 entityType: selectedEntityType,
                 entityId: selectedEntityId,
-                columnMapping: columnMapping.length > 0 ? columnMapping : undefined,
             };
 
-            const result = await loansApi.uploadImportFile(uploadData);
+            const result = await loansApi.uploadImportFile(uploadDto);
 
-            setImportResult(result);
-            setSuccess('Import réussi !');
-            setCurrentStep(3);
-            onLoanImported?.(result.id);
-        } catch (err) {
-            if (err instanceof Error && err.message.includes('Mapping des colonnes requis')) {
-                // Try to extract column information from error
+            if (result && result.status === 'PENDING') {
+                setImportId(result.id);
+
                 try {
-                    const errorData = JSON.parse(err.message);
-                    if (errorData.details?.detectedColumns) {
-                        setPreview({
-                            previewRows: [],
-                            detectedColumns: errorData.details.detectedColumns,
-                            totalRows: 0,
-                        });
-                        setCurrentStep(2);
-                        return;
-                    }
+                    const previewData = await loansApi.getImportPreview(result.id);
+                    setPreview(previewData);
+                    setCurrentStep(2);
+                    return;
                 } catch {
-                    // Fall through to general error
+                    if (selectedFile) {
+                        try {
+                            const text = await selectedFile.text();
+                            const lines = text.split('\n').filter(line => line.trim());
+                            if (lines.length > 0) {
+                                const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, '').trim());
+                                setPreview({
+                                    previewRows: [],
+                                    detectedColumns: headers,
+                                    totalRows: lines.length - 1,
+                                });
+                                setCurrentStep(2);
+                                return;
+                            }
+                        } catch (parseError) {
+                            console.error('Error parsing file:', parseError);
+                        }
+                    }
+
+                    setPreview({
+                        previewRows: [],
+                        detectedColumns: ['Veuillez sélectionner un fichier valide'],
+                        totalRows: 0,
+                    });
+                    setCurrentStep(2);
+                    return;
                 }
             }
+
+            setImportResult(result);
+            setCurrentStep(3);
+            if (result.loanId) {
+                onLoanImported?.(result.loanId);
+            }
+        } catch (err) {
             setError(err instanceof Error ? err.message : 'Import failed');
         } finally {
             setIsLoading(false);
@@ -111,7 +165,13 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
     const downloadTemplate = async (format: ImportFileFormat) => {
         setIsLoading(true);
         try {
-            const blob = await loansApi.downloadTemplate(format);
+            const blob = await loansApi.downloadTemplate(format, {
+                snackbar: {
+                    showSuccess: true,
+                    successMessage: `Modèle ${format} téléchargé avec succès`,
+                    showError: true,
+                }
+            });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -120,12 +180,49 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
-            setSuccess(`Modèle ${format} téléchargé avec succès`);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Download failed');
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const loadEntities = async (entityType: EntityType) => {
+        try {
+            let entitiesList: Array<{ id: string; name: string }> = [];
+
+            switch (entityType) {
+                case EntityType.GROUP:
+                    entitiesList = await entitiesApi.getGroups();
+                    break;
+                case EntityType.COMPANY:
+                    entitiesList = await entitiesApi.getCompanies();
+                    break;
+                case EntityType.BUSINESSUNIT:
+                    const companies = await entitiesApi.getCompanies();
+                    const allBusinessUnits: Array<{ id: string; name: string }> = [];
+                    for (const company of companies) {
+                        const businessUnits = await entitiesApi.getBusinessUnits(company.id);
+                        allBusinessUnits.push(...businessUnits);
+                    }
+                    entitiesList = allBusinessUnits;
+                    break;
+                default:
+                    entitiesList = [];
+            }
+
+            setEntities(entitiesList);
+        } catch (error) {
+            console.error('Error loading entities:', error);
+            setEntities([]);
+        }
+    };
+
+    const handleEntityTypeChange = (value: string) => {
+        const entityType = value as EntityType;
+        setSelectedEntityType(entityType);
+        setSelectedEntityId('');
+        loadEntities(entityType);
     };
 
     const handleColumnMapping = (sourceColumn: string, targetField: 'dueDate' | 'principalPayment' | 'interestPayment' | 'insurancePayment') => {
@@ -138,6 +235,43 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         });
     };
 
+    const processImport = async () => {
+        if (!preview || !isImportReady()) {
+            setError('Veuillez compléter le mapping des colonnes');
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            if (!importId) {
+                setError('ID d\'import manquant');
+                return;
+            }
+
+            const processDto = {
+                importId,
+                loanName,
+                entityType: selectedEntityType,
+                entityId: selectedEntityId,
+                columnMapping,
+            };
+
+            const result = await loansApi.processImport(processDto);
+
+            setImportResult(result as LoanImport);
+            setCurrentStep(3);
+            if (result.loanId) {
+                onLoanImported?.(result.loanId);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Processing failed');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const resetImport = () => {
         setCurrentStep(1);
         setSelectedFile(null);
@@ -146,7 +280,6 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         setImportResult(null);
         setLoanName('');
         setError(null);
-        setSuccess(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -154,7 +287,7 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
 
     const getRequiredColumns = () => ['dueDate', 'principalPayment', 'interestPayment', 'insurancePayment'];
 
-    const isMappingComplete = () => {
+    const isImportReady = () => {
         const required = getRequiredColumns();
         return required.every(field =>
             columnMapping.some(mapping => mapping.targetField === field)
@@ -213,24 +346,6 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                 <AlertDialogDescription className="text-red-800">
                                     {error}
                                 </AlertDialogDescription>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
-
-                    {success && (
-                        <AlertDialog open={true}>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle className="flex items-center gap-2 text-green-600">
-                                        <div className="rounded-lg bg-green-50 p-1.5">
-                                            <CheckCircle className="h-4 w-4 text-green-600" />
-                                        </div>
-                                        Succès
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription className="text-green-800">
-                                        {success}
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
                             </AlertDialogContent>
                         </AlertDialog>
                     )}
@@ -296,7 +411,7 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                         <Label htmlFor="entityType">Type d&rsquo;entité</Label>
                                         <Select
                                             value={selectedEntityType}
-                                            onValueChange={(value) => setSelectedEntityType(value as EntityType)}
+                                            onValueChange={handleEntityTypeChange}
                                         >
                                             <option value={EntityType.GROUP}>Groupe</option>
                                             <option value={EntityType.COMPANY}>Entreprise</option>
@@ -304,49 +419,46 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                         </Select>
                                     </div>
                                     <div>
-                                        <Label htmlFor="entityId">ID de l&rsquo;entité</Label>
-                                        <Input
+                                        <Label htmlFor="entityId">Entité</Label>
+                                        <Select
                                             id="entityId"
-                                            placeholder="UUID de l'entité"
-                                            value={selectedEntityId}
-                                            onChange={(e) => setSelectedEntityId(e.target.value)}
+                                            value={selectedEntityId || ''}
+                                            onValueChange={(value) => setSelectedEntityId(value)}
+                                            disabled={!selectedEntityType}
+                                        >
+                                            <option value="">Sélectionner une entité...</option>
+                                            {entities.map((entity) => (
+                                                <option key={entity.id} value={entity.id}>
+                                                    {entity.name}
+                                                </option>
+                                            ))}
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="fileInput">Fichier Excel/CSV</Label>
+                                        <Input
+                                            id="fileInput"
+                                            type="file"
+                                            accept=".xlsx,.xls,.csv"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    setSelectedFile(file);
+                                                }
+                                            }}
+                                            disabled={isLoading}
                                         />
                                     </div>
                                 </div>
-                            </div>
-
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4">Télécharger votre fichier</h3>
-                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                                    <FileSpreadsheet className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                                    <p className="text-lg font-medium mb-2">
-                                        {selectedFile ? selectedFile.name : 'Glissez-déposez votre fichier ici'}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground mb-4">
-                                        Formats supportés: .xlsx, .xls, .csv (max 10MB)
-                                    </p>
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept=".xlsx,.xls,.csv"
-                                        onChange={handleFileSelect}
-                                        className="hidden"
-                                    />
-                                    <Button onClick={() => fileInputRef.current?.click()} variant="outline">
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Choisir un fichier
+                                <div className="flex justify-end">
+                                    <Button
+                                        onClick={goToNextStep}
+                                        disabled={isLoading || !selectedFile || !loanName || !selectedEntityType || !selectedEntityId}
+                                    >
+                                        {isLoading ? 'Chargement...' : 'suivant'}
+                                        <ArrowRight className="ml-2 h-4 w-4" />
                                     </Button>
                                 </div>
-                            </div>
-
-                            <div className="flex justify-end">
-                                <Button
-                                    onClick={uploadFile}
-                                    disabled={isLoading || !selectedFile || !loanName || !selectedEntityType || !selectedEntityId}
-                                >
-                                    {isLoading ? 'Import...' : 'Importer le fichier'}
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
                             </div>
                         </div>
                     )}
@@ -396,8 +508,8 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                     Précédent
                                 </Button>
                                 <Button
-                                    onClick={uploadFile}
-                                    disabled={!isMappingComplete() || isLoading}
+                                    onClick={processImport}
+                                    disabled={!isImportReady() || isLoading}
                                 >
                                     {isLoading ? 'Import...' : 'Finaliser l\'import'}
                                     <CheckCircle className="ml-2 h-4 w-4" />
@@ -423,13 +535,19 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                             </div>
                                             <div className="space-y-2">
                                                 <p className="text-sm text-green-800">
-                                                    <strong>Emprunt créé:</strong> {importResult.name}
+                                                    <strong>Emprunt créé:</strong> {importResult.loan?.name || 'Prêt importé'}
                                                 </p>
                                                 <p className="text-sm text-green-800">
-                                                    <strong>Capital:</strong> {formatCurrency(importResult.principalAmount)}
+                                                    <strong>Capital:</strong> {importResult.loan ? formatCurrency(importResult.loan.principalAmount) : 'N/A'}
                                                 </p>
                                                 <p className="text-sm text-green-800">
-                                                    <strong>Durée:</strong> {importResult.durationMonths} mois
+                                                    <strong>Durée:</strong> {importResult.loan ? `${importResult.loan.durationMonths} mois` : 'N/A'}
+                                                </p>
+                                                <p className="text-sm text-green-800">
+                                                    <strong>Fichier:</strong> {importResult.originalFileName}
+                                                </p>
+                                                <p className="text-sm text-green-800">
+                                                    <strong>Lignes importées:</strong> {importResult.importedRows} / {importResult.totalRows}
                                                 </p>
                                             </div>
                                         </CardContent>
@@ -441,8 +559,8 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                 <Button variant="outline" onClick={resetImport}>
                                     Nouvel import
                                 </Button>
-                                {importResult && (
-                                    <Button onClick={() => onLoanImported?.(importResult.id)}>
+                                {importResult && importResult.loanId && (
+                                    <Button onClick={() => onLoanImported?.(importResult.loanId)}>
                                         Voir l&rsquo;emprunt
                                     </Button>
                                 )}
@@ -451,6 +569,6 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                     )}
                 </CardContent>
             </Card>
-        </div >
+        </div>
     );
 }

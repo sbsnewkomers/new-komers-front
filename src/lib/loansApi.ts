@@ -1,5 +1,6 @@
 import {
     Loan,
+    LoanImport,
     LoanCalculatorDto,
     CalculatorValidationResponse,
     CalculatorGenerationResponse,
@@ -12,7 +13,7 @@ import {
     ImportResultDto,
     EntityType
 } from '../types/loans';
-import { apiFetch, ApiFetchSnackbarOptions } from './apiClient';
+import { apiFetch, ApiFetchSnackbarOptions, setAccessTokenGetter } from './apiClient';
 
 class ApiError extends Error {
     constructor(
@@ -26,6 +27,18 @@ class ApiError extends Error {
 }
 
 class LoansApi {
+    private accessTokenGetter: (() => string | null) | null = null;
+
+    constructor() {
+        // Store the access token getter for use in downloadTemplate
+        // This will be set by the app initialization
+    }
+
+    setAccessTokenGetter(getter: () => string | null) {
+        this.accessTokenGetter = getter;
+        setAccessTokenGetter(getter);
+    }
+
     // Basic CRUD operations
     async createLoan(loanData: Partial<Loan>): Promise<Loan> {
         return apiFetch<Loan>('/loans', {
@@ -93,7 +106,7 @@ class LoansApi {
     }
 
     // Import operations
-    async uploadImportFile(uploadData: UploadLoanImportDto): Promise<Loan> {
+    async uploadImportFile(uploadData: UploadLoanImportDto, options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<LoanImport> {
         const formData = new FormData();
         formData.append('file', uploadData.file);
         formData.append('loanName', uploadData.loanName);
@@ -104,9 +117,10 @@ class LoansApi {
             formData.append('columnMapping', JSON.stringify(uploadData.columnMapping));
         }
 
-        return apiFetch<Loan>('/loans/import/upload', {
+        return apiFetch<LoanImport>('/loans/import/upload', {
             method: 'POST',
             body: formData,
+            snackbar: options?.snackbar,
         });
     }
 
@@ -121,14 +135,54 @@ class LoansApi {
         });
     }
 
-    async downloadTemplate(format: 'EXCEL' | 'CSV'): Promise<Blob> {
-        const response = await apiFetch<Response>(`/loans/import/template?format=${format}`, {
-            authRedirect: false,
+    async downloadTemplate(format: 'EXCEL' | 'CSV', options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<Blob> {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+        const url = `${baseUrl}/loans/import/template?format=${format}`;
+
+        const token = this.accessTokenGetter ? this.accessTokenGetter() : null;
+
+        const response = await fetch(url, {
+            credentials: "same-origin",
+            headers: {
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
         });
 
-        // Convert response to blob
-        const blob = await response.blob();
-        return blob;
+        if (!response.ok) {
+            const text = await response.text().catch(() => "");
+            let errorMessage = `Failed to download template: ${response.status} ${response.statusText}`;
+
+            try {
+                const errorData = JSON.parse(text);
+                if (errorData && typeof errorData === 'object' && 'message' in errorData) {
+                    errorMessage = typeof errorData.message === 'string' ? errorData.message : errorMessage;
+                }
+            } catch {
+                // Keep default error message
+            }
+
+            // Show error snackbar if enabled
+            if (options?.snackbar?.showError !== false) {
+                const { emitSnackbar } = await import('@/ui/snackbarBus');
+                emitSnackbar({
+                    message: options?.snackbar?.errorMessage || errorMessage || "Une erreur est survenue",
+                    variant: "error"
+                });
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        // Show success snackbar if enabled
+        if (options?.snackbar?.showSuccess) {
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: options?.snackbar?.successMessage || `Modèle ${format} téléchargé avec succès`,
+                variant: "success"
+            });
+        }
+
+        return response.blob();
     }
 }
 
