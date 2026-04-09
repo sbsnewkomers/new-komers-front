@@ -560,7 +560,7 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                     Nouvel import
                                 </Button>
                                 {importResult && importResult.loanId && (
-                                    <Button onClick={() => onLoanImported?.(importResult.loanId)}>
+                                    <Button onClick={() => onLoanImported?.(importResult.loanId!)}>
                                         Voir l&rsquo;emprunt
                                     </Button>
                                 )}
