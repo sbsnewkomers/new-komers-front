@@ -329,7 +329,7 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                                         Confirmer la sauvegarde
                                     </AlertDialogTitle>
                                 </AlertDialogHeader>
-                                <AlertDialogDescription className="text-gray-700">
+                                <div className="text-gray-700">
                                     <div className="space-y-4">
                                         <p className="font-medium">
                                             Vous allez sauvegarder cet échéancier pour l&apos;entité suivante :
@@ -382,7 +382,7 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                                     <p className="text-sm text-gray-600 mt-4">
                                         Voulez-vous confirmer la sauvegarde de cet échéancier ?
                                     </p>
-                                </AlertDialogDescription>
+                                </div>
                                 <AlertDialogFooter className="flex justify-end gap-3 pt-4">
                                     <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
                                         Annuler
