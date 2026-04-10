@@ -116,6 +116,15 @@ export default function LoansPageOptimized() {
         window.location.reload();
     };
 
+    const handleLoanInstallmentUpdate = async () => {
+        // Recharger les détails du prêt pour mettre à jour les échéances et les statistiques
+        if (selectedLoan) {
+            // Petit délai pour s'assurer que le backend a le temps de mettre à jour les données
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await loadLoanDetails(selectedLoan.id);
+        }
+    };
+
     const handleEditBack = () => {
         setEditingLoanId(null);
         setActiveTab('list');
@@ -213,6 +222,7 @@ export default function LoansPageOptimized() {
                                     onBack={handleBack}
                                     onEdit={handleLoanEdit}
                                     onDelete={handleLoanDelete}
+                                    onLoanUpdate={handleLoanInstallmentUpdate}
                                 />
                             )}
                         </TabsContent>

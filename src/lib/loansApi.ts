@@ -135,6 +135,20 @@ class LoansApi {
         });
     }
 
+    // Installment payment operations
+    async markInstallmentAsPaid(loanId: string, installmentId: string, paymentDate?: string): Promise<void> {
+        return apiFetch<void>(`/loans/${loanId}/installments/${installmentId}/pay`, {
+            method: 'POST',
+            body: JSON.stringify({ paymentDate }),
+        });
+    }
+
+    async unmarkInstallmentAsPaid(loanId: string, installmentId: string): Promise<void> {
+        return apiFetch<void>(`/loans/${loanId}/installments/${installmentId}/unpay`, {
+            method: 'POST',
+        });
+    }
+
     async downloadTemplate(format: 'EXCEL' | 'CSV', options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<Blob> {
         const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
         const url = `${baseUrl}/loans/import/template?format=${format}`;
