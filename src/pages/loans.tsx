@@ -140,40 +140,48 @@ export default function LoansPageOptimized() {
                 <div className="space-y-6">
                     {/* Header */}
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Gestion des emprunts</h1>
-                        <p className="text-muted-foreground">
-                            Suivez et gérez tous vos emprunts et échéanciers
-                        </p>
+                        <div className="flex items-center gap-3 mb-1">
+                            <div className="rounded-xl bg-primary/10 p-2.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-dollar-sign h-5 w-5 text-primary" aria-hidden="true">
+                                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-primary">Gestion des emprunts</h2>
+                                <p className="text-sm text-slate-500">Suivez et gérez tous vos emprunts et échéanciers</p>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Error Dialog */}
                     <ErrorDialog error={error} />
 
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
-                        <TabsList className="inline-flex h-12 items-center justify-center rounded-lg bg-transparent p-1 text-muted-foreground w-full">
+                        <TabsList className="h-12 p-1.5 bg-slate-100 rounded-xl gap-1">
                             <TabsTrigger
                                 value="overview"
-                                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                                className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md"
                             >
-                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>
                                 Aperçu
                             </TabsTrigger>
                             <TabsTrigger
                                 value="list"
-                                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                                className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md"
                             >
-                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                                 </svg>
                                 Liste complète
                             </TabsTrigger>
                             <TabsTrigger
                                 value="create"
-                                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                                className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md"
                             >
-                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                 </svg>
                                 Créer

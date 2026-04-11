@@ -51,6 +51,7 @@ import {
   Building,
   Briefcase,
   Layers,
+  Search,
 } from "lucide-react";
 import {
   CompanyCreateWizard,
@@ -140,13 +141,13 @@ type TreeNode =
   | { type: "workspace"; id: string; name: string }
   | { type: "group"; id: string; name: string }
   | {
-      type: "company";
-      id: string;
-      name: string;
-      groupId: string | null;
-      workspaceId?: string;
-      completionPercentage: number;
-    }
+    type: "company";
+    id: string;
+    name: string;
+    groupId: string | null;
+    workspaceId?: string;
+    completionPercentage: number;
+  }
   | { type: "bu"; id: string; name: string; companyId: string; code: string }
   | { type: "section-header"; id: string; name: string };
 
@@ -262,7 +263,7 @@ export default function StructurePage() {
       }
       setLogoFile(file);
       setAddworkspaceForm(prev => ({ ...prev, logo: file.name }));
-      
+
       // Créer un aperçu
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -298,7 +299,7 @@ export default function StructurePage() {
 
   const handlePhoneChange = (value: string) => {
     setAddworkspaceForm((f) => ({ ...f, contact_phone: value }));
-    
+
     if (!validatePhone(value)) {
       setWorkspaceErrors((prev) => ({
         ...prev,
@@ -324,7 +325,7 @@ export default function StructurePage() {
 
   const handleEditPhoneChange = (value: string) => {
     setEditworkspace((f) => ({ ...f, contact_phone: value }));
-    
+
     if (!validatePhone(value)) {
       setEditWorkspaceErrors((prev) => ({
         ...prev,
@@ -466,7 +467,7 @@ export default function StructurePage() {
   const loadTree = useCallback(async () => {
     // Éviter les rechargements multiples
     if (treeLoading) return;
-    
+
     setTreeLoading(true);
     setTreeError(null);
     try {
@@ -516,7 +517,7 @@ export default function StructurePage() {
   //   };
   // }, [isAuthReady, user, loadTree]);
 
-  
+
   const loadBUsForCompany = useCallback(async (companyId: string) => {
     try {
       const data = await apiFetch<BusinessUnit[]>(
@@ -534,7 +535,7 @@ export default function StructurePage() {
 
   // Combine groups from workspaces and standalone groups
   const groupList = useMemo(() => {
-    const orgGroups = (tree?.workspaces ?? []).flatMap((org) => 
+    const orgGroups = (tree?.workspaces ?? []).flatMap((org) =>
       org.groups.map(group => ({ ...group, workspaceId: org.id }))
     );
     const standaloneGroups = (tree?.groups ?? []).map(group => ({ ...group, workspaceId: undefined }));
@@ -649,9 +650,9 @@ export default function StructurePage() {
 
     // Filtrer les workspaces et leurs groupes/entreprises
     (tree?.workspaces ?? []).forEach((org) => {
-      const orgMatches = org.name.toLowerCase().includes(query) || 
-                        org.description?.toLowerCase().includes(query);
-      
+      const orgMatches = org.name.toLowerCase().includes(query) ||
+        org.description?.toLowerCase().includes(query);
+
       const filteredGroups = org.groups.map((group) => {
         const groupMatches = group.name.toLowerCase().includes(query);
         const filteredCompanies = group.companies.filter((company) => {
@@ -753,7 +754,7 @@ export default function StructurePage() {
 
   // Recalculer les données filtrées
   const filteredGroupList = useMemo(() => {
-    const orgGroups = (filteredTreeData?.workspaces ?? []).flatMap((org) => 
+    const orgGroups = (filteredTreeData?.workspaces ?? []).flatMap((org) =>
       org.groups.map(group => ({ ...group, workspaceId: org.id }))
     );
     const standaloneGroups = (filteredTreeData?.groups ?? []).map(group => ({ ...group, workspaceId: undefined }));
@@ -792,7 +793,7 @@ export default function StructurePage() {
     const rows: TreeNode[] = [];
 
     console.log('filteredTreeData workspaces:', filteredTreeData?.workspaces);
-    
+
     // Ajouter les workspaces et leurs groupes/entreprises
     (filteredTreeData?.workspaces ?? []).forEach((org) => {
       // N'afficher les workspaces que pour SUPER_ADMIN et ADMIN
@@ -800,7 +801,7 @@ export default function StructurePage() {
         rows.push({ type: "workspace", id: org.id, name: org.name });
         console.log(`Added workspace: ${org.name}`);
       }
-      
+
       // Ajouter les groupes de l'workspace immédiatement après le workspace
       org.groups.forEach((g) => {
         rows.push({ type: "group", id: g.id, name: g.name });
@@ -861,11 +862,11 @@ export default function StructurePage() {
 
     // Ajouter les groupes standalone et leurs entreprises (seulement s'ils n'ont pas déjà été ajoutés via les workspaces)
     const workspaceGroupIds = new Set(
-      (filteredTreeData?.workspaces ?? []).flatMap((org) => 
+      (filteredTreeData?.workspaces ?? []).flatMap((org) =>
         org.groups.map((g) => g.id)
       )
     );
-    
+
     (filteredTreeData?.groups ?? []).forEach((g) => {
       if (!workspaceGroupIds.has(g.id)) {
         rows.push({ type: "group", id: g.id, name: g.name });
@@ -932,7 +933,7 @@ export default function StructurePage() {
       console.log('=== OUVERTURE MODAL ===');
       console.log('Node clicked:', node);
       console.log('Current editBU before update:', editBU);
-      
+
       setSelectedNode(node);
       setEditing(false);
       setNodeUsers(null);
@@ -1047,7 +1048,7 @@ export default function StructurePage() {
         console.log('Looking for BU with ID:', node.id); // Debug log
         const bu = freshBUs.find((b) => b.id === node.id);
         console.log('Found BU:', bu); // Debug log
-        
+
         if (bu) {
           const updatedEditBU = {
             name: bu.name,
@@ -1105,7 +1106,7 @@ export default function StructurePage() {
       // Valider l'email et le téléphone
       const emailValid = validateEmail(editworkspace.contact_email);
       const phoneValid = validatePhone(editworkspace.contact_phone);
-      
+
       if (!emailValid || !phoneValid) {
         // Mettre à jour les erreurs
         setEditWorkspaceErrors({
@@ -1199,7 +1200,7 @@ export default function StructurePage() {
       if (editCompany.address) {
         formData.append('address', editCompany.address);
       }
-       if (editCompany.country) {
+      if (editCompany.country) {
         formData.append('country', editCompany.country);
       }
       if (editCompany.ape_code) {
@@ -1261,7 +1262,7 @@ export default function StructurePage() {
       if (editBULogoFile) {
         formData.append('logo', editBULogoFile);
       }
-      
+
       const updatedBU = await apiFetch<BusinessUnit>(
         `/companies/${selectedNode.companyId}/business-units/${selectedNode.id}`,
         {
@@ -1274,7 +1275,7 @@ export default function StructurePage() {
         },
       );
       setEditBULogoFile(null);
-      
+
       // Mettre à jour l'état local avec les données retournées par le serveur
       if (updatedBU) {
         setEditBU(prev => ({
@@ -1285,7 +1286,7 @@ export default function StructurePage() {
           siret: updatedBU.siret,
           logo: updatedBU.logo || ""
         }));
-        
+
         // Recharger les BUs pour mettre à jour l'affichage dans l'arbre
         await loadBUsForCompany(selectedNode.companyId);
       }
@@ -1298,11 +1299,11 @@ export default function StructurePage() {
 
   const handleCreateworkspace = async () => {
     if (!addworkspaceForm.name.trim()) return;
-    
+
     // Valider l'email et le téléphone
     const emailValid = validateEmail(addworkspaceForm.contact_email);
     const phoneValid = validatePhone(addworkspaceForm.contact_phone);
-    
+
     if (!emailValid || !phoneValid) {
       // Mettre à jour les erreurs
       setWorkspaceErrors({
@@ -1311,7 +1312,7 @@ export default function StructurePage() {
       });
       return;
     }
-    
+
     setAddworkspaceLoading(true);
     try {
       // Créer FormData pour l'upload du fichier
@@ -1321,12 +1322,12 @@ export default function StructurePage() {
       formData.append('address', addworkspaceForm.address.trim() || '');
       formData.append('contact_email', addworkspaceForm.contact_email.trim() || '');
       formData.append('contact_phone', addworkspaceForm.contact_phone.trim() || '');
-      
+
       // Ajouter le fichier logo s'il existe
       if (logoFile) {
         formData.append('logo', logoFile);
       }
-      
+
       // Utiliser apiFetch pour avoir le snackbar de succès
       await apiFetch("/workspaces", {
         method: 'POST',
@@ -1334,11 +1335,11 @@ export default function StructurePage() {
         headers: {}, // Important: ne pas définir Content-Type pour FormData
         snackbar: { showSuccess: true, successMessage: "Workspace créée avec succès" },
       });
-      
+
       setAddworkspaceOpen(false);
-      setAddworkspaceForm({ 
-        name: "", 
-        description: "", 
+      setAddworkspaceForm({
+        name: "",
+        description: "",
         logo: undefined as string | undefined,
         address: "",
         contact_email: "",
@@ -1401,14 +1402,14 @@ export default function StructurePage() {
 
       // Créer FormData pour gérer le fichier logo
       const formData = new FormData();
-      
+
       // Debug: vérifier les valeurs
       console.log('Form data being sent:', {
         groupId: form.groupId,
         workspaceId: form.workspaceId,
         hasLogo: !!form.logo
       });
-      
+
       // Ajouter les champs texte
       if (form.groupId) formData.append('groupId', form.groupId);
       if (form.workspaceId) formData.append('workspace_id', form.workspaceId);
@@ -1422,7 +1423,7 @@ export default function StructurePage() {
       if (form.main_activity) formData.append('main_activity', form.main_activity);
       formData.append('size', size);
       formData.append('model', model);
-      
+
       // Ajouter le logo s'il existe
       if (form.logo) {
         formData.append('logo', form.logo);
@@ -1443,39 +1444,39 @@ export default function StructurePage() {
       addCompanyGroupId,
       addCompanyForm
     });
-    
+
     if (!addCompanyGroupId || !addCompanyForm.name?.trim()) {
-      console.error('Missing required fields:', { 
-        groupId: addCompanyGroupId, 
-        name: addCompanyForm.name 
+      console.error('Missing required fields:', {
+        groupId: addCompanyGroupId,
+        name: addCompanyForm.name
       });
       return;
     }
-    
+
     // Vérifier que le groupe existe
     const group = groupList.find((g) => g.id === addCompanyGroupId);
     if (!group) {
       console.error('Group not found:', addCompanyGroupId);
       return;
     }
-    
+
     // Validation supplémentaire
     if (!addCompanyForm.fiscal_year_start || !addCompanyForm.fiscal_year_end) {
       console.error('Les dates d\'exercice sont requises');
       return;
     }
-    
+
     console.log('Creating company in group:', group.name);
     setAddCompanyLoading(true);
     try {
       const formData = new FormData();
       formData.append('groupId', addCompanyGroupId);
-      
+
       // Ajouter workspace_id depuis le groupe
       if (group.workspaceId) {
         formData.append('workspace_id', group.workspaceId);
       }
-      
+
       formData.append('name', addCompanyForm.name);
       if (addCompanyForm.siret) {
         formData.append('siret', addCompanyForm.siret);
@@ -1512,7 +1513,7 @@ export default function StructurePage() {
         headers: {}, // Important: ne pas définir Content-Type pour FormData
         snackbar: { showSuccess: true, successMessage: "Entreprise créée" },
       });
-      
+
       console.log('Company created successfully:', response);
       await loadTree();
       setAddCompanyOpen(false);
@@ -1736,225 +1737,142 @@ export default function StructurePage() {
       companies={companyListForLayout}
       workspaces={workspacesForLayout}
       selectedCompanyId=""
-      onCompanyChange={() => {}}
+      onCompanyChange={() => { }}
     >
       <Head>
         <title>Structure de l&apos;workspace</title>
       </Head>
       <div className="space-y-6">
-        {/* Header section */}
-        <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-6">
-            <div className="flex flex-col md:flex-row gap-2 items-center justify-between w-full">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
-                    <Building2 className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-slate-900">
-                      {user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" 
-                        ? "Structure des workspaces" 
-                        : tree?.workspaces?.[0]?.name || "Structure des workspaces"}
-                    </h1>
-                    <p className="text-sm font-medium text-purple-600 uppercase tracking-wide">
-                      {user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" 
-                        ? "Toutes les workspaces" 
-                        : "Workspace"}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-slate-500 max-w-2xl font-medium text-sm">
-                  Gérez la structure hiérarchique de votre workspace et pilotez 
-                  l&apos;ensemble de vos entités.
-                </p>
-              </div>
-
-              <div className="flex flex-col items-center gap-2">
-                {/* Barre de recherche */}
-                <div className="relative max-w-md">
-                  <div className="absolute top-1/3 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-4 w-4 text-slate-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setIsSearchFocused(false)}
-                    placeholder="Rechercher"
-                    className={`w-full pl-10 pr-4 py-2.5 text-sm border rounded-lg transition-all duration-200 ${
-                      isSearchFocused
-                        ? "border-primary ring-2 ring-primary/20 bg-white"
-                        : "border-slate-200 bg-slate-50 hover:border-slate-300"
-                    } focus:outline-none placeholder:text-slate-400`}
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    >
-                      <svg
-                        className="h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex justify-end gap-3 w-full">
-                  {canImportStructure && (
-                    <Link
-                      href="/structure/import/upload"
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-md"
-                    >
-                      <Upload className="size-4" />
-                      Importer
-                    </Link>
-                  )}
-                  {(user?.role === "SUPER_ADMIN" ||
-                    user?.role === "ADMIN" ||
-                    user?.role === "HEAD_MANAGER" ||
-                    user?.role === "MANAGER") && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button className="h-10 gap-2 bg-linear-to-br from-purple-500 to-purple-600 text-white hover:bg-purple-900! cursor-pointer shadow-sm transition-all hover:shadow-xl">
-                            <Plus className="size-4" />
-                            {/* <span className="hidden md:block">Ajouter</span> */}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
-                            <DropdownMenuItem
-                              onClick={() => setAddworkspaceOpen(true)}
-                              className="gap-2"
-                            >
-                              <Layers className="h-4 w-4 text-purple-600" />
-                              Workspace
-                            </DropdownMenuItem>
-                          )}
-
-                          {(user?.role === "SUPER_ADMIN" ||
-                            user?.role === "ADMIN" ||
-                            user?.role === "HEAD_MANAGER" ||
-                            user?.role === "MANAGER") && (
-                              <>
-                                <DropdownMenuItem
-                                  onClick={() => setAddGroupOpen(true)}
-                                  disabled={
-                                    !canCreateCompany ||
-                                    !tree?.workspaces ||
-                                    tree.workspaces.length === 0
-                                  }
-                                  title={
-                                    !tree?.workspaces || tree.workspaces.length === 0
-                                      ? "Créez d'abord une workspace"
-                                      : ""
-                                  }
-                                  className="gap-2"
-                                >
-                                  <Building2 className="h-4 w-4 text-blue-600" />
-                                  Groupe
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => setWizardOpen(true)}
-                                  disabled={
-                                    !canCreateCompany ||
-                                    !tree?.workspaces ||
-                                    tree.workspaces.length === 0
-                                  }
-                                  title={
-                                    !tree?.workspaces || tree.workspaces.length === 0
-                                      ? "Créez d'abord une workspace"
-                                      : ""
-                                  }
-                                  className="gap-2"
-                                >
-                                  <Building className="h-4 w-4 text-slate-700" />
-                                  Entreprise
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => setAddBUStandaloneOpen(true)}
-                                  disabled={
-                                    !canCreateCompany ||
-                                    !tree?.workspaces ||
-                                    tree.workspaces.length === 0
-                                  }
-                                  title={
-                                    !tree?.workspaces || tree.workspaces.length === 0
-                                      ? "Créez d'abord une workspace"
-                                      : ""
-                                  }
-                                  className="gap-2"
-                                >
-                                  <Briefcase className="h-4 w-4 text-emerald-600" />
-                                  Business Unit
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                </div>
-              </div>
-             
+        {/* Header */}
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="rounded-xl bg-primary/10 p-2.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-network h-5 w-5 text-primary" aria-hidden="true">
+                <circle cx="12" cy="5" r="3"></circle>
+                <circle cx="6" cy="19" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <circle cx="12" cy="12" r="3"></circle>
+                <line x1="12" y1="8" x2="12" y2="9"></line>
+                <line x1="9" y1="11" x2="6" y2="16"></line>
+                <line x1="15" y1="11" x2="18" y2="16"></line>
+                <line x1="12" y1="15" x2="12" y2="16"></line>
+              </svg>
             </div>
-            {/* <div className="flex items-center gap-4 justify-between w-full!">
-              <div className="flex items-center gap-2 text-sm text-slate-500">
-                <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
-                  <Layers className="h-4 w-4 text-blue-600" />
-                  <span className="text-xs md:text-sm font-medium text-blue-700">
-                    {searchQuery.trim()
-                      ? filteredGroupList.length
-                      : groupList.length}{" "}
-                    groupes
-                    {searchQuery.trim() && ` sur ${groupList.length}`}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-                  <Building className="h-4 w-4 text-slate-600" />
-                  <span className="text-xs font-medium text-slate-700">
-                    {searchQuery.trim()
-                      ? filteredAllTreeCompanies.length
-                      : allTreeCompanies.length}{" "}
-                    entreprises
-                    {searchQuery.trim() && ` sur ${allTreeCompanies.length}`}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
-                  <Briefcase className="h-4 w-4 text-emerald-600" />
-                  <span className="text-xs font-medium text-emerald-700">
-                    {searchQuery.trim()
-                      ? treeRows.filter((r) => r.type === "bu").length
-                      : totalBusinessUnits}{" "}
-                    business units
-                    {searchQuery.trim() && ` sur ${totalBusinessUnits}`}
-                  </span>
-                </div>
-              </div>
-            </div> */}
+            <div>
+              <h2 className="text-xl font-bold text-primary">
+                {user?.role === "SUPER_ADMIN" || user?.role === "ADMIN"
+                  ? "Structure des workspaces"
+                  : tree?.workspaces?.[0]?.name || "Structure des workspaces"}
+              </h2>
+              <p className="text-sm text-slate-500">Gérez la structure hiérarchique de votre workspace et pilotez l'ensemble de vos entités.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Search and Actions */}
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              type="search"
+              placeholder="Rechercher..."
+              className="h-9 w-[260px] rounded-lg border-slate-200 pl-9 text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-3 w-full">
+            {canImportStructure && (
+              <Link
+                href="/structure/import/upload"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-md"
+              >
+                <Upload className="size-4" />
+                Importer
+              </Link>
+            )}
+            {(user?.role === "SUPER_ADMIN" ||
+              user?.role === "ADMIN" ||
+              user?.role === "HEAD_MANAGER" ||
+              user?.role === "MANAGER") && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="h-10 gap-2 bg-linear-to-br from-purple-500 to-purple-600 text-white hover:bg-purple-900! cursor-pointer shadow-sm transition-all hover:shadow-xl">
+                      <Plus className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
+                      <DropdownMenuItem
+                        onClick={() => setAddworkspaceOpen(true)}
+                        className="gap-2"
+                      >
+                        <Layers className="h-4 w-4 text-purple-600" />
+                        Workspace
+                      </DropdownMenuItem>
+                    )}
+
+                    {(user?.role === "SUPER_ADMIN" ||
+                      user?.role === "ADMIN" ||
+                      user?.role === "HEAD_MANAGER" ||
+                      user?.role === "MANAGER") && (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => setAddGroupOpen(true)}
+                            disabled={
+                              !canCreateCompany ||
+                              !tree?.workspaces ||
+                              tree.workspaces.length === 0
+                            }
+                            title={
+                              !tree?.workspaces || tree.workspaces.length === 0
+                                ? "Créez d'abord une workspace"
+                                : ""
+                            }
+                            className="gap-2"
+                          >
+                            <Building2 className="h-4 w-4 text-blue-600" />
+                            Groupe
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setWizardOpen(true)}
+                            disabled={
+                              !canCreateCompany ||
+                              !tree?.workspaces ||
+                              tree.workspaces.length === 0
+                            }
+                            title={
+                              !tree?.workspaces || tree.workspaces.length === 0
+                                ? "Créez d'abord une workspace"
+                                : ""
+                            }
+                            className="gap-2"
+                          >
+                            <Building className="h-4 w-4 text-slate-700" />
+                            Entreprise
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setAddBUStandaloneOpen(true)}
+                            disabled={
+                              !canCreateCompany ||
+                              !tree?.workspaces ||
+                              tree.workspaces.length === 0
+                            }
+                            title={
+                              !tree?.workspaces || tree.workspaces.length === 0
+                                ? "Créez d'abord une workspace"
+                                : ""
+                            }
+                            className="gap-2"
+                          >
+                            <Briefcase className="h-4 w-4 text-emerald-600" />
+                            Business Unit
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
           </div>
         </div>
 
@@ -2119,8 +2037,8 @@ export default function StructurePage() {
 
                   const indent =
                     node.type === "workspace" ? 0 :
-                    node.type === "group" ? 1 : 
-                    node.type === "company" ? 2 : 3;
+                      node.type === "group" ? 1 :
+                        node.type === "company" ? 2 : 3;
                   const Icon =
                     node.type === "workspace"
                       ? Building2
@@ -2180,11 +2098,10 @@ export default function StructurePage() {
                               className="cursor-pointer rounded p-0.5 transition-colors hover:bg-slate-200 mr-1"
                             >
                               <Play
-                                className={`h-3 w-3 fill-slate-500 text-slate-400 transition-transform ${
-                                  expandedCompanyIds.has(node.id)
-                                    ? "rotate-90"
-                                    : ""
-                                }`}
+                                className={`h-3 w-3 fill-slate-500 text-slate-400 transition-transform ${expandedCompanyIds.has(node.id)
+                                  ? "rotate-90"
+                                  : ""
+                                  }`}
                               />
                             </div>
                           ) : (
@@ -2196,11 +2113,10 @@ export default function StructurePage() {
                             className={`h-5 w-5 ${iconColor} transition-colors group-hover/row:scale-110`}
                           />
                           <span
-                            className={`truncate font-medium transition-colors ${
-                              node.type === "group"
-                                ? "text-primary font-semibold"
-                                : "text-slate-700"
-                            }`}
+                            className={`truncate font-medium transition-colors ${node.type === "group"
+                              ? "text-primary font-semibold"
+                              : "text-slate-700"
+                              }`}
                           >
                             {node.name}
                           </span>
@@ -2224,13 +2140,12 @@ export default function StructurePage() {
                             <div className="flex items-center gap-2">
                               <div className="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
                                 <div
-                                  className={`h-1.5 rounded-full transition-all duration-500 ${
-                                    completion === 100
-                                      ? "bg-green-500"
-                                      : completion >= 50
-                                        ? "bg-amber-400"
-                                        : "bg-slate-300"
-                                  }`}
+                                  className={`h-1.5 rounded-full transition-all duration-500 ${completion === 100
+                                    ? "bg-green-500"
+                                    : completion >= 50
+                                      ? "bg-amber-400"
+                                      : "bg-slate-300"
+                                    }`}
                                   style={{ width: `${completion}%` }}
                                 />
                               </div>
@@ -2243,9 +2158,9 @@ export default function StructurePage() {
 
                         <div className="flex justify-end">
                           {user?.role === "SUPER_ADMIN" ||
-                          user?.role === "ADMIN" ||
-                          user?.role === "HEAD_MANAGER" ||
-                          user?.role === "MANAGER" ? (
+                            user?.role === "ADMIN" ||
+                            user?.role === "HEAD_MANAGER" ||
+                            user?.role === "MANAGER" ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <button
@@ -2423,15 +2338,14 @@ export default function StructurePage() {
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
           <DialogHeader className="flex-row items-center justify-between sticky top-0 bg-white z-10 pb-4">
             <DialogTitle className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                selectedNode?.type === "workspace"
-                  ? "bg-linear-to-br from-purple-500 to-purple-600"
-                  : selectedNode?.type === "group"
-                    ? "bg-linear-to-br from-blue-500 to-blue-600"
-                    : selectedNode?.type === "company"
-                      ? "bg-linear-to-br from-slate-600 to-slate-700"
-                      : "bg-linear-to-br from-emerald-500 to-emerald-600"
-              }`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedNode?.type === "workspace"
+                ? "bg-linear-to-br from-purple-500 to-purple-600"
+                : selectedNode?.type === "group"
+                  ? "bg-linear-to-br from-blue-500 to-blue-600"
+                  : selectedNode?.type === "company"
+                    ? "bg-linear-to-br from-slate-600 to-slate-700"
+                    : "bg-linear-to-br from-emerald-500 to-emerald-600"
+                }`}>
                 {selectedNode?.type === "workspace" && <Building2 className="h-5 w-5 text-white" />}
                 {selectedNode?.type === "group" && <Layers className="h-5 w-5 text-white" />}
                 {selectedNode?.type === "company" && <Building className="h-5 w-5 text-white" />}
@@ -2468,67 +2382,67 @@ export default function StructurePage() {
                     onChange={(v) => setEditworkspace((f) => ({ ...f, description: v }))}
                   />
                   <div>
-                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Logo
-                  </label>
-                  {editing ? (
-                    <FileUpload
-                      key={editworkspace.logo}
-                      value={editworkspace.logo}
-                      onChange={(file) => {
-                        setEditworkspaceLogoFile(file);
-                        if (file) {
-                          setEditworkspace((f) => ({ ...f, logo: file.name }));
-                        } else {
-                          setEditworkspace((f) => ({ ...f, logo: undefined }));
-                        }
-                      }}
-                      placeholder="Uploader une image de logo"
-                      accept="image/*"
-                    />
-                  ) : (
-                    <div className="space-y-2">
-                      {editworkspace.logo ? (
-                        <>
-                          {console.log('Logo à afficher:', editworkspace.logo)}
-                          {console.log('NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL)}
-                          {editworkspace.logo.startsWith('http') ? (
-                            <Image 
-                              src={editworkspace.logo} 
-                              alt="Logo de l'workspace" 
-                              width={64}
-                              height={64}
-                              className="object-cover rounded-lg border border-slate-200"
-                              onError={(e) => {
-                                console.error('Erreur chargement image URL:', editworkspace.logo);
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <>
-                              {console.log('URL complète générée:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`)}
-                              <Image 
-                                src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`} 
-                                alt="Logo de l'workspace" 
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Logo
+                    </label>
+                    {editing ? (
+                      <FileUpload
+                        key={editworkspace.logo}
+                        value={editworkspace.logo}
+                        onChange={(file) => {
+                          setEditworkspaceLogoFile(file);
+                          if (file) {
+                            setEditworkspace((f) => ({ ...f, logo: file.name }));
+                          } else {
+                            setEditworkspace((f) => ({ ...f, logo: undefined }));
+                          }
+                        }}
+                        placeholder="Uploader une image de logo"
+                        accept="image/*"
+                      />
+                    ) : (
+                      <div className="space-y-2">
+                        {editworkspace.logo ? (
+                          <>
+                            {console.log('Logo à afficher:', editworkspace.logo)}
+                            {console.log('NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL)}
+                            {editworkspace.logo.startsWith('http') ? (
+                              <Image
+                                src={editworkspace.logo}
+                                alt="Logo de l'workspace"
                                 width={64}
                                 height={64}
-                                unoptimized={true}
                                 className="object-cover rounded-lg border border-slate-200"
                                 onError={(e) => {
-                                  console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`);
+                                  console.error('Erreur chargement image URL:', editworkspace.logo);
                                   e.currentTarget.style.display = 'none';
                                 }}
                               />
-                            </>
-                          )}
-                          <p className="text-xs text-slate-500">{editworkspace.logo}</p>
-                        </>
-                      ) : (
-                        <p className="text-sm font-medium text-primary">—</p>
-                      )}
-                    </div>
-                  )}
-                </div>
+                            ) : (
+                              <>
+                                {console.log('URL complète générée:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`)}
+                                <Image
+                                  src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`}
+                                  alt="Logo de l'workspace"
+                                  width={64}
+                                  height={64}
+                                  unoptimized={true}
+                                  className="object-cover rounded-lg border border-slate-200"
+                                  onError={(e) => {
+                                    console.error('Erreur chargement image fichier:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editworkspace.logo}`);
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </>
+                            )}
+                            <p className="text-xs text-slate-500">{editworkspace.logo}</p>
+                          </>
+                        ) : (
+                          <p className="text-sm font-medium text-primary">—</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <FieldTextarea
                     label="Adresse"
                     value={editworkspace.address}
@@ -2581,7 +2495,7 @@ export default function StructurePage() {
                       <p className="text-sm font-medium text-primary">{editworkspace.contact_phone || "—"}</p>
                     )}
                   </div>
-                                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -2605,7 +2519,7 @@ export default function StructurePage() {
                 label="SIREN"
                 value={editGroup.siret ? editGroup.siret.substring(0, 9) : ""}
                 editing={false} // SIREN est calculé automatiquement, non modifiable
-                onChange={() => {}} // Non modifiable
+                onChange={() => { }} // Non modifiable
               />
               <Field
                 label="Code APE"
@@ -2688,9 +2602,9 @@ export default function StructurePage() {
                     {editGroup.logo ? (
                       <>
                         {editGroup.logo.startsWith('http') ? (
-                          <Image 
-                            src={editGroup.logo} 
-                            alt="Logo du groupe" 
+                          <Image
+                            src={editGroup.logo}
+                            alt="Logo du groupe"
                             width={64}
                             height={64}
                             className="object-cover rounded-lg border border-slate-200"
@@ -2700,9 +2614,9 @@ export default function StructurePage() {
                             }}
                           />
                         ) : (
-                          <Image 
-                            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editGroup.logo}`} 
-                            alt="Logo du groupe" 
+                          <Image
+                            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editGroup.logo}`}
+                            alt="Logo du groupe"
                             width={64}
                             height={64}
                             unoptimized={true}
@@ -2745,7 +2659,7 @@ export default function StructurePage() {
                   editCompany.siret ? editCompany.siret.substring(0, 9) : ""
                 }
                 editing={false} // SIREN est calculé automatiquement, non modifiable
-                onChange={() => {}} // Non modifiable
+                onChange={() => { }} // Non modifiable
               />
               <FieldTextarea
                 label="Adresse"
@@ -2777,7 +2691,7 @@ export default function StructurePage() {
                 label="Activité principale"
                 value={editCompany.main_activity}
                 editing={false} // Always read-only like in the original
-                onChange={() => {}} // Non-modifiable
+                onChange={() => { }} // Non-modifiable
               />
               <Field
                 label="Début d&apos;exercice"
@@ -2850,9 +2764,9 @@ export default function StructurePage() {
                     {editCompany.logo ? (
                       <>
                         {editCompany.logo.startsWith('http') ? (
-                          <Image 
-                            src={editCompany.logo} 
-                            alt="Logo de l'entreprise" 
+                          <Image
+                            src={editCompany.logo}
+                            alt="Logo de l'entreprise"
                             width={64}
                             height={64}
                             className="object-cover rounded-lg border border-slate-200"
@@ -2862,9 +2776,9 @@ export default function StructurePage() {
                             }}
                           />
                         ) : (
-                          <Image 
-                            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editCompany.logo}`} 
-                            alt="Logo de l'entreprise" 
+                          <Image
+                            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editCompany.logo}`}
+                            alt="Logo de l'entreprise"
                             width={64}
                             height={64}
                             unoptimized={true}
@@ -2953,7 +2867,7 @@ export default function StructurePage() {
                   label="Activité"
                   value={editBU.activity}
                   editing={false} // Always read-only like in company
-                  onChange={() => {}} // Non-modifiable
+                  onChange={() => { }} // Non-modifiable
                 />
               )}
               <Field
@@ -2993,9 +2907,9 @@ export default function StructurePage() {
                     {editBU.logo ? (
                       <>
                         {editBU.logo.startsWith('http') ? (
-                          <Image 
-                            src={editBU.logo} 
-                            alt="Logo de la business unit" 
+                          <Image
+                            src={editBU.logo}
+                            alt="Logo de la business unit"
                             width={64}
                             height={64}
                             className="object-cover rounded-lg border border-slate-200"
@@ -3005,9 +2919,9 @@ export default function StructurePage() {
                             }}
                           />
                         ) : (
-                          <Image 
-                            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editBU.logo}`} 
-                            alt="Logo de la business unit" 
+                          <Image
+                            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${editBU.logo}`}
+                            alt="Logo de la business unit"
                             width={64}
                             height={64}
                             unoptimized={true}
@@ -3349,26 +3263,26 @@ export default function StructurePage() {
                         user?.role === "ADMIN" ||
                         user?.role === "MANAGER" ||
                         user?.role === "HEAD_MANAGER") && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            setFicheOpen(false);
-                            setFicheShareholderFormOpen(true);
-                            if (!ficheShareholderUsers.length) {
-                              try {
-                                const us = await fetchUsers();
-                                setFicheShareholderUsers(us);
-                              } catch {
-                                /* handled globally */
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              setFicheOpen(false);
+                              setFicheShareholderFormOpen(true);
+                              if (!ficheShareholderUsers.length) {
+                                try {
+                                  const us = await fetchUsers();
+                                  setFicheShareholderUsers(us);
+                                } catch {
+                                  /* handled globally */
+                                }
                               }
-                            }
-                          }}
-                        >
-                          <Plus className="mr-1 h-4 w-4" />
-                          Ajouter un actionnaire
-                        </Button>
-                      )}
+                            }}
+                          >
+                            <Plus className="mr-1 h-4 w-4" />
+                            Ajouter un actionnaire
+                          </Button>
+                        )}
                     </div>
                     {ficheShareholdersLoading ? (
                       <p className="text-xs text-slate-400">
@@ -3384,21 +3298,20 @@ export default function StructurePage() {
                           const ownerLabel =
                             s.ownerType === "USER"
                               ? (() => {
-                                  const u = ficheShareholderUsers.find(
-                                    (x) => x.id === s.ownerId,
-                                  );
-                                  if (!u) return s.ownerId;
-                                  const fullName = `${u.firstName ?? ""} ${
-                                    u.lastName ?? ""
+                                const u = ficheShareholderUsers.find(
+                                  (x) => x.id === s.ownerId,
+                                );
+                                if (!u) return s.ownerId;
+                                const fullName = `${u.firstName ?? ""} ${u.lastName ?? ""
                                   }`.trim();
-                                  return fullName || u.email;
-                                })()
+                                return fullName || u.email;
+                              })()
                               : (() => {
-                                  const c = allTreeCompanies.find(
-                                    (x) => x.id === s.ownerId,
-                                  );
-                                  return c?.name ?? s.ownerId;
-                                })();
+                                const c = allTreeCompanies.find(
+                                  (x) => x.id === s.ownerId,
+                                );
+                                return c?.name ?? s.ownerId;
+                              })();
                           return (
                             <li
                               key={s.id}
@@ -3747,7 +3660,7 @@ export default function StructurePage() {
                 placeholder="Nom de l'entreprise"
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -3775,7 +3688,7 @@ export default function StructurePage() {
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Activité principale
@@ -3788,7 +3701,7 @@ export default function StructurePage() {
                 className="bg-gray-50 cursor-not-allowed"
               />
             </div>
-            
+
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Adresse
@@ -3801,7 +3714,7 @@ export default function StructurePage() {
                 placeholder="Adresse de l'entreprise"
               />
             </div>
-            
+
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Pays
@@ -3814,7 +3727,7 @@ export default function StructurePage() {
                 }
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -3848,7 +3761,7 @@ export default function StructurePage() {
                 </Select>
               </div>
             </div>
-            
+
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Logo
@@ -3867,7 +3780,7 @@ export default function StructurePage() {
                 accept="image/*"
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -4078,9 +3991,9 @@ export default function StructurePage() {
                 />
                 {logoPreview && (
                   <div className="mt-2">
-                    <Image 
-                      src={logoPreview} 
-                      alt="Aperçu du logo" 
+                    <Image
+                      src={logoPreview}
+                      alt="Aperçu du logo"
                       width={80}
                       height={80}
                       className="object-cover rounded-lg border border-slate-200"
@@ -4137,8 +4050,8 @@ export default function StructurePage() {
             </div>
           </div>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setAddworkspaceOpen(false);
                 setLogoFile(null);
@@ -4162,10 +4075,10 @@ export default function StructurePage() {
       <CompanyCreateWizard
         open={wizardOpen}
         onOpenChange={setWizardOpen}
-        groups={groupList.map((g) => ({ 
-          id: g.id, 
-          name: g.name, 
-          workspaceId: g.workspaceId || "" 
+        groups={groupList.map((g) => ({
+          id: g.id,
+          name: g.name,
+          workspaceId: g.workspaceId || ""
         }))}
         workspaces={tree?.workspaces?.map((o) => ({ id: o.id, name: o.name })) || []}
         onSubmit={handleCreateCompany}

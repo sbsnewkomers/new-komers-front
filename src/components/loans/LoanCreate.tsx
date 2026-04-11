@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calculator, FileSpreadsheet, TrendingUp, Database, PenTool } from 'lucide-react';
+import { Calculator, FileSpreadsheet, Database, PenTool } from 'lucide-react';
 
 interface LoanCreateProps {
     onMethodSelect: (method: 'calculator' | 'import' | 'manual') => void;
@@ -10,11 +10,7 @@ export function LoanCreate({ onMethodSelect }: LoanCreateProps) {
         <div className="space-y-6">
             {/* Header */}
             <div className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-4">
-                    <TrendingUp className="h-6 w-6 text-green-600" />
-                    <h1 className="text-2xl font-bold text-gray-900">Créer un nouvel emprunt</h1>
-                </div>
-                <p className="text-gray-600 max-w-2xl mx-auto">
+                <p className="text-gray-600">
                     Choisissez la méthode qui vous convient le mieux pour créer votre échéancier de prêt
                 </p>
             </div>

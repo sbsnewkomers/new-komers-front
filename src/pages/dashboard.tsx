@@ -234,10 +234,28 @@ export default function DashboardPage() {
       title="Dashboard"
       companies={companyList}
       selectedCompanyId={selectedCompanyId}
-      onCompanyChange={() => {}}
+      onCompanyChange={() => { }}
     >
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-primary">Vue d&apos;ensemble</h2>
+      {/* Header */}
+      <div>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="rounded-xl bg-primary/10 p-2.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-layout-dashboard h-5 w-5 text-primary" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-primary">Vue d&apos;ensemble</h2>
+            <p className="text-sm text-slate-500">Tableau de bord avec indicateurs clés et widgets personnalisables.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-3">
         <Button
           onClick={() => setAddModalOpen(true)}
           className="bg-primary text-white hover:bg-slate-800"
@@ -336,7 +354,7 @@ export default function DashboardPage() {
                       <ResponsiveContainer width="100%" height="100%">
                         {w.chartType === "line" ? (
                           <LineChart
-                            data={w.data?.map((d, i) => ({ ...d, value: i !== 2 ? d.value : d.value - (25 * i)  })) ?? []}
+                            data={w.data?.map((d, i) => ({ ...d, value: i !== 2 ? d.value : d.value - (25 * i) })) ?? []}
                             margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
                           >
                             <CartesianGrid
@@ -379,7 +397,7 @@ export default function DashboardPage() {
                           </LineChart>
                         ) : (
                           <BarChart
-                            data={w.data?.map((d, i) => ({ ...d, value: i === 2 ? d.value : d.value - ((25 * (i+1)) * d.value/100) })) ?? []}
+                            data={w.data?.map((d, i) => ({ ...d, value: i === 2 ? d.value : d.value - ((25 * (i + 1)) * d.value / 100) })) ?? []}
                             margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
                           >
                             <CartesianGrid
