@@ -476,7 +476,7 @@ export default function UsersPage() {
         {/* Actions */}
         <div className="flex items-center gap-3">
           {invitableRoles.length > 0 && (
-            <Button onClick={openInviteModal} className="h-9 gap-2 bg-slate-900 text-white hover:bg-slate-800">
+            <Button onClick={openInviteModal} className="bg-primary text-white hover:bg-slate-800">
               <Send className="h-4 w-4" />
               Inviter un utilisateur
             </Button>

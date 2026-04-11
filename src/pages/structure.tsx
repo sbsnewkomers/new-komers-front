@@ -1797,7 +1797,7 @@ export default function StructurePage() {
               user?.role === "MANAGER") && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button className="h-10 gap-2 bg-linear-to-br from-purple-500 to-purple-600 text-white hover:bg-purple-900! cursor-pointer shadow-sm transition-all hover:shadow-xl">
+                    <Button className="bg-primary text-white hover:bg-slate-800">
                       <Plus className="size-4" />
                     </Button>
                   </DropdownMenuTrigger>
