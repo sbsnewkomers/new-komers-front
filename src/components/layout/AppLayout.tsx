@@ -22,6 +22,7 @@ import {
   Bell,
   HelpCircle,
   ChevronRight,
+  ChevronDown,
   Upload,
   Users,
   ScrollText,
@@ -29,6 +30,7 @@ import {
   X,
   Building,
   DollarSign,
+  Database,
 } from "lucide-react";
 
 type AppLayoutProps = {
@@ -62,6 +64,7 @@ export function AppLayout({
 
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [extracomptablesMenuOpen, setExtracomptablesMenuOpen] = React.useState(false);
 
   const menuRef = React.useRef<HTMLDivElement>(null);
 
@@ -169,10 +172,46 @@ export function AppLayout({
               user?.role === "ADMIN" ||
               user?.role === "HEAD_MANAGER" ||
               user?.role === "MANAGER") && (
-                <Link href="/loans" className={navLinkClass("/loans")}>
-                  <DollarSign className="h-5 w-5" />
-                  Emprunts
-                </Link>
+                <div>
+                  <button
+                    onClick={() => setExtracomptablesMenuOpen(!extracomptablesMenuOpen)}
+                    className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-sm font-medium w-full text-left ${isActive("/loans") || isActive("/dotations")
+                      ? "bg-slate-100 text-primary"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                      }`}
+                  >
+                    <Database className="h-5 w-5" />
+                    Données extracomptables
+                    <ChevronDown
+                      className={`ml-auto h-4 w-4 transition-transform ${extracomptablesMenuOpen ? "rotate-180" : ""
+                        }`}
+                    />
+                  </button>
+                  {extracomptablesMenuOpen && (
+                    <div className="ml-8 mt-1 space-y-1">
+                      <Link
+                        href="/loans"
+                        className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm font-medium ${isActive("/loans")
+                          ? "bg-primary/10 text-primary"
+                          : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                          }`}
+                      >
+                        <DollarSign className="h-4 w-4" />
+                        Emprunts
+                      </Link>
+                      <Link
+                        href="/dotations"
+                        className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm font-medium ${isActive("/dotations")
+                          ? "bg-primary/10 text-primary"
+                          : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                          }`}
+                      >
+                        <BookOpen className="h-4 w-4" />
+                        Dotations
+                      </Link>
+                    </div>
+                  )}
+                </div>
               )}
 
             {/* <Link href="/budget" className={navLinkClass("/budget")}>
@@ -421,14 +460,48 @@ export function AppLayout({
                 user?.role === "ADMIN" ||
                 user?.role === "HEAD_MANAGER" ||
                 user?.role === "MANAGER") && (
-                  <Link
-                    href="/loans"
-                    className={navLinkClass("/loans")}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <DollarSign className="h-5 w-5" />
-                    Emprunts
-                  </Link>
+                  <div>
+                    <button
+                      onClick={() => setExtracomptablesMenuOpen(!extracomptablesMenuOpen)}
+                      className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-sm font-medium w-full text-left ${isActive("/loans") || isActive("/dotations")
+                        ? "bg-slate-100 text-primary"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                        }`}
+                    >
+                      <Database className="h-5 w-5" />
+                      Données extracomptables
+                      <ChevronDown
+                        className={`ml-auto h-4 w-4 transition-transform ${extracomptablesMenuOpen ? "rotate-180" : ""
+                          }`}
+                      />
+                    </button>
+                    {extracomptablesMenuOpen && (
+                      <div className="ml-8 mt-1 space-y-1">
+                        <Link
+                          href="/loans"
+                          className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm font-medium ${isActive("/loans")
+                            ? "bg-primary/10 text-primary"
+                            : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                            }`}
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <DollarSign className="h-4 w-4" />
+                          Emprunts
+                        </Link>
+                        <Link
+                          href="/dotations"
+                          className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm font-medium ${isActive("/dotations")
+                            ? "bg-primary/10 text-primary"
+                            : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                            }`}
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <BookOpen className="h-4 w-4" />
+                          Dotations
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 )}
 
               <Link

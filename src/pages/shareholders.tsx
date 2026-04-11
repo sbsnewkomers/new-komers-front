@@ -202,7 +202,7 @@ export default function ShareholdersPage() {
             <Button
               type="button"
               onClick={openCreate}
-              className="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-800"
+              className="bg-primary text-white hover:bg-slate-800"
             >
               <Plus className="h-4 w-4" />
               Nouvel actionnaire
