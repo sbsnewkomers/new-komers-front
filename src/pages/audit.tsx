@@ -371,19 +371,30 @@ export default function AuditPage() {
   }
 
   return (
-    <AppLayout title="Audit" companies={[]} selectedCompanyId="" onCompanyChange={() => {}}>
+    <AppLayout title="Audit" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
       <Head>
         <title>Journal d&apos;audit</title>
       </Head>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Journal d&apos;audit</h2>
-            <p className="text-sm text-slate-500">
-              Historique complet des actions sur la plateforme.
-            </p>
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="rounded-xl bg-primary/10 p-2.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-history h-5 w-5 text-primary" aria-hidden="true">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+                <path d="M12 7v5l4 2"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-primary">Journal d&apos;audit</h2>
+              <p className="text-sm text-slate-500">Historique complet des actions sur la plateforme.</p>
+            </div>
           </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3">
           <Button
             variant="outline"
             className="h-9 gap-2 border-slate-200 text-slate-700"
@@ -643,9 +654,8 @@ export default function AuditPage() {
                         key={p}
                         type="button"
                         onClick={() => setPage(p)}
-                        className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition ${
-                          p === page ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
-                        }`}
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition ${p === page ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
+                          }`}
                       >
                         {p}
                       </button>

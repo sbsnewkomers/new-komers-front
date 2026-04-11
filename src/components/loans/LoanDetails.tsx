@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/Label';
 import { Loan, LoanStatistics } from '@/types/loans';
 import { entitiesApi } from '@/lib/entitiesApi';
 import { fetchUser } from '@/lib/usersApi';
+import { loansApi } from '@/lib/loansApi';
 
 interface LoanDetailsProps {
     loan: Loan;
@@ -12,23 +13,35 @@ interface LoanDetailsProps {
     onBack: () => void;
     onEdit: (loanId: string) => void;
     onDelete: (loanId: string) => void;
+    onLoanUpdate?: () => void;
 }
 
 // Utility functions
-const formatCurrency = (amount: number) => {
+const formatCurrency = (amount: number | null | undefined) => {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+        return '0,00\xa0\u20AC';
+    }
     return new Intl.NumberFormat('fr-FR', {
         style: 'currency',
         currency: 'EUR'
     }).format(amount);
 };
 
+const formatPercentage = (value: number | null | undefined) => {
+    if (value === null || value === undefined || isNaN(value)) {
+        return '0%';
+    }
+    return `${Math.round(value)}%`;
+};
+
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR');
 };
 
-export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete }: LoanDetailsProps) {
+export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete, onLoanUpdate }: LoanDetailsProps) {
     const [entityName, setEntityName] = useState<string>('');
     const [creatorName, setCreatorName] = useState<string>('');
+    const [loading, setLoading] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchEntityName = async () => {
@@ -62,6 +75,60 @@ export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete }: LoanD
             fetchCreatorName();
         }
     }, [loan.entityType, loan.entityId, loan.createdById]);
+
+    const handleMarkAsPaid = async (installmentId: string) => {
+        setLoading(installmentId);
+        try {
+            await loansApi.markInstallmentAsPaid(loan.id, installmentId);
+            // Refresh loan data to show updated status
+            if (onLoanUpdate) {
+                onLoanUpdate();
+            }
+            // Show success notification
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: 'Échéance marquée comme payée avec succès',
+                variant: 'success'
+            });
+        } catch (error) {
+            console.error('Erreur lors du marquage comme payé:', error);
+            // Show error notification
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: 'Erreur lors du marquage comme payé',
+                variant: 'error'
+            });
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    const handleUnmarkAsPaid = async (installmentId: string) => {
+        setLoading(installmentId);
+        try {
+            await loansApi.unmarkInstallmentAsPaid(loan.id, installmentId);
+            // Refresh loan data to show updated status
+            if (onLoanUpdate) {
+                onLoanUpdate();
+            }
+            // Show success notification
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: 'Paiement annulé avec succès',
+                variant: 'success'
+            });
+        } catch (error) {
+            console.error('Erreur lors de l\'annulation du paiement:', error);
+            // Show error notification
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: 'Erreur lors de l\'annulation du paiement',
+                variant: 'error'
+            });
+        } finally {
+            setLoading(null);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -221,7 +288,7 @@ export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete }: LoanD
                                 <Label className="text-sm font-medium text-muted-foreground">Progression</Label>
                                 <p className="text-lg font-semibold">
                                     {loan.principalAmount > 0
-                                        ? `${Math.round((loanStats.totalPrincipalPaid / loan.principalAmount) * 100)}%`
+                                        ? formatPercentage((loanStats.totalPrincipalPaid / loan.principalAmount) * 100)
                                         : '0%'
                                     }
                                 </p>
@@ -249,25 +316,67 @@ export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete }: LoanD
                                         <th className="text-right p-2">Paiement total</th>
                                         <th className="text-right p-2">Solde restant</th>
                                         <th className="text-center p-2">Statut</th>
+                                        <th className="text-center p-2">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {loan.installments.map((installment) => (
-                                        <tr key={installment.id} className="border-b hover:bg-gray-50">
+                                        <tr
+                                            key={installment.id}
+                                            className={`border-b ${installment.isPaid
+                                                ? 'bg-green-50 hover:bg-green-100'
+                                                : 'bg-red-50 hover:bg-red-100'
+                                                }`}
+                                        >
                                             <td className="p-2 font-medium">{installment.installmentNumber}</td>
                                             <td className="p-2">{formatDate(installment.dueDate)}</td>
-                                            <td className="p-2 text-right">{formatCurrency(installment.principalPayment)}</td>
-                                            <td className="p-2 text-right">{formatCurrency(installment.interestPayment)}</td>
-                                            <td className="p-2 text-right">{formatCurrency(installment.insurancePayment)}</td>
-                                            <td className="p-2 text-right font-semibold">{formatCurrency(installment.totalPayment)}</td>
-                                            <td className="p-2 text-right">{formatCurrency(installment.remainingBalance)}</td>
+                                            <td className={`p-2 text-right ${installment.isPaid ? 'text-green-700 font-medium' : ''}`}>
+                                                {formatCurrency(installment.principalPayment)}
+                                            </td>
+                                            <td className={`p-2 text-right ${installment.isPaid ? 'text-green-700 font-medium' : ''}`}>
+                                                {formatCurrency(installment.interestPayment)}
+                                            </td>
+                                            <td className={`p-2 text-right ${installment.isPaid ? 'text-green-700 font-medium' : ''}`}>
+                                                {formatCurrency(installment.insurancePayment)}
+                                            </td>
+                                            <td className={`p-2 text-right font-semibold ${installment.isPaid ? 'text-green-700' : ''}`}>
+                                                {formatCurrency(installment.totalPayment)}
+                                            </td>
+                                            <td className={`p-2 text-right font-medium ${installment.isPaid ? 'text-green-700' : ''}`}>
+                                                {formatCurrency(installment.remainingBalance)}
+                                            </td>
                                             <td className="p-2 text-center">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${installment.isPaid
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-yellow-100 text-yellow-800'
+                                                    ? 'bg-green-100 text-green-800 border border-green-200'
+                                                    : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
                                                     }`}>
                                                     {installment.isPaid ? 'Payé' : 'En attente'}
                                                 </span>
+                                            </td>
+                                            <td className="p-2 text-center">
+                                                <div className="flex gap-1 justify-center">
+                                                    {!installment.isPaid ? (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => handleMarkAsPaid(installment.id)}
+                                                            disabled={loading === installment.id}
+                                                            style={{ backgroundColor: '#16a34a', color: 'white', borderColor: '#16a34a' }}
+                                                            className="hover:bg-green-700"
+                                                        >
+                                                            {loading === installment.id ? '...' : 'Marquer payé'}
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="destructive"
+                                                            onClick={() => handleUnmarkAsPaid(installment.id)}
+                                                            disabled={loading === installment.id}
+                                                        >
+                                                            {loading === installment.id ? '...' : 'Annuler payement'}
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
