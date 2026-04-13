@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
+import { Select } from '@/components/ui/Select';
 import { Edit, Plus, Trash2, Save } from 'lucide-react';
 import { loansApi } from '@/lib/loansApi';
+import { entitiesApi } from '@/lib/entitiesApi';
 import { emitSnackbar } from '@/ui/snackbarBus';
 import {
     EntityType,
@@ -39,6 +41,7 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
     const [loanName, setLoanName] = useState('');
     const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(entityType || EntityType.GROUP);
     const [selectedEntityId, setSelectedEntityId] = useState(entityId || '');
+    const [entities, setEntities] = useState<Array<{ id: string; name: string }>>([]);
 
     // Installments
     const [installments, setInstallments] = useState<EditableInstallment[]>([]);
@@ -62,6 +65,13 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
 
         setInstallments(prev => [...prev, newInstallment]);
     }, [installments.length]);
+
+    // Load entities by default on component mount
+    useEffect(() => {
+        if (selectedEntityType === EntityType.GROUP) {
+            loadEntities(EntityType.GROUP);
+        }
+    }, [selectedEntityType]);
 
     // Initialize with one empty row
     useEffect(() => {
@@ -92,6 +102,44 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
 
             return updated;
         });
+    };
+
+    const loadEntities = async (entityType: EntityType) => {
+        try {
+            let entitiesList: Array<{ id: string; name: string }> = [];
+
+            switch (entityType) {
+                case EntityType.GROUP:
+                    entitiesList = await entitiesApi.getGroups();
+                    break;
+                case EntityType.COMPANY:
+                    entitiesList = await entitiesApi.getCompanies();
+                    break;
+                case EntityType.BUSINESSUNIT:
+                    const companies = await entitiesApi.getCompanies();
+                    const allBusinessUnits: Array<{ id: string; name: string }> = [];
+                    for (const company of companies) {
+                        const businessUnits = await entitiesApi.getBusinessUnits(company.id);
+                        allBusinessUnits.push(...businessUnits);
+                    }
+                    entitiesList = allBusinessUnits;
+                    break;
+                default:
+                    entitiesList = [];
+            }
+
+            setEntities(entitiesList);
+        } catch (error) {
+            console.error('Error loading entities:', error);
+            setEntities([]);
+        }
+    };
+
+    const handleEntityTypeChange = (value: string) => {
+        const entityType = value as EntityType;
+        setSelectedEntityType(entityType);
+        setSelectedEntityId('');
+        loadEntities(entityType);
     };
 
     const updateInstallment = (index: number, field: keyof EditableInstallment, value: string | number) => {
@@ -273,24 +321,30 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
                             </div>
                             <div>
                                 <Label htmlFor="entityType">Type d&rsquo;entité</Label>
-                                <select
+                                <Select
                                     value={selectedEntityType}
-                                    onChange={(e) => setSelectedEntityType(e.target.value as EntityType)}
-                                    className="w-full p-2 border rounded-md"
+                                    onValueChange={handleEntityTypeChange}
                                 >
                                     <option value={EntityType.GROUP}>Groupe</option>
                                     <option value={EntityType.COMPANY}>Entreprise</option>
                                     <option value={EntityType.BUSINESSUNIT}>Unité de business</option>
-                                </select>
+                                </Select>
                             </div>
                             <div>
-                                <Label htmlFor="entityId">ID de l&rsquo;entité</Label>
-                                <Input
+                                <Label htmlFor="entityId">Entité</Label>
+                                <Select
                                     id="entityId"
-                                    placeholder="UUID de l'entité"
-                                    value={selectedEntityId}
-                                    onChange={(e) => setSelectedEntityId(e.target.value)}
-                                />
+                                    value={selectedEntityId || ''}
+                                    onValueChange={(value) => setSelectedEntityId(value)}
+                                    disabled={!selectedEntityType}
+                                >
+                                    <option value="">Sélectionner une entité...</option>
+                                    {entities.map((entity) => (
+                                        <option key={entity.id} value={entity.id}>
+                                            {entity.name}
+                                        </option>
+                                    ))}
+                                </Select>
                             </div>
                         </div>
                     </div>
