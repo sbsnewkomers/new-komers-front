@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from '@/components/ui/AlertDialog';
-import { Edit, Plus, Trash2, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import { Select } from '@/components/ui/Select';
+import { Edit, Plus, Trash2, Save } from 'lucide-react';
 import { loansApi } from '@/lib/loansApi';
+import { entitiesApi } from '@/lib/entitiesApi';
+import { emitSnackbar } from '@/ui/snackbarBus';
 import {
     EntityType,
     LoanInputMethod
@@ -28,26 +30,27 @@ interface EditableInstallment {
     insurancePayment: number;
     totalPayment: number;
     remainingBalance: number;
+    comments?: string;
     isNew?: boolean;
 }
 
 export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualLoanEntryProps) {
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
 
     // Loan information
     const [loanName, setLoanName] = useState('');
     const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(entityType || EntityType.GROUP);
     const [selectedEntityId, setSelectedEntityId] = useState(entityId || '');
+    const [entities, setEntities] = useState<Array<{ id: string; name: string }>>([]);
 
     // Installments
     const [installments, setInstallments] = useState<EditableInstallment[]>([]);
 
     const addNewInstallment = useCallback(() => {
+        // Simple sequential numbering based on current length
         const newNumber = installments.length + 1;
-        const lastBalance = installments.length > 0 ? installments[installments.length - 1].remainingBalance : 0;
 
+        // Set remaining balance to 0 for new installments (will be calculated when user enters values)
         const newInstallment: EditableInstallment = {
             installmentNumber: newNumber,
             dueDate: new Date().toISOString().split('T')[0],
@@ -55,12 +58,20 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
             interestPayment: 0,
             insurancePayment: 0,
             totalPayment: 0,
-            remainingBalance: lastBalance,
+            remainingBalance: 0,
+            comments: '',
             isNew: true,
         };
 
         setInstallments(prev => [...prev, newInstallment]);
     }, [installments.length]);
+
+    // Load entities by default on component mount
+    useEffect(() => {
+        if (selectedEntityType === EntityType.GROUP) {
+            loadEntities(EntityType.GROUP);
+        }
+    }, [selectedEntityType]);
 
     // Initialize with one empty row
     useEffect(() => {
@@ -71,14 +82,64 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
 
     const removeInstallment = (index: number) => {
         setInstallments(prev => {
-            const updated = prev.filter((_, i) => i !== index);
-            // Recalculate installment numbers and remaining balances
-            return updated.map((installment, i) => ({
+            let updated = prev.filter((_, i) => i !== index);
+
+            // Recalculate installment numbers
+            updated = updated.map((installment, i) => ({
                 ...installment,
                 installmentNumber: i + 1,
-                remainingBalance: i === 0 ? totals.totalPrincipal : updated[i - 1].remainingBalance - installment.principalPayment,
             }));
+
+            // Recalculate all remaining balances
+            if (updated.length > 0) {
+                const totalCapital = updated.reduce((sum, i) => sum + i.principalPayment, 0);
+                let cumulativePaid = 0;
+                for (let i = 0; i < updated.length; i++) {
+                    cumulativePaid += updated[i].principalPayment;
+                    updated[i].remainingBalance = totalCapital - cumulativePaid;
+                }
+            }
+
+            return updated;
         });
+    };
+
+    const loadEntities = async (entityType: EntityType) => {
+        try {
+            let entitiesList: Array<{ id: string; name: string }> = [];
+
+            switch (entityType) {
+                case EntityType.GROUP:
+                    entitiesList = await entitiesApi.getGroups();
+                    break;
+                case EntityType.COMPANY:
+                    entitiesList = await entitiesApi.getCompanies();
+                    break;
+                case EntityType.BUSINESSUNIT:
+                    const companies = await entitiesApi.getCompanies();
+                    const allBusinessUnits: Array<{ id: string; name: string }> = [];
+                    for (const company of companies) {
+                        const businessUnits = await entitiesApi.getBusinessUnits(company.id);
+                        allBusinessUnits.push(...businessUnits);
+                    }
+                    entitiesList = allBusinessUnits;
+                    break;
+                default:
+                    entitiesList = [];
+            }
+
+            setEntities(entitiesList);
+        } catch (error) {
+            console.error('Error loading entities:', error);
+            setEntities([]);
+        }
+    };
+
+    const handleEntityTypeChange = (value: string) => {
+        const entityType = value as EntityType;
+        setSelectedEntityType(entityType);
+        setSelectedEntityId('');
+        loadEntities(entityType);
     };
 
     const updateInstallment = (index: number, field: keyof EditableInstallment, value: string | number) => {
@@ -94,18 +155,23 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
                 // Recalculate total payment
                 installment.totalPayment = installment.principalPayment + installment.interestPayment + installment.insurancePayment;
 
-                // Recalculate remaining balance for this and subsequent installments
-                if (field === 'principalPayment') {
-                    const previousBalance = index === 0 ?
-                        totals.totalPrincipal :
-                        updated[index - 1].remainingBalance;
-                    installment.remainingBalance = previousBalance - numValue;
+                // Update the installment in the array first
+                updated[index] = installment;
 
-                    // Update remaining balances for subsequent installments
-                    for (let i = index + 1; i < updated.length; i++) {
-                        updated[i].remainingBalance = updated[i - 1].remainingBalance - updated[i].principalPayment;
+                // Recalculate all remaining balances when principal payment changes
+                if (field === 'principalPayment') {
+                    // Calculate total capital (sum of all principal payments)
+                    const totalCapital = updated.reduce((sum, i) => sum + i.principalPayment, 0);
+
+                    // Recalculate remaining balance for all installments
+                    let cumulativePaid = 0;
+                    for (let i = 0; i < updated.length; i++) {
+                        cumulativePaid += updated[i].principalPayment;
+                        updated[i].remainingBalance = totalCapital - cumulativePaid;
                     }
                 }
+            } else if (field === 'comments') {
+                installment[field] = value as string;
             }
 
             updated[index] = installment;
@@ -130,17 +196,17 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
 
     const validateInstallments = () => {
         if (!loanName.trim()) {
-            setError('Le nom de l\'emprunt est requis');
+            emitSnackbar({ message: 'Le nom de l\'emprunt est requis', variant: 'error' });
             return false;
         }
 
         if (!selectedEntityType || !selectedEntityId) {
-            setError('Le type d\'entité et l\'ID sont requis');
+            emitSnackbar({ message: 'Le type d\'entité et l\'ID sont requis', variant: 'error' });
             return false;
         }
 
         if (installments.length === 0) {
-            setError('Au moins une échéance est requise');
+            emitSnackbar({ message: 'Au moins une échéance est requise', variant: 'error' });
             return false;
         }
 
@@ -148,12 +214,12 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
         for (let i = 0; i < installments.length; i++) {
             const installment = installments[i];
             if (!installment.dueDate) {
-                setError(`La date est requise pour l'échéance ${i + 1}`);
+                emitSnackbar({ message: `La date est requise pour l'échéance ${i + 1}`, variant: 'error' });
                 return false;
             }
 
             if (installment.principalPayment < 0 || installment.interestPayment < 0 || installment.insurancePayment < 0) {
-                setError(`Les montants doivent être positifs pour l'échéance ${i + 1}`);
+                emitSnackbar({ message: `Les montants doivent être positifs pour l'échéance ${i + 1}`, variant: 'error' });
                 return false;
             }
         }
@@ -164,7 +230,7 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
             const previousDate = new Date(installments[i - 1].dueDate);
 
             if (currentDate <= previousDate) {
-                setError(`Les dates doivent être séquentielles. La date de l'échéance ${i + 1} est antérieure à la précédente`);
+                emitSnackbar({ message: `Les dates doivent être séquentielles. La date de l'échéance ${i + 1} est antérieure à la précédente`, variant: 'error' });
                 return false;
             }
         }
@@ -178,43 +244,40 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
         }
 
         setIsLoading(true);
-        setError(null);
 
         try {
-            const totals = calculateTotals();
-
-            // Create loan with calculated parameters
-            const loanData = {
+            // Create manual loan with installments
+            const manualLoanData = {
                 name: loanName,
-                principalAmount: totals.totalPrincipal,
-                annualInterestRate: totals.totalPrincipal > 0 ? (totals.totalInterest / totals.totalPrincipal) * 100 : 0,
-                durationMonths: installments.length,
-                firstInstallmentDate: installments[0]?.dueDate || new Date().toISOString().split('T')[0],
-                monthlyInsuranceCost: installments[0]?.insurancePayment || 0,
-                deferralPeriodMonths: 0,
                 entityType: selectedEntityType,
                 entityId: selectedEntityId,
+                installments: installments.map((installment) => ({
+                    installmentNumber: installment.installmentNumber,
+                    dueDate: installment.dueDate,
+                    principalPayment: installment.principalPayment,
+                    interestPayment: installment.interestPayment,
+                    insurancePayment: installment.insurancePayment,
+                    totalPayment: installment.totalPayment,
+                    remainingBalance: installment.remainingBalance,
+                    comments: installment.comments || undefined,
+                })),
                 inputMethod: LoanInputMethod.MANUAL,
             };
 
-            const loan = await loansApi.createLoan(loanData);
-
-            // Create installments manually
-            const installmentPromises = installments.map((installment, index) => {
-                // This would need a dedicated API endpoint for manual installment creation
-                // For now, we'll use the existing loan structure
-                return loansApi.updateLoan(loan.id, {
-                    // This is a simplified approach - in reality, you'd need a specific endpoint
-                    // for creating individual installments
-                });
+            const loan = await loansApi.createManualLoan(manualLoanData, {
+                snackbar: {
+                    showSuccess: true,
+                    successMessage: 'Emprunt créé avec succès'
+                }
             });
 
-            await Promise.all(installmentPromises);
-
-            setSuccess('Emprunt créé avec succès');
+            emitSnackbar({ message: 'Emprunt créé avec succès', variant: 'success' });
             onLoanCreated?.(loan.id);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save loan');
+            emitSnackbar({
+                message: err instanceof Error ? err.message : 'Failed to save loan',
+                variant: 'error'
+            });
         } finally {
             setIsLoading(false);
         }
@@ -242,41 +305,6 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
                     </p>
                 </CardHeader>
                 <CardContent>
-                    {error && (
-                        <AlertDialog open={true}>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-                                        <div className="rounded-lg bg-red-50 p-1.5">
-                                            <AlertCircle className="h-4 w-4 text-red-500" />
-                                        </div>
-                                        Erreur
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription className="text-red-800">
-                                        {error}
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
-
-                    {success && (
-                        <AlertDialog open={true}>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle className="flex items-center gap-2 text-green-600">
-                                        <div className="rounded-lg bg-green-50 p-1.5">
-                                            <CheckCircle className="h-4 w-4 text-green-600" />
-                                        </div>
-                                        Succès
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription className="text-green-800">
-                                        {success}
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
 
                     {/* Loan Information */}
                     <div className="space-y-6 mb-8">
@@ -293,24 +321,30 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
                             </div>
                             <div>
                                 <Label htmlFor="entityType">Type d&rsquo;entité</Label>
-                                <select
+                                <Select
                                     value={selectedEntityType}
-                                    onChange={(e) => setSelectedEntityType(e.target.value as EntityType)}
-                                    className="w-full p-2 border rounded-md"
+                                    onValueChange={handleEntityTypeChange}
                                 >
                                     <option value={EntityType.GROUP}>Groupe</option>
                                     <option value={EntityType.COMPANY}>Entreprise</option>
                                     <option value={EntityType.BUSINESSUNIT}>Unité de business</option>
-                                </select>
+                                </Select>
                             </div>
                             <div>
-                                <Label htmlFor="entityId">ID de l&rsquo;entité</Label>
-                                <Input
+                                <Label htmlFor="entityId">Entité</Label>
+                                <Select
                                     id="entityId"
-                                    placeholder="UUID de l'entité"
-                                    value={selectedEntityId}
-                                    onChange={(e) => setSelectedEntityId(e.target.value)}
-                                />
+                                    value={selectedEntityId || ''}
+                                    onValueChange={(value) => setSelectedEntityId(value)}
+                                    disabled={!selectedEntityType}
+                                >
+                                    <option value="">Sélectionner une entité...</option>
+                                    {entities.map((entity) => (
+                                        <option key={entity.id} value={entity.id}>
+                                            {entity.name}
+                                        </option>
+                                    ))}
+                                </Select>
                             </div>
                         </div>
                     </div>
@@ -337,13 +371,14 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
                                             <th className="px-4 py-2 text-right">Assurance</th>
                                             <th className="px-4 py-2 text-right">Total</th>
                                             <th className="px-4 py-2 text-right">Restant dû</th>
+                                            <th className="px-4 py-2 text-right">Commentaire</th>
                                             <th className="px-4 py-2 text-center">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {installments.map((installment, index) => (
                                             <tr key={index} className="border-b">
-                                                <td className="px-4 py-2">{installment.installmentNumber}</td>
+                                                <td className="px-4 py-2">{index + 1}</td>
                                                 <td className="px-4 py-2">
                                                     <Input
                                                         type="date"
@@ -387,6 +422,15 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
                                                 </td>
                                                 <td className="px-4 py-2 text-right">
                                                     {formatCurrency(installment.remainingBalance)}
+                                                </td>
+                                                <td className="px-4 py-2">
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="Commentaires..."
+                                                        value={installment.comments || ''}
+                                                        onChange={(e) => updateInstallment(index, 'comments', e.target.value)}
+                                                        className="w-32"
+                                                    />
                                                 </td>
                                                 <td className="px-4 py-2 text-center">
                                                     <Button
@@ -451,13 +495,13 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
                                 Tout effacer
                             </Button>
                             <Button onClick={saveLoan} disabled={isLoading}>
-                                {isLoading ? 'Sauvegarde...' : 'Sauvegarder l&rsquo;emprunt'}
+                                {isLoading ? 'Sauvegarde...' : 'Sauvegarder l\'emprunt'}
                                 <Save className="ml-2 h-4 w-4" />
                             </Button>
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+                    </div >
+                </CardContent >
+            </Card >
+        </div >
     );
 }

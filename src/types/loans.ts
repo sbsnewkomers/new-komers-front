@@ -218,3 +218,22 @@ export interface CalculatorGenerationResponse {
     amortizationTable: LoanInstallmentCalculation[];
     message: string;
 }
+
+export interface ManualInstallmentDto {
+    installmentNumber: number;
+    dueDate: string;
+    principalPayment: number;
+    interestPayment: number;
+    insurancePayment: number;
+    totalPayment: number;
+    remainingBalance: number;
+    comments?: string;
+}
+
+export interface CreateManualLoanDto {
+    name: string;
+    entityType: EntityType;
+    entityId: string;
+    installments: ManualInstallmentDto[];
+    inputMethod?: LoanInputMethod;
+}
