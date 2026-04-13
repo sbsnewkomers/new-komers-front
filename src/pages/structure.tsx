@@ -216,6 +216,19 @@ export default function StructurePage() {
   const [ficheCompanyId, setFicheCompanyId] = useState<string | null>(null);
   const [ficheCompany, setFicheCompany] = useState<CompanyFull | null>(null);
   const [ficheTab, setFicheTab] = useState("informations");
+
+  // Fiche Group states
+  const [ficheGroupOpen, setFicheGroupOpen] = useState(false);
+  const [ficheGroupId, setFicheGroupId] = useState<string | null>(null);
+  const [ficheGroup, setFicheGroup] = useState<GroupFull | null>(null);
+  const [ficheGroupTab, setFicheGroupTab] = useState("informations");
+
+  // Fiche BU states
+  const [ficheBUOpen, setFicheBUOpen] = useState(false);
+  const [ficheBUId, setFicheBUId] = useState<string | null>(null);
+  const [ficheBU, setFicheBU] = useState<BusinessUnit | null>(null);
+  const [ficheBUTab, setFicheBUTab] = useState("informations");
+
   const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(
     new Set(),
   );
@@ -1722,6 +1735,72 @@ export default function StructurePage() {
     }
   };
 
+  const openFicheGroup = async (groupId: string) => {
+    setFicheGroupId(groupId);
+    setFicheGroupTab("informations");
+    setFicheGroupOpen(true);
+    setFicheGroup(null);
+    try {
+      const g = await apiFetch<GroupFull>(`/groups/${groupId}`, {
+        snackbar: { showSuccess: false, showError: true },
+      });
+      setFicheGroup(g);
+    } catch {
+      /* snackbar handles */
+    }
+  };
+
+  const openFicheBU = async (buId: string, companyId?: string) => {
+    setFicheBUId(buId);
+    setFicheBUTab("informations");
+    setFicheBUOpen(true);
+    setFicheBU(null);
+
+    try {
+      // Si companyId est fourni, l'utiliser directement
+      if (companyId) {
+        const bu = await apiFetch<BusinessUnit>(
+          `/companies/${companyId}/business-units/${buId}`,
+          {
+            snackbar: { showSuccess: false, showError: true },
+          }
+        );
+        setFicheBU(bu);
+      } else {
+        // Sinon, chercher la BU dans toutes les entreprises pour trouver son companyId
+        let foundBU: BusinessUnit | null = null;
+        let foundCompanyId = "";
+
+        // Parcourir toutes les entreprises pour trouver la BU
+        for (const company of allTreeCompanies) {
+          try {
+            const bus = await apiFetch<BusinessUnit[]>(
+              `/companies/${company.id}/business-units`,
+              { snackbar: { showSuccess: false, showError: false } }
+            );
+            const bu = bus.find(b => b.id === buId);
+            if (bu) {
+              foundBU = bu;
+              foundCompanyId = company.id;
+              break;
+            }
+          } catch {
+            // Ignorer les erreurs et continuer la recherche
+            continue;
+          }
+        }
+
+        if (foundBU) {
+          setFicheBU(foundBU);
+        } else {
+          throw new Error("Business Unit non trouvée");
+        }
+      }
+    } catch {
+      /* snackbar handles */
+    }
+  };
+
   const typeLabel =
     selectedNode?.type === "workspace"
       ? "Workspace"
@@ -2204,34 +2283,44 @@ export default function StructurePage() {
                                   </DropdownMenuItem>
                                 )}
                                 {node.type === "group" && (
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (!node.id) {
-                                        console.error('Group node ID is undefined:', node);
-                                        return;
-                                      }
-                                      console.log('Setting addCompanyGroupId to:', node.id);
-                                      setAddCompanyGroupId(node.id);
-                                      setAddCompanyForm({
-                                        name: "",
-                                        siret: "",
-                                        fiscal_year_start: "",
-                                        fiscal_year_end: "",
-                                        address: "",
-                                        country: "",
-                                        ape_code: "",
-                                        main_activity: "",
-                                        size: "SMALL",
-                                        model: "SUBSIDIARY",
-                                        logo: undefined as string | undefined,
-                                      });
-                                      setAddCompanyOpen(true);
-                                    }}
-                                  >
-                                    <Plus className="mr-2 h-4 w-4" /> Ajouter
-                                    une entreprise
-                                  </DropdownMenuItem>
+                                  <>
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openFicheGroup(node.id);
+                                      }}
+                                    >
+                                      Fiche groupe
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!node.id) {
+                                          console.error('Group node ID is undefined:', node);
+                                          return;
+                                        }
+                                        console.log('Setting addCompanyGroupId to:', node.id);
+                                        setAddCompanyGroupId(node.id);
+                                        setAddCompanyForm({
+                                          name: "",
+                                          siret: "",
+                                          fiscal_year_start: "",
+                                          fiscal_year_end: "",
+                                          address: "",
+                                          country: "",
+                                          ape_code: "",
+                                          main_activity: "",
+                                          size: "SMALL",
+                                          model: "SUBSIDIARY",
+                                          logo: undefined as string | undefined,
+                                        });
+                                        setAddCompanyOpen(true);
+                                      }}
+                                    >
+                                      <Plus className="mr-2 h-4 w-4" /> Ajouter
+                                      une entreprise
+                                    </DropdownMenuItem>
+                                  </>
                                 )}
                                 {node.type === "company" && (
                                   <>
@@ -2263,6 +2352,16 @@ export default function StructurePage() {
                                       une BU
                                     </DropdownMenuItem>
                                   </>
+                                )}
+                                {node.type === "bu" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openFicheBU(node.id, node.companyId);
+                                    }}
+                                  >
+                                    Fiche BU
+                                  </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem
                                   onClick={(e) => {
@@ -2296,6 +2395,16 @@ export default function StructurePage() {
                                 >
                                   Voir les détails
                                 </DropdownMenuItem>
+                                {node.type === "group" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openFicheGroup(node.id);
+                                    }}
+                                  >
+                                    Fiche groupe
+                                  </DropdownMenuItem>
+                                )}
                                 {node.type === "company" && (
                                   <DropdownMenuItem
                                     onClick={(e) => {
@@ -2304,6 +2413,16 @@ export default function StructurePage() {
                                     }}
                                   >
                                     Fiche entreprise
+                                  </DropdownMenuItem>
+                                )}
+                                {node.type === "bu" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openFicheBU(node.id, node.companyId);
+                                    }}
+                                  >
+                                    Fiche BU
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
@@ -3340,6 +3459,184 @@ export default function StructurePage() {
           })()}
           <DialogFooter>
             <Button variant="outline" onClick={() => setFicheOpen(false)}>
+              Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fiche Group Modal */}
+      <Dialog open={ficheGroupOpen} onOpenChange={setFicheGroupOpen}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto gap-2!">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Layers className="h-5 w-5 text-blue-500" />
+              {ficheGroup?.name ??
+                groupList.find((x) => x.id === ficheGroupId)?.name ??
+                "Fiche groupe"}
+            </DialogTitle>
+          </DialogHeader>
+          {(() => {
+            if (!ficheGroup) {
+              return (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                </div>
+              );
+            }
+            const groupCompanies = allTreeCompanies.filter(c => c.groupId === ficheGroup.id);
+            return (
+              <Tabs value={ficheGroupTab} onValueChange={setFicheGroupTab}>
+                <TabsList className="gap-4">
+                  <TabsTrigger value="informations">Informations</TabsTrigger>
+                  <TabsTrigger value="entreprises">Entreprises</TabsTrigger>
+                </TabsList>
+                <TabsContent value="informations" className="">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 pt-0">
+                    <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                      <dt className="text-slate-500">SIRET</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheGroup.siret || "—"}
+                      </dd>
+                      <dt className="text-slate-500">SIREN</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheGroup.siret
+                          ? ficheGroup.siret.substring(0, 9)
+                          : "—"}
+                      </dd>
+                      <dt className="text-slate-500">Début d&apos;exercice</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheGroup.fiscal_year_start || "—"}
+                      </dd>
+                      <dt className="text-slate-500">Fin d&apos;exercice</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheGroup.fiscal_year_end || "—"}
+                      </dd>
+                      {ficheGroup.ape_code && (
+                        <>
+                          <dt className="text-slate-500">Code APE</dt>
+                          <dd className="font-medium text-primary">
+                            {ficheGroup.ape_code}
+                          </dd>
+                        </>
+                      )}
+                      {ficheGroup.mainActivity && (
+                        <>
+                          <dt className="text-slate-500">
+                            Activité principale
+                          </dt>
+                          <dd className="font-medium text-primary">
+                            {ficheGroup.mainActivity}
+                          </dd>
+                        </>
+                      )}
+                      {ficheGroup.country && (
+                        <>
+                          <dt className="text-slate-500">Pays</dt>
+                          <dd className="font-medium text-primary">
+                            {ficheGroup.country}
+                          </dd>
+                        </>
+                      )}
+                    </dl>
+                  </div>
+                </TabsContent>
+                <TabsContent value="entreprises" className="">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-1">
+                    <ul className="space-y-2">
+                      {groupCompanies.map((company) => (
+                        <li
+                          key={company.id}
+                          className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 transition-colors hover:bg-slate-50"
+                          onClick={() => {
+                            setFicheGroupOpen(false);
+                            openFiche(company.id);
+                          }}
+                        >
+                          <span className="font-medium text-primary">
+                            {company.name}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-slate-500">
+                              {company.siret}
+                            </span>
+                            <span className="text-slate-400">›</span>
+                          </div>
+                        </li>
+                      ))}
+                      {groupCompanies.length === 0 && (
+                        <li className="py-4 text-center text-slate-400">
+                          Aucune entreprise dans ce groupe.
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Fiche BU Modal */}
+      <Dialog open={ficheBUOpen} onOpenChange={setFicheBUOpen}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto gap-2!">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-blue-500" />
+              {ficheBU?.name ??
+                `BU ${ficheBU?.code ?? ""}` ??
+                "Fiche BU"}
+            </DialogTitle>
+          </DialogHeader>
+          {(() => {
+            if (!ficheBU) {
+              return (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                </div>
+              );
+            }
+            return (
+              <Tabs value={ficheBUTab} onValueChange={setFicheBUTab}>
+                <TabsList className="gap-4">
+                  <TabsTrigger value="informations">Informations</TabsTrigger>
+                </TabsList>
+                <TabsContent value="informations" className="">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 pt-0">
+                    <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                      <dt className="text-slate-500">Code</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheBU.code || "—"}
+                      </dd>
+                      <dt className="text-slate-500">SIRET</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheBU.siret || "—"}
+                      </dd>
+                      <dt className="text-slate-500">Activité</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheBU.activity || "—"}
+                      </dd>
+                      <dt className="text-slate-500">Pays</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheBU.country || "—"}
+                      </dd>
+                      {ficheBU.company_id && (
+                        <>
+                          <dt className="text-slate-500">Entreprise</dt>
+                          <dd className="font-medium text-primary">
+                            {allTreeCompanies.find(c => c.id === ficheBU.company_id)?.name || ficheBU.company_id}
+                          </dd>
+                        </>
+                      )}
+                    </dl>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFicheBUOpen(false)}>
               Fermer
             </Button>
           </DialogFooter>
