@@ -33,8 +33,8 @@ export default function LoansPageOptimized() {
     const [editingLoanId, setEditingLoanId] = useState<string | null>(null);
 
     // Custom hooks
-    const { loans, isLoading, error, setError } = useLoans();
-    const { selectedLoan, loanStats, loadLoanDetails, clearLoanDetails } = useLoanDetails();
+    const { loans, isLoading, error, setError, setLoans } = useLoans();
+    const { selectedLoan, loanStats, loadLoanDetails, clearLoanDetails, setSelectedLoan } = useLoanDetails();
     const { deleteConfirmOpen, loanToDelete, confirmDelete, cancelDelete, closeDialog } = useDeleteConfirm();
 
     // Gérer les paramètres query au chargement
@@ -95,12 +95,16 @@ export default function LoansPageOptimized() {
         try {
             await loansApi.deleteLoan(loanToDelete);
             setError(null);
+
+            // Remove loan from the list
+            setLoans((prevLoans: Loan[]) =>
+                prevLoans.filter((loan: Loan) => loan.id !== loanToDelete)
+            );
+
             if (selectedLoan?.id === loanToDelete) {
                 clearLoanDetails();
                 setActiveTab('overview');
             }
-            // Reload loans to refresh the list
-            window.location.reload();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete loan');
         } finally {
@@ -128,8 +132,28 @@ export default function LoansPageOptimized() {
 
     const handleLoanUpdated = (updatedLoan: Loan) => {
         console.log('Loan updated:', updatedLoan);
-        // Recharger les données pour mettre à jour la liste
-        window.location.reload();
+
+        // Guard against undefined/null
+        if (!updatedLoan || !updatedLoan.id) {
+            console.error('Invalid loan data received:', updatedLoan);
+            return;
+        }
+
+        // Update loan in loans list
+        setLoans((prevLoans: Loan[]) =>
+            prevLoans.map((loan: Loan) =>
+                loan.id === updatedLoan.id ? updatedLoan : loan
+            )
+        );
+
+        // Update selected loan if it's one being edited
+        if (selectedLoan?.id === updatedLoan.id) {
+            setSelectedLoan(updatedLoan);
+        }
+
+        // Go back to details view
+        setActiveTab('details');
+        setEditingLoanId(null);
     };
 
     const handleLoanInstallmentUpdate = async () => {

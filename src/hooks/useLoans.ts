@@ -29,7 +29,8 @@ export function useLoans() {
         isLoading,
         error,
         loadLoans,
-        setError
+        setError,
+        setLoans
     };
 }
 
@@ -76,6 +77,7 @@ export function useLoanDetails() {
         error,
         loadLoanDetails,
         clearLoanDetails,
-        setError
+        setError,
+        setSelectedLoan
     };
 }

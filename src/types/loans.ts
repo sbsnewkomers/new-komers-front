@@ -28,6 +28,13 @@ export enum ImportStatus {
     FAILED = 'FAILED',
 }
 
+export enum InstallmentStatus {
+    PENDING = 'Pending',
+    OVERDUE = 'Overdue',
+    PAID = 'Paid',
+    UNPAID = 'Unpaid'
+}
+
 export interface Loan {
     id: string;
     name: string;
@@ -59,6 +66,8 @@ export interface LoanInstallment {
     totalPayment: number;
     remainingBalance: number;
     isPaid: boolean;
+    status: InstallmentStatus;
+    paymentDate?: string | null;
     createdAt: string;
     updatedAt: string;
 }

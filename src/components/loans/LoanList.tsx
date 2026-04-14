@@ -127,7 +127,6 @@ export function LoanList({
                             <option value="all">Tous les statuts</option>
                             <option value="ACTIVE">Actif</option>
                             <option value="COMPLETED">Terminé</option>
-                            <option value="PENDING">En attente</option>
                             <option value="SUSPENDED">Suspendu</option>
                         </Select>
                     </div>
