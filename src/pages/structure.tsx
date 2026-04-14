@@ -12,6 +12,7 @@ import {
   type Treeworkspace,
 } from "@/lib/structureApi";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useRouter } from "next/router";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { usePermissions } from "@/permissions/usePermissions";
 import { CRUD_ACTION } from "@/permissions/actions";
@@ -52,6 +53,8 @@ import {
   Briefcase,
   Layers,
   Search,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import {
   CompanyCreateWizard,
@@ -69,6 +72,15 @@ import {
   type ShareholderFormValues,
 } from "@/components/shareholders/ShareholderFormDialog";
 import Image from "next/image";
+
+type Emprunt = {
+  id: string;
+  amount: number;
+  description?: string;
+  date: string;
+  interest_rate?: number;
+  duration_months?: number;
+};
 
 type BusinessUnit = {
   id: string;
@@ -153,6 +165,7 @@ type TreeNode =
 
 export default function StructurePage() {
   const { user, isAuthReady } = usePermissionsContext();
+  const router = useRouter();
   const { can } = usePermissions();
   const canImportStructure =
     user?.role === "SUPER_ADMIN" ||
@@ -216,6 +229,25 @@ export default function StructurePage() {
   const [ficheCompanyId, setFicheCompanyId] = useState<string | null>(null);
   const [ficheCompany, setFicheCompany] = useState<CompanyFull | null>(null);
   const [ficheTab, setFicheTab] = useState("informations");
+  const [ficheCompanyEmprunts, setFicheCompanyEmprunts] = useState<Emprunt[]>([]);
+  const [ficheCompanyDataLoading, setFicheCompanyDataLoading] = useState(false);
+
+  // Fiche Group states
+  const [ficheGroupOpen, setFicheGroupOpen] = useState(false);
+  const [ficheGroupId, setFicheGroupId] = useState<string | null>(null);
+  const [ficheGroup, setFicheGroup] = useState<GroupFull | null>(null);
+  const [ficheGroupTab, setFicheGroupTab] = useState("informations");
+  const [ficheGroupEmprunts, setFicheGroupEmprunts] = useState<Emprunt[]>([]);
+  const [ficheGroupDataLoading, setFicheGroupDataLoading] = useState(false);
+
+  // Fiche BU states
+  const [ficheBUOpen, setFicheBUOpen] = useState(false);
+  const [ficheBUId, setFicheBUId] = useState<string | null>(null);
+  const [ficheBU, setFicheBU] = useState<BusinessUnit | null>(null);
+  const [ficheBUTab, setFicheBUTab] = useState("informations");
+  const [ficheBUEmprunts, setFicheBUEmprunts] = useState<Emprunt[]>([]);
+  const [ficheBUDataLoading, setFicheBUDataLoading] = useState(false);
+
   const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(
     new Set(),
   );
@@ -1720,6 +1752,168 @@ export default function StructurePage() {
     } finally {
       setFicheShareholdersLoading(false);
     }
+    loadCompanyExtraData(companyId);
+  };
+
+  const openFicheGroup = async (groupId: string) => {
+    setFicheGroupId(groupId);
+    setFicheGroupTab("informations");
+    setFicheGroupOpen(true);
+    setFicheGroup(null);
+    try {
+      const g = await apiFetch<GroupFull>(`/groups/${groupId}`, {
+        snackbar: { showSuccess: false, showError: true },
+      });
+      setFicheGroup(g);
+    } catch {
+      /* snackbar handles */
+    }
+    loadGroupExtraData(groupId);
+  };
+
+  const openFicheBU = async (buId: string, companyId?: string) => {
+    setFicheBUId(buId);
+    setFicheBUTab("informations");
+    setFicheBUOpen(true);
+    setFicheBU(null);
+
+    try {
+      // Si companyId est fourni, l'utiliser directement
+      if (companyId) {
+        const bu = await apiFetch<BusinessUnit>(
+          `/companies/${companyId}/business-units/${buId}`,
+          {
+            snackbar: { showSuccess: false, showError: true },
+          }
+        );
+        setFicheBU(bu);
+      } else {
+        // Sinon, chercher la BU dans toutes les entreprises pour trouver son companyId
+        let foundBU: BusinessUnit | null = null;
+        let foundCompanyId = "";
+
+        // Parcourir toutes les entreprises pour trouver la BU
+        for (const company of allTreeCompanies) {
+          try {
+            const bus = await apiFetch<BusinessUnit[]>(
+              `/companies/${company.id}/business-units`,
+              { snackbar: { showSuccess: false, showError: false } }
+            );
+            const bu = bus.find(b => b.id === buId);
+            if (bu) {
+              foundBU = bu;
+              foundCompanyId = company.id;
+              break;
+            }
+          } catch {
+            // Ignorer les erreurs et continuer la recherche
+            continue;
+          }
+        }
+
+        if (foundBU) {
+          setFicheBU(foundBU);
+        } else {
+          throw new Error("Business Unit non trouvée");
+        }
+      }
+    } catch {
+      /* snackbar handles */
+    }
+    loadBUExtraData(buId);
+  };
+
+  // Fonction pour gérer le clic sur un emprunt
+  const handleLoanClick = (loanId: string) => {
+    router.push({
+      pathname: '/loans',
+      query: {
+        tab: 'details',
+        loanId: loanId
+      }
+    });
+  };
+
+  // Fonctions pour charger les données extracomptables
+  const loadGroupExtraData = async (groupId: string) => {
+    setFicheGroupDataLoading(true);
+    try {
+      // Charger les emprunts du groupe
+      const loansResponse = await apiFetch<{ loans: any[]; total: number }>(
+        `/loans/by-entity/group/${groupId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+
+      // Transformer les données des prêts en format Emprunt
+      const emprunts = (loansResponse?.loans || []).map(loan => ({
+        id: loan.id,
+        amount: loan.principalAmount || 0,
+        description: loan.name || loan.description,
+        date: loan.createdAt || loan.firstInstallmentDate,
+        interest_rate: loan.annualInterestRate,
+        duration_months: loan.durationMonths
+      }));
+
+      setFicheGroupEmprunts(emprunts);
+    } catch {
+      setFicheGroupEmprunts([]);
+    } finally {
+      setFicheGroupDataLoading(false);
+    }
+  };
+
+  const loadBUExtraData = async (buId: string) => {
+    setFicheBUDataLoading(true);
+    try {
+      // Charger les emprunts de la BU
+      const loansResponse = await apiFetch<{ loans: any[]; total: number }>(
+        `/loans/by-entity/business unit/${buId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+
+      // Transformer les données des prêts en format Emprunt
+      const emprunts = (loansResponse?.loans || []).map(loan => ({
+        id: loan.id,
+        amount: loan.principalAmount || 0,
+        description: loan.name || loan.description,
+        date: loan.createdAt || loan.firstInstallmentDate,
+        interest_rate: loan.annualInterestRate,
+        duration_months: loan.durationMonths
+      }));
+
+      setFicheBUEmprunts(emprunts);
+    } catch {
+      setFicheBUEmprunts([]);
+    } finally {
+      setFicheBUDataLoading(false);
+    }
+  };
+
+  const loadCompanyExtraData = async (companyId: string) => {
+    setFicheCompanyDataLoading(true);
+    try {
+      // Charger les emprunts de l'entreprise
+      const loansResponse = await apiFetch<{ loans: any[]; total: number }>(
+        `/loans/by-entity/company/${companyId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+
+      // Transformer les données des prêts en format Emprunt
+      const emprunts = (loansResponse?.loans || []).map(loan => ({
+        id: loan.id,
+        amount: loan.principalAmount || 0,
+        description: loan.name || loan.description,
+        date: loan.createdAt || loan.firstInstallmentDate,
+        interest_rate: loan.annualInterestRate,
+        duration_months: loan.durationMonths
+      }));
+
+      setFicheCompanyEmprunts(emprunts);
+    } catch {
+      setFicheCompanyEmprunts([]);
+    } finally {
+      setFicheCompanyDataLoading(false);
+    }
   };
 
   const typeLabel =
@@ -2204,34 +2398,44 @@ export default function StructurePage() {
                                   </DropdownMenuItem>
                                 )}
                                 {node.type === "group" && (
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (!node.id) {
-                                        console.error('Group node ID is undefined:', node);
-                                        return;
-                                      }
-                                      console.log('Setting addCompanyGroupId to:', node.id);
-                                      setAddCompanyGroupId(node.id);
-                                      setAddCompanyForm({
-                                        name: "",
-                                        siret: "",
-                                        fiscal_year_start: "",
-                                        fiscal_year_end: "",
-                                        address: "",
-                                        country: "",
-                                        ape_code: "",
-                                        main_activity: "",
-                                        size: "SMALL",
-                                        model: "SUBSIDIARY",
-                                        logo: undefined as string | undefined,
-                                      });
-                                      setAddCompanyOpen(true);
-                                    }}
-                                  >
-                                    <Plus className="mr-2 h-4 w-4" /> Ajouter
-                                    une entreprise
-                                  </DropdownMenuItem>
+                                  <>
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openFicheGroup(node.id);
+                                      }}
+                                    >
+                                      Fiche groupe
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!node.id) {
+                                          console.error('Group node ID is undefined:', node);
+                                          return;
+                                        }
+                                        console.log('Setting addCompanyGroupId to:', node.id);
+                                        setAddCompanyGroupId(node.id);
+                                        setAddCompanyForm({
+                                          name: "",
+                                          siret: "",
+                                          fiscal_year_start: "",
+                                          fiscal_year_end: "",
+                                          address: "",
+                                          country: "",
+                                          ape_code: "",
+                                          main_activity: "",
+                                          size: "SMALL",
+                                          model: "SUBSIDIARY",
+                                          logo: undefined as string | undefined,
+                                        });
+                                        setAddCompanyOpen(true);
+                                      }}
+                                    >
+                                      <Plus className="mr-2 h-4 w-4" /> Ajouter
+                                      une entreprise
+                                    </DropdownMenuItem>
+                                  </>
                                 )}
                                 {node.type === "company" && (
                                   <>
@@ -2263,6 +2467,16 @@ export default function StructurePage() {
                                       une BU
                                     </DropdownMenuItem>
                                   </>
+                                )}
+                                {node.type === "bu" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openFicheBU(node.id, node.companyId);
+                                    }}
+                                  >
+                                    Fiche BU
+                                  </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem
                                   onClick={(e) => {
@@ -2296,6 +2510,16 @@ export default function StructurePage() {
                                 >
                                   Voir les détails
                                 </DropdownMenuItem>
+                                {node.type === "group" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openFicheGroup(node.id);
+                                    }}
+                                  >
+                                    Fiche groupe
+                                  </DropdownMenuItem>
+                                )}
                                 {node.type === "company" && (
                                   <DropdownMenuItem
                                     onClick={(e) => {
@@ -2304,6 +2528,16 @@ export default function StructurePage() {
                                     }}
                                   >
                                     Fiche entreprise
+                                  </DropdownMenuItem>
+                                )}
+                                {node.type === "bu" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openFicheBU(node.id, node.companyId);
+                                    }}
+                                  >
+                                    Fiche BU
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
@@ -3121,10 +3355,10 @@ export default function StructurePage() {
 
       {/* Fiche Entreprise Modal */}
       <Dialog open={ficheOpen} onOpenChange={setFicheOpen}>
-        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto gap-2!">
+        <DialogContent className="max-h-[70vh] max-w-screen-xl gap-2!">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <span className="text-lg">🏢</span>
+              <Building2 className="h-6 w-6 text-blue-600" />
               {ficheCompany?.name ??
                 allTreeCompanies.find((x) => x.id === ficheCompanyId)?.name ??
                 "Fiche entreprise"}
@@ -3147,6 +3381,7 @@ export default function StructurePage() {
                     Business Units
                   </TabsTrigger>
                   <TabsTrigger value="actionnaires">Actionnaires</TabsTrigger>
+                  <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
                 </TabsList>
                 <TabsContent value="informations" className="">
                   <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 pt-0">
@@ -3297,28 +3532,19 @@ export default function StructurePage() {
                         {ficheShareholders.map((s) => {
                           const ownerLabel =
                             s.ownerType === "USER"
-                              ? (() => {
-                                const u = ficheShareholderUsers.find(
-                                  (x) => x.id === s.ownerId,
-                                );
-                                if (!u) return s.ownerId;
-                                const fullName = `${u.firstName ?? ""} ${u.lastName ?? ""
-                                  }`.trim();
-                                return fullName || u.email;
-                              })()
-                              : (() => {
-                                const c = allTreeCompanies.find(
-                                  (x) => x.id === s.ownerId,
-                                );
-                                return c?.name ?? s.ownerId;
-                              })();
+                              ? ficheShareholderUsers.find((u) => u.id === s.ownerId)?.firstName +
+                              " " +
+                              ficheShareholderUsers.find((u) => u.id === s.ownerId)?.lastName
+                              : s.ownerType === "COMPANY"
+                                ? allTreeCompanies.find((c) => c.id === s.ownerId)?.name
+                                : s.ownerId || "Inconnu";
                           return (
                             <li
                               key={s.id}
                               className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2"
                             >
                               <div className="flex flex-col">
-                                <span className="font-medium text-slate-900">
+                                <span className="font-medium text-primary">
                                   {ownerLabel}
                                 </span>
                                 <span className="text-[11px] text-slate-400">
@@ -3335,11 +3561,413 @@ export default function StructurePage() {
                     )}
                   </div>
                 </TabsContent>
+                <TabsContent value="donnees-extracomptables" className="">
+                  <div className="space-y-6">
+                    {ficheCompanyDataLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                      </div>
+                    ) : (
+                      <>
+                        {/* Section Emprunts */}
+                        <div className="rounded-xl border border-slate-100 bg-slate-50 p-5">
+                          <h3 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                            <TrendingDown className="h-5 w-5 text-red-600" />
+                            Emprunts
+                          </h3>
+                          {ficheCompanyEmprunts.length === 0 ? (
+                            <p className="text-slate-500 text-center py-4">
+                              Aucun emprunt enregistré pour cette entreprise.
+                            </p>
+                          ) : (
+                            <div className="relative">
+                              <div className="mb-4 pb-4 border-b border-slate-200">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold text-primary">Total des emprunts:</span>
+                                  <span className="font-bold text-red-600 text-lg">
+                                    -{ficheCompanyEmprunts.reduce((sum, e) => sum + e.amount, 0).toLocaleString('fr-FR')} €
+                                  </span>
+                                </div>
+                              </div>
+                              <div className={`space-y-3 ${ficheCompanyEmprunts.length > 4 ? 'max-h-96 overflow-y-auto pr-2' : ''}`}>
+                                {ficheCompanyEmprunts.map((emprunt) => (
+                                  <div
+                                    key={emprunt.id}
+                                    className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
+                                    onClick={() => handleLoanClick(emprunt.id)}
+                                  >
+                                    <div className="flex-1">
+                                      <div className="font-medium text-primary">
+                                        Emprunt
+                                      </div>
+                                      {emprunt.description && (
+                                        <div className="text-sm text-slate-500 mt-1">
+                                          {emprunt.description}
+                                        </div>
+                                      )}
+                                      <div className="text-xs text-slate-400 mt-1">
+                                        {new Date(emprunt.date).toLocaleDateString('fr-FR')}
+                                        {emprunt.duration_months && (
+                                          <span className="ml-2">
+                                            â¢ {emprunt.duration_months} mois
+                                          </span>
+                                        )}
+                                        {emprunt.interest_rate && (
+                                          <span className="ml-2">
+                                            â¢ {emprunt.interest_rate}% d'intérêt
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="font-semibold text-red-600">
+                                        -{emprunt.amount.toLocaleString('fr-FR')} €
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                      </>
+                    )}
+                  </div>
+                </TabsContent>
               </Tabs>
             );
           })()}
           <DialogFooter>
             <Button variant="outline" onClick={() => setFicheOpen(false)}>
+              Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fiche Group Modal */}
+      <Dialog open={ficheGroupOpen} onOpenChange={setFicheGroupOpen}>
+        <DialogContent className="max-w-screen-xl gap-2!">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Layers className="h-5 w-5 text-blue-500" />
+              {ficheGroup?.name ??
+                groupList.find((x) => x.id === ficheGroupId)?.name ??
+                "Fiche groupe"}
+            </DialogTitle>
+          </DialogHeader>
+          {(() => {
+            if (!ficheGroup) {
+              return (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                </div>
+              );
+            }
+            const groupCompanies = allTreeCompanies.filter(c => c.groupId === ficheGroup.id);
+            return (
+              <Tabs value={ficheGroupTab} onValueChange={setFicheGroupTab}>
+                <TabsList className="gap-4">
+                  <TabsTrigger value="informations">Informations</TabsTrigger>
+                  <TabsTrigger value="entreprises">Entreprises</TabsTrigger>
+                  <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
+                </TabsList>
+                <TabsContent value="informations" className="">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 pt-0">
+                    <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                      <dt className="text-slate-500">SIRET</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheGroup.siret || "—"}
+                      </dd>
+                      <dt className="text-slate-500">SIREN</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheGroup.siret
+                          ? ficheGroup.siret.substring(0, 9)
+                          : "—"}
+                      </dd>
+                      <dt className="text-slate-500">Début d&apos;exercice</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheGroup.fiscal_year_start || "—"}
+                      </dd>
+                      <dt className="text-slate-500">Fin d&apos;exercice</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheGroup.fiscal_year_end || "—"}
+                      </dd>
+                      {ficheGroup.ape_code && (
+                        <>
+                          <dt className="text-slate-500">Code APE</dt>
+                          <dd className="font-medium text-primary">
+                            {ficheGroup.ape_code}
+                          </dd>
+                        </>
+                      )}
+                      {ficheGroup.mainActivity && (
+                        <>
+                          <dt className="text-slate-500">
+                            Activité principale
+                          </dt>
+                          <dd className="font-medium text-primary">
+                            {ficheGroup.mainActivity}
+                          </dd>
+                        </>
+                      )}
+                      {ficheGroup.country && (
+                        <>
+                          <dt className="text-slate-500">Pays</dt>
+                          <dd className="font-medium text-primary">
+                            {ficheGroup.country}
+                          </dd>
+                        </>
+                      )}
+                    </dl>
+                  </div>
+                </TabsContent>
+                <TabsContent value="entreprises" className="">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-1">
+                    <ul className="space-y-2">
+                      {groupCompanies.map((company) => (
+                        <li
+                          key={company.id}
+                          className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 transition-colors hover:bg-slate-50"
+                          onClick={() => {
+                            setFicheGroupOpen(false);
+                            openFiche(company.id);
+                          }}
+                        >
+                          <span className="font-medium text-primary">
+                            {company.name}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-slate-500">
+                              {company.siret}
+                            </span>
+                            <span className="text-slate-400">›</span>
+                          </div>
+                        </li>
+                      ))}
+                      {groupCompanies.length === 0 && (
+                        <li className="py-4 text-center text-slate-400">
+                          Aucune entreprise dans ce groupe.
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </TabsContent>
+                <TabsContent value="donnees-extracomptables" className="">
+                  <div className="space-y-6">
+                    {ficheGroupDataLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                      </div>
+                    ) : (
+                      <>
+                        {/* Section Emprunts */}
+                        <div className="rounded-xl border border-slate-100 bg-slate-50 p-5">
+                          <h3 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                            <TrendingDown className="h-5 w-5 text-red-600" />
+                            Emprunts
+                          </h3>
+                          {ficheGroupEmprunts.length === 0 ? (
+                            <p className="text-slate-500 text-center py-4">
+                              Aucun emprunt enregistré pour ce groupe.
+                            </p>
+                          ) : (
+                            <div className="relative">
+                              <div className="mb-4 pb-4 border-b border-slate-200">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold text-primary">Total des emprunts:</span>
+                                  <span className="font-bold text-red-600 text-lg">
+                                    -{ficheGroupEmprunts.reduce((sum, e) => sum + e.amount, 0).toLocaleString('fr-FR')} €
+                                  </span>
+                                </div>
+                              </div>
+                              <div className={`space-y-3 ${ficheGroupEmprunts.length > 4 ? 'max-h-96 overflow-y-auto pr-2' : ''}`}>
+                                {ficheGroupEmprunts.map((emprunt) => (
+                                  <div
+                                    key={emprunt.id}
+                                    className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
+                                    onClick={() => handleLoanClick(emprunt.id)}
+                                  >
+                                    <div className="flex-1">
+                                      <div className="font-medium text-primary">
+                                        Emprunt
+                                      </div>
+                                      {emprunt.description && (
+                                        <div className="text-sm text-slate-500 mt-1">
+                                          {emprunt.description}
+                                        </div>
+                                      )}
+                                      <div className="text-xs text-slate-400 mt-1">
+                                        {new Date(emprunt.date).toLocaleDateString('fr-FR')}
+                                        {emprunt.duration_months && (
+                                          <span className="ml-2">
+                                            â¢ {emprunt.duration_months} mois
+                                          </span>
+                                        )}
+                                        {emprunt.interest_rate && (
+                                          <span className="ml-2">
+                                            â¢ {emprunt.interest_rate}% d'intérêt
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="font-semibold text-red-600">
+                                        -{emprunt.amount.toLocaleString('fr-FR')} €
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                      </>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Fiche BU Modal */}
+      <Dialog open={ficheBUOpen} onOpenChange={setFicheBUOpen}>
+        <DialogContent className="max-w-screen-xl gap-2!">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-blue-500" />
+              {ficheBU?.name ??
+                `BU ${ficheBU?.code ?? ""}` ??
+                "Fiche BU"}
+            </DialogTitle>
+          </DialogHeader>
+          {(() => {
+            if (!ficheBU) {
+              return (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                </div>
+              );
+            }
+            return (
+              <Tabs value={ficheBUTab} onValueChange={setFicheBUTab}>
+                <TabsList className="gap-4">
+                  <TabsTrigger value="informations">Informations</TabsTrigger>
+                  <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
+                </TabsList>
+                <TabsContent value="informations" className="">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 pt-0">
+                    <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                      <dt className="text-slate-500">Code</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheBU.code || "—"}
+                      </dd>
+                      <dt className="text-slate-500">SIRET</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheBU.siret || "—"}
+                      </dd>
+                      <dt className="text-slate-500">Activité</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheBU.activity || "—"}
+                      </dd>
+                      <dt className="text-slate-500">Pays</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheBU.country || "—"}
+                      </dd>
+                      {ficheBU.company_id && (
+                        <>
+                          <dt className="text-slate-500">Entreprise</dt>
+                          <dd className="font-medium text-primary">
+                            {allTreeCompanies.find(c => c.id === ficheBU.company_id)?.name || ficheBU.company_id}
+                          </dd>
+                        </>
+                      )}
+                    </dl>
+                  </div>
+                </TabsContent>
+                <TabsContent value="donnees-extracomptables" className="">
+                  <div className="space-y-6">
+                    {ficheBUDataLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                      </div>
+                    ) : (
+                      <>
+                        {/* Section Emprunts */}
+                        <div className="rounded-xl border border-slate-100 bg-slate-50 p-5">
+                          <h3 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                            <TrendingDown className="h-5 w-5 text-red-600" />
+                            Emprunts
+                          </h3>
+                          {ficheBUEmprunts.length === 0 ? (
+                            <p className="text-slate-500 text-center py-4">
+                              Aucun emprunt enregistré pour cette business unit.
+                            </p>
+                          ) : (
+                            <div className="relative">
+                              <div className="mb-4 pb-4 border-b border-slate-200">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold text-primary">Total des emprunts:</span>
+                                  <span className="font-bold text-red-600 text-lg">
+                                    -{ficheBUEmprunts.reduce((sum, e) => sum + e.amount, 0).toLocaleString('fr-FR')} €
+                                  </span>
+                                </div>
+                              </div>
+                              <div className={`space-y-3 ${ficheBUEmprunts.length > 4 ? 'max-h-96 overflow-y-auto pr-2' : ''}`}>
+                                {ficheBUEmprunts.map((emprunt) => (
+                                  <div
+                                    key={emprunt.id}
+                                    className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
+                                    onClick={() => handleLoanClick(emprunt.id)}
+                                  >
+                                    <div className="flex-1">
+                                      <div className="font-medium text-primary">
+                                        Emprunt
+                                      </div>
+                                      {emprunt.description && (
+                                        <div className="text-sm text-slate-500 mt-1">
+                                          {emprunt.description}
+                                        </div>
+                                      )}
+                                      <div className="text-xs text-slate-400 mt-1">
+                                        {new Date(emprunt.date).toLocaleDateString('fr-FR')}
+                                        {emprunt.duration_months && (
+                                          <span className="ml-2">
+                                            â¢ {emprunt.duration_months} mois
+                                          </span>
+                                        )}
+                                        {emprunt.interest_rate && (
+                                          <span className="ml-2">
+                                            â¢ {emprunt.interest_rate}% d'intérêt
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="font-semibold text-red-600">
+                                        -{emprunt.amount.toLocaleString('fr-FR')} €
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                      </>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFicheBUOpen(false)}>
               Fermer
             </Button>
           </DialogFooter>

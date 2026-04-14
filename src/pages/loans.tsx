@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { loansApi } from '@/lib/loansApi';
@@ -20,11 +21,11 @@ import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
 import {
     Loan,
     EntityType,
-    LoanStatus,
-    LoanStatistics
+    LoanStatus
 } from '@/types/loans';
 
 export default function LoansPageOptimized() {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState('overview');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<LoanStatus | 'all'>('all');
@@ -35,6 +36,21 @@ export default function LoansPageOptimized() {
     const { loans, isLoading, error, setError } = useLoans();
     const { selectedLoan, loanStats, loadLoanDetails, clearLoanDetails } = useLoanDetails();
     const { deleteConfirmOpen, loanToDelete, confirmDelete, cancelDelete, closeDialog } = useDeleteConfirm();
+
+    // Gérer les paramètres query au chargement
+    useEffect(() => {
+        if (router.isReady) {
+            const { tab, loanId } = router.query;
+
+            if (tab === 'details' && loanId && typeof loanId === 'string') {
+                // Charger l'emprunt et afficher l'onglet details
+                loadLoanDetails(loanId);
+                setActiveTab('details');
+            } else if (tab && typeof tab === 'string') {
+                setActiveTab(tab);
+            }
+        }
+    }, [router.isReady, router.query]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Overview stats
     const overviewStats = useMemo(() => {
