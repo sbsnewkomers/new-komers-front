@@ -1688,6 +1688,12 @@ export default function StructurePage() {
   const handleCreateBUStandalone = async () => {
     if (!addBUStandaloneForm.name.trim() || !addBUStandaloneForm.companyId)
       return;
+
+    // Valider le SIRET avant d'envoyer la requête
+    if (addBUStandaloneForm.siret && !validateSiret(addBUStandaloneForm.siret)) {
+      return;
+    }
+
     setAddBUStandaloneLoading(true);
     try {
       await apiFetch(
@@ -4202,7 +4208,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Code APE
+                Code APE *
               </label>
               <ApeCodeSelect
                 value={addBUStandaloneForm.code}
@@ -4239,7 +4245,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                SIRET
+                SIRET *
               </label>
               <SiretInput
                 value={addBUStandaloneForm.siret}
@@ -4273,6 +4279,9 @@ export default function StructurePage() {
               disabled={
                 addBUStandaloneLoading ||
                 !addBUStandaloneForm.name.trim() ||
+                !addBUStandaloneForm.code.trim() ||
+                !addBUStandaloneForm.siret.trim() ||
+                (addBUStandaloneForm.siret && !validateSiret(addBUStandaloneForm.siret)) ||
                 !addBUStandaloneForm.country.trim() ||
                 !addBUStandaloneForm.companyId.trim()
               }
