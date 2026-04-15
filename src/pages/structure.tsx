@@ -1577,6 +1577,12 @@ export default function StructurePage() {
 
   const handleAddBUToCompany = async () => {
     if (!addBUCompanyId || !addBUForm.name.trim()) return;
+
+    // Valider le SIRET avant d'envoyer la requête
+    if (addBUForm.siret && !validateSiret(addBUForm.siret)) {
+      return;
+    }
+
     setAddBULoading(true);
     try {
       const formData = new FormData();
@@ -4503,7 +4509,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Code APE
+                Code APE *
               </label>
               <ApeCodeSelect
                 value={addBUForm.code}
@@ -4525,7 +4531,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                SIRET
+                SIRET *
               </label>
               <SiretInput
                 value={addBUForm.siret}
@@ -4574,6 +4580,9 @@ export default function StructurePage() {
               disabled={
                 addBULoading ||
                 !addBUForm.name.trim() ||
+                !addBUForm.code.trim() ||
+                !addBUForm.siret.trim() ||
+                (addBUForm.siret && !validateSiret(addBUForm.siret)) ||
                 !addBUForm.country.trim() ||
                 !can("business-units", CRUD_ACTION.CREATE)
               }
