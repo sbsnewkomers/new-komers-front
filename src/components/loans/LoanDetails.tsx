@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
-import { Loan, LoanStatistics } from '@/types/loans';
+import { Loan, LoanStatistics, InstallmentStatus } from '@/types/loans';
 import { entitiesApi } from '@/lib/entitiesApi';
 import { fetchUser } from '@/lib/usersApi';
 import { loansApi } from '@/lib/loansApi';
@@ -36,6 +36,36 @@ const formatPercentage = (value: number | null | undefined) => {
 
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR');
+};
+
+const getStatusDisplay = (status: InstallmentStatus) => {
+    switch (status) {
+        case InstallmentStatus.PAID:
+            return {
+                text: 'Payé',
+                className: 'bg-green-100 text-green-800 border border-green-200'
+            };
+        case InstallmentStatus.PENDING:
+            return {
+                text: 'En attente',
+                className: 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+            };
+        case InstallmentStatus.OVERDUE:
+            return {
+                text: 'En retard',
+                className: 'bg-red-100 text-red-800 border border-red-200'
+            };
+        case InstallmentStatus.UNPAID:
+            return {
+                text: 'Non payé',
+                className: 'bg-gray-100 text-gray-800 border border-gray-200'
+            };
+        default:
+            return {
+                text: 'Inconnu',
+                className: 'bg-gray-100 text-gray-800 border border-gray-200'
+            };
+    }
 };
 
 export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete, onLoanUpdate }: LoanDetailsProps) {
@@ -323,34 +353,37 @@ export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete, onLoanU
                                     {loan.installments.map((installment) => (
                                         <tr
                                             key={installment.id}
-                                            className={`border-b ${installment.isPaid
+                                            className={`border-b ${installment.status === InstallmentStatus.PAID
                                                 ? 'bg-green-50 hover:bg-green-100'
-                                                : 'bg-red-50 hover:bg-red-100'
+                                                : installment.status === InstallmentStatus.PENDING
+                                                    ? 'bg-yellow-50 hover:bg-yellow-100'
+                                                    : installment.status === InstallmentStatus.OVERDUE
+                                                        ? 'bg-red-50 hover:bg-red-100'
+                                                        : installment.status === InstallmentStatus.UNPAID
+                                                            ? 'bg-gray-50 hover:bg-gray-100'
+                                                            : 'bg-gray-50 hover:bg-gray-100'
                                                 }`}
                                         >
                                             <td className="p-2 font-medium">{installment.installmentNumber}</td>
                                             <td className="p-2">{formatDate(installment.dueDate)}</td>
-                                            <td className={`p-2 text-right ${installment.isPaid ? 'text-green-700 font-medium' : ''}`}>
+                                            <td className={`p-2 text-right ${installment.status === InstallmentStatus.PAID ? 'text-green-700 font-medium' : ''}`}>
                                                 {formatCurrency(installment.principalPayment)}
                                             </td>
-                                            <td className={`p-2 text-right ${installment.isPaid ? 'text-green-700 font-medium' : ''}`}>
+                                            <td className={`p-2 text-right ${installment.status === InstallmentStatus.PAID ? 'text-green-700 font-medium' : ''}`}>
                                                 {formatCurrency(installment.interestPayment)}
                                             </td>
-                                            <td className={`p-2 text-right ${installment.isPaid ? 'text-green-700 font-medium' : ''}`}>
+                                            <td className={`p-2 text-right ${installment.status === InstallmentStatus.PAID ? 'text-green-700 font-medium' : ''}`}>
                                                 {formatCurrency(installment.insurancePayment)}
                                             </td>
-                                            <td className={`p-2 text-right font-semibold ${installment.isPaid ? 'text-green-700' : ''}`}>
+                                            <td className={`p-2 text-right font-semibold ${installment.status === InstallmentStatus.PAID ? 'text-green-700' : ''}`}>
                                                 {formatCurrency(installment.totalPayment)}
                                             </td>
-                                            <td className={`p-2 text-right font-medium ${installment.isPaid ? 'text-green-700' : ''}`}>
+                                            <td className={`p-2 text-right font-medium ${installment.status === InstallmentStatus.PAID ? 'text-green-700' : ''}`}>
                                                 {formatCurrency(installment.remainingBalance)}
                                             </td>
                                             <td className="p-2 text-center">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${installment.isPaid
-                                                    ? 'bg-green-100 text-green-800 border border-green-200'
-                                                    : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                                                    }`}>
-                                                    {installment.isPaid ? 'Payé' : 'En attente'}
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusDisplay(installment.status).className}`}>
+                                                    {getStatusDisplay(installment.status).text}
                                                 </span>
                                             </td>
                                             <td className="p-2 text-center">

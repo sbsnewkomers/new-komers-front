@@ -49,6 +49,42 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
     });
 
     const handleInputChange = (field: keyof LoanCalculatorDto, value: string | number) => {
+        // Validation spécifique pour la période de différé
+        if (field === 'deferralPeriodMonths') {
+            const deferralValue = Number(value);
+            const totalDuration = Number(formData.durationMonths) || (Number(formData.durationYears) * 12);
+
+            if (deferralValue > totalDuration && totalDuration > 0) {
+                apiFetch('/dummy', {
+                    method: 'POST',
+                    snackbar: {
+                        showError: true,
+                        errorMessage: 'La période de différé doit être inférieure à la durée totale du prêt'
+                    }
+                });
+                return;
+            }
+        }
+
+        // Validation spécifique pour la durée totale
+        if (field === 'durationMonths' || field === 'durationYears') {
+            const newDurationMonths = field === 'durationMonths'
+                ? Number(value)
+                : Number(value) * 12;
+            const deferralValue = Number(formData.deferralPeriodMonths);
+
+            if (deferralValue > newDurationMonths && newDurationMonths > 0) {
+                apiFetch('/dummy', {
+                    method: 'POST',
+                    snackbar: {
+                        showError: true,
+                        errorMessage: 'La période de différé doit être inférieure à la durée totale du prêt'
+                    }
+                });
+                return;
+            }
+        }
+
         setFormData(prev => ({
             ...prev,
             [field]: value
@@ -59,6 +95,33 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
     const validateStep1 = async () => {
         setIsLoading(true);
         setError(null);
+
+        // Client-side validation for required fields
+        const requiredFields = [
+            { field: 'name', label: 'Nom de l\'emprunt' },
+            { field: 'principalAmount', label: 'Montant du capital emprunté' },
+            { field: 'annualInterestRate', label: 'Taux d\'intérêt annuel' },
+            { field: 'durationMonths', label: 'Durée totale' },
+            { field: 'firstInstallmentDate', label: 'Date de la première échéance' }
+        ];
+
+        const missingFields = requiredFields.filter(({ field }) => {
+            const value = formData[field as keyof LoanCalculatorDto];
+            return !value || (typeof value === 'string' && value.trim() === '') || (typeof value === 'number' && (value === 0 || isNaN(value)));
+        });
+
+        if (missingFields.length > 0) {
+            const missingLabels = missingFields.map(({ label }) => label).join(', ');
+            apiFetch('/dummy', {
+                method: 'POST',
+                snackbar: {
+                    showError: true,
+                    errorMessage: `Veuillez remplir tous les champs obligatoires: ${missingLabels}`
+                }
+            });
+            setIsLoading(false);
+            return;
+        }
 
         try {
             const validationData = {
@@ -404,7 +467,7 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                                     <h3 className="text-lg font-semibold mb-4">Caractéristiques Principales</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <Label htmlFor="loanName">Nom de l&rsquo;emprunt</Label>
+                                            <Label htmlFor="loanName">Nom de l&rsquo;emprunt <span className="text-red-500">*</span></Label>
                                             <Input
                                                 id="loanName"
                                                 placeholder="ex: Prêt BNP Agence X"
@@ -413,7 +476,7 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                                             />
                                         </div>
                                         <div>
-                                            <Label htmlFor="principalAmount">Montant du capital emprunté (EUR)</Label>
+                                            <Label htmlFor="principalAmount">Montant du capital emprunté (EUR) <span className="text-red-500">*</span></Label>
                                             <Input
                                                 id="principalAmount"
                                                 type="number"
@@ -425,7 +488,7 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                                             />
                                         </div>
                                         <div>
-                                            <Label htmlFor="annualInterestRate">Taux d&apos;intérêt annuel (%)</Label>
+                                            <Label htmlFor="annualInterestRate">Taux d&apos;intérêt annuel (%) <span className="text-red-500">*</span></Label>
                                             <Input
                                                 id="annualInterestRate"
                                                 type="number"
@@ -438,29 +501,18 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                                             />
                                         </div>
                                         <div>
-                                            <Label htmlFor="duration">Durée totale</Label>
-                                            <div className="flex gap-2">
-                                                <Input
-                                                    type="number"
-                                                    min="1"
-                                                    max="50"
-                                                    placeholder="Années"
-                                                    value={formData.durationYears || ''}
-                                                    onChange={(e) => handleInputChange('durationYears', e.target.value)}
-                                                />
-                                                <span className="flex items-center text-muted-foreground">ou</span>
-                                                <Input
-                                                    type="number"
-                                                    min="1"
-                                                    max="600"
-                                                    placeholder="Mois"
-                                                    value={formData.durationMonths || ''}
-                                                    onChange={(e) => handleInputChange('durationMonths', e.target.value)}
-                                                />
-                                            </div>
+                                            <Label htmlFor="duration">Durée totale (mois) <span className="text-red-500">*</span></Label>
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                max="600"
+                                                placeholder="ex: 24"
+                                                value={formData.durationMonths || ''}
+                                                onChange={(e) => handleInputChange('durationMonths', e.target.value)}
+                                            />
                                         </div>
                                         <div>
-                                            <Label htmlFor="firstInstallmentDate">Date de la première échéance</Label>
+                                            <Label htmlFor="firstInstallmentDate">Date de la première échéance <span className="text-red-500">*</span></Label>
                                             <Input
                                                 id="firstInstallmentDate"
                                                 type="date"
@@ -516,25 +568,6 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                                         </div>
                                     </div>
                                 </div>
-
-                                {validation && (
-                                    <Card className="bg-blue-50 border-blue-200">
-                                        <CardContent className="pt-6">
-                                            <h4 className="font-semibold text-blue-900 mb-3">Résumé des paramètres saisis</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                                <div><span className="font-medium">Nom:</span> {validation.parameters.loanName}</div>
-                                                <div><span className="font-medium">Capital:</span> {formatCurrency(validation.parameters.principalAmount)}</div>
-                                                <div><span className="font-medium">Taux:</span> {validation.parameters.annualInterestRate}%</div>
-                                                <div><span className="font-medium">Durée:</span> {validation.parameters.durationInMonths} mois</div>
-                                                <div><span className="font-medium">Première échéance:</span> {formatDate(validation.parameters.firstInstallmentDate)}</div>
-                                                <div><span className="font-medium">Assurance:</span> {formatCurrency(validation.parameters.monthlyInsuranceCost)}/mois</div>
-                                                {validation.parameters.deferralPeriodMonths > 0 && (
-                                                    <div><span className="font-medium">Différé:</span> {validation.parameters.deferralPeriodMonths} mois</div>
-                                                )}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )}
 
                                 <div className="flex justify-between">
                                     <Button variant="outline" onClick={() => setCurrentStep(1)}>

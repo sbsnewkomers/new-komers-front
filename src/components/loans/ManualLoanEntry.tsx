@@ -238,6 +238,13 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
         return true;
     };
 
+    const normalizeInstallmentNumbers = (installmentsList: EditableInstallment[]) => {
+        return installmentsList.map((installment, index) => ({
+            ...installment,
+            installmentNumber: index + 1,
+        }));
+    };
+
     const saveLoan = async () => {
         if (!validateInstallments()) {
             return;
@@ -246,12 +253,15 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
         setIsLoading(true);
 
         try {
+            // Normalize installment numbers before saving
+            const normalizedInstallments = normalizeInstallmentNumbers(installments);
+
             // Create manual loan with installments
             const manualLoanData = {
                 name: loanName,
                 entityType: selectedEntityType,
                 entityId: selectedEntityId,
-                installments: installments.map((installment) => ({
+                installments: normalizedInstallments.map((installment) => ({
                     installmentNumber: installment.installmentNumber,
                     dueDate: installment.dueDate,
                     principalPayment: installment.principalPayment,
