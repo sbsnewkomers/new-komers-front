@@ -3858,9 +3858,7 @@ export default function StructurePage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Briefcase className="h-5 w-5 text-blue-500" />
-              {ficheBU?.name ??
-                `BU ${ficheBU?.code ?? ""}` ??
-                "Fiche BU"}
+              {ficheBU?.name || `BU ${ficheBU?.code ?? ""}` || "Fiche BU"}
             </DialogTitle>
           </DialogHeader>
           {(() => {
