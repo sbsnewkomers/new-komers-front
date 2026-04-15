@@ -1617,6 +1617,12 @@ export default function StructurePage() {
 
   const handleCreateGroup = async () => {
     if (!addGroupForm.name.trim()) return;
+
+    // Valider le SIRET avant d'envoyer la requête
+    if (addGroupForm.siret && !validateSiret(addGroupForm.siret)) {
+      return;
+    }
+
     setAddGroupLoading(true);
     try {
       const formData = new FormData();
@@ -4133,6 +4139,7 @@ export default function StructurePage() {
                 !addGroupForm.workspaceId.trim() ||
                 !addGroupForm.ape_code.trim() ||
                 !addGroupForm.siret.trim() ||
+                (addGroupForm.siret && !validateSiret(addGroupForm.siret)) ||
                 !addGroupForm.country.trim() ||
                 !addGroupForm.fiscal_year_start.trim() ||
                 !addGroupForm.fiscal_year_end.trim()
