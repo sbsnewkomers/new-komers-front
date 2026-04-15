@@ -2404,7 +2404,7 @@ export default function StructurePage() {
                                         country: "",
                                         fiscal_year_start: "",
                                         fiscal_year_end: "",
-                                        workspaceId: "",
+                                        workspaceId: node.id,
                                         logo: undefined as string | undefined,
                                       });
                                       setAddGroupLogoFile(null);
