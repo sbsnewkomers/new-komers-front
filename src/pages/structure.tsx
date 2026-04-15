@@ -4017,7 +4017,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Code APE
+                Code APE *
               </label>
               <ApeCodeSelect
                 value={addGroupForm.ape_code}
@@ -4031,7 +4031,24 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                SIRET
+                Activité principale
+              </label>
+              <Input
+                value={addGroupForm.mainActivity}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({
+                    ...f,
+                    mainActivity: e.target.value,
+                  }))
+                }
+                placeholder="Activité principale"
+                readOnly
+                className="bg-gray-50 cursor-not-allowed"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                SIRET *
               </label>
               <SiretInput
                 value={addGroupForm.siret}
@@ -4070,27 +4087,11 @@ export default function StructurePage() {
                 placeholder="Pays du groupe"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Activité principale
-              </label>
-              <Input
-                value={addGroupForm.mainActivity}
-                onChange={(e) =>
-                  setAddGroupForm((f) => ({
-                    ...f,
-                    mainActivity: e.target.value,
-                  }))
-                }
-                placeholder="Activité principale"
-                readOnly
-                className="bg-gray-50 cursor-not-allowed"
-              />
-            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Début exercice
+                  Début exercice *
                 </label>
                 <Input
                   type="date"
@@ -4105,7 +4106,7 @@ export default function StructurePage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Fin exercice
+                  Fin exercice *
                 </label>
                 <Input
                   type="date"
@@ -4126,7 +4127,16 @@ export default function StructurePage() {
             </Button>
             <Button
               onClick={handleCreateGroup}
-              disabled={addGroupLoading || !addGroupForm.name.trim() || !addGroupForm.workspaceId.trim()}
+              disabled={
+                addGroupLoading ||
+                !addGroupForm.name.trim() ||
+                !addGroupForm.workspaceId.trim() ||
+                !addGroupForm.ape_code.trim() ||
+                !addGroupForm.siret.trim() ||
+                !addGroupForm.country.trim() ||
+                !addGroupForm.fiscal_year_start.trim() ||
+                !addGroupForm.fiscal_year_end.trim()
+              }
             >
               {addGroupLoading ? "Création..." : "Créer"}
             </Button>
