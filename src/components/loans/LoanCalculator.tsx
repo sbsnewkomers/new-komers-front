@@ -276,13 +276,13 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
             let entitiesList: Group[] | Company[] | BusinessUnit[] = [];
 
             switch (entityType) {
-                case 'group':
+                case EntityType.GROUP:
                     entitiesList = await entitiesApi.getGroups();
                     break;
-                case 'company':
+                case EntityType.COMPANY:
                     entitiesList = await entitiesApi.getCompanies();
                     break;
-                case 'business unit':
+                case EntityType.BUSINESSUNIT:
                     // For business units, we need to get companies first, then their business units
                     const companies = await entitiesApi.getCompanies();
                     const allBusinessUnits: BusinessUnit[] = [];
@@ -313,6 +313,13 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
             }));
             setSelectedEntity(entityId || '');
             loadEntities(entityType);
+        } else {
+            // Set default entityType to group and load groups
+            setFormData(prev => ({
+                ...prev,
+                entityType: EntityType.GROUP
+            }));
+            loadEntities(EntityType.GROUP);
         }
     }, [entityType, entityId]);
 
@@ -411,9 +418,9 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                                                         }}
                                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:ring-2"
                                                     >
-                                                        <option value="group">Groupe</option>
-                                                        <option value="company">Entreprise</option>
-                                                        <option value="business unit">Unité commerciale</option>
+                                                        <option value={EntityType.GROUP}>Groupe</option>
+                                                        <option value={EntityType.COMPANY}>Entreprise</option>
+                                                        <option value={EntityType.BUSINESSUNIT}>Unité commerciale</option>
                                                     </select>
                                                 </div>
                                                 <div>

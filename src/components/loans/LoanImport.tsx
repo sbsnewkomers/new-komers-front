@@ -189,7 +189,8 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `modele-echeancier.${format.toLowerCase()}`;
+            const fileExtension = format === ImportFileFormat.EXCEL ? 'xlsx' : 'csv';
+            a.download = `modele-echeancier.${fileExtension}`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
