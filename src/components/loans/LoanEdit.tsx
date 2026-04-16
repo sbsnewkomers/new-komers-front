@@ -90,26 +90,48 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
     const saveLoan = async (confirmRegeneration: boolean = false) => {
         setIsSaving(true);
         try {
-            const updateData: Record<string, string | number | boolean> = {
-                name: formData.name,
-                principalAmount: parseFloat(formData.principalAmount),
-                annualInterestRate: parseFloat(formData.annualInterestRate),
-                durationMonths: parseInt(formData.durationMonths),
-                firstInstallmentDate: formData.firstInstallmentDate,
-                monthlyInsuranceCost: parseFloat(formData.monthlyInsuranceCost),
-                deferralPeriodMonths: parseInt(formData.deferralPeriodMonths),
-                status: formData.status,
-            };
+            // Ne envoyer que les champs qui ont été modifiés
+            const updateData: Record<string, string | number | boolean> = {};
+
+            // Toujours envoyer le nom et le statut s'ils sont différents
+            if (loan && formData.name !== loan.name) {
+                updateData.name = formData.name;
+            }
+
+            if (loan && formData.status !== loan.status) {
+                updateData.status = formData.status;
+            }
+
+            // Vérifier les champs critiques
+            const criticalFields = ['principalAmount', 'annualInterestRate', 'durationMonths', 'firstInstallmentDate', 'monthlyInsuranceCost', 'deferralPeriodMonths'];
+            let hasCriticalFieldChanges = false;
+
+            if (loan) {
+                criticalFields.forEach(field => {
+                    const formValue = formData[field as keyof typeof formData];
+                    const loanValue = loan[field as keyof Loan];
+
+                    if (formValue !== undefined && formValue !== '' && formValue !== loanValue?.toString()) {
+                        if (field === 'principalAmount' || field === 'annualInterestRate' || field === 'monthlyInsuranceCost') {
+                            updateData[field] = parseFloat(formValue as string);
+                        } else if (field === 'durationMonths' || field === 'deferralPeriodMonths') {
+                            updateData[field] = parseInt(formValue as string);
+                        } else {
+                            updateData[field] = formValue;
+                        }
+                        hasCriticalFieldChanges = true;
+                    }
+                });
+            }
 
             // Ajouter la confirmation de régénération si nécessaire
-            if (confirmRegeneration) {
+            if (confirmRegeneration || hasCriticalFieldChanges) {
                 updateData.confirmScheduleRegeneration = true;
             }
 
             const updatedLoan = await loansApi.updateLoan(loanId, updateData);
 
             onLoanUpdated(updatedLoan);
-            onBack();
         } catch (err) {
             onError(err instanceof Error ? err.message : 'Failed to update loan');
         } finally {

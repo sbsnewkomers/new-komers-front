@@ -12,6 +12,7 @@ import {
   type Treeworkspace,
 } from "@/lib/structureApi";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useRouter } from "next/router";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { usePermissions } from "@/permissions/usePermissions";
 import { CRUD_ACTION } from "@/permissions/actions";
@@ -52,11 +53,9 @@ import {
   Briefcase,
   Layers,
   Search,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
-import {
-  CompanyCreateWizard,
-  type CompanyWizardForm,
-} from "@/components/structure/CompanyCreateWizard";
 import {
   fetchShareholdersByCompany,
   createShareholder,
@@ -69,6 +68,15 @@ import {
   type ShareholderFormValues,
 } from "@/components/shareholders/ShareholderFormDialog";
 import Image from "next/image";
+
+type Emprunt = {
+  id: string;
+  amount: number;
+  description?: string;
+  date: string;
+  interest_rate?: number;
+  duration_months?: number;
+};
 
 type BusinessUnit = {
   id: string;
@@ -153,6 +161,7 @@ type TreeNode =
 
 export default function StructurePage() {
   const { user, isAuthReady } = usePermissionsContext();
+  const router = useRouter();
   const { can } = usePermissions();
   const canImportStructure =
     user?.role === "SUPER_ADMIN" ||
@@ -209,13 +218,31 @@ export default function StructurePage() {
   >({});
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
-  const [wizardOpen, setWizardOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [ficheOpen, setFicheOpen] = useState(false);
   const [ficheCompanyId, setFicheCompanyId] = useState<string | null>(null);
   const [ficheCompany, setFicheCompany] = useState<CompanyFull | null>(null);
   const [ficheTab, setFicheTab] = useState("informations");
+  const [ficheCompanyEmprunts, setFicheCompanyEmprunts] = useState<Emprunt[]>([]);
+  const [ficheCompanyDataLoading, setFicheCompanyDataLoading] = useState(false);
+
+  // Fiche Group states
+  const [ficheGroupOpen, setFicheGroupOpen] = useState(false);
+  const [ficheGroupId, setFicheGroupId] = useState<string | null>(null);
+  const [ficheGroup, setFicheGroup] = useState<GroupFull | null>(null);
+  const [ficheGroupTab, setFicheGroupTab] = useState("informations");
+  const [ficheGroupEmprunts, setFicheGroupEmprunts] = useState<Emprunt[]>([]);
+  const [ficheGroupDataLoading, setFicheGroupDataLoading] = useState(false);
+
+  // Fiche BU states
+  const [ficheBUOpen, setFicheBUOpen] = useState(false);
+  const [ficheBUId, setFicheBUId] = useState<string | null>(null);
+  const [ficheBU, setFicheBU] = useState<BusinessUnit | null>(null);
+  const [ficheBUTab, setFicheBUTab] = useState("informations");
+  const [ficheBUEmprunts, setFicheBUEmprunts] = useState<Emprunt[]>([]);
+  const [ficheBUDataLoading, setFicheBUDataLoading] = useState(false);
+
   const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(
     new Set(),
   );
@@ -351,6 +378,8 @@ export default function StructurePage() {
     main_activity: "",
     size: "SMALL",
     model: "SUBSIDIARY",
+    groupId: "",
+    workspaceId: "",
     logo: undefined as string | undefined,
   });
   const [addCompanyLoading, setAddCompanyLoading] = useState(false);
@@ -1389,55 +1418,6 @@ export default function StructurePage() {
     await loadTree();
   };
 
-  const handleCreateCompany = useCallback(
-    async (form: CompanyWizardForm) => {
-      const size =
-        form.size === "MEDIUM_ETI"
-          ? "MEDIUM"
-          : (form.size as "SMALL" | "MEDIUM" | "LARGE");
-      const model =
-        form.model === "INDEPENDANT"
-          ? "SUBSIDIARY"
-          : (form.model as "HOLDING" | "SUBSIDIARY");
-
-      // Créer FormData pour gérer le fichier logo
-      const formData = new FormData();
-
-      // Debug: vérifier les valeurs
-      console.log('Form data being sent:', {
-        groupId: form.groupId,
-        workspaceId: form.workspaceId,
-        hasLogo: !!form.logo
-      });
-
-      // Ajouter les champs texte
-      if (form.groupId) formData.append('groupId', form.groupId);
-      if (form.workspaceId) formData.append('workspace_id', form.workspaceId);
-      formData.append('name', form.name);
-      formData.append('fiscal_year_start', form.fiscal_year_start);
-      formData.append('fiscal_year_end', form.fiscal_year_end);
-      formData.append('siret', form.siret);
-      if (form.address) formData.append('address', form.address);
-      if (form.country) formData.append('country', form.country);
-      if (form.ape_code) formData.append('ape_code', form.ape_code);
-      if (form.main_activity) formData.append('main_activity', form.main_activity);
-      formData.append('size', size);
-      formData.append('model', model);
-
-      // Ajouter le logo s'il existe
-      if (form.logo) {
-        formData.append('logo', form.logo);
-      }
-
-      await apiFetch("/companies", {
-        method: "POST",
-        body: formData,
-        snackbar: { showSuccess: true, successMessage: "Entreprise créée" },
-      });
-      await loadTree();
-    },
-    [loadTree],
-  );
 
   const handleAddCompanyToGroup = async () => {
     console.log('handleAddCompanyToGroup called with:', {
@@ -1445,18 +1425,28 @@ export default function StructurePage() {
       addCompanyForm
     });
 
-    if (!addCompanyGroupId || !addCompanyForm.name?.trim()) {
+    // Déterminer le groupId et workspaceId finaux
+    const finalGroupId = addCompanyGroupId || addCompanyForm.groupId;
+    const finalWorkspaceId = addCompanyGroupId
+      ? groupList.find(g => g.id === addCompanyGroupId)?.workspaceId
+      : addCompanyForm.workspaceId;
+
+    // Validation
+    if (!addCompanyForm.name?.trim()) {
       console.error('Missing required fields:', {
-        groupId: addCompanyGroupId,
         name: addCompanyForm.name
       });
       return;
     }
 
-    // Vérifier que le groupe existe
-    const group = groupList.find((g) => g.id === addCompanyGroupId);
-    if (!group) {
-      console.error('Group not found:', addCompanyGroupId);
+    // Valider le SIRET avant d'envoyer la requête
+    if (addCompanyForm.siret && !validateSiret(addCompanyForm.siret)) {
+      return;
+    }
+
+    // Validation pour le mode standalone : un groupe est requis
+    if (!addCompanyGroupId && !finalGroupId) {
+      console.error('Un groupe est requis');
       return;
     }
 
@@ -1466,15 +1456,23 @@ export default function StructurePage() {
       return;
     }
 
-    console.log('Creating company in group:', group.name);
+    const targetName = addCompanyGroupId
+      ? groupList.find(g => g.id === addCompanyGroupId)?.name
+      : (finalGroupId ? groupList.find(g => g.id === finalGroupId)?.name : 'Workspace direct');
+
+    console.log('Creating company:', targetName);
     setAddCompanyLoading(true);
     try {
       const formData = new FormData();
-      formData.append('groupId', addCompanyGroupId);
 
-      // Ajouter workspace_id depuis le groupe
-      if (group.workspaceId) {
-        formData.append('workspace_id', group.workspaceId);
+      // Ajouter groupId si présent
+      if (finalGroupId) {
+        formData.append('groupId', finalGroupId);
+      }
+
+      // Ajouter workspace_id si présent
+      if (finalWorkspaceId) {
+        formData.append('workspace_id', finalWorkspaceId);
       }
 
       formData.append('name', addCompanyForm.name);
@@ -1528,6 +1526,8 @@ export default function StructurePage() {
         main_activity: "",
         size: "SMALL",
         model: "SUBSIDIARY",
+        groupId: "",
+        workspaceId: "",
         logo: undefined as string | undefined,
       });
       setAddCompanyLogoFile(null);
@@ -1545,6 +1545,12 @@ export default function StructurePage() {
 
   const handleAddBUToCompany = async () => {
     if (!addBUCompanyId || !addBUForm.name.trim()) return;
+
+    // Valider le SIRET avant d'envoyer la requête
+    if (addBUForm.siret && !validateSiret(addBUForm.siret)) {
+      return;
+    }
+
     setAddBULoading(true);
     try {
       const formData = new FormData();
@@ -1585,6 +1591,12 @@ export default function StructurePage() {
 
   const handleCreateGroup = async () => {
     if (!addGroupForm.name.trim()) return;
+
+    // Valider le SIRET avant d'envoyer la requête
+    if (addGroupForm.siret && !validateSiret(addGroupForm.siret)) {
+      return;
+    }
+
     setAddGroupLoading(true);
     try {
       const formData = new FormData();
@@ -1644,6 +1656,12 @@ export default function StructurePage() {
   const handleCreateBUStandalone = async () => {
     if (!addBUStandaloneForm.name.trim() || !addBUStandaloneForm.companyId)
       return;
+
+    // Valider le SIRET avant d'envoyer la requête
+    if (addBUStandaloneForm.siret && !validateSiret(addBUStandaloneForm.siret)) {
+      return;
+    }
+
     setAddBUStandaloneLoading(true);
     try {
       await apiFetch(
@@ -1719,6 +1737,168 @@ export default function StructurePage() {
       setFicheShareholders([]);
     } finally {
       setFicheShareholdersLoading(false);
+    }
+    loadCompanyExtraData(companyId);
+  };
+
+  const openFicheGroup = async (groupId: string) => {
+    setFicheGroupId(groupId);
+    setFicheGroupTab("informations");
+    setFicheGroupOpen(true);
+    setFicheGroup(null);
+    try {
+      const g = await apiFetch<GroupFull>(`/groups/${groupId}`, {
+        snackbar: { showSuccess: false, showError: true },
+      });
+      setFicheGroup(g);
+    } catch {
+      /* snackbar handles */
+    }
+    loadGroupExtraData(groupId);
+  };
+
+  const openFicheBU = async (buId: string, companyId?: string) => {
+    setFicheBUId(buId);
+    setFicheBUTab("informations");
+    setFicheBUOpen(true);
+    setFicheBU(null);
+
+    try {
+      // Si companyId est fourni, l'utiliser directement
+      if (companyId) {
+        const bu = await apiFetch<BusinessUnit>(
+          `/companies/${companyId}/business-units/${buId}`,
+          {
+            snackbar: { showSuccess: false, showError: true },
+          }
+        );
+        setFicheBU(bu);
+      } else {
+        // Sinon, chercher la BU dans toutes les entreprises pour trouver son companyId
+        let foundBU: BusinessUnit | null = null;
+        let foundCompanyId = "";
+
+        // Parcourir toutes les entreprises pour trouver la BU
+        for (const company of allTreeCompanies) {
+          try {
+            const bus = await apiFetch<BusinessUnit[]>(
+              `/companies/${company.id}/business-units`,
+              { snackbar: { showSuccess: false, showError: false } }
+            );
+            const bu = bus.find(b => b.id === buId);
+            if (bu) {
+              foundBU = bu;
+              foundCompanyId = company.id;
+              break;
+            }
+          } catch {
+            // Ignorer les erreurs et continuer la recherche
+            continue;
+          }
+        }
+
+        if (foundBU) {
+          setFicheBU(foundBU);
+        } else {
+          throw new Error("Business Unit non trouvée");
+        }
+      }
+    } catch {
+      /* snackbar handles */
+    }
+    loadBUExtraData(buId);
+  };
+
+  // Fonction pour gérer le clic sur un emprunt
+  const handleLoanClick = (loanId: string) => {
+    router.push({
+      pathname: '/loans',
+      query: {
+        tab: 'details',
+        loanId: loanId
+      }
+    });
+  };
+
+  // Fonctions pour charger les données extracomptables
+  const loadGroupExtraData = async (groupId: string) => {
+    setFicheGroupDataLoading(true);
+    try {
+      // Charger les emprunts du groupe
+      const loansResponse = await apiFetch<{ loans: any[]; total: number }>(
+        `/loans/by-entity/group/${groupId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+
+      // Transformer les données des prêts en format Emprunt
+      const emprunts = (loansResponse?.loans || []).map(loan => ({
+        id: loan.id,
+        amount: loan.principalAmount || 0,
+        description: loan.name || loan.description,
+        date: loan.createdAt || loan.firstInstallmentDate,
+        interest_rate: loan.annualInterestRate,
+        duration_months: loan.durationMonths
+      }));
+
+      setFicheGroupEmprunts(emprunts);
+    } catch {
+      setFicheGroupEmprunts([]);
+    } finally {
+      setFicheGroupDataLoading(false);
+    }
+  };
+
+  const loadBUExtraData = async (buId: string) => {
+    setFicheBUDataLoading(true);
+    try {
+      // Charger les emprunts de la BU
+      const loansResponse = await apiFetch<{ loans: any[]; total: number }>(
+        `/loans/by-entity/business unit/${buId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+
+      // Transformer les données des prêts en format Emprunt
+      const emprunts = (loansResponse?.loans || []).map(loan => ({
+        id: loan.id,
+        amount: loan.principalAmount || 0,
+        description: loan.name || loan.description,
+        date: loan.createdAt || loan.firstInstallmentDate,
+        interest_rate: loan.annualInterestRate,
+        duration_months: loan.durationMonths
+      }));
+
+      setFicheBUEmprunts(emprunts);
+    } catch {
+      setFicheBUEmprunts([]);
+    } finally {
+      setFicheBUDataLoading(false);
+    }
+  };
+
+  const loadCompanyExtraData = async (companyId: string) => {
+    setFicheCompanyDataLoading(true);
+    try {
+      // Charger les emprunts de l'entreprise
+      const loansResponse = await apiFetch<{ loans: any[]; total: number }>(
+        `/loans/by-entity/company/${companyId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+
+      // Transformer les données des prêts en format Emprunt
+      const emprunts = (loansResponse?.loans || []).map(loan => ({
+        id: loan.id,
+        amount: loan.principalAmount || 0,
+        description: loan.name || loan.description,
+        date: loan.createdAt || loan.firstInstallmentDate,
+        interest_rate: loan.annualInterestRate,
+        duration_months: loan.durationMonths
+      }));
+
+      setFicheCompanyEmprunts(emprunts);
+    } catch {
+      setFicheCompanyEmprunts([]);
+    } finally {
+      setFicheCompanyDataLoading(false);
     }
   };
 
@@ -1835,7 +2015,25 @@ export default function StructurePage() {
                             Groupe
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => setWizardOpen(true)}
+                            onClick={() => {
+                              setAddCompanyGroupId(null);
+                              setAddCompanyForm({
+                                name: "",
+                                siret: "",
+                                fiscal_year_start: "",
+                                fiscal_year_end: "",
+                                address: "",
+                                country: "",
+                                ape_code: "",
+                                main_activity: "",
+                                size: "SMALL",
+                                model: "SUBSIDIARY",
+                                groupId: "",
+                                workspaceId: "",
+                                logo: undefined as string | undefined,
+                              });
+                              setAddCompanyOpen(true);
+                            }}
                             disabled={
                               !canCreateCompany ||
                               !tree?.workspaces ||
@@ -2192,7 +2390,7 @@ export default function StructurePage() {
                                         country: "",
                                         fiscal_year_start: "",
                                         fiscal_year_end: "",
-                                        workspaceId: "",
+                                        workspaceId: node.id,
                                         logo: undefined as string | undefined,
                                       });
                                       setAddGroupLogoFile(null);
@@ -2204,34 +2402,46 @@ export default function StructurePage() {
                                   </DropdownMenuItem>
                                 )}
                                 {node.type === "group" && (
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (!node.id) {
-                                        console.error('Group node ID is undefined:', node);
-                                        return;
-                                      }
-                                      console.log('Setting addCompanyGroupId to:', node.id);
-                                      setAddCompanyGroupId(node.id);
-                                      setAddCompanyForm({
-                                        name: "",
-                                        siret: "",
-                                        fiscal_year_start: "",
-                                        fiscal_year_end: "",
-                                        address: "",
-                                        country: "",
-                                        ape_code: "",
-                                        main_activity: "",
-                                        size: "SMALL",
-                                        model: "SUBSIDIARY",
-                                        logo: undefined as string | undefined,
-                                      });
-                                      setAddCompanyOpen(true);
-                                    }}
-                                  >
-                                    <Plus className="mr-2 h-4 w-4" /> Ajouter
-                                    une entreprise
-                                  </DropdownMenuItem>
+                                  <>
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openFicheGroup(node.id);
+                                      }}
+                                    >
+                                      Fiche groupe
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!node.id) {
+                                          console.error('Group node ID is undefined:', node);
+                                          return;
+                                        }
+                                        console.log('Setting addCompanyGroupId to:', node.id);
+                                        setAddCompanyGroupId(node.id);
+                                        setAddCompanyForm({
+                                          name: "",
+                                          siret: "",
+                                          fiscal_year_start: "",
+                                          fiscal_year_end: "",
+                                          address: "",
+                                          country: "",
+                                          ape_code: "",
+                                          main_activity: "",
+                                          size: "SMALL",
+                                          model: "SUBSIDIARY",
+                                          groupId: "",
+                                          workspaceId: "",
+                                          logo: undefined as string | undefined,
+                                        });
+                                        setAddCompanyOpen(true);
+                                      }}
+                                    >
+                                      <Plus className="mr-2 h-4 w-4" /> Ajouter
+                                      une entreprise
+                                    </DropdownMenuItem>
+                                  </>
                                 )}
                                 {node.type === "company" && (
                                   <>
@@ -2263,6 +2473,16 @@ export default function StructurePage() {
                                       une BU
                                     </DropdownMenuItem>
                                   </>
+                                )}
+                                {node.type === "bu" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openFicheBU(node.id, node.companyId);
+                                    }}
+                                  >
+                                    Fiche BU
+                                  </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem
                                   onClick={(e) => {
@@ -2296,6 +2516,16 @@ export default function StructurePage() {
                                 >
                                   Voir les détails
                                 </DropdownMenuItem>
+                                {node.type === "group" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openFicheGroup(node.id);
+                                    }}
+                                  >
+                                    Fiche groupe
+                                  </DropdownMenuItem>
+                                )}
                                 {node.type === "company" && (
                                   <DropdownMenuItem
                                     onClick={(e) => {
@@ -2304,6 +2534,16 @@ export default function StructurePage() {
                                     }}
                                   >
                                     Fiche entreprise
+                                  </DropdownMenuItem>
+                                )}
+                                {node.type === "bu" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openFicheBU(node.id, node.companyId);
+                                    }}
+                                  >
+                                    Fiche BU
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
@@ -3121,10 +3361,10 @@ export default function StructurePage() {
 
       {/* Fiche Entreprise Modal */}
       <Dialog open={ficheOpen} onOpenChange={setFicheOpen}>
-        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto gap-2!">
+        <DialogContent className="max-h-[70vh] max-w-screen-xl gap-2!">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <span className="text-lg">🏢</span>
+              <Building2 className="h-6 w-6 text-blue-600" />
               {ficheCompany?.name ??
                 allTreeCompanies.find((x) => x.id === ficheCompanyId)?.name ??
                 "Fiche entreprise"}
@@ -3147,6 +3387,7 @@ export default function StructurePage() {
                     Business Units
                   </TabsTrigger>
                   <TabsTrigger value="actionnaires">Actionnaires</TabsTrigger>
+                  <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
                 </TabsList>
                 <TabsContent value="informations" className="">
                   <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 pt-0">
@@ -3297,28 +3538,19 @@ export default function StructurePage() {
                         {ficheShareholders.map((s) => {
                           const ownerLabel =
                             s.ownerType === "USER"
-                              ? (() => {
-                                const u = ficheShareholderUsers.find(
-                                  (x) => x.id === s.ownerId,
-                                );
-                                if (!u) return s.ownerId;
-                                const fullName = `${u.firstName ?? ""} ${u.lastName ?? ""
-                                  }`.trim();
-                                return fullName || u.email;
-                              })()
-                              : (() => {
-                                const c = allTreeCompanies.find(
-                                  (x) => x.id === s.ownerId,
-                                );
-                                return c?.name ?? s.ownerId;
-                              })();
+                              ? ficheShareholderUsers.find((u) => u.id === s.ownerId)?.firstName +
+                              " " +
+                              ficheShareholderUsers.find((u) => u.id === s.ownerId)?.lastName
+                              : s.ownerType === "COMPANY"
+                                ? allTreeCompanies.find((c) => c.id === s.ownerId)?.name
+                                : s.ownerId || "Inconnu";
                           return (
                             <li
                               key={s.id}
                               className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2"
                             >
                               <div className="flex flex-col">
-                                <span className="font-medium text-slate-900">
+                                <span className="font-medium text-primary">
                                   {ownerLabel}
                                 </span>
                                 <span className="text-[11px] text-slate-400">
@@ -3335,11 +3567,411 @@ export default function StructurePage() {
                     )}
                   </div>
                 </TabsContent>
+                <TabsContent value="donnees-extracomptables" className="">
+                  <div className="space-y-6">
+                    {ficheCompanyDataLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                      </div>
+                    ) : (
+                      <>
+                        {/* Section Emprunts */}
+                        <div className="rounded-xl border border-slate-100 bg-slate-50 p-5">
+                          <h3 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                            <TrendingDown className="h-5 w-5 text-red-600" />
+                            Emprunts
+                          </h3>
+                          {ficheCompanyEmprunts.length === 0 ? (
+                            <p className="text-slate-500 text-center py-4">
+                              Aucun emprunt enregistré pour cette entreprise.
+                            </p>
+                          ) : (
+                            <div className="relative">
+                              <div className="mb-4 pb-4 border-b border-slate-200">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold text-primary">Total des emprunts:</span>
+                                  <span className="font-bold text-red-600 text-lg">
+                                    -{ficheCompanyEmprunts.reduce((sum, e) => sum + e.amount, 0).toLocaleString('fr-FR')} €
+                                  </span>
+                                </div>
+                              </div>
+                              <div className={`space-y-3 ${ficheCompanyEmprunts.length > 4 ? 'max-h-96 overflow-y-auto pr-2' : ''}`}>
+                                {ficheCompanyEmprunts.map((emprunt) => (
+                                  <div
+                                    key={emprunt.id}
+                                    className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
+                                    onClick={() => handleLoanClick(emprunt.id)}
+                                  >
+                                    <div className="flex-1">
+                                      <div className="font-medium text-primary">
+                                        Emprunt
+                                      </div>
+                                      {emprunt.description && (
+                                        <div className="text-sm text-slate-500 mt-1">
+                                          {emprunt.description}
+                                        </div>
+                                      )}
+                                      <div className="text-xs text-slate-400 mt-1">
+                                        {new Date(emprunt.date).toLocaleDateString('fr-FR')}
+                                        {emprunt.duration_months && (
+                                          <span className="ml-2">
+                                            â¢ {emprunt.duration_months} mois
+                                          </span>
+                                        )}
+                                        {emprunt.interest_rate && (
+                                          <span className="ml-2">
+                                            â¢ {emprunt.interest_rate}% d'intérêt
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="font-semibold text-red-600">
+                                        -{emprunt.amount.toLocaleString('fr-FR')} €
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                      </>
+                    )}
+                  </div>
+                </TabsContent>
               </Tabs>
             );
           })()}
           <DialogFooter>
             <Button variant="outline" onClick={() => setFicheOpen(false)}>
+              Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fiche Group Modal */}
+      <Dialog open={ficheGroupOpen} onOpenChange={setFicheGroupOpen}>
+        <DialogContent className="max-w-screen-xl gap-2!">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Layers className="h-5 w-5 text-blue-500" />
+              {ficheGroup?.name ??
+                groupList.find((x) => x.id === ficheGroupId)?.name ??
+                "Fiche groupe"}
+            </DialogTitle>
+          </DialogHeader>
+          {(() => {
+            if (!ficheGroup) {
+              return (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                </div>
+              );
+            }
+            const groupCompanies = allTreeCompanies.filter(c => c.groupId === ficheGroup.id);
+            return (
+              <Tabs value={ficheGroupTab} onValueChange={setFicheGroupTab}>
+                <TabsList className="gap-4">
+                  <TabsTrigger value="informations">Informations</TabsTrigger>
+                  <TabsTrigger value="entreprises">Entreprises</TabsTrigger>
+                  <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
+                </TabsList>
+                <TabsContent value="informations" className="">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 pt-0">
+                    <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                      <dt className="text-slate-500">SIRET</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheGroup.siret || "—"}
+                      </dd>
+                      <dt className="text-slate-500">SIREN</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheGroup.siret
+                          ? ficheGroup.siret.substring(0, 9)
+                          : "—"}
+                      </dd>
+                      <dt className="text-slate-500">Début d&apos;exercice</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheGroup.fiscal_year_start || "—"}
+                      </dd>
+                      <dt className="text-slate-500">Fin d&apos;exercice</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheGroup.fiscal_year_end || "—"}
+                      </dd>
+                      {ficheGroup.ape_code && (
+                        <>
+                          <dt className="text-slate-500">Code APE</dt>
+                          <dd className="font-medium text-primary">
+                            {ficheGroup.ape_code}
+                          </dd>
+                        </>
+                      )}
+                      {ficheGroup.mainActivity && (
+                        <>
+                          <dt className="text-slate-500">
+                            Activité principale
+                          </dt>
+                          <dd className="font-medium text-primary">
+                            {ficheGroup.mainActivity}
+                          </dd>
+                        </>
+                      )}
+                      {ficheGroup.country && (
+                        <>
+                          <dt className="text-slate-500">Pays</dt>
+                          <dd className="font-medium text-primary">
+                            {ficheGroup.country}
+                          </dd>
+                        </>
+                      )}
+                    </dl>
+                  </div>
+                </TabsContent>
+                <TabsContent value="entreprises" className="">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-1">
+                    <ul className="space-y-2">
+                      {groupCompanies.map((company) => (
+                        <li
+                          key={company.id}
+                          className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 transition-colors hover:bg-slate-50"
+                          onClick={() => {
+                            setFicheGroupOpen(false);
+                            openFiche(company.id);
+                          }}
+                        >
+                          <span className="font-medium text-primary">
+                            {company.name}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-slate-500">
+                              {company.siret}
+                            </span>
+                            <span className="text-slate-400">›</span>
+                          </div>
+                        </li>
+                      ))}
+                      {groupCompanies.length === 0 && (
+                        <li className="py-4 text-center text-slate-400">
+                          Aucune entreprise dans ce groupe.
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </TabsContent>
+                <TabsContent value="donnees-extracomptables" className="">
+                  <div className="space-y-6">
+                    {ficheGroupDataLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                      </div>
+                    ) : (
+                      <>
+                        {/* Section Emprunts */}
+                        <div className="rounded-xl border border-slate-100 bg-slate-50 p-5">
+                          <h3 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                            <TrendingDown className="h-5 w-5 text-red-600" />
+                            Emprunts
+                          </h3>
+                          {ficheGroupEmprunts.length === 0 ? (
+                            <p className="text-slate-500 text-center py-4">
+                              Aucun emprunt enregistré pour ce groupe.
+                            </p>
+                          ) : (
+                            <div className="relative">
+                              <div className="mb-4 pb-4 border-b border-slate-200">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold text-primary">Total des emprunts:</span>
+                                  <span className="font-bold text-red-600 text-lg">
+                                    -{ficheGroupEmprunts.reduce((sum, e) => sum + e.amount, 0).toLocaleString('fr-FR')} €
+                                  </span>
+                                </div>
+                              </div>
+                              <div className={`space-y-3 ${ficheGroupEmprunts.length > 4 ? 'max-h-96 overflow-y-auto pr-2' : ''}`}>
+                                {ficheGroupEmprunts.map((emprunt) => (
+                                  <div
+                                    key={emprunt.id}
+                                    className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
+                                    onClick={() => handleLoanClick(emprunt.id)}
+                                  >
+                                    <div className="flex-1">
+                                      <div className="font-medium text-primary">
+                                        Emprunt
+                                      </div>
+                                      {emprunt.description && (
+                                        <div className="text-sm text-slate-500 mt-1">
+                                          {emprunt.description}
+                                        </div>
+                                      )}
+                                      <div className="text-xs text-slate-400 mt-1">
+                                        {new Date(emprunt.date).toLocaleDateString('fr-FR')}
+                                        {emprunt.duration_months && (
+                                          <span className="ml-2">
+                                            â¢ {emprunt.duration_months} mois
+                                          </span>
+                                        )}
+                                        {emprunt.interest_rate && (
+                                          <span className="ml-2">
+                                            â¢ {emprunt.interest_rate}% d'intérêt
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="font-semibold text-red-600">
+                                        -{emprunt.amount.toLocaleString('fr-FR')} €
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                      </>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Fiche BU Modal */}
+      <Dialog open={ficheBUOpen} onOpenChange={setFicheBUOpen}>
+        <DialogContent className="max-w-screen-xl gap-2!">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-blue-500" />
+              {ficheBU?.name || `BU ${ficheBU?.code ?? ""}` || "Fiche BU"}
+            </DialogTitle>
+          </DialogHeader>
+          {(() => {
+            if (!ficheBU) {
+              return (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                </div>
+              );
+            }
+            return (
+              <Tabs value={ficheBUTab} onValueChange={setFicheBUTab}>
+                <TabsList className="gap-4">
+                  <TabsTrigger value="informations">Informations</TabsTrigger>
+                  <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
+                </TabsList>
+                <TabsContent value="informations" className="">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-5 pt-0">
+                    <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                      <dt className="text-slate-500">Code</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheBU.code || "—"}
+                      </dd>
+                      <dt className="text-slate-500">SIRET</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheBU.siret || "—"}
+                      </dd>
+                      <dt className="text-slate-500">Activité</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheBU.activity || "—"}
+                      </dd>
+                      <dt className="text-slate-500">Pays</dt>
+                      <dd className="font-medium text-primary">
+                        {ficheBU.country || "—"}
+                      </dd>
+                      {ficheBU.company_id && (
+                        <>
+                          <dt className="text-slate-500">Entreprise</dt>
+                          <dd className="font-medium text-primary">
+                            {allTreeCompanies.find(c => c.id === ficheBU.company_id)?.name || ficheBU.company_id}
+                          </dd>
+                        </>
+                      )}
+                    </dl>
+                  </div>
+                </TabsContent>
+                <TabsContent value="donnees-extracomptables" className="">
+                  <div className="space-y-6">
+                    {ficheBUDataLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                      </div>
+                    ) : (
+                      <>
+                        {/* Section Emprunts */}
+                        <div className="rounded-xl border border-slate-100 bg-slate-50 p-5">
+                          <h3 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                            <TrendingDown className="h-5 w-5 text-red-600" />
+                            Emprunts
+                          </h3>
+                          {ficheBUEmprunts.length === 0 ? (
+                            <p className="text-slate-500 text-center py-4">
+                              Aucun emprunt enregistré pour cette business unit.
+                            </p>
+                          ) : (
+                            <div className="relative">
+                              <div className="mb-4 pb-4 border-b border-slate-200">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold text-primary">Total des emprunts:</span>
+                                  <span className="font-bold text-red-600 text-lg">
+                                    -{ficheBUEmprunts.reduce((sum, e) => sum + e.amount, 0).toLocaleString('fr-FR')} €
+                                  </span>
+                                </div>
+                              </div>
+                              <div className={`space-y-3 ${ficheBUEmprunts.length > 4 ? 'max-h-96 overflow-y-auto pr-2' : ''}`}>
+                                {ficheBUEmprunts.map((emprunt) => (
+                                  <div
+                                    key={emprunt.id}
+                                    className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
+                                    onClick={() => handleLoanClick(emprunt.id)}
+                                  >
+                                    <div className="flex-1">
+                                      <div className="font-medium text-primary">
+                                        Emprunt
+                                      </div>
+                                      {emprunt.description && (
+                                        <div className="text-sm text-slate-500 mt-1">
+                                          {emprunt.description}
+                                        </div>
+                                      )}
+                                      <div className="text-xs text-slate-400 mt-1">
+                                        {new Date(emprunt.date).toLocaleDateString('fr-FR')}
+                                        {emprunt.duration_months && (
+                                          <span className="ml-2">
+                                            â¢ {emprunt.duration_months} mois
+                                          </span>
+                                        )}
+                                        {emprunt.interest_rate && (
+                                          <span className="ml-2">
+                                            â¢ {emprunt.interest_rate}% d'intérêt
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="font-semibold text-red-600">
+                                        -{emprunt.amount.toLocaleString('fr-FR')} €
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                      </>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFicheBUOpen(false)}>
               Fermer
             </Button>
           </DialogFooter>
@@ -3389,7 +4021,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Code APE
+                Code APE *
               </label>
               <ApeCodeSelect
                 value={addGroupForm.ape_code}
@@ -3403,7 +4035,24 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                SIRET
+                Activité principale
+              </label>
+              <Input
+                value={addGroupForm.mainActivity}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({
+                    ...f,
+                    mainActivity: e.target.value,
+                  }))
+                }
+                placeholder="Activité principale"
+                readOnly
+                className="bg-gray-50 cursor-not-allowed"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                SIRET *
               </label>
               <SiretInput
                 value={addGroupForm.siret}
@@ -3442,27 +4091,11 @@ export default function StructurePage() {
                 placeholder="Pays du groupe"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Activité principale
-              </label>
-              <Input
-                value={addGroupForm.mainActivity}
-                onChange={(e) =>
-                  setAddGroupForm((f) => ({
-                    ...f,
-                    mainActivity: e.target.value,
-                  }))
-                }
-                placeholder="Activité principale"
-                readOnly
-                className="bg-gray-50 cursor-not-allowed"
-              />
-            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Début exercice
+                  Début exercice *
                 </label>
                 <Input
                   type="date"
@@ -3477,7 +4110,7 @@ export default function StructurePage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Fin exercice
+                  Fin exercice *
                 </label>
                 <Input
                   type="date"
@@ -3498,7 +4131,17 @@ export default function StructurePage() {
             </Button>
             <Button
               onClick={handleCreateGroup}
-              disabled={addGroupLoading || !addGroupForm.name.trim() || !addGroupForm.workspaceId.trim()}
+              disabled={
+                addGroupLoading ||
+                !addGroupForm.name.trim() ||
+                !addGroupForm.workspaceId.trim() ||
+                !addGroupForm.ape_code.trim() ||
+                !addGroupForm.siret.trim() ||
+                (addGroupForm.siret && !validateSiret(addGroupForm.siret)) ||
+                !addGroupForm.country.trim() ||
+                !addGroupForm.fiscal_year_start.trim() ||
+                !addGroupForm.fiscal_year_end.trim()
+              }
             >
               {addGroupLoading ? "Création..." : "Créer"}
             </Button>
@@ -3551,7 +4194,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Code APE
+                Code APE *
               </label>
               <ApeCodeSelect
                 value={addBUStandaloneForm.code}
@@ -3588,7 +4231,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                SIRET
+                SIRET *
               </label>
               <SiretInput
                 value={addBUStandaloneForm.siret}
@@ -3622,6 +4265,9 @@ export default function StructurePage() {
               disabled={
                 addBUStandaloneLoading ||
                 !addBUStandaloneForm.name.trim() ||
+                !addBUStandaloneForm.code.trim() ||
+                !addBUStandaloneForm.siret.trim() ||
+                (addBUStandaloneForm.siret && !validateSiret(addBUStandaloneForm.siret)) ||
                 !addBUStandaloneForm.country.trim() ||
                 !addBUStandaloneForm.companyId.trim()
               }
@@ -3641,13 +4287,45 @@ export default function StructurePage() {
               Ajouter une entreprise
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-slate-500">
-            Dans le groupe :{" "}
-            <strong>
-              {groupList.find((g) => g.id === addCompanyGroupId)?.name || "Groupe inconnu"}
-            </strong>
-          </p>
+          {addCompanyGroupId ? (
+            <p className="text-sm text-slate-500">
+              Dans le groupe :{" "}
+              <strong>
+                {groupList.find((g) => g.id === addCompanyGroupId)?.name || "Groupe inconnu"}
+              </strong>
+            </p>
+          ) : (
+            <p className="text-sm text-slate-500">
+              Sélectionnez un groupe pour rattacher cette entreprise
+            </p>
+          )}
           <div className="space-y-4 py-2">
+            {/* Champ de sélection du groupe - seulement en mode standalone */}
+            {!addCompanyGroupId && (
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Groupe *
+                </label>
+                <Select
+                  value={addCompanyForm.groupId || ""}
+                  onValueChange={(value) => {
+                    const selectedGroup = groupList.find(g => g.id === value);
+                    setAddCompanyForm((f) => ({
+                      ...f,
+                      groupId: value,
+                      workspaceId: selectedGroup?.workspaceId || ""
+                    }));
+                  }}
+                  className="h-11"
+                  required
+                >
+                  <option value="">Sélectionner un groupe</option>
+                  {groupList.map((g) => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                </Select>
+              </div>
+            )}
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Nom *
@@ -3661,10 +4339,12 @@ export default function StructurePage() {
               />
             </div>
 
+
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  SIRET
+                  SIRET *
                 </label>
                 <SiretInput
                   value={addCompanyForm.siret}
@@ -3675,7 +4355,7 @@ export default function StructurePage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Code APE
+                  Code APE *
                 </label>
                 <ApeCodeSelect
                   value={addCompanyForm.ape_code}
@@ -3717,7 +4397,7 @@ export default function StructurePage() {
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Pays
+                Pays *
               </label>
               <CountrySelect
                 placeholder="Pays de l'entreprise"
@@ -3784,7 +4464,7 @@ export default function StructurePage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Début exercice
+                  Début exercice *
                 </label>
                 <Input
                   type="date"
@@ -3799,7 +4479,7 @@ export default function StructurePage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Fin exercice
+                  Fin exercice *
                 </label>
                 <Input
                   type="date"
@@ -3820,7 +4500,17 @@ export default function StructurePage() {
             </Button>
             <Button
               onClick={handleAddCompanyToGroup}
-              disabled={addCompanyLoading || !addCompanyForm.name.trim()}
+              disabled={
+                addCompanyLoading ||
+                !addCompanyForm.name.trim() ||
+                !addCompanyForm.siret.trim() ||
+                (addCompanyForm.siret && !validateSiret(addCompanyForm.siret)) ||
+                !addCompanyForm.ape_code.trim() ||
+                !addCompanyForm.country.trim() ||
+                !addCompanyForm.fiscal_year_start.trim() ||
+                !addCompanyForm.fiscal_year_end.trim() ||
+                (!addCompanyGroupId && !addCompanyForm.groupId.trim())
+              }
             >
               {addCompanyLoading ? "Création..." : "Créer"}
             </Button>
@@ -3858,7 +4548,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Code APE
+                Code APE *
               </label>
               <ApeCodeSelect
                 value={addBUForm.code}
@@ -3880,7 +4570,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                SIRET
+                SIRET *
               </label>
               <SiretInput
                 value={addBUForm.siret}
@@ -3929,6 +4619,9 @@ export default function StructurePage() {
               disabled={
                 addBULoading ||
                 !addBUForm.name.trim() ||
+                !addBUForm.code.trim() ||
+                !addBUForm.siret.trim() ||
+                (addBUForm.siret && !validateSiret(addBUForm.siret)) ||
                 !addBUForm.country.trim() ||
                 !can("business-units", CRUD_ACTION.CREATE)
               }
@@ -4072,17 +4765,6 @@ export default function StructurePage() {
         </DialogContent>
       </Dialog>
 
-      <CompanyCreateWizard
-        open={wizardOpen}
-        onOpenChange={setWizardOpen}
-        groups={groupList.map((g) => ({
-          id: g.id,
-          name: g.name,
-          workspaceId: g.workspaceId || ""
-        }))}
-        workspaces={tree?.workspaces?.map((o) => ({ id: o.id, name: o.name })) || []}
-        onSubmit={handleCreateCompany}
-      />
     </AppLayout>
   );
 }

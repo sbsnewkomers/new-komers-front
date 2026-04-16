@@ -11,7 +11,9 @@ import {
     UploadLoanImportDto,
     ProcessImportDto,
     ImportResultDto,
-    EntityType
+    EntityType,
+    CreateManualLoanDto,
+    ManualInstallmentDto
 } from '../types/loans';
 import { apiFetch, ApiFetchSnackbarOptions, setAccessTokenGetter } from './apiClient';
 
@@ -92,6 +94,14 @@ class LoansApi {
         return apiFetch<Loan>('/loans/calculator/create', {
             method: 'POST',
             body: JSON.stringify(calculatorDto),
+            snackbar: options?.snackbar,
+        });
+    }
+
+    async createManualLoan(manualLoanData: CreateManualLoanDto, options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<Loan> {
+        return apiFetch<Loan>('/loans/manual', {
+            method: 'POST',
+            body: JSON.stringify(manualLoanData),
             snackbar: options?.snackbar,
         });
     }

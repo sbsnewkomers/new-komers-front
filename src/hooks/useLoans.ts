@@ -29,7 +29,8 @@ export function useLoans() {
         isLoading,
         error,
         loadLoans,
-        setError
+        setError,
+        setLoans
     };
 }
 
@@ -38,8 +39,15 @@ export function useLoanDetails() {
     const [loanStats, setLoanStats] = useState<LoanStatistics | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [currentLoadingId, setCurrentLoadingId] = useState<string | null>(null);
 
     const loadLoanDetails = async (loanId: string) => {
+        // Éviter de charger le même emprunt plusieurs fois
+        if (currentLoadingId === loanId && isLoading) {
+            return;
+        }
+
+        setCurrentLoadingId(loanId);
         setIsLoading(true);
         setError(null);
         try {
@@ -53,6 +61,7 @@ export function useLoanDetails() {
             setError(err instanceof Error ? err.message : 'Failed to load loan details');
         } finally {
             setIsLoading(false);
+            setCurrentLoadingId(null);
         }
     };
 
@@ -68,6 +77,7 @@ export function useLoanDetails() {
         error,
         loadLoanDetails,
         clearLoanDetails,
-        setError
+        setError,
+        setSelectedLoan
     };
 }

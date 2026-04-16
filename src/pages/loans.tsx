@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { loansApi } from '@/lib/loansApi';
@@ -20,11 +21,11 @@ import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
 import {
     Loan,
     EntityType,
-    LoanStatus,
-    LoanStatistics
+    LoanStatus
 } from '@/types/loans';
 
 export default function LoansPageOptimized() {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState('overview');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<LoanStatus | 'all'>('all');
@@ -32,9 +33,24 @@ export default function LoansPageOptimized() {
     const [editingLoanId, setEditingLoanId] = useState<string | null>(null);
 
     // Custom hooks
-    const { loans, isLoading, error, setError } = useLoans();
-    const { selectedLoan, loanStats, loadLoanDetails, clearLoanDetails } = useLoanDetails();
+    const { loans, isLoading, error, setError, setLoans } = useLoans();
+    const { selectedLoan, loanStats, loadLoanDetails, clearLoanDetails, setSelectedLoan } = useLoanDetails();
     const { deleteConfirmOpen, loanToDelete, confirmDelete, cancelDelete, closeDialog } = useDeleteConfirm();
+
+    // Gérer les paramètres query au chargement
+    useEffect(() => {
+        if (router.isReady) {
+            const { tab, loanId } = router.query;
+
+            if (tab === 'details' && loanId && typeof loanId === 'string') {
+                // Charger l'emprunt et afficher l'onglet details
+                loadLoanDetails(loanId);
+                setActiveTab('details');
+            } else if (tab && typeof tab === 'string') {
+                setActiveTab(tab);
+            }
+        }
+    }, [router.isReady, router.query]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Overview stats
     const overviewStats = useMemo(() => {
@@ -79,12 +95,16 @@ export default function LoansPageOptimized() {
         try {
             await loansApi.deleteLoan(loanToDelete);
             setError(null);
+
+            // Remove loan from the list
+            setLoans((prevLoans: Loan[]) =>
+                prevLoans.filter((loan: Loan) => loan.id !== loanToDelete)
+            );
+
             if (selectedLoan?.id === loanToDelete) {
                 clearLoanDetails();
                 setActiveTab('overview');
             }
-            // Reload loans to refresh the list
-            window.location.reload();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete loan');
         } finally {
@@ -112,8 +132,28 @@ export default function LoansPageOptimized() {
 
     const handleLoanUpdated = (updatedLoan: Loan) => {
         console.log('Loan updated:', updatedLoan);
-        // Recharger les données pour mettre à jour la liste
-        window.location.reload();
+
+        // Guard against undefined/null
+        if (!updatedLoan || !updatedLoan.id) {
+            console.error('Invalid loan data received:', updatedLoan);
+            return;
+        }
+
+        // Update loan in loans list
+        setLoans((prevLoans: Loan[]) =>
+            prevLoans.map((loan: Loan) =>
+                loan.id === updatedLoan.id ? updatedLoan : loan
+            )
+        );
+
+        // Update selected loan if it's one being edited
+        if (selectedLoan?.id === updatedLoan.id) {
+            setSelectedLoan(updatedLoan);
+        }
+
+        // Go back to details view
+        setActiveTab('details');
+        setEditingLoanId(null);
     };
 
     const handleLoanInstallmentUpdate = async () => {

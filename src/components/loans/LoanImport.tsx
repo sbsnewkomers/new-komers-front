@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogDescription } from '@/compo
 import { FileSpreadsheet, Download, CheckCircle, ArrowRight } from 'lucide-react';
 import { loansApi } from '@/lib/loansApi';
 import { entitiesApi } from '@/lib/entitiesApi';
+import { apiFetch } from '@/lib/apiClient';
 import {
     type LoanImport,
     EntityType,
@@ -112,7 +113,18 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
 
             const result = await loansApi.uploadImportFile(uploadDto);
 
-            if (result && result.status === 'PENDING') {
+            if (!result) {
+                apiFetch('/dummy', {
+                    method: 'POST',
+                    snackbar: {
+                        showError: true,
+                        errorMessage: 'Erreur lors du téléchargement du fichier. Veuillez réessayer.'
+                    }
+                });
+                return;
+            }
+
+            if (result.status === 'PENDING') {
                 setImportId(result.id);
 
                 try {
@@ -156,7 +168,9 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                 onLoanImported?.(result.loanId);
             }
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Import failed');
+            const errorMessage = err instanceof Error ? err.message : 'Import failed';
+            setError(errorMessage);
+            console.error('Import error:', err);
         } finally {
             setIsLoading(false);
         }
@@ -175,7 +189,8 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `modele-echeancier.${format.toLowerCase()}`;
+            const fileExtension = format === ImportFileFormat.EXCEL ? 'xlsx' : 'csv';
+            a.download = `modele-echeancier.${fileExtension}`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);

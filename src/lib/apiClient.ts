@@ -106,7 +106,7 @@ export async function apiFetch<T>(
     // Try to parse backend JSON and extract a human message
     let parsed: unknown;
     let backendMessage: string | undefined;
-    
+
     try {
       parsed = text ? JSON.parse(text) : undefined;
       // Add safety check for parsed object
