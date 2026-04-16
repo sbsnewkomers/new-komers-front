@@ -221,7 +221,7 @@ export function AppLayout({
 
             <Link href="/import" className={navLinkClass("/import")}>
               <Upload className="h-5 w-5" />
-              Mapping
+              Import des données comptables
             </Link>
 
             <Link href="/reporting" className={navLinkClass("/reporting")}>
