@@ -251,10 +251,10 @@ export function AppLayout({
                 </Link>
               )}
 
-            <Link href="/settings" className={navLinkClass("/settings")}>
+            {/* <Link href="/settings" className={navLinkClass("/settings")}>
               <Settings className="h-5 w-5" />
               Settings
-            </Link>
+            </Link> */}
 
             <div className="relative">
               <button
@@ -556,14 +556,14 @@ export function AppLayout({
                   </Link>
                 )}
 
-              <Link
+              {/* <Link
                 href="/settings"
                 className={navLinkClass("/settings")}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Settings className="h-5 w-5" />
                 Settings
-              </Link>
+              </Link> */}
             </nav>
 
             <div className="border-t border-slate-100 p-4">

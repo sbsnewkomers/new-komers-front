@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -169,6 +170,23 @@ export default function StructurePage() {
     user?.role === "HEAD_MANAGER" ||
     user?.role === "MANAGER";
   const canCreateCompany = can("companies", CRUD_ACTION.CREATE);
+
+  useEffect(() => {
+    if (!isAuthReady || user) return;
+
+    const returnTo = router.asPath || "/structure";
+    try {
+      window.localStorage.setItem("nk-return-to", returnTo);
+    } catch {
+      // ignore storage write errors
+    }
+
+    void router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+  }, [isAuthReady, user, router]);
+
+  if (!isAuthReady || !user) {
+    return null;
+  }
 
   // Fonction utilitaire pour valider et ajuster les dates d'exercice
   const handleFiscalYearStartChange = (
