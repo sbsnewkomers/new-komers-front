@@ -83,7 +83,7 @@ export async function apiFetch<T>(
     // Try to parse backend JSON and extract a human message
     let parsed: unknown;
     let backendMessage: string | undefined;
-    
+
     try {
       parsed = text ? JSON.parse(text) : undefined;
       // Add safety check for parsed object
@@ -106,21 +106,8 @@ export async function apiFetch<T>(
       emitSnackbar({ message: (displayMessage && displayMessage.trim()) || "Une erreur est survenue", variant: "error" });
     }
 
-    // Throw a richer error object, but with a clean .message for UI
-    let finalMessage = "Une erreur est survenue";
-    
-    // Essayer de construire le message de manière sécurisée
-    if (snackbar?.errorMessage && typeof snackbar.errorMessage === 'string') {
-      finalMessage = snackbar.errorMessage;
-    } else if (backendMessage && typeof backendMessage === 'string') {
-      finalMessage = backendMessage;
-    } else if (text && typeof text === 'string') {
-      finalMessage = text;
-    } else if (defaultMessage && typeof defaultMessage === 'string') {
-      finalMessage = defaultMessage;
-    }
-    
-    const err = new Error(finalMessage);
+    // Retourner une valeur spéciale pour indiquer l'erreur
+    return Symbol("error") as T;
   }
 
   if (snackbar?.showSuccess) {
