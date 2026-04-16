@@ -57,10 +57,6 @@ import {
   TrendingDown,
 } from "lucide-react";
 import {
-  CompanyCreateWizard,
-  type CompanyWizardForm,
-} from "@/components/structure/CompanyCreateWizard";
-import {
   fetchShareholdersByCompany,
   createShareholder,
   type ShareholderDto,
@@ -222,7 +218,6 @@ export default function StructurePage() {
   >({});
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
-  const [wizardOpen, setWizardOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [ficheOpen, setFicheOpen] = useState(false);
@@ -383,6 +378,8 @@ export default function StructurePage() {
     main_activity: "",
     size: "SMALL",
     model: "SUBSIDIARY",
+    groupId: "",
+    workspaceId: "",
     logo: undefined as string | undefined,
   });
   const [addCompanyLoading, setAddCompanyLoading] = useState(false);
@@ -1421,55 +1418,6 @@ export default function StructurePage() {
     await loadTree();
   };
 
-  const handleCreateCompany = useCallback(
-    async (form: CompanyWizardForm) => {
-      const size =
-        form.size === "MEDIUM_ETI"
-          ? "MEDIUM"
-          : (form.size as "SMALL" | "MEDIUM" | "LARGE");
-      const model =
-        form.model === "INDEPENDANT"
-          ? "SUBSIDIARY"
-          : (form.model as "HOLDING" | "SUBSIDIARY");
-
-      // Créer FormData pour gérer le fichier logo
-      const formData = new FormData();
-
-      // Debug: vérifier les valeurs
-      console.log('Form data being sent:', {
-        groupId: form.groupId,
-        workspaceId: form.workspaceId,
-        hasLogo: !!form.logo
-      });
-
-      // Ajouter les champs texte
-      if (form.groupId) formData.append('groupId', form.groupId);
-      if (form.workspaceId) formData.append('workspace_id', form.workspaceId);
-      formData.append('name', form.name);
-      formData.append('fiscal_year_start', form.fiscal_year_start);
-      formData.append('fiscal_year_end', form.fiscal_year_end);
-      formData.append('siret', form.siret);
-      if (form.address) formData.append('address', form.address);
-      if (form.country) formData.append('country', form.country);
-      if (form.ape_code) formData.append('ape_code', form.ape_code);
-      if (form.main_activity) formData.append('main_activity', form.main_activity);
-      formData.append('size', size);
-      formData.append('model', model);
-
-      // Ajouter le logo s'il existe
-      if (form.logo) {
-        formData.append('logo', form.logo);
-      }
-
-      await apiFetch("/companies", {
-        method: "POST",
-        body: formData,
-        snackbar: { showSuccess: true, successMessage: "Entreprise créée" },
-      });
-      await loadTree();
-    },
-    [loadTree],
-  );
 
   const handleAddCompanyToGroup = async () => {
     console.log('handleAddCompanyToGroup called with:', {
@@ -1477,9 +1425,15 @@ export default function StructurePage() {
       addCompanyForm
     });
 
-    if (!addCompanyGroupId || !addCompanyForm.name?.trim()) {
+    // Déterminer le groupId et workspaceId finaux
+    const finalGroupId = addCompanyGroupId || addCompanyForm.groupId;
+    const finalWorkspaceId = addCompanyGroupId
+      ? groupList.find(g => g.id === addCompanyGroupId)?.workspaceId
+      : addCompanyForm.workspaceId;
+
+    // Validation
+    if (!addCompanyForm.name?.trim()) {
       console.error('Missing required fields:', {
-        groupId: addCompanyGroupId,
         name: addCompanyForm.name
       });
       return;
@@ -1490,10 +1444,9 @@ export default function StructurePage() {
       return;
     }
 
-    // Vérifier que le groupe existe
-    const group = groupList.find((g) => g.id === addCompanyGroupId);
-    if (!group) {
-      console.error('Group not found:', addCompanyGroupId);
+    // Validation pour le mode standalone : un groupe est requis
+    if (!addCompanyGroupId && !finalGroupId) {
+      console.error('Un groupe est requis');
       return;
     }
 
@@ -1503,15 +1456,23 @@ export default function StructurePage() {
       return;
     }
 
-    console.log('Creating company in group:', group.name);
+    const targetName = addCompanyGroupId
+      ? groupList.find(g => g.id === addCompanyGroupId)?.name
+      : (finalGroupId ? groupList.find(g => g.id === finalGroupId)?.name : 'Workspace direct');
+
+    console.log('Creating company:', targetName);
     setAddCompanyLoading(true);
     try {
       const formData = new FormData();
-      formData.append('groupId', addCompanyGroupId);
 
-      // Ajouter workspace_id depuis le groupe
-      if (group.workspaceId) {
-        formData.append('workspace_id', group.workspaceId);
+      // Ajouter groupId si présent
+      if (finalGroupId) {
+        formData.append('groupId', finalGroupId);
+      }
+
+      // Ajouter workspace_id si présent
+      if (finalWorkspaceId) {
+        formData.append('workspace_id', finalWorkspaceId);
       }
 
       formData.append('name', addCompanyForm.name);
@@ -1565,6 +1526,8 @@ export default function StructurePage() {
         main_activity: "",
         size: "SMALL",
         model: "SUBSIDIARY",
+        groupId: "",
+        workspaceId: "",
         logo: undefined as string | undefined,
       });
       setAddCompanyLogoFile(null);
@@ -2052,7 +2015,25 @@ export default function StructurePage() {
                             Groupe
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => setWizardOpen(true)}
+                            onClick={() => {
+                              setAddCompanyGroupId(null);
+                              setAddCompanyForm({
+                                name: "",
+                                siret: "",
+                                fiscal_year_start: "",
+                                fiscal_year_end: "",
+                                address: "",
+                                country: "",
+                                ape_code: "",
+                                main_activity: "",
+                                size: "SMALL",
+                                model: "SUBSIDIARY",
+                                groupId: "",
+                                workspaceId: "",
+                                logo: undefined as string | undefined,
+                              });
+                              setAddCompanyOpen(true);
+                            }}
                             disabled={
                               !canCreateCompany ||
                               !tree?.workspaces ||
@@ -2450,6 +2431,8 @@ export default function StructurePage() {
                                           main_activity: "",
                                           size: "SMALL",
                                           model: "SUBSIDIARY",
+                                          groupId: "",
+                                          workspaceId: "",
                                           logo: undefined as string | undefined,
                                         });
                                         setAddCompanyOpen(true);
@@ -4304,13 +4287,45 @@ export default function StructurePage() {
               Ajouter une entreprise
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-slate-500">
-            Dans le groupe :{" "}
-            <strong>
-              {groupList.find((g) => g.id === addCompanyGroupId)?.name || "Groupe inconnu"}
-            </strong>
-          </p>
+          {addCompanyGroupId ? (
+            <p className="text-sm text-slate-500">
+              Dans le groupe :{" "}
+              <strong>
+                {groupList.find((g) => g.id === addCompanyGroupId)?.name || "Groupe inconnu"}
+              </strong>
+            </p>
+          ) : (
+            <p className="text-sm text-slate-500">
+              Sélectionnez un groupe pour rattacher cette entreprise
+            </p>
+          )}
           <div className="space-y-4 py-2">
+            {/* Champ de sélection du groupe - seulement en mode standalone */}
+            {!addCompanyGroupId && (
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Groupe *
+                </label>
+                <Select
+                  value={addCompanyForm.groupId || ""}
+                  onValueChange={(value) => {
+                    const selectedGroup = groupList.find(g => g.id === value);
+                    setAddCompanyForm((f) => ({
+                      ...f,
+                      groupId: value,
+                      workspaceId: selectedGroup?.workspaceId || ""
+                    }));
+                  }}
+                  className="h-11"
+                  required
+                >
+                  <option value="">Sélectionner un groupe</option>
+                  {groupList.map((g) => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                </Select>
+              </div>
+            )}
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Nom *
@@ -4323,6 +4338,8 @@ export default function StructurePage() {
                 placeholder="Nom de l'entreprise"
               />
             </div>
+
+
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -4491,7 +4508,8 @@ export default function StructurePage() {
                 !addCompanyForm.ape_code.trim() ||
                 !addCompanyForm.country.trim() ||
                 !addCompanyForm.fiscal_year_start.trim() ||
-                !addCompanyForm.fiscal_year_end.trim()
+                !addCompanyForm.fiscal_year_end.trim() ||
+                (!addCompanyGroupId && !addCompanyForm.groupId.trim())
               }
             >
               {addCompanyLoading ? "Création..." : "Créer"}
@@ -4747,17 +4765,6 @@ export default function StructurePage() {
         </DialogContent>
       </Dialog>
 
-      <CompanyCreateWizard
-        open={wizardOpen}
-        onOpenChange={setWizardOpen}
-        groups={groupList.map((g) => ({
-          id: g.id,
-          name: g.name,
-          workspaceId: g.workspaceId || ""
-        }))}
-        workspaces={tree?.workspaces?.map((o) => ({ id: o.id, name: o.name })) || []}
-        onSubmit={handleCreateCompany}
-      />
     </AppLayout>
   );
 }
