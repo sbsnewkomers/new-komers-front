@@ -21,6 +21,25 @@ export function setAccessTokenGetter(getter: () => string | null) {
   accessTokenGetter = getter;
 }
 
+// ✅ Classe d'erreur personnalisée
+export class ApiError extends Error {
+  status: number;
+  details: {
+    status: number;
+    statusText: string;
+    message: string;
+    code: string | null;
+    originalResponse: any;
+  };
+
+  constructor(message: string, status: number, details: any) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.details = details;
+  }
+}
+
 export async function apiFetch<T>(
   path: string,
   init?: RequestInit & {
@@ -58,7 +77,11 @@ export async function apiFetch<T>(
       if (authRedirect === false) {
         // Let callers know it's specifically a 401 without forcing navigation.
         // We encode the status so higher-level code can distinguish it.
-        throw new Error(JSON.stringify({ status: 401, body: text401 || null }));
+        throw new ApiError(
+          "Unauthorized",
+          401,
+          { status: 401, body: text401 || null }
+        );
       }
 
       if (typeof window !== "undefined") {
@@ -74,7 +97,7 @@ export async function apiFetch<T>(
         }
       }
 
-      throw new Error(text401 || "Unauthorized");
+      throw new ApiError(text401 || "Unauthorized", 401, { status: 401, body: text401 || null });
     }
 
     const text = await res.text().catch(() => "");
@@ -120,7 +143,18 @@ export async function apiFetch<T>(
       finalMessage = defaultMessage;
     }
     
-    const err = new Error(finalMessage);
+    // ✅ Créer et lancer une ApiError avec tous les détails
+    throw new ApiError(
+      finalMessage,
+      res.status,
+      {
+        status: res.status,
+        statusText: res.statusText,
+        message: backendMessage || text,
+        code: parsed && typeof parsed === 'object' && 'code' in parsed ? (parsed as any).code : null,
+        originalResponse: parsed || text
+      }
+    );
   }
 
   if (snackbar?.showSuccess) {
@@ -145,7 +179,7 @@ export async function apiFetch<T>(
       return JSON.parse(text) as T;
     } catch {
       // If it's supposed to be JSON but can't parse, throw error
-      throw new Error("Invalid JSON response from server");
+      throw new ApiError("Invalid JSON response from server", 500, { originalResponse: text });
     }
   }
 
