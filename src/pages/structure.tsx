@@ -1485,6 +1485,11 @@ export default function StructurePage() {
       return;
     }
 
+    // Valider le SIRET avant d'envoyer la requête
+    if (addCompanyForm.siret && !validateSiret(addCompanyForm.siret)) {
+      return;
+    }
+
     // Vérifier que le groupe existe
     const group = groupList.find((g) => g.id === addCompanyGroupId);
     if (!group) {
@@ -4322,7 +4327,7 @@ export default function StructurePage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  SIRET
+                  SIRET *
                 </label>
                 <SiretInput
                   value={addCompanyForm.siret}
@@ -4333,7 +4338,7 @@ export default function StructurePage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Code APE
+                  Code APE *
                 </label>
                 <ApeCodeSelect
                   value={addCompanyForm.ape_code}
@@ -4375,7 +4380,7 @@ export default function StructurePage() {
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Pays
+                Pays *
               </label>
               <CountrySelect
                 placeholder="Pays de l'entreprise"
@@ -4442,7 +4447,7 @@ export default function StructurePage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Début exercice
+                  Début exercice *
                 </label>
                 <Input
                   type="date"
@@ -4457,7 +4462,7 @@ export default function StructurePage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Fin exercice
+                  Fin exercice *
                 </label>
                 <Input
                   type="date"
@@ -4478,7 +4483,16 @@ export default function StructurePage() {
             </Button>
             <Button
               onClick={handleAddCompanyToGroup}
-              disabled={addCompanyLoading || !addCompanyForm.name.trim()}
+              disabled={
+                addCompanyLoading ||
+                !addCompanyForm.name.trim() ||
+                !addCompanyForm.siret.trim() ||
+                (addCompanyForm.siret && !validateSiret(addCompanyForm.siret)) ||
+                !addCompanyForm.ape_code.trim() ||
+                !addCompanyForm.country.trim() ||
+                !addCompanyForm.fiscal_year_start.trim() ||
+                !addCompanyForm.fiscal_year_end.trim()
+              }
             >
               {addCompanyLoading ? "Création..." : "Créer"}
             </Button>
