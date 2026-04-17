@@ -43,7 +43,8 @@ type AuditActionUi =
   | "EXPORT"
   | "VIEW"
   | "INVITE"
-  | "PERMISSION_CHANGE";
+  | "PERMISSION_CHANGE"
+  | "GENERATE";
 
 type AuditCategory = "AUTH" | "ENTITY" | "USER" | "IMPORT" | "PERMISSION" | "REPORTING";
 
@@ -70,6 +71,7 @@ const actionConfig: Record<AuditActionUi, { label: string; icon: typeof Plus; co
   VIEW: { label: "Consultation", icon: Eye, color: "text-slate-500 bg-slate-50" },
   INVITE: { label: "Invitation", icon: Users, color: "text-amber-600 bg-amber-50" },
   PERMISSION_CHANGE: { label: "Permission", icon: Shield, color: "text-purple-600 bg-purple-50" },
+  GENERATE: { label: "Génération", icon: Plus, color: "text-green-600 bg-green-50" },
 };
 
 const categoryLabels: Record<AuditCategory, string> = {
@@ -191,7 +193,9 @@ function mapBackendActionToUi(action: string): AuditActionUi {
   if (a.startsWith("INVITATION_") || a.includes("INVITATION")) return "INVITE";
   if (a.includes("PERMISSION") || a === "UNAUTHORIZED_ACTION") return "PERMISSION_CHANGE";
   if (a.includes("IMPORT")) return "IMPORT";
+  if (a === "GENERIC_FILE_UPLOADED") return "IMPORT";
   if (a.endsWith("_CREATED")) return "CREATE";
+  if (a === "INSTALLMENTS_GENERATED") return "GENERATE";
   if (
     a.endsWith("_UPDATED") ||
     a.endsWith("_SCOPE_CHANGED") ||
