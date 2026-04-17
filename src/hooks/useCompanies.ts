@@ -8,7 +8,6 @@ type Company = {
   id: string;
   name: string;
   fiscal_year_start: string;
-  fiscal_year_end: string;
   siret: string;
   address?: string;
   ape_code?: string;
@@ -24,7 +23,6 @@ type CreateCompanyDto = {
   groupId: string;
   name: string;
   fiscal_year_start: string;
-  fiscal_year_end: string;
   siret: string;
   address?: string;
   ape_code?: string;

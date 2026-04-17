@@ -68,6 +68,15 @@ const DEMO_CHART_DATA = [
   { name: "Juin", value: 700 },
 ];
 
+const inferFiscalYearEnd = (fiscalYearStart: string): Date | null => {
+  const start = new Date(fiscalYearStart);
+  if (Number.isNaN(start.getTime())) return null;
+  const end = new Date(start);
+  end.setFullYear(end.getFullYear() + 1);
+  end.setDate(end.getDate() - 1);
+  return end;
+};
+
 export default function DashboardPage() {
   const { user, isAuthReady } = usePermissionsContext();
   const companies = useCompanies();
@@ -101,11 +110,11 @@ export default function DashboardPage() {
     if (widgets.length > 0 || chartWidgets.length > 0) return;
 
     const today = new Date();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const activeFiscalYears = list.filter((c: any) => {
-      if (!c.fiscal_year_start || !c.fiscal_year_end) return false;
+    const activeFiscalYears = list.filter((c) => {
+      if (!c.fiscal_year_start) return false;
       const start = new Date(c.fiscal_year_start);
-      const end = new Date(c.fiscal_year_end);
+      const end = inferFiscalYearEnd(c.fiscal_year_start);
+      if (Number.isNaN(start.getTime()) || !end) return false;
       return start <= today && end >= today;
     }).length;
 

@@ -76,8 +76,6 @@ export default function StructureCompanyPage() {
                     <dd>{company.siret}</dd>
                     <dt className="text-muted-foreground">Début d'exercice</dt>
                     <dd>{company.fiscal_year_start}</dd>
-                    <dt className="text-muted-foreground">Fin d'exercice</dt>
-                    <dd>{company.fiscal_year_end}</dd>
                     {company.address && (
                       <>
                         <dt className="text-muted-foreground">Adresse</dt>

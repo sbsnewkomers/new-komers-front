@@ -1,7 +1,14 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
@@ -96,7 +103,6 @@ type GroupFull = {
   siret: string;
   ape_code?: string;
   fiscal_year_start: string;
-  fiscal_year_end: string;
   mainActivity?: string;
   country?: string;
   logo?: string;
@@ -124,7 +130,6 @@ type CompanyFull = {
   name: string;
   siret: string;
   fiscal_year_start: string;
-  fiscal_year_end: string;
   address?: string;
   country: string;
   ape_code?: string;
@@ -188,42 +193,16 @@ export default function StructurePage() {
     return null;
   }
 
-  // Fonction utilitaire pour valider et ajuster les dates d'exercice
+  // Fonction utilitaire pour la date de début d'exercice
   const handleFiscalYearStartChange = (
     value: string,
-    currentEndDate: string,
-    updateForm: (updater: (prev: any) => any) => void,
-    endDateField: string = 'fiscal_year_end'
+    updateForm: Dispatch<
+      SetStateAction<{ fiscal_year_start: string } & Record<string, unknown>>
+    >,
   ) => {
-    // Si une date de fin existe, ne permettre que les dates antérieures
-    if (currentEndDate && value >= currentEndDate) {
-      return; // Ne pas mettre à jour si la date de début n'est pas antérieure à la date de fin
-    }
-    updateForm((prev: any) => {
-      const updated = { ...prev, fiscal_year_start: value };
-      // Si la date de fin est antérieure ou égale à la nouvelle date de début, ajuster la date de fin
-      if (currentEndDate && currentEndDate <= value) {
-        const nextDay = new Date(value);
-        nextDay.setDate(nextDay.getDate() + 1);
-        updated[endDateField] = nextDay.toISOString().split('T')[0];
-      }
-      return updated;
-    });
-  };
-
-  const handleFiscalYearEndChange = (
-    value: string,
-    currentStartDate: string,
-    updateForm: (updater: (prev: any) => any) => void,
-    startDateField: string = 'fiscal_year_start'
-  ) => {
-    // Ne permettre que les dates postérieures à la date de début
-    if (currentStartDate && value <= currentStartDate) {
-      return; // Ne pas mettre à jour si la date de fin n'est pas valide
-    }
-    updateForm((prev: any) => ({
+    updateForm((prev) => ({
       ...prev,
-      fiscal_year_end: value,
+      fiscal_year_start: value,
     }));
   };
 
@@ -389,7 +368,6 @@ export default function StructurePage() {
     name: "",
     siret: "",
     fiscal_year_start: "",
-    fiscal_year_end: "",
     address: "",
     country: "",
     ape_code: "",
@@ -422,7 +400,6 @@ export default function StructurePage() {
     siret: "",
     ape_code: "",
     fiscal_year_start: "",
-    fiscal_year_end: "",
     mainActivity: "",
     country: "",
     workspaceId: "",
@@ -460,7 +437,6 @@ export default function StructurePage() {
     siret: "",
     ape_code: "",
     fiscal_year_start: "",
-    fiscal_year_end: "",
     mainActivity: "",
     country: "",
     logo: undefined as string | undefined,
@@ -473,7 +449,6 @@ export default function StructurePage() {
     ape_code: "",
     main_activity: "",
     fiscal_year_start: "",
-    fiscal_year_end: "",
     size: "",
     model: "",
     logo: undefined as string | undefined,
@@ -1034,7 +1009,6 @@ export default function StructurePage() {
             siret: g.siret ?? "",
             ape_code: g.ape_code ?? "",
             fiscal_year_start: g.fiscal_year_start ?? "",
-            fiscal_year_end: g.fiscal_year_end ?? "",
             mainActivity: g.mainActivity ?? "",
             country: g.country ?? "",
             logo: g.logo ?? "",
@@ -1045,7 +1019,6 @@ export default function StructurePage() {
             siret: "",
             ape_code: "",
             fiscal_year_start: "",
-            fiscal_year_end: "",
             mainActivity: "",
             country: "",
             logo: undefined as string | undefined,
@@ -1065,7 +1038,6 @@ export default function StructurePage() {
             ape_code: c.ape_code ?? "",
             main_activity: c.main_activity ?? "",
             fiscal_year_start: c.fiscal_year_start ?? "",
-            fiscal_year_end: c.fiscal_year_end ?? "",
             size: c.size ?? "",
             model: c.model ?? "",
             logo: c.logo ?? "",
@@ -1080,7 +1052,6 @@ export default function StructurePage() {
             ape_code: "",
             main_activity: "",
             fiscal_year_start: "",
-            fiscal_year_end: "",
             size: "",
             model: "",
             logo: undefined as string | undefined,
@@ -1211,9 +1182,6 @@ export default function StructurePage() {
       if (editGroup.fiscal_year_start) {
         formData.append('fiscal_year_start', editGroup.fiscal_year_start);
       }
-      if (editGroup.fiscal_year_end) {
-        formData.append('fiscal_year_end', editGroup.fiscal_year_end);
-      }
       if (editGroup.mainActivity) {
         formData.append('mainActivity', editGroup.mainActivity);
       }
@@ -1258,9 +1226,6 @@ export default function StructurePage() {
       }
       if (editCompany.fiscal_year_start) {
         formData.append('fiscal_year_start', editCompany.fiscal_year_start);
-      }
-      if (editCompany.fiscal_year_end) {
-        formData.append('fiscal_year_end', editCompany.fiscal_year_end);
       }
       if (editCompany.size) {
         formData.append('size', editCompany.size);
@@ -1469,8 +1434,8 @@ export default function StructurePage() {
     }
 
     // Validation supplémentaire
-    if (!addCompanyForm.fiscal_year_start || !addCompanyForm.fiscal_year_end) {
-      console.error('Les dates d\'exercice sont requises');
+    if (!addCompanyForm.fiscal_year_start) {
+      console.error("La date de début d'exercice est requise");
       return;
     }
 
@@ -1498,7 +1463,6 @@ export default function StructurePage() {
         formData.append('siret', addCompanyForm.siret);
       }
       formData.append('fiscal_year_start', addCompanyForm.fiscal_year_start);
-      formData.append('fiscal_year_end', addCompanyForm.fiscal_year_end);
       if (addCompanyForm.address) {
         formData.append('address', addCompanyForm.address);
       }
@@ -1537,7 +1501,6 @@ export default function StructurePage() {
         name: "",
         siret: "",
         fiscal_year_start: "",
-        fiscal_year_end: "",
         address: "",
         country: "",
         ape_code: "",
@@ -1628,9 +1591,6 @@ export default function StructurePage() {
       if (addGroupForm.fiscal_year_start) {
         formData.append('fiscal_year_start', addGroupForm.fiscal_year_start);
       }
-      if (addGroupForm.fiscal_year_end) {
-        formData.append('fiscal_year_end', addGroupForm.fiscal_year_end);
-      }
       if (addGroupForm.mainActivity) {
         formData.append('mainActivity', addGroupForm.mainActivity);
       }
@@ -1657,7 +1617,6 @@ export default function StructurePage() {
         siret: "",
         ape_code: "",
         fiscal_year_start: "",
-        fiscal_year_end: "",
         mainActivity: "",
         country: "",
         workspaceId: "",
@@ -2039,7 +1998,6 @@ export default function StructurePage() {
                                 name: "",
                                 siret: "",
                                 fiscal_year_start: "",
-                                fiscal_year_end: "",
                                 address: "",
                                 country: "",
                                 ape_code: "",
@@ -2407,7 +2365,6 @@ export default function StructurePage() {
                                         mainActivity: "",
                                         country: "",
                                         fiscal_year_start: "",
-                                        fiscal_year_end: "",
                                         workspaceId: node.id,
                                         logo: undefined as string | undefined,
                                       });
@@ -2442,7 +2399,6 @@ export default function StructurePage() {
                                           name: "",
                                           siret: "",
                                           fiscal_year_start: "",
-                                          fiscal_year_end: "",
                                           address: "",
                                           country: "",
                                           ape_code: "",
@@ -2792,29 +2748,9 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={editGroup.fiscal_year_start}
-                  onChange={(e) => handleFiscalYearStartChange(
-                    e.target.value,
-                    editGroup.fiscal_year_end,
-                    setEditGroup
-                  )}
-                  max={editGroup.fiscal_year_end ? new Date(editGroup.fiscal_year_end).toISOString().split('T')[0] : undefined}
-                  disabled={!editing}
-                  className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Fin d&apos;exercice
-                </label>
-                <Input
-                  type="date"
-                  value={editGroup.fiscal_year_end}
-                  onChange={(e) => handleFiscalYearEndChange(
-                    e.target.value,
-                    editGroup.fiscal_year_start,
-                    setEditGroup
-                  )}
-                  min={editGroup.fiscal_year_start ? new Date(editGroup.fiscal_year_start).toISOString().split('T')[0] : undefined}
+                  onChange={(e) =>
+                    handleFiscalYearStartChange(e.target.value, setEditGroup)
+                  }
                   disabled={!editing}
                   className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
                 />
@@ -2956,22 +2892,7 @@ export default function StructurePage() {
                 value={editCompany.fiscal_year_start}
                 editing={editing}
                 type="date"
-                onChange={(v) => handleFiscalYearStartChange(
-                  v,
-                  editCompany.fiscal_year_end,
-                  setEditCompany
-                )}
-              />
-              <Field
-                label="Fin d&apos;exercice"
-                value={editCompany.fiscal_year_end}
-                editing={editing}
-                type="date"
-                onChange={(v) => handleFiscalYearEndChange(
-                  v,
-                  editCompany.fiscal_year_start,
-                  setEditCompany
-                )}
+                onChange={(v) => handleFiscalYearStartChange(v, setEditCompany)}
               />
               <Field
                 label="Taille"
@@ -3424,10 +3345,6 @@ export default function StructurePage() {
                       <dd className="font-medium text-primary">
                         {ficheCompany.fiscal_year_start || "—"}
                       </dd>
-                      <dt className="text-slate-500">Fin d&apos;exercice</dt>
-                      <dd className="font-medium text-primary">
-                        {ficheCompany.fiscal_year_end || "—"}
-                      </dd>
                       {ficheCompany.address && (
                         <>
                           <dt className="text-slate-500">Adresse</dt>
@@ -3713,10 +3630,6 @@ export default function StructurePage() {
                       <dt className="text-slate-500">Début d&apos;exercice</dt>
                       <dd className="font-medium text-primary">
                         {ficheGroup.fiscal_year_start || "—"}
-                      </dd>
-                      <dt className="text-slate-500">Fin d&apos;exercice</dt>
-                      <dd className="font-medium text-primary">
-                        {ficheGroup.fiscal_year_end || "—"}
                       </dd>
                       {ficheGroup.ape_code && (
                         <>
@@ -4118,27 +4031,9 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={addGroupForm.fiscal_year_start}
-                  onChange={(e) => handleFiscalYearStartChange(
-                    e.target.value,
-                    addGroupForm.fiscal_year_end,
-                    setAddGroupForm
-                  )}
-                  max={addGroupForm.fiscal_year_end ? new Date(addGroupForm.fiscal_year_end).toISOString().split('T')[0] : undefined}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Fin exercice *
-                </label>
-                <Input
-                  type="date"
-                  value={addGroupForm.fiscal_year_end}
-                  onChange={(e) => handleFiscalYearEndChange(
-                    e.target.value,
-                    addGroupForm.fiscal_year_start,
-                    setAddGroupForm
-                  )}
-                  min={addGroupForm.fiscal_year_start ? new Date(addGroupForm.fiscal_year_start).toISOString().split('T')[0] : undefined}
+                  onChange={(e) =>
+                    handleFiscalYearStartChange(e.target.value, setAddGroupForm)
+                  }
                 />
               </div>
             </div>
@@ -4157,8 +4052,7 @@ export default function StructurePage() {
                 !addGroupForm.siret.trim() ||
                 (addGroupForm.siret && !validateSiret(addGroupForm.siret)) ||
                 !addGroupForm.country.trim() ||
-                !addGroupForm.fiscal_year_start.trim() ||
-                !addGroupForm.fiscal_year_end.trim()
+                !addGroupForm.fiscal_year_start.trim()
               }
             >
               {addGroupLoading ? "Création..." : "Créer"}
@@ -4487,27 +4381,9 @@ export default function StructurePage() {
                 <Input
                   type="date"
                   value={addCompanyForm.fiscal_year_start}
-                  onChange={(e) => handleFiscalYearStartChange(
-                    e.target.value,
-                    addCompanyForm.fiscal_year_end,
-                    setAddCompanyForm
-                  )}
-                  max={addCompanyForm.fiscal_year_end ? new Date(addCompanyForm.fiscal_year_end).toISOString().split('T')[0] : undefined}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Fin exercice *
-                </label>
-                <Input
-                  type="date"
-                  value={addCompanyForm.fiscal_year_end}
-                  onChange={(e) => handleFiscalYearEndChange(
-                    e.target.value,
-                    addCompanyForm.fiscal_year_start,
-                    setAddCompanyForm
-                  )}
-                  min={addCompanyForm.fiscal_year_start ? new Date(addCompanyForm.fiscal_year_start).toISOString().split('T')[0] : undefined}
+                  onChange={(e) =>
+                    handleFiscalYearStartChange(e.target.value, setAddCompanyForm)
+                  }
                 />
               </div>
             </div>
@@ -4526,7 +4402,6 @@ export default function StructurePage() {
                 !addCompanyForm.ape_code.trim() ||
                 !addCompanyForm.country.trim() ||
                 !addCompanyForm.fiscal_year_start.trim() ||
-                !addCompanyForm.fiscal_year_end.trim() ||
                 (!addCompanyGroupId && !addCompanyForm.groupId.trim())
               }
             >
