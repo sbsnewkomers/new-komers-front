@@ -2749,7 +2749,7 @@ export default function StructurePage() {
                   type="date"
                   value={editGroup.fiscal_year_start}
                   onChange={(e) =>
-                    handleFiscalYearStartChange(e.target.value, setEditGroup)
+                    setEditGroup((prev) => ({ ...prev, fiscal_year_start: e.target.value }))
                   }
                   disabled={!editing}
                   className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
@@ -2892,7 +2892,7 @@ export default function StructurePage() {
                 value={editCompany.fiscal_year_start}
                 editing={editing}
                 type="date"
-                onChange={(v) => handleFiscalYearStartChange(v, setEditCompany)}
+                onChange={(v) => setEditCompany((prev) => ({ ...prev, fiscal_year_start: v }))}
               />
               <Field
                 label="Taille"
@@ -4032,7 +4032,7 @@ export default function StructurePage() {
                   type="date"
                   value={addGroupForm.fiscal_year_start}
                   onChange={(e) =>
-                    handleFiscalYearStartChange(e.target.value, setAddGroupForm)
+                    setAddGroupForm((prev) => ({ ...prev, fiscal_year_start: e.target.value }))
                   }
                 />
               </div>
@@ -4382,7 +4382,7 @@ export default function StructurePage() {
                   type="date"
                   value={addCompanyForm.fiscal_year_start}
                   onChange={(e) =>
-                    handleFiscalYearStartChange(e.target.value, setAddCompanyForm)
+                    setAddCompanyForm((prev) => ({ ...prev, fiscal_year_start: e.target.value }))
                   }
                 />
               </div>
