@@ -9,19 +9,19 @@ import { Button } from "@/components/ui/Button";
 import { Sheet, Plug, ArrowRight, FileUp } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/apiClient";
 
-import { EntitySelector } from "./EntitySelector";
-import { cleanMapping } from './MappingUtils';
-import { SavedMappingModal } from './SavedMappingModal';
-import { UploadZone } from "./UploadZone";
-import { ImportInProgress } from "./ImportInProgress";
-import { ImportHistory } from "./ImportHistory";
-import { MappingModal } from "./MappingModal";
-import { ValidationErrorsModal } from "./ValidationErrorsModal";
-import { ConfirmReplaceDialog } from "./ConfirmReplaceDialog";
-import { RollbackConfirmDialog } from "./RollbackConfirmDialog";
-import { ApiTabContent } from "./ApiTabContent";
-import { Basic_COLUMNS } from "./constants";
-import { ImportHistoryRow, ImportProgress, ValidationError, SavedMapping, MappingPayload } from "./types";
+import { EntitySelector } from "@/features/import/EntitySelector";
+import { cleanMapping } from "@/features/import/MappingUtils";
+import { SavedMappingModal } from "@/features/import/SavedMappingModal";
+import { UploadZone } from "@/features/import/UploadZone";
+import { ImportInProgress } from "@/features/import/ImportInProgress";
+import { ImportHistory } from "@/features/import/ImportHistory";
+import { MappingModal } from "@/features/import/MappingModal";
+import { ValidationErrorsModal } from "@/features/import/ValidationErrorsModal";
+import { ConfirmReplaceDialog } from "@/features/import/ConfirmReplaceDialog";
+import { RollbackConfirmDialog } from "@/features/import/RollbackConfirmDialog";
+import { ApiTabContent } from "@/features/import/ApiTabContent";
+import { Basic_COLUMNS } from "@/features/import/constants";
+import { ImportHistoryRow, ImportProgress, ValidationError, SavedMapping, MappingPayload } from "@/features/import/types";
 
 export default function ImportPage() {
   const companies = useCompanies();
