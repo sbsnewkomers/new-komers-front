@@ -65,6 +65,8 @@ export default function ImportPage() {
   const [savedMappingModalOpen, setSavedMappingModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingMappingId, setPendingMappingId] = useState<string | null>(null);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+
   
   // Ref pour éviter les appels multiples
   const isImportingRef = useRef(false);
@@ -239,9 +241,27 @@ export default function ImportPage() {
     }
   };
 
-  const handleEntityChange = (entityId: string, entityType: 'Group' | 'Company') => {
+  const handleEntityChange = async (entityId: string, entityType: 'Group' | 'Company') => {
     setSelectedEntityId(entityId);
     setSelectedEntityType(entityType);
+    setWorkspaceId(null);
+    try {
+    if (entityType === 'Company') {
+      const company = await apiFetch<{ workspace_id: string }>(
+        `/companies/${entityId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      setWorkspaceId(company.workspace_id ?? null);
+    } else {
+      const group = await apiFetch<{ workspace_id: string }>(
+        `/groups/${entityId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      setWorkspaceId(group.workspace_id ?? null);
+    }
+  } catch {
+    setWorkspaceId(null);
+  }
   };
 
   const performImport = async (
@@ -282,6 +302,8 @@ export default function ImportPage() {
           rules: cleanedRules,
           entityId,
           entityType,
+          workspaceId: workspaceId ?? null,
+          scope: workspaceId ? 'LOCAL' : 'GLOBAL',
         };
 
         const templateData = await apiFetch<any>("/mapping-templates", {
@@ -771,6 +793,7 @@ export default function ImportPage() {
         entityType={selectedEntityType}
         showImportButton={!!csvFile}
         onFileUpload={handleFileUpload}
+        workspaceId={workspaceId}
       />
       
       <SavedMappingModal
@@ -779,6 +802,7 @@ export default function ImportPage() {
         fileName={csvFile?.name ?? ""}
         onSelectMapping={handleSelectSavedMapping}
         onCreateNew={() => setMappingOpen(true)}
+        workspaceId={workspaceId}
       />
 
       <ValidationErrorsModal

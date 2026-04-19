@@ -4,14 +4,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/Button";
 import { apiFetch } from "@/lib/apiClient";
 import { SavedMapping } from "./types";
-import { BookMarked, CheckCircle2, Clock, Loader2, PlusCircle } from "lucide-react";
+import { BookMarked, CheckCircle2, Clock, Globe, FolderOpen, Loader2, PlusCircle } from "lucide-react";
 
 interface SavedMappingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   fileName: string;
   onSelectMapping: (mapping: SavedMapping) => void;
-  onCreateNew: () => void; // ouvre le MappingModal classique
+  onCreateNew: () => void;
+  workspaceId?: string | null; 
 }
 
 export function SavedMappingModal({
@@ -20,8 +21,10 @@ export function SavedMappingModal({
   fileName,
   onSelectMapping,
   onCreateNew,
+  workspaceId,
 }: SavedMappingModalProps) {
-  const [savedMappings, setSavedMappings] = useState<SavedMapping[]>([]);
+  const [localMappings, setLocalMappings] = useState<SavedMapping[]>([]);
+  const [globalMappings, setGlobalMappings] = useState<SavedMapping[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -29,20 +32,73 @@ export function SavedMappingModal({
     if (!open) return;
     setSelectedId(null);
     setLoading(true);
-    apiFetch<SavedMapping[]>("/mapping-templates/user/me", {
-      snackbar: { showSuccess: false, showError: false },
-    })
-      .then((data) => setSavedMappings(data ?? []))
-      .catch(() => setSavedMappings([]))
+
+    Promise.all([
+      // Locaux : uniquement si un workspaceId est disponible
+      workspaceId
+        ? apiFetch<SavedMapping[]>(`/mapping-templates/workspace/${workspaceId}`, {
+            snackbar: { showSuccess: false, showError: false },
+          })
+        : Promise.resolve([] as SavedMapping[]),
+      // Globaux : toujours
+      apiFetch<SavedMapping[]>(`/mapping-templates/global`, {
+        snackbar: { showSuccess: false, showError: false },
+      }),
+    ])
+      .then(([local, global]) => {
+        setLocalMappings(local ?? []);
+        setGlobalMappings(global ?? []);
+      })
+      .catch(() => {
+        setLocalMappings([]);
+        setGlobalMappings([]);
+      })
       .finally(() => setLoading(false));
-  }, [open]);
+  }, [open, workspaceId]);
+
+  const allMappings = [...localMappings, ...globalMappings];
 
   const handleConfirm = () => {
-    const chosen = savedMappings.find((m) => m.id === selectedId);
+    const chosen = allMappings.find((m) => m.id === selectedId);
     if (!chosen) return;
     onSelectMapping(chosen);
     onOpenChange(false);
   };
+
+  // ── Rendu d'un item de la liste ────────────────────────────
+  const MappingItem = ({ m }: { m: SavedMapping }) => (
+    <li
+      key={m.id}
+      onClick={() => setSelectedId(m.id)}
+      className={`flex items-center justify-between rounded-lg border px-4 py-3 cursor-pointer transition-all ${
+        selectedId === m.id
+          ? "border-primary bg-primary/5 shadow-sm"
+          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+      }`}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <BookMarked
+          className={`h-4 w-4 shrink-0 ${selectedId === m.id ? "text-primary" : "text-slate-400"}`}
+        />
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-slate-800 truncate">{m.name}</p>
+          {m.createdAt && (
+            <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+              <Clock className="h-3 w-3" />
+              {new Date(m.createdAt).toLocaleDateString("fr-FR")}
+            </p>
+          )}
+        </div>
+      </div>
+      {selectedId === m.id && (
+        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+      )}
+    </li>
+  );
+
+  const hasLocal = localMappings.length > 0;
+  const hasGlobal = globalMappings.length > 0;
+  const hasAny = hasLocal || hasGlobal;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -63,44 +119,46 @@ export function SavedMappingModal({
             <Loader2 className="h-5 w-5 animate-spin" />
             Chargement des mappings…
           </div>
-        ) : savedMappings.length === 0 ? (
+        ) : !hasAny ? (
           <div className="text-center py-10 text-slate-400 text-sm">
             Aucun mapping sauvegardé trouvé.
           </div>
         ) : (
-          <ul className="space-y-2 max-h-64 overflow-y-auto pr-1">
-            {savedMappings.map((m) => (
-              <li
-                key={m.id}
-                onClick={() => setSelectedId(m.id)}
-                className={`flex items-center justify-between rounded-lg border px-4 py-3 cursor-pointer transition-all ${
-                  selectedId === m.id
-                    ? "border-primary bg-primary/5 shadow-sm"
-                    : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                }`}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <BookMarked
-                    className={`h-4 w-4 shrink-0 ${
-                      selectedId === m.id ? "text-primary" : "text-slate-400"
-                    }`}
-                  />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-800 truncate">{m.name}</p>
-                    {m.createdAt && (
-                      <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                        <Clock className="h-3 w-3" />
-                        {new Date(m.createdAt).toLocaleDateString("fr-FR")}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {selectedId === m.id && (
-                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                )}
-              </li>
-            ))}
-          </ul>
+          <div className="max-h-72 overflow-y-auto space-y-1 pr-1">
+
+            {/* ── Section Locaux ── */}
+            {hasLocal && (
+              <>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-1 pt-1 pb-1 flex items-center gap-1.5">
+                  <FolderOpen className="h-3 w-3" />
+                  Locaux
+                </p>
+                <ul className="space-y-1.5">
+                  {localMappings.map((m) => <MappingItem key={m.id} m={m} />)}
+                </ul>
+              </>
+            )}
+
+            {/* ── Séparateur ── */}
+            {hasLocal && hasGlobal && (
+              <div className="py-2">
+                <div className="border-t border-slate-100" />
+              </div>
+            )}
+
+            {/* ── Section Globaux ── */}
+            {hasGlobal && (
+              <>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-1 pt-1 pb-1 flex items-center gap-1.5">
+                  <Globe className="h-3 w-3 text-emerald-500" />
+                  <span className="text-emerald-600">Globaux</span>
+                </p>
+                <ul className="space-y-1.5">
+                  {globalMappings.map((m) => <MappingItem key={m.id} m={m} />)}
+                </ul>
+              </>
+            )}
+          </div>
         )}
 
         <div className="flex justify-between items-center pt-2 border-t mt-2">
