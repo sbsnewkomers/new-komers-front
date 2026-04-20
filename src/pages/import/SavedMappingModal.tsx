@@ -43,31 +43,29 @@ export function SavedMappingModal({
     setLoading(true);
 
     const fetchLocal = async (): Promise<SavedMapping[]> => {
-      // workspaceId connu → fetch direct
-      if (workspaceId) {
-        return apiFetch<SavedMapping[]>(`/mapping-templates/workspace/${workspaceId}`, {
-          snackbar: { showSuccess: false, showError: false },
-        });
-      }
-      // non-admin sans entité sélectionnée → fetch via my-workspaces
-      if (!isAdmin) {
-        const wsList = await apiFetch<{ id: string; name: string }[]>(
-          '/mapping-templates/my-workspaces',
-          { snackbar: { showSuccess: false, showError: false } }
-        );
-        if (!wsList?.length) return [];
-        const results = await Promise.all(
-          wsList.map(ws =>
-            apiFetch<SavedMapping[]>(
-              `/mapping-templates/workspace/${ws.id}`,
-              { snackbar: { showSuccess: false, showError: false } }
-            ).catch(() => [] as SavedMapping[])
-          )
-        );
-        return results.flat();
-      }
-      return [];
-    };
+  // workspaceId connu → fetch direct
+  if (workspaceId) {
+    return apiFetch<SavedMapping[]>(`/mapping-templates/workspace/${workspaceId}`, {
+      snackbar: { showSuccess: false, showError: false },
+    });
+  }
+
+  // ADMIN ou non-admin sans entité → fetch via my-workspaces
+  const wsList = await apiFetch<{ id: string; name: string }[]>(
+    '/mapping-templates/my-workspaces',
+    { snackbar: { showSuccess: false, showError: false } }
+  );
+  if (!wsList?.length) return [];
+  const results = await Promise.all(
+    wsList.map(ws =>
+      apiFetch<SavedMapping[]>(
+        `/mapping-templates/workspace/${ws.id}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      ).catch(() => [] as SavedMapping[])
+    )
+  );
+  return results.flat();
+};
 
     Promise.all([
       fetchLocal().catch(() => [] as SavedMapping[]),
