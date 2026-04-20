@@ -5,6 +5,7 @@ type Group = {
   id: string;
   name: string;
   fiscal_year_start: string;
+  last_closed_fiscal_year?: number | null;
   siret: string;
   mainActivity?: string;
   createdAt?: string;
@@ -14,6 +15,7 @@ type Group = {
 type CreateGroupDto = {
   name: string;
   fiscal_year_start: string;
+  last_closed_fiscal_year?: number | null;
   siret: string;
   mainActivity?: string;
 };

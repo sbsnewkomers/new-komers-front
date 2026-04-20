@@ -50,6 +50,7 @@ export default function ImportEntriesPage() {
   const [movement, setMovement] = useState<EntryMovementFilter>("all");
   const [page, setPage] = useState(1);
   const [summary, setSummary] = useState({ totalRows: 0, totalDebit: 0, totalCredit: 0 });
+  const [entriesContext, setEntriesContext] = useState<ImportEntriesResponse["context"]>(null);
   const [pagination, setPagination] = useState({
     page: 1,
     pageSize: PAGE_SIZE,
@@ -89,6 +90,7 @@ export default function ImportEntriesPage() {
         });
 
         setItems(response.items ?? []);
+         setEntriesContext(response.context ?? null);
         setSummary(response.summary);
         setPagination(response.pagination);
       } catch (err) {
@@ -163,7 +165,22 @@ export default function ImportEntriesPage() {
               </Card>
             </div>
 
-            <Card className="bg-white/95 drop-shadow-lg ring-1 ring-slate-100">
+            {entriesContext && (
+              <Card className="bg-sky-50/80 ring-1 ring-sky-100">
+                <CardContent className="p-4! text-sm text-sky-900">
+                  <span className="font-medium">
+                    {entriesContext.entityType === "Company" ? "Entreprise" : "Groupe"}:
+                  </span>{" "}
+                  {entriesContext.entityName || entriesContext.entityId}
+                  <span className="mx-2 text-sky-400">•</span>
+                  {entriesContext.lastClosedFiscalYear !== null
+                    ? `Dernier exercice clos: ${entriesContext.lastClosedFiscalYear}`
+                    : "Aucun exercice clos déclaré"}
+                </CardContent>
+              </Card>
+            )}
+
+              <Card className="bg-linear-to-tl from-slate-200 to-white drop-shadow-lg ring-1 ring-blue-100">
               <CardContent className="p-5!">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center">
                   <div className="relative flex-1">
@@ -226,8 +243,22 @@ export default function ImportEntriesPage() {
                             </TableCell>
                           </TableRow>
                         ) : (
-                          items.map((entry) => (
-                            <TableRow key={entry.id} className="hover:bg-slate-50/70">
+                          items.map((entry) => {
+                            const closedYear = entriesContext?.lastClosedFiscalYear;
+                            const isClosedByEntityRule =
+                              closedYear !== null &&
+                              closedYear !== undefined &&
+                              entry.fiscalYearLabel !== null &&
+                              entry.fiscalYearLabel !== undefined &&
+                              entry.fiscalYearLabel <= closedYear;
+
+                            return (
+                            <TableRow
+                              key={entry.id}
+                              className={`hover:bg-slate-50/70 ${
+                                isClosedByEntityRule ? "bg-amber-50/60" : ""
+                              }`}
+                            >
                               <TableCell>{formatDate(entry.writingDate)}</TableCell>
                               <TableCell className="font-medium text-slate-700">{entry.writingNumber || "-"}</TableCell>
                               <TableCell>{entry.writingLib || "-"}</TableCell>
@@ -246,7 +277,7 @@ export default function ImportEntriesPage() {
                                 {entry.credit > 0 ? formatAmount(entry.credit) : "-"}
                               </TableCell>
                             </TableRow>
-                          ))
+                          )})
                         )}
                       </TableBody>
                     </Table>

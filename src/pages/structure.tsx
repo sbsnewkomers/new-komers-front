@@ -103,6 +103,7 @@ type GroupFull = {
   siret: string;
   ape_code?: string;
   fiscal_year_start: string;
+  last_closed_fiscal_year?: number | null;
   mainActivity?: string;
   country?: string;
   logo?: string;
@@ -130,6 +131,7 @@ type CompanyFull = {
   name: string;
   siret: string;
   fiscal_year_start: string;
+  last_closed_fiscal_year?: number | null;
   address?: string;
   country: string;
   ape_code?: string;
@@ -368,6 +370,7 @@ export default function StructurePage() {
     name: "",
     siret: "",
     fiscal_year_start: "",
+    last_closed_fiscal_year: "",
     address: "",
     country: "",
     ape_code: "",
@@ -400,6 +403,7 @@ export default function StructurePage() {
     siret: "",
     ape_code: "",
     fiscal_year_start: "",
+    last_closed_fiscal_year: "",
     mainActivity: "",
     country: "",
     workspaceId: "",
@@ -437,6 +441,7 @@ export default function StructurePage() {
     siret: "",
     ape_code: "",
     fiscal_year_start: "",
+    last_closed_fiscal_year: "",
     mainActivity: "",
     country: "",
     logo: undefined as string | undefined,
@@ -449,6 +454,7 @@ export default function StructurePage() {
     ape_code: "",
     main_activity: "",
     fiscal_year_start: "",
+    last_closed_fiscal_year: "",
     size: "",
     model: "",
     logo: undefined as string | undefined,
@@ -1009,6 +1015,11 @@ export default function StructurePage() {
             siret: g.siret ?? "",
             ape_code: g.ape_code ?? "",
             fiscal_year_start: g.fiscal_year_start ?? "",
+            last_closed_fiscal_year:
+              g.last_closed_fiscal_year !== null &&
+              g.last_closed_fiscal_year !== undefined
+                ? String(g.last_closed_fiscal_year)
+                : "",
             mainActivity: g.mainActivity ?? "",
             country: g.country ?? "",
             logo: g.logo ?? "",
@@ -1019,6 +1030,7 @@ export default function StructurePage() {
             siret: "",
             ape_code: "",
             fiscal_year_start: "",
+            last_closed_fiscal_year: "",
             mainActivity: "",
             country: "",
             logo: undefined as string | undefined,
@@ -1038,6 +1050,11 @@ export default function StructurePage() {
             ape_code: c.ape_code ?? "",
             main_activity: c.main_activity ?? "",
             fiscal_year_start: c.fiscal_year_start ?? "",
+            last_closed_fiscal_year:
+              c.last_closed_fiscal_year !== null &&
+              c.last_closed_fiscal_year !== undefined
+                ? String(c.last_closed_fiscal_year)
+                : "",
             size: c.size ?? "",
             model: c.model ?? "",
             logo: c.logo ?? "",
@@ -1052,6 +1069,7 @@ export default function StructurePage() {
             ape_code: "",
             main_activity: "",
             fiscal_year_start: "",
+            last_closed_fiscal_year: "",
             size: "",
             model: "",
             logo: undefined as string | undefined,
@@ -1182,6 +1200,9 @@ export default function StructurePage() {
       if (editGroup.fiscal_year_start) {
         formData.append('fiscal_year_start', editGroup.fiscal_year_start);
       }
+      if (editGroup.last_closed_fiscal_year.trim()) {
+        formData.append('last_closed_fiscal_year', editGroup.last_closed_fiscal_year.trim());
+      }
       if (editGroup.mainActivity) {
         formData.append('mainActivity', editGroup.mainActivity);
       }
@@ -1226,6 +1247,12 @@ export default function StructurePage() {
       }
       if (editCompany.fiscal_year_start) {
         formData.append('fiscal_year_start', editCompany.fiscal_year_start);
+      }
+      if (editCompany.last_closed_fiscal_year.trim()) {
+        formData.append(
+          'last_closed_fiscal_year',
+          editCompany.last_closed_fiscal_year.trim(),
+        );
       }
       if (editCompany.size) {
         formData.append('size', editCompany.size);
@@ -1463,6 +1490,12 @@ export default function StructurePage() {
         formData.append('siret', addCompanyForm.siret);
       }
       formData.append('fiscal_year_start', addCompanyForm.fiscal_year_start);
+      if (addCompanyForm.last_closed_fiscal_year.trim()) {
+        formData.append(
+          'last_closed_fiscal_year',
+          addCompanyForm.last_closed_fiscal_year.trim(),
+        );
+      }
       if (addCompanyForm.address) {
         formData.append('address', addCompanyForm.address);
       }
@@ -1501,6 +1534,7 @@ export default function StructurePage() {
         name: "",
         siret: "",
         fiscal_year_start: "",
+        last_closed_fiscal_year: "",
         address: "",
         country: "",
         ape_code: "",
@@ -1591,6 +1625,12 @@ export default function StructurePage() {
       if (addGroupForm.fiscal_year_start) {
         formData.append('fiscal_year_start', addGroupForm.fiscal_year_start);
       }
+      if (addGroupForm.last_closed_fiscal_year.trim()) {
+        formData.append(
+          'last_closed_fiscal_year',
+          addGroupForm.last_closed_fiscal_year.trim(),
+        );
+      }
       if (addGroupForm.mainActivity) {
         formData.append('mainActivity', addGroupForm.mainActivity);
       }
@@ -1617,6 +1657,7 @@ export default function StructurePage() {
         siret: "",
         ape_code: "",
         fiscal_year_start: "",
+        last_closed_fiscal_year: "",
         mainActivity: "",
         country: "",
         workspaceId: "",
@@ -1998,6 +2039,7 @@ export default function StructurePage() {
                                 name: "",
                                 siret: "",
                                 fiscal_year_start: "",
+                                last_closed_fiscal_year: "",
                                 address: "",
                                 country: "",
                                 ape_code: "",
@@ -2365,6 +2407,7 @@ export default function StructurePage() {
                                         mainActivity: "",
                                         country: "",
                                         fiscal_year_start: "",
+                                        last_closed_fiscal_year: "",
                                         workspaceId: node.id,
                                         logo: undefined as string | undefined,
                                       });
@@ -2399,6 +2442,7 @@ export default function StructurePage() {
                                           name: "",
                                           siret: "",
                                           fiscal_year_start: "",
+                                          last_closed_fiscal_year: "",
                                           address: "",
                                           country: "",
                                           ape_code: "",
@@ -2755,6 +2799,15 @@ export default function StructurePage() {
                   className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
                 />
               </div>
+              <Field
+                label="Dernier exercice clos"
+                value={editGroup.last_closed_fiscal_year}
+                editing={editing}
+                type="number"
+                onChange={(v) =>
+                  setEditGroup((prev) => ({ ...prev, last_closed_fiscal_year: v }))
+                }
+              />
               <FieldCountry
                 label="Pays"
                 value={editGroup.country}
@@ -2893,6 +2946,15 @@ export default function StructurePage() {
                 editing={editing}
                 type="date"
                 onChange={(v) => setEditCompany((prev) => ({ ...prev, fiscal_year_start: v }))}
+              />
+              <Field
+                label="Dernier exercice clos"
+                value={editCompany.last_closed_fiscal_year}
+                editing={editing}
+                type="number"
+                onChange={(v) =>
+                  setEditCompany((prev) => ({ ...prev, last_closed_fiscal_year: v }))
+                }
               />
               <Field
                 label="Taille"
@@ -4036,6 +4098,24 @@ export default function StructurePage() {
                   }
                 />
               </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Dernier exercice clos
+                </label>
+                <Input
+                  type="number"
+                  min="1900"
+                  max="9999"
+                  value={addGroupForm.last_closed_fiscal_year}
+                  onChange={(e) =>
+                    setAddGroupForm((prev) => ({
+                      ...prev,
+                      last_closed_fiscal_year: e.target.value,
+                    }))
+                  }
+                  placeholder="Ex: 2024"
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -4384,6 +4464,24 @@ export default function StructurePage() {
                   onChange={(e) =>
                     setAddCompanyForm((prev) => ({ ...prev, fiscal_year_start: e.target.value }))
                   }
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Dernier exercice clos
+                </label>
+                <Input
+                  type="number"
+                  min="1900"
+                  max="9999"
+                  value={addCompanyForm.last_closed_fiscal_year}
+                  onChange={(e) =>
+                    setAddCompanyForm((prev) => ({
+                      ...prev,
+                      last_closed_fiscal_year: e.target.value,
+                    }))
+                  }
+                  placeholder="Ex: 2024"
                 />
               </div>
             </div>

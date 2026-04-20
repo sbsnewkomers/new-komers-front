@@ -62,6 +62,10 @@ export default function ImportPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   const [selectedEntityType, setSelectedEntityType] = useState<'Group' | 'Company' | null>(null);
+  const [selectedEntityMeta, setSelectedEntityMeta] = useState<{
+    name: string;
+    lastClosedFiscalYear: number | null;
+  } | null>(null);
   
   const [selectedSavedMapping, setSelectedSavedMapping] = useState<SavedMapping | null>(null);
   const [savedMappingModalOpen, setSavedMappingModalOpen] = useState(false);
@@ -241,9 +245,21 @@ export default function ImportPage() {
     }
   };
 
-  const handleEntityChange = (entityId: string, entityType: 'Group' | 'Company') => {
+  const handleEntityChange = (
+    entityId: string,
+    entityType: 'Group' | 'Company',
+    entity?: { name: string; last_closed_fiscal_year?: number | null },
+  ) => {
     setSelectedEntityId(entityId);
     setSelectedEntityType(entityType);
+    setSelectedEntityMeta(
+      entityId && entity
+        ? {
+            name: entity.name,
+            lastClosedFiscalYear: entity.last_closed_fiscal_year ?? null,
+          }
+        : null,
+    );
   };
 
   const performImport = async (
@@ -702,6 +718,16 @@ export default function ImportPage() {
           selectedEntityType={selectedEntityType}
           onEntityChange={handleEntityChange}
         />
+
+        {selectedEntityMeta && (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700">
+            <span className="font-medium">{selectedEntityMeta.name}</span>
+            <span className="mx-2 text-slate-400">•</span>
+            {selectedEntityMeta.lastClosedFiscalYear !== null
+              ? `Dernier exercice clos: ${selectedEntityMeta.lastClosedFiscalYear}`
+              : 'Aucun exercice clos renseigné'}
+          </div>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="h-12 p-1.5 bg-slate-100 rounded-xl gap-1">
