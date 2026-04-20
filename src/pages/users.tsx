@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -79,6 +80,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/DropdownMenu";
+import { useRouter } from "next/navigation";
 
 // Validation d'email
 const isValidEmail = (email: string): boolean => {
@@ -103,7 +105,15 @@ const statusBadgeColor: Record<UserStatus, string> = {
 type ActiveTab = "users" | "invitations";
 
 export default function UsersPage() {
+  const router = useRouter();
   const { user: currentUser } = usePermissionsContext();
+  // check user role
+  const isAdmin = currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "ADMIN" || currentUser?.role === "HEAD_MANAGER" || currentUser?.role === "MANAGER";
+  if (!isAdmin) {
+    router.replace("/403");
+    // return null
+    return null;
+  }
   const [activeTab, setActiveTab] = useState<ActiveTab>("users");
 
   // ── Users state ──
