@@ -60,7 +60,6 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback }: Im
                     <TableHead className="font-semibold text-slate-600">Statut</TableHead>
                     <TableHead className="font-semibold text-slate-600">Entité</TableHead>
                     <TableHead className="font-semibold text-slate-600">Utilisateur</TableHead>
-                    <TableHead className="font-semibold text-slate-600 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
 
@@ -117,20 +116,7 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback }: Im
                         </div>
                       </TableCell>
 
-                      {/* ACTIONS */}
-                      <TableCell className="text-right">
-                        {row.status === "Terminé" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="gap-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                            onClick={() => onRollback(row)}
-                          >
-                            <RotateCcw className="h-3.5 w-3.5" />
-                            Restaurer
-                          </Button>
-                        )}
-                      </TableCell>
+                      
                     </TableRow>
                   ))}
                 </TableBody>

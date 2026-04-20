@@ -65,13 +65,7 @@ export default function ImportPage() {
 
   // Ref pour éviter les appels multiples
   const isImportingRef = useRef(false);
-
-  useEffect(() => {
-    companies.fetchList();
-    fetchHistory();
-  }, []);
-
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback( async () => {
     try {
       const data = await apiFetch<any[]>("/generic-import/history", {
         method: "GET",
@@ -93,7 +87,14 @@ export default function ImportPage() {
     } catch (err) {
       console.error("Erreur load history:", err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    companies.fetchList();
+    fetchHistory();
+  }, []);
+
+  
 
   const companyList = companies.list ?? [];
 
@@ -467,7 +468,7 @@ export default function ImportPage() {
   setCsvHeaders([]);
   setValidationErrors([]);
   setValidationModalOpen(false);
-
+  await new Promise(resolve => setTimeout(resolve, 500));
   await fetchHistory();
   setHistoryOpen(true);
 }

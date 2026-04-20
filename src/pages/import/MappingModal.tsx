@@ -6,7 +6,7 @@ import {
   FolderOpen, Eye, Save, Globe, Trash2,
 } from "lucide-react";
 import { Basic_COLUMNS } from "./constants";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { apiFetch } from "@/lib/apiClient";
 import { SavedMapping } from "./types";
 import { cleanMapping } from './MappingUtils';
@@ -45,9 +45,10 @@ interface MappingListPanelProps {
   blockedMessage?: string;
   onView: (m: SavedMapping) => void;
   formatDate: (d: string) => string;
+  // workspace selector dans le panneau lui-même
   showWorkspaceSelector?: boolean;
   accessibleWorkspaces?: { id: string; name: string }[];
-  selectedLocalWorkspaceId?: string | null;
+  selectedWorkspaceId?: string | null;
   onSelectWorkspace?: (id: string) => void;
   onDelete: (m: SavedMapping) => void;
   currentUserId?: string;
@@ -66,11 +67,11 @@ function MappingListPanel({
   formatDate,
   showWorkspaceSelector = false,
   accessibleWorkspaces = [],
-  selectedLocalWorkspaceId,
+  selectedWorkspaceId,
   onSelectWorkspace,
-  onDelete,        // ✅ correctement destructuré
-  currentUserId,   // ✅ correctement destructuré
-  userRole,        // ✅ correctement destructuré
+  onDelete,
+  currentUserId,
+  userRole,
 }: MappingListPanelProps) {
   if (blocked) {
     return (
@@ -90,13 +91,14 @@ function MappingListPanel({
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white">
+      {/* Sélecteur de workspace TOUJOURS affiché si showWorkspaceSelector=true */}
       {showWorkspaceSelector && accessibleWorkspaces.length > 0 && (
         <div className="flex-shrink-0 p-3 border-b border-slate-100 bg-slate-50">
           <label className="text-xs font-semibold text-slate-600 mb-1 block">
             Choisir un workspace
           </label>
           <select
-            value={selectedLocalWorkspaceId ?? ""}
+            value={selectedWorkspaceId ?? ""}
             onChange={(e) => onSelectWorkspace?.(e.target.value)}
             className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white"
           >
@@ -105,6 +107,11 @@ function MappingListPanel({
               <option key={ws.id} value={ws.id}>{ws.name}</option>
             ))}
           </select>
+          {selectedWorkspaceId && (
+            <p className="text-[10px] text-slate-400 mt-1">
+              Sélectionnez un autre workspace pour changer l'affichage
+            </p>
+          )}
         </div>
       )}
 
@@ -122,7 +129,7 @@ function MappingListPanel({
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-3">
-          {showWorkspaceSelector && !selectedLocalWorkspaceId ? (
+          {showWorkspaceSelector && !selectedWorkspaceId ? (
             <div className="text-center py-8">
               <div className="inline-flex p-3 rounded-full bg-slate-100 mb-3">
                 <FolderOpen className="h-6 w-6 text-slate-400" />
@@ -178,7 +185,6 @@ function MappingListPanel({
                         <Eye className="h-4 w-4 text-slate-400" aria-hidden="true" />
                         {(() => {
                           const isGlobal = !m.workspaceId || m.scope === 'GLOBAL';
-                          // ✅ Correction : utilisation de userRole uniquement (plus de fetchUserPermissionDetail)
                           const canDelete = isGlobal
                             ? (userRole === 'SUPER_ADMIN' || userRole === 'ADMIN')
                             : (
@@ -189,7 +195,7 @@ function MappingListPanel({
                               );
                           return canDelete ? (
                             <button
-                              onClick={(e) => { e.stopPropagation(); onDelete(m); }} // ✅ onDelete correctement résolu
+                              onClick={(e) => { e.stopPropagation(); onDelete(m); }}
                               className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
                               title="Supprimer ce mapping"
                               aria-label={`Supprimer ${m.name}`}
@@ -226,17 +232,6 @@ function ScopeToggle({ scope, onChange, disabled }: ScopeToggleProps) {
       <button
         type="button"
         disabled={disabled}
-        onClick={() => onChange('LOCAL')}
-        className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
-          scope === 'LOCAL' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-      >
-        <FolderOpen className="h-3 w-3" />
-        Local
-      </button>
-      <button
-        type="button"
-        disabled={disabled}
         onClick={() => onChange('GLOBAL')}
         className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
           scope === 'GLOBAL' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
@@ -245,12 +240,23 @@ function ScopeToggle({ scope, onChange, disabled }: ScopeToggleProps) {
         <Globe className="h-3 w-3" />
         Global
       </button>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChange('LOCAL')}
+        className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+          scope === 'LOCAL' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        <FolderOpen className="h-3 w-3" />
+        Local
+      </button>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// Select workspace inline (pour admin en mode LOCAL)
+// Select workspace inline
 // ─────────────────────────────────────────────────────────────
 interface WorkspaceSelectorInlineProps {
   workspaces: { id: string; name: string }[];
@@ -309,6 +315,8 @@ interface MappingDetailModalProps {
   saveAsNewWorkspaceId: string | null;
   setSaveAsNewWorkspaceId: (id: string) => void;
   isLoadingWorkspaces?: boolean;
+  successMessage?: string | null;
+  errorMessage?: string | null;
 }
 
 function MappingDetailModal({
@@ -334,10 +342,35 @@ function MappingDetailModal({
   saveAsNewWorkspaceId,
   setSaveAsNewWorkspaceId,
   isLoadingWorkspaces,
+  successMessage,
+  errorMessage,
 }: MappingDetailModalProps) {
   return (
     <Dialog open={showMappingDetail} onOpenChange={setShowMappingDetail}>
       <DialogContent className="max-w-3xl h-[85vh] flex flex-col bg-white rounded-xl overflow-hidden">
+
+        {/* Messages feedback en haut de la modale détail */}
+        {errorMessage && (
+          <div className="flex-shrink-0 mx-4 mt-4 p-2 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-xs text-red-600 flex items-center gap-2">
+              <AlertCircle className="h-3 w-3" />{errorMessage}
+            </p>
+          </div>
+        )}
+        {successMessage && (
+          <div className="flex-shrink-0 mx-4 mt-4 p-3 bg-emerald-500 rounded-lg shadow-md flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex-shrink-0 bg-white/20 rounded-full p-1">
+              <CheckCircle2 className="h-4 w-4 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-white">{successMessage}</p>
+              <p className="text-[10px] text-emerald-100 mt-0.5">La fenêtre va se fermer automatiquement...</p>
+            </div>
+            <div className="flex-shrink-0">
+              <Loader2 className="h-3.5 w-3.5 text-white/70 animate-spin" />
+            </div>
+          </div>
+        )}
         <DialogHeader className="p-4 border-b bg-slate-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -383,7 +416,6 @@ function MappingDetailModal({
 
         {detailMode === "edit" && (
           <div className="flex-shrink-0 p-4 border-b bg-white space-y-3">
-            {/* Nom */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Nom du nouveau mapping <span className="text-red-500">*</span>
@@ -401,7 +433,6 @@ function MappingDetailModal({
               )}
             </div>
 
-            {/* Toggle scope + select workspace — uniquement pour SUPER_ADMIN / ADMIN */}
             {isAdmin && (
               <div className="space-y-2">
                 <div className="flex items-center gap-3 flex-wrap">
@@ -414,7 +445,6 @@ function MappingDetailModal({
                   </span>
                 </div>
 
-                {/* Select workspace visible uniquement en LOCAL */}
                 {saveAsNewScope === 'LOCAL' && (
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-semibold text-slate-600">
@@ -608,7 +638,21 @@ export function MappingModal({
   // Workspaces accessibles
   const [accessibleWorkspaces, setAccessibleWorkspaces] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
-  const [selectedLocalWorkspaceId, setSelectedLocalWorkspaceId] = useState<string | null>(null);
+
+  // ── workspace actif pour l'onglet "Locaux" (panneau liste)
+  // Ce state est LA source de vérité pour l'affichage des mappings locaux.
+  // Il est synchronisé depuis :
+  //   - workspaceId (prop) s'il est connu
+  //   - saveWorkspaceId quand l'admin le sélectionne dans le header (mode "Par fichier")
+  //   - la sélection directe dans le panneau "Locaux"
+  const [activeLocalWorkspaceId, setActiveLocalWorkspaceId] = useState<string | null>(null);
+
+  // ── workspace sélectionné pour sauvegarder (header mode fichier)
+  const [saveWorkspaceId, setSaveWorkspaceId] = useState<string | null>(null);
+
+  // ── auto-détection workspaceId pour non-admins
+  const [autoDetectedWorkspaceId, setAutoDetectedWorkspaceId] = useState<string | null>(null);
+  const [needsWorkspaceSelection, setNeedsWorkspaceSelection] = useState(false);
 
   // Détail / édition
   const [selectedSavedMapping, setSelectedSavedMapping] = useState<SavedMapping | null>(null);
@@ -626,16 +670,15 @@ export function MappingModal({
   const [newMappingName, setNewMappingName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // ── Scope + workspace pour sauvegarde courante ──
-  const [saveScope, setSaveScope] = useState<'LOCAL' | 'GLOBAL'>('LOCAL');
-  const [saveWorkspaceId, setSaveWorkspaceId] = useState<string | null>(null);
+  // Scope pour sauvegarde courante
+  const [saveScope, setSaveScope] = useState<'LOCAL' | 'GLOBAL'>('GLOBAL');
 
-  // ── Scope + workspace pour "enregistrer comme nouveau" (depuis détail) ──
+  // Scope + workspace pour "enregistrer comme nouveau"
   const [saveAsNewScope, setSaveAsNewScope] = useState<'LOCAL' | 'GLOBAL'>('LOCAL');
   const [saveAsNewWorkspaceId, setSaveAsNewWorkspaceId] = useState<string | null>(null);
 
-  // ── Dérivé : admin sans workspaceId connu → afficher le sélecteur de workspace ──
-  const showHeaderWorkspaceSelector = isAdmin && !workspaceId;
+  // Ref pour éviter double-fetch
+  const prevActiveLocalWorkspaceId = useRef<string | null>(null);
 
   // ── Fetch workspaces accessibles ──────────────────────────
   const fetchAccessibleWorkspaces = useCallback(async () => {
@@ -646,57 +689,17 @@ export function MappingModal({
         { snackbar: { showSuccess: false, showError: false } }
       );
       setAccessibleWorkspaces(wsList ?? []);
+      return wsList ?? [];
     } catch {
       setAccessibleWorkspaces([]);
+      return [];
     } finally {
       setIsLoadingWorkspaces(false);
     }
   }, []);
 
-  // ── Fetch mappings locaux ─────────────────────────────────
-  const fetchLocalMappings = useCallback(async () => {
-    setIsLoadingLocal(true);
-    try {
-      if (workspaceId) {
-        const data = await apiFetch<SavedMapping[]>(
-          `/mapping-templates/workspace/${workspaceId}`,
-          { snackbar: { showSuccess: false, showError: false } }
-        );
-        setLocalMappings(data ?? []);
-      } else if (isAdmin) {
-        const wsList = await apiFetch<{ id: string; name: string }[]>(
-          '/mapping-templates/my-workspaces',
-          { snackbar: { showSuccess: false, showError: false } }
-        );
-        setAccessibleWorkspaces(wsList ?? []);
-        setLocalMappings([]);
-      } else {
-        const wsList = await apiFetch<{ id: string; name: string }[]>(
-          '/mapping-templates/my-workspaces',
-          { snackbar: { showSuccess: false, showError: false } }
-        );
-        if (!wsList?.length) { setLocalMappings([]); return; }
-        const results = await Promise.all(
-          wsList.map(ws =>
-            apiFetch<SavedMapping[]>(
-              `/mapping-templates/workspace/${ws.id}`,
-              { snackbar: { showSuccess: false, showError: false } }
-            ).catch(() => [] as SavedMapping[])
-          )
-        );
-        setLocalMappings(results.flat());
-      }
-    } catch (err) {
-      console.error("❌ [fetchLocalMappings]:", err);
-      setLocalMappings([]);
-    } finally {
-      setIsLoadingLocal(false);
-    }
-  }, [workspaceId, isAdmin, currentUser?.role]);
-
-  const handleSelectLocalWorkspace = useCallback(async (wsId: string) => {
-    setSelectedLocalWorkspaceId(wsId);
-    if (!wsId) { setLocalMappings([]); return; }
+  // ── Fetch mappings locaux pour un workspace donné ─────────
+  const fetchLocalMappingsForWorkspace = useCallback(async (wsId: string) => {
     setIsLoadingLocal(true);
     try {
       const data = await apiFetch<SavedMapping[]>(
@@ -710,6 +713,34 @@ export function MappingModal({
       setIsLoadingLocal(false);
     }
   }, []);
+
+  // ── Effet : re-fetch mappings locaux dès que activeLocalWorkspaceId change ──
+  useEffect(() => {
+    if (!open) return;
+    if (activeLocalWorkspaceId && activeLocalWorkspaceId !== prevActiveLocalWorkspaceId.current) {
+      prevActiveLocalWorkspaceId.current = activeLocalWorkspaceId;
+      fetchLocalMappingsForWorkspace(activeLocalWorkspaceId);
+    } else if (!activeLocalWorkspaceId) {
+      setLocalMappings([]);
+    }
+  }, [activeLocalWorkspaceId, open, fetchLocalMappingsForWorkspace]);
+
+  // ── Quand l'admin change le workspace dans le header (mode Par fichier)
+  //    → synchroniser activeLocalWorkspaceId pour l'onglet Locaux
+  const handleHeaderWorkspaceChange = useCallback((id: string) => {
+    setSaveWorkspaceId(id || null);
+    // Sync vers l'onglet Locaux
+    setActiveLocalWorkspaceId(id || null);
+  }, []);
+
+  // ── Quand l'utilisateur sélectionne un workspace dans le panneau Locaux
+  const handlePanelWorkspaceChange = useCallback((wsId: string) => {
+    setActiveLocalWorkspaceId(wsId || null);
+    // Si c'est un admin, synchroniser aussi saveWorkspaceId
+    if (isAdmin) {
+      setSaveWorkspaceId(wsId || null);
+    }
+  }, [isAdmin]);
 
   const fetchGlobalMappings = useCallback(async () => {
     setIsLoadingGlobal(true);
@@ -726,24 +757,80 @@ export function MappingModal({
     }
   }, []);
 
+  // ── Auto-détection workspaceId pour non-admins ─────────────
+  const autoDetectWorkspaceForNonAdmin = useCallback(async () => {
+    if (isAdmin) return;
+
+    if (workspaceId) {
+      setAutoDetectedWorkspaceId(workspaceId);
+      setSaveWorkspaceId(workspaceId);
+      setActiveLocalWorkspaceId(workspaceId);
+      setNeedsWorkspaceSelection(false);
+      return;
+    }
+
+    try {
+      const wsList = await apiFetch<{ id: string; name: string }[]>(
+        '/mapping-templates/my-workspaces',
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+
+      if (wsList?.length === 1) {
+        setAutoDetectedWorkspaceId(wsList[0].id);
+        setSaveWorkspaceId(wsList[0].id);
+        setActiveLocalWorkspaceId(wsList[0].id);
+        setNeedsWorkspaceSelection(false);
+        setAccessibleWorkspaces(wsList);
+      } else if (wsList?.length > 1) {
+        setAutoDetectedWorkspaceId(null);
+        setSaveWorkspaceId(null);
+        setActiveLocalWorkspaceId(null);
+        setNeedsWorkspaceSelection(true);
+        setAccessibleWorkspaces(wsList);
+      } else {
+        setAutoDetectedWorkspaceId(null);
+        setSaveWorkspaceId(null);
+        setActiveLocalWorkspaceId(null);
+        setNeedsWorkspaceSelection(false);
+      }
+    } catch {
+      setAutoDetectedWorkspaceId(null);
+      setNeedsWorkspaceSelection(false);
+    }
+  }, [isAdmin, workspaceId]);
+
+  // ── Initialisation à l'ouverture de la modale ──────────────
   useEffect(() => {
     if (open) {
-      fetchLocalMappings();
+      prevActiveLocalWorkspaceId.current = null;
+
       fetchGlobalMappings();
-      fetchAccessibleWorkspaces();
       setSelectedSavedMapping(null);
       setErrorMessage(null);
       setSuccessMessage(null);
       setMappingName("");
       setNewMappingName("");
-      setSelectedLocalWorkspaceId(null);
-      // Reset scopes et workspaces
-      setSaveScope('LOCAL');
-      setSaveWorkspaceId(workspaceId ?? null);
-      setSaveAsNewScope('LOCAL');
+      setSaveScope(isAdmin ? 'GLOBAL' : 'LOCAL');
+      setSaveAsNewScope(isAdmin ? 'GLOBAL' : 'LOCAL');
       setSaveAsNewWorkspaceId(workspaceId ?? null);
+
+      if (isAdmin) {
+        fetchAccessibleWorkspaces();
+        const initWs = workspaceId ?? null;
+        setSaveWorkspaceId(initWs);
+        setActiveLocalWorkspaceId(initWs);
+        setAutoDetectedWorkspaceId(null);
+        setNeedsWorkspaceSelection(false);
+        if (initWs) {
+          fetchLocalMappingsForWorkspace(initWs);
+        } else {
+          setLocalMappings([]);
+        }
+      } else {
+        autoDetectWorkspaceForNonAdmin();
+      }
     }
-  }, [open, workspaceId]);
+  }, [open, workspaceId, isAdmin]);
 
   const closeModal = useCallback(() => {
     onOpenChange(false);
@@ -774,10 +861,14 @@ export function MappingModal({
     setOriginalEditMapping(fullRules);
     setDetailMode("view");
     setNewMappingName("");
-    setSaveAsNewScope('LOCAL');
+    // Scope par défaut : celui du mapping ouvert (GLOBAL si global, LOCAL sinon)
+    const isGlobalMapping = !m.workspaceId || m.scope === 'GLOBAL';
+    setSaveAsNewScope(isAdmin ? (isGlobalMapping ? 'GLOBAL' : 'LOCAL') : 'LOCAL');
+    // workspaceId : on prend celui de la prop si l'entité est sélectionnée, sinon null
+    // entityId/entityType seront résolus au moment de la sauvegarde selon le contexte courant
     setSaveAsNewWorkspaceId(workspaceId ?? null);
     setShowMappingDetail(true);
-  }, [workspaceId]);
+  }, [workspaceId, isAdmin]);
 
   const isMappingChanged = useMemo(
     () => JSON.stringify(editSavedMapping) !== JSON.stringify(originalEditMapping),
@@ -827,29 +918,35 @@ export function MappingModal({
     if (onImport) onImport();
   }, [onImport]);
 
-  // ── Enregistrer mapping courant ────────
+  // ── Enregistrer mapping courant ─────────────────────────────
   const handleSaveCurrentMapping = useCallback(async () => {
     if (!mappingName.trim()) return;
     setIsSaving(true);
 
     const currentRules = cleanMapping(mapping);
-
     const effectiveScope = isAdmin ? saveScope : 'LOCAL';
-    const effectiveWorkspaceId = effectiveScope === 'GLOBAL'
-      ? null
-      : (workspaceId ?? saveWorkspaceId ?? null);
 
-    if (effectiveScope === 'LOCAL' && !effectiveWorkspaceId) {
-      setErrorMessage("Un workspace est requis pour un mapping local. Sélectionnez un workspace ci-dessus.");
-      setIsSaving(false);
-      return;
+    let effectiveWorkspaceId: string | null = null;
+
+    if (effectiveScope === 'LOCAL') {
+      effectiveWorkspaceId =
+        workspaceId
+        ?? autoDetectedWorkspaceId
+        ?? saveWorkspaceId
+        ?? null;
+
+      if (!effectiveWorkspaceId) {
+        setErrorMessage("Veuillez sélectionner un workspace avant d'enregistrer.");
+        setIsSaving(false);
+        return;
+      }
     }
 
     const payload = {
       name: mappingName.trim(),
       rules: currentRules,
-      entityId: effectiveScope === 'LOCAL' ? (entityId || null) : null,
-      entityType: effectiveScope === 'LOCAL' ? (entityType || null) : null,
+      entityId: entityId || null,
+      entityType: entityType || null,
       workspaceId: effectiveWorkspaceId,
       scope: effectiveScope,
     };
@@ -859,7 +956,11 @@ export function MappingModal({
         method: "POST",
         body: JSON.stringify(payload),
       });
-      await Promise.all([fetchLocalMappings(), fetchGlobalMappings()]);
+      // Re-fetch les deux listes
+      await Promise.all([
+        effectiveWorkspaceId ? fetchLocalMappingsForWorkspace(effectiveWorkspaceId) : Promise.resolve(),
+        fetchGlobalMappings(),
+      ]);
       setErrorMessage(null);
       setSuccessMessage("Mapping enregistré avec succès !");
       setMappingName("");
@@ -870,9 +971,14 @@ export function MappingModal({
     } finally {
       setIsSaving(false);
     }
-  }, [mapping, mappingName, entityId, entityType, workspaceId, isAdmin, saveScope, saveWorkspaceId]);
+  }, [
+    mapping, mappingName, entityId, entityType,
+    workspaceId, autoDetectedWorkspaceId,
+    isAdmin, saveScope, saveWorkspaceId,
+    fetchLocalMappingsForWorkspace, fetchGlobalMappings, closeModal,
+  ]);
 
-  // ── Enregistrer comme nouveau (depuis détail) ──────────────
+  // ── Enregistrer comme nouveau (depuis détail) ───────────────
   const handleSaveAsNewMapping = useCallback(async () => {
     if (!selectedSavedMapping || !newMappingName.trim()) return;
     setIsSaving(true);
@@ -884,14 +990,21 @@ export function MappingModal({
     const cleaned = cleanMapping(invertedMapping);
 
     const effectiveScope = isAdmin ? saveAsNewScope : 'LOCAL';
-    const effectiveWorkspaceId = effectiveScope === 'GLOBAL'
-      ? null
-      : (workspaceId ?? saveAsNewWorkspaceId ?? null);
 
-    if (effectiveScope === 'LOCAL' && !effectiveWorkspaceId) {
-      setErrorMessage("Un workspace est requis pour un mapping local. Sélectionnez un workspace.");
-      setIsSaving(false);
-      return;
+    let effectiveWorkspaceId: string | null = null;
+
+    if (effectiveScope === 'LOCAL') {
+      effectiveWorkspaceId =
+        workspaceId
+        ?? autoDetectedWorkspaceId
+        ?? saveAsNewWorkspaceId
+        ?? null;
+
+      if (!effectiveWorkspaceId) {
+        setErrorMessage("Un workspace est requis pour un mapping local. Sélectionnez un workspace.");
+        setIsSaving(false);
+        return;
+      }
     }
 
     const payload = {
@@ -908,7 +1021,10 @@ export function MappingModal({
         method: "POST",
         body: JSON.stringify(payload),
       });
-      await Promise.all([fetchLocalMappings(), fetchGlobalMappings()]);
+      await Promise.all([
+        effectiveWorkspaceId ? fetchLocalMappingsForWorkspace(effectiveWorkspaceId) : Promise.resolve(),
+        fetchGlobalMappings(),
+      ]);
       setErrorMessage(null);
       setSuccessMessage("Nouveau mapping enregistré avec succès !");
       setNewMappingName("");
@@ -923,50 +1039,57 @@ export function MappingModal({
     } finally {
       setIsSaving(false);
     }
-  }, [selectedSavedMapping, editSavedMapping, newMappingName, entityId, entityType, workspaceId, isAdmin, saveAsNewScope, saveAsNewWorkspaceId]);
+  }, [
+    selectedSavedMapping, editSavedMapping, newMappingName,
+    entityId, entityType, workspaceId, autoDetectedWorkspaceId,
+    isAdmin, saveAsNewScope, saveAsNewWorkspaceId,
+    fetchLocalMappingsForWorkspace, fetchGlobalMappings, onOpenChange,
+  ]);
 
- const handleDeleteMapping = useCallback(async (m: SavedMapping) => {
-  if (!confirm(`Supprimer le mapping "${m.name}" ?`)) return;
-  
-  try {
-    await apiFetch(`/mapping-templates/${m.id}`, {
-      method: 'DELETE',
-      snackbar: {
-        showSuccess: true,
-        showError: false, // IMPORTANT: mettre à false pour éviter l'affichage automatique
-        successMessage: `✅ Mapping "${m.name}" supprimé`,
-      },
-    });
-    await Promise.all([fetchLocalMappings(), fetchGlobalMappings()]);
-  } catch (err: any) {
-    console.error('Erreur suppression mapping:', err);
-    
-    // Récupérer le message d'erreur (l'erreur est dans err.message)
-    const errorMessage = err?.message || '';
-    const errorString = String(errorMessage).toLowerCase();
-    
-    // Vérifier si c'est une erreur de contrainte de clé étrangère
-    const isForeignKeyViolation = 
-      errorString.includes('contrainte de clé étrangère') ||
-      errorString.includes('violation de clé étrangère') ||
-      errorString.includes('foreign key') ||
-      errorString.includes('fk_entry_mapping') ||
-      errorString.includes('accounting_entries');
-    
-    if (isForeignKeyViolation) {
-      // Afficher la modale personnalisée
-      setMappingDeleteError({
-        show: true,
-        mappingName: m.name,
-        details: "Ce mapping est utilisé par des écritures comptables existantes."
+  const handleDeleteMapping = useCallback(async (m: SavedMapping) => {
+    if (!confirm(`Supprimer le mapping "${m.name}" ?`)) return;
+
+    try {
+      await apiFetch(`/mapping-templates/${m.id}`, {
+        method: 'DELETE',
+        snackbar: {
+          showSuccess: true,
+          showError: false,
+          successMessage: `✅ Mapping "${m.name}" supprimé`,
+        },
       });
-    } else {
-      // Autre erreur - afficher un message simple
-      setErrorMessage(`Impossible de supprimer le mapping "${m.name}". ${errorMessage || 'Erreur inconnue'}`);
-      setTimeout(() => setErrorMessage(null), 5000);
+      // Re-fetch selon le scope du mapping supprimé
+      const isGlobal = !m.workspaceId || m.scope === 'GLOBAL';
+      if (isGlobal) {
+        await fetchGlobalMappings();
+      } else if (activeLocalWorkspaceId) {
+        await fetchLocalMappingsForWorkspace(activeLocalWorkspaceId);
+      }
+    } catch (err: any) {
+      console.error('Erreur suppression mapping:', err);
+
+      const errorMessage = err?.message || '';
+      const errorString = String(errorMessage).toLowerCase();
+
+      const isForeignKeyViolation =
+        errorString.includes('contrainte de clé étrangère') ||
+        errorString.includes('violation de clé étrangère') ||
+        errorString.includes('foreign key') ||
+        errorString.includes('fk_entry_mapping') ||
+        errorString.includes('accounting_entries');
+
+      if (isForeignKeyViolation) {
+        setMappingDeleteError({
+          show: true,
+          mappingName: m.name,
+          details: "Ce mapping est utilisé par des écritures comptables existantes.",
+        });
+      } else {
+        setErrorMessage(`Impossible de supprimer le mapping "${m.name}". ${errorMessage || 'Erreur inconnue'}`);
+        setTimeout(() => setErrorMessage(null), 5000);
+      }
     }
-  }
-}, [fetchLocalMappings, fetchGlobalMappings]);
+  }, [fetchGlobalMappings, fetchLocalMappingsForWorkspace, activeLocalWorkspaceId]);
 
   const handleFileInputClick = useCallback(() => {
     document.getElementById('mapping-file-input')?.click();
@@ -977,13 +1100,23 @@ export function MappingModal({
     if (file && onFileUpload) onFileUpload(file);
   }, [onFileUpload]);
 
+  // ── Admin : affiche le sélecteur de workspace dans le header quand nécessaire ──
+  // (pas de workspaceId connu via l'entité sélectionnée)
+  const showHeaderWorkspaceSelector = isAdmin && !workspaceId;
+
   const canSaveMapping = useMemo(() => {
     const baseValid = mappingName.trim() !== "" && isComplete && hasFile;
-
     if (!baseValid) return false;
+
     if (isAdmin && saveScope === 'LOCAL' && !workspaceId && !saveWorkspaceId) return false;
+
+    if (!isAdmin) {
+      const resolvedWs = workspaceId ?? autoDetectedWorkspaceId ?? saveWorkspaceId;
+      if (!resolvedWs) return false;
+    }
+
     return true;
-  }, [mappingName, isComplete, hasFile, isAdmin, saveScope, workspaceId, saveWorkspaceId]);
+  }, [mappingName, isComplete, hasFile, isAdmin, saveScope, workspaceId, saveWorkspaceId, autoDetectedWorkspaceId]);
 
   const getImportButtonDisabled = useCallback(() => {
     if (configMode === 'file') return !isComplete || !hasFile;
@@ -996,9 +1129,16 @@ export function MappingModal({
     local: "Réutilisez un mapping déjà configuré pour ce workspace",
     global: "Réutilisez un mapping partagé sur toute la plateforme",
   }[configMode];
+
+  // ── Détermine si le panneau Locaux doit afficher un sélecteur de workspace ──
+  // Pour les admins : toujours (pour pouvoir changer)
+  // Pour les non-admins avec plusieurs workspaces : toujours
+  const showLocalPanelWorkspaceSelector = isAdmin
+    ? true
+    : needsWorkspaceSelection;
+
   const DeleteErrorDialog = () => {
     if (!mappingDeleteError?.show) return null;
-    
     return (
       <Dialog open={mappingDeleteError.show} onOpenChange={() => setMappingDeleteError(null)}>
         <DialogContent className="max-w-md bg-white rounded-xl">
@@ -1012,33 +1152,25 @@ export function MappingModal({
               </DialogTitle>
             </div>
           </DialogHeader>
-          
           <div className="space-y-4 py-4">
             <p className="text-sm text-slate-700">
               Le mapping <span className="font-semibold text-primary">"{mappingDeleteError.mappingName}"</span> ne peut pas être supprimé car il est actuellement utilisé.
             </p>
-            
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <p className="text-sm font-medium text-amber-800 mb-2">
-                📌 Pourquoi ce message ?
-              </p>
+              <p className="text-sm font-medium text-amber-800 mb-2">📌 Pourquoi ce message ?</p>
               <p className="text-sm text-amber-700">
-                Ce mapping a été utilisé pour importer ou structurer des données. 
+                Ce mapping a été utilisé pour importer ou structurer des données.
                 La suppression pourrait causer des incohérences dans votre base de données.
               </p>
             </div>
-            
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-              <p className="text-sm font-medium text-slate-700 mb-2">
-                ✅ Comment faire ?
-              </p>
+              <p className="text-sm font-medium text-slate-700 mb-2">✅ Comment faire ?</p>
               <ul className="text-sm text-slate-600 space-y-2 list-disc list-inside">
                 <li>Créez un <strong>nouveau mapping</strong> si besoin</li>
                 <li>Le mapping existant restera disponible en lecture seule</li>
                 <li>Contactez un administrateur si vous souhaitez forcer la suppression</li>
               </ul>
             </div>
-            
             {mappingDeleteError.details && (
               <details className="text-xs text-slate-500 mt-2">
                 <summary className="cursor-pointer">Détails techniques</summary>
@@ -1048,19 +1180,15 @@ export function MappingModal({
               </details>
             )}
           </div>
-          
           <DialogFooter>
-            <Button onClick={() => setMappingDeleteError(null)} variant="outline">
-              Fermer
-            </Button>
-            <Button onClick={() => setMappingDeleteError(null)} className="bg-primary">
-              Compris
-            </Button>
+            <Button onClick={() => setMappingDeleteError(null)} variant="outline">Fermer</Button>
+            <Button onClick={() => setMappingDeleteError(null)} className="bg-primary">Compris</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     );
   };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1074,10 +1202,17 @@ export function MappingModal({
             </div>
           )}
           {successMessage && (
-            <div className="flex-shrink-0 mx-4 mt-4 p-2 bg-emerald-50 border border-emerald-200 rounded-md">
-              <p className="text-xs text-emerald-600 flex items-center gap-2">
-                <CheckCircle2 className="h-3 w-3" />{successMessage}
-              </p>
+            <div className="flex-shrink-0 mx-4 mt-4 p-3 bg-emerald-500 rounded-lg shadow-md flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex-shrink-0 bg-white/20 rounded-full p-1">
+                <CheckCircle2 className="h-4 w-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-white">{successMessage}</p>
+                <p className="text-[10px] text-emerald-100 mt-0.5">La fenêtre va se fermer automatiquement...</p>
+              </div>
+              <div className="flex-shrink-0">
+                <Loader2 className="h-3.5 w-3.5 text-white/70 animate-spin" />
+              </div>
             </div>
           )}
 
@@ -1111,7 +1246,6 @@ export function MappingModal({
                         placeholder="Ex: Mapping fournisseur A"
                         className="w-56 px-2 py-1 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
-                      {/* Toggle scope uniquement pour SUPER_ADMIN / ADMIN */}
                       {isAdmin && (
                         <>
                           <span className="text-xs text-slate-300">|</span>
@@ -1126,7 +1260,7 @@ export function MappingModal({
                       )}
                     </div>
 
-                    {/* Select workspace : visible pour admin en LOCAL sans entité sélectionnée */}
+                    {/* Sélecteur workspace pour ADMIN en LOCAL sans entité */}
                     {showHeaderWorkspaceSelector && saveScope === 'LOCAL' && (
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-medium text-slate-600">
@@ -1135,7 +1269,7 @@ export function MappingModal({
                         <WorkspaceSelectorInline
                           workspaces={accessibleWorkspaces}
                           value={saveWorkspaceId}
-                          onChange={setSaveWorkspaceId}
+                          onChange={handleHeaderWorkspaceChange}
                           isLoading={isLoadingWorkspaces}
                         />
                         {!saveWorkspaceId && (
@@ -1143,10 +1277,34 @@ export function MappingModal({
                         )}
                       </div>
                     )}
+
+                    {/* Sélecteur workspace pour non-admin avec plusieurs workspaces */}
+                    {!isAdmin && needsWorkspaceSelection && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-medium text-slate-600">
+                          Workspace <span className="text-red-500">*</span> :
+                        </span>
+                        <WorkspaceSelectorInline
+                          workspaces={accessibleWorkspaces}
+                          value={saveWorkspaceId}
+                          onChange={(id) => {
+                            setSaveWorkspaceId(id);
+                            setAutoDetectedWorkspaceId(id);
+                            setActiveLocalWorkspaceId(id);
+                          }}
+                          isLoading={isLoadingWorkspaces}
+                        />
+                        {!saveWorkspaceId && (
+                          <span className="text-[10px] text-amber-600">
+                            Requis — vous avez accès à plusieurs workspaces
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Onglets — ordre : Fichier · Globaux · Locaux */}
+                {/* Onglets */}
                 <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
                   <button
                     onClick={() => setConfigMode('file')}
@@ -1155,9 +1313,10 @@ export function MappingModal({
                     <Upload className="h-3.5 w-3.5" />
                     Par fichier
                   </button>
+
                   <button
                     onClick={() => setConfigMode('global')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${configMode === 'global' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${configMode === 'global' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                   >
                     <Globe className="h-3.5 w-3.5" />
                     Globaux
@@ -1167,6 +1326,7 @@ export function MappingModal({
                       </span>
                     )}
                   </button>
+
                   <button
                     onClick={() => setConfigMode('local')}
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${configMode === 'local' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
@@ -1189,6 +1349,7 @@ export function MappingModal({
 
             {configMode === 'file' ? (
               <>
+                {/* Panneau gauche : colonnes du fichier */}
                 <div className="flex-1 flex flex-col min-w-0 overflow-hidden border-r border-slate-100 bg-slate-50/30">
                   <div className="flex-shrink-0 p-3 border-b border-slate-100">
                     <div className="flex items-center justify-between mb-2">
@@ -1290,6 +1451,7 @@ export function MappingModal({
                   )}
                 </div>
 
+                {/* Panneau droit : champs attendus */}
                 <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white">
                   <div className="flex-shrink-0 p-3 border-b border-slate-100">
                     <div className="flex items-center justify-between">
@@ -1377,9 +1539,11 @@ export function MappingModal({
               <MappingListPanel
                 title="Mappings locaux"
                 subtitle={
-                  showHeaderWorkspaceSelector && !selectedLocalWorkspaceId
+                  showLocalPanelWorkspaceSelector && !activeLocalWorkspaceId
                     ? "Sélectionnez un workspace pour voir ses mappings"
-                    : "Mappings de votre workspace — cliquez pour voir les détails"
+                    : activeLocalWorkspaceId
+                      ? `Mappings du workspace — cliquez pour voir les détails`
+                      : "Mappings de votre workspace — cliquez pour voir les détails"
                 }
                 icon={<FolderOpen className="h-4 w-4 text-primary" />}
                 mappings={localMappings}
@@ -1387,15 +1551,16 @@ export function MappingModal({
                 blocked={false}
                 onView={viewMappingDetail}
                 formatDate={formatDate}
-                showWorkspaceSelector={showHeaderWorkspaceSelector && !selectedLocalWorkspaceId}
+                // Le sélecteur est toujours visible pour les admins (pour changer de workspace)
+                // et pour les non-admins avec plusieurs workspaces
+                showWorkspaceSelector={showLocalPanelWorkspaceSelector}
                 accessibleWorkspaces={accessibleWorkspaces}
-                selectedLocalWorkspaceId={selectedLocalWorkspaceId}
-                onSelectWorkspace={handleSelectLocalWorkspace}
+                selectedWorkspaceId={activeLocalWorkspaceId}
+                onSelectWorkspace={handlePanelWorkspaceChange}
                 onDelete={handleDeleteMapping}
                 currentUserId={currentUser?.id}
                 userRole={currentUser?.role}
               />
-              
             )}
           </div>
 
@@ -1468,7 +1633,11 @@ export function MappingModal({
         saveAsNewWorkspaceId={saveAsNewWorkspaceId}
         setSaveAsNewWorkspaceId={setSaveAsNewWorkspaceId}
         isLoadingWorkspaces={isLoadingWorkspaces}
+        successMessage={successMessage}
+        errorMessage={errorMessage}
       />
+
+      <DeleteErrorDialog />
     </>
   );
 }
