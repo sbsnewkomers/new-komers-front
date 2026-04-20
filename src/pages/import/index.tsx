@@ -262,6 +262,75 @@ export default function ImportPage() {
     );
   };
 
+  const mapErrorToValidationErrors = (error: unknown): ValidationError[] => {
+    if (error instanceof ApiError) {
+      const originalResponse = error.details?.originalResponse as
+        | { message?: string | string[]; code?: string }
+        | undefined;
+      const originalMessage = originalResponse?.message;
+      const normalizedMessage = Array.isArray(originalMessage)
+        ? originalMessage.join(", ")
+        : originalMessage;
+
+      if (error.details?.code === "MAPPING_MISMATCH") {
+        return [
+          {
+            line: 0,
+            column: "N/A",
+            value: "",
+            reason:
+              "Le fichier ne correspond pas au mapping sélectionné. Les colonnes de votre fichier ne correspondent pas aux colonnes attendues par le mapping.",
+            message: "Le fichier ne correspond pas au mapping sélectionné.",
+          },
+        ];
+      }
+
+      const message =
+        normalizedMessage ||
+        error.details?.message ||
+        error.message ||
+        "Erreur de validation";
+
+      return [
+        {
+          line: 0,
+          column: "N/A",
+          value: "",
+          reason: message,
+          message,
+        },
+      ];
+    }
+
+    if (error instanceof Error) {
+      return [
+        {
+          line: 0,
+          column: "N/A",
+          value: "",
+          reason: error.message,
+          message: error.message,
+        },
+      ];
+    }
+
+    return [
+      {
+        line: 0,
+        column: "N/A",
+        value: "",
+        reason: "Erreur inconnue",
+        message: "Erreur inconnue",
+      },
+    ];
+  };
+
+  const showValidationError = (error: unknown) => {
+    const mappedErrors = mapErrorToValidationErrors(error);
+    setValidationErrors(mappedErrors);
+    setValidationModalOpen(true);
+  };
+
   const performImport = async (
     existingMappingId?: string,
     fileOverride?: File,
@@ -335,44 +404,12 @@ export default function ImportPage() {
           snackbar: { showSuccess: false, showError: false },
         });
       } catch (apiError: unknown) {
-        console.error("Erreur API capturée:", apiError);
-        
-        let mappedErrors: ValidationError[] = [];
-        
-        if (apiError instanceof ApiError) {
-          if (apiError.details?.code === 'MAPPING_MISMATCH') {
-            mappedErrors = [{
-              line: 0,
-              column: 'N/A',
-              value: '',
-              reason: "Le fichier ne correspond pas au mapping sélectionné. Les colonnes de votre fichier ne correspondent pas aux colonnes attendues par le mapping.",
-              message: "Le fichier ne correspond pas au mapping sélectionné."
-            }];
-          } else {
-            mappedErrors = [{
-              line: 0,
-              column: 'N/A',
-              value: '',
-              reason: apiError.details?.message || apiError.message,
-              message: apiError.details?.message || apiError.message
-            }];
-          }
-        } else if (apiError instanceof Error) {
-          mappedErrors = [{
-            line: 0,
-            column: 'N/A',
-            value: '',
-            reason: apiError.message,
-            message: apiError.message
-          }];
+        if (apiError instanceof ApiError && apiError.status === 400) {
+          console.warn("Import refusé par règle métier:", apiError.message);
+        } else {
+          console.error("Erreur API capturée:", apiError);
         }
-        
-        // Pas d'alert, seulement le modal
-        if (mappedErrors.length > 0) {
-          setValidationErrors(mappedErrors);
-          setValidationModalOpen(true);
-        }
-        
+        showValidationError(apiError);
         return;
       }
 
@@ -380,13 +417,21 @@ export default function ImportPage() {
 
       if (importResult && importResult.success === false) {
         if (importResult.errors && Array.isArray(importResult.errors) && importResult.errors.length > 0) {
-          const mappedErrors: ValidationError[] = importResult.errors.map((err: any) => ({
-            line: err.line || 0,
-            column: err.column || 'N/A',
-            value: err.value || '',
-            reason: err.reason || err.message || 'Erreur inconnue',
-            message: err.reason || err.message
-          }));
+          const mappedErrors: ValidationError[] = importResult.errors.map(
+            (err: {
+              line?: number;
+              column?: string;
+              value?: string;
+              reason?: string;
+              message?: string;
+            }) => ({
+              line: err.line || 0,
+              column: err.column || 'N/A',
+              value: err.value || '',
+              reason: err.reason || err.message || 'Erreur inconnue',
+              message: err.reason || err.message,
+            }),
+          );
           
           setValidationErrors(mappedErrors);
           setValidationModalOpen(true);
@@ -425,16 +470,9 @@ export default function ImportPage() {
         setHistoryOpen(true);
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur inattendue:", error);
-      setValidationErrors([{
-        line: 0,
-        column: 'N/A',
-        value: '',
-        reason: error.message || 'Erreur inconnue',
-        message: error.message || 'Erreur inconnue'
-      }]);
-      setValidationModalOpen(true);
+      showValidationError(error);
     } finally {
       setIsSubmitting(false);
       isImportingRef.current = false;
@@ -573,42 +611,12 @@ export default function ImportPage() {
     await performImport(savedMapping.id, fileToUse, entityId, entityType);
   } catch (error) {
     // ✅ Capturer l'erreur ici pour éviter l'overlay Next.js
-    console.error("Erreur dans handleSelectSavedMapping:", error);
-    
-    let mappedErrors: ValidationError[] = [];
-    
-    if (error instanceof ApiError) {
-      if (error.details?.code === 'MAPPING_MISMATCH') {
-        mappedErrors = [{
-          line: 0,
-          column: 'N/A',
-          value: '',
-          reason: "Le fichier ne correspond pas au mapping sélectionné. Les colonnes de votre fichier ne correspondent pas aux colonnes attendues par le mapping.",
-          message: "Le fichier ne correspond pas au mapping sélectionné."
-        }];
-      } else {
-        mappedErrors = [{
-          line: 0,
-          column: 'N/A',
-          value: '',
-          reason: error.details?.message || error.message,
-          message: error.details?.message || error.message
-        }];
-      }
-    } else if (error instanceof Error) {
-      mappedErrors = [{
-        line: 0,
-        column: 'N/A',
-        value: '',
-        reason: error.message,
-        message: error.message
-      }];
+    if (error instanceof ApiError && error.status === 400) {
+      console.warn("Sélection mapping refusée par règle métier:", error.message);
+    } else {
+      console.error("Erreur dans handleSelectSavedMapping:", error);
     }
-    
-    if (mappedErrors.length > 0) {
-      setValidationErrors(mappedErrors);
-      setValidationModalOpen(true);
-    }
+    showValidationError(error);
   }
 };
 
@@ -651,32 +659,12 @@ export default function ImportPage() {
     await performImport();
   } catch (error) {
     // ✅ Capturer l'erreur ici aussi
-    console.error("Erreur dans handleConfirmReplace:", error);
-    
-    let mappedErrors: ValidationError[] = [];
-    
-    if (error instanceof ApiError) {
-      mappedErrors = [{
-        line: 0,
-        column: 'N/A',
-        value: '',
-        reason: error.details?.message || error.message,
-        message: error.details?.message || error.message
-      }];
-    } else if (error instanceof Error) {
-      mappedErrors = [{
-        line: 0,
-        column: 'N/A',
-        value: '',
-        reason: error.message,
-        message: error.message
-      }];
+    if (error instanceof ApiError && error.status === 400) {
+      console.warn("Import confirmé mais refusé par règle métier:", error.message);
+    } else {
+      console.error("Erreur dans handleConfirmReplace:", error);
     }
-    
-    if (mappedErrors.length > 0) {
-      setValidationErrors(mappedErrors);
-      setValidationModalOpen(true);
-    }
+    showValidationError(error);
   } finally {
     setIsSubmitting(false);
   }
@@ -684,7 +672,7 @@ export default function ImportPage() {
 
   const handleImport = () => {
     setMappingOpen(false);
-    handleConfirmReplace();
+    void handleConfirmReplace();
   };
 
   return (

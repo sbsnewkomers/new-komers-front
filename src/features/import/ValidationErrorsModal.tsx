@@ -17,7 +17,7 @@ export function ValidationErrorsModal({ open, onOpenChange, errors }: Validation
 
   const getErrorIcon = (reason: string) => {
     const msg = reason.toLowerCase();
-    if (msg.includes('obligatoire') || msg.includes('required') || msg.includes('manquant')) {
+    if (msg.includes('obligatoire') || msg.includes('required') || msg.includes('manquant') || msg.includes('bloqué')) {
       return <XCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />;
     }
     if (msg.includes('format') || msg.includes('invalide') || msg.includes('incorrect')) {
@@ -53,7 +53,7 @@ export function ValidationErrorsModal({ open, onOpenChange, errors }: Validation
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-7xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-red-600">
             <div className="rounded-lg bg-red-50 p-1.5">
@@ -93,7 +93,7 @@ export function ValidationErrorsModal({ open, onOpenChange, errors }: Validation
                       <TableHead className="w-20 font-semibold">Ligne</TableHead>
                       <TableHead className="w-32 font-semibold">Colonne</TableHead>
                       <TableHead className="w-40 font-semibold">Valeur reçue</TableHead>
-                      <TableHead className="font-semibold">Raison / Erreur</TableHead>
+                      <TableHead className="font-semibold" colSpan={2}>Raison / Erreur</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -110,9 +110,9 @@ export function ValidationErrorsModal({ open, onOpenChange, errors }: Validation
                             {error.value || "(vide)"}
                           </code>
                         </TableCell>
-                        <TableCell className="text-red-600 align-top">
+                        <TableCell className="text-red-600 align-top" colSpan={2}>
                           <div className="flex gap-2">
-                            {getErrorIcon(error.reason)}
+                            {/* {getErrorIcon(error.reason)} */}
                             <span>{error.reason}</span>
                           </div>
                         </TableCell>
