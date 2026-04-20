@@ -2,6 +2,7 @@
 import * as XLSX from 'xlsx';
 import { useEffect, useState, useCallback, useRef } from "react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { useCompanies } from "@/hooks";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
@@ -24,6 +25,7 @@ import { Basic_COLUMNS } from "@/features/import/constants";
 import { ImportHistoryRow, ImportProgress, ValidationError, SavedMapping, MappingPayload } from "@/features/import/types";
 
 export default function ImportPage() {
+  const router = useRouter();
   const companies = useCompanies();
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [activeTab, setActiveTab] = useState("excel");
@@ -54,7 +56,7 @@ export default function ImportPage() {
   const [confirmReplaceOpen, setConfirmReplaceOpen] = useState(false);
   const [confirmReplaceInput, setConfirmReplaceInput] = useState("");
   const [dragOver, setDragOver] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(true);
   const [rollbackTarget, setRollbackTarget] = useState<ImportHistoryRow | null>(null);
   const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -751,6 +753,9 @@ export default function ImportPage() {
           history={history}
           historyOpen={historyOpen}
           onToggle={() => setHistoryOpen(!historyOpen)}
+          onViewEntries={(row) => {
+            void router.push(`/import/entries?file=${encodeURIComponent(row.file)}`);
+          }}
           onRollback={(row) => {
             setRollbackTarget(row);
             setRollbackConfirmOpen(true);

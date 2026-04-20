@@ -10,6 +10,38 @@ export interface ImportHistoryRow {
   errorsCount?: number;  // Optionnel: nombre d'erreurs
 }
 
+export type EntryMovementFilter = "all" | "debit" | "credit";
+
+export interface ImportedAccountingEntry {
+  id: string;
+  writingDate: string;
+  writingNumber: string;
+  writingLib: string;
+  journalCode: string;
+  accountNumber: string;
+  accountLib: string;
+  pieceReference: string;
+  debit: number;
+  credit: number;
+  createdAt: string;
+}
+
+export interface ImportEntriesResponse {
+  file: string;
+  items: ImportedAccountingEntry[];
+  summary: {
+    totalRows: number;
+    totalDebit: number;
+    totalCredit: number;
+  };
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalFilteredRows: number;
+    totalPages: number;
+  };
+}
+
 // types.ts
 export interface ValidationError {
   line: number;
