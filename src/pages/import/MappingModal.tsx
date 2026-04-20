@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/Button";
 import {
   CheckCircle2, ArrowRight, Sparkles, FileUp, Loader2, Search,
   AlertCircle, Filter, Database, Clock, Upload, PenTool,
-  FolderOpen, Eye, Save, Globe,
+  FolderOpen, Eye, Save, Globe, Trash2,
 } from "lucide-react";
 import { Basic_COLUMNS } from "./constants";
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -29,11 +29,11 @@ interface MappingModalProps {
   workspaceId?: string | null;
 }
 
-type ConfigMode = 'file' | 'manual' | 'local' | 'global';
+type ConfigMode = 'file' | 'local' | 'global';
 type DetailMode = "view" | "edit";
 
 // ─────────────────────────────────────────────────────────────
-// Sous-composant : panneau liste de mappings (locaux ou globaux)
+// Sous-composant : panneau liste de mappings
 // ─────────────────────────────────────────────────────────────
 interface MappingListPanelProps {
   title: string;
@@ -45,11 +45,13 @@ interface MappingListPanelProps {
   blockedMessage?: string;
   onView: (m: SavedMapping) => void;
   formatDate: (d: string) => string;
-  // Sélecteur workspace (admin sans entité)
   showWorkspaceSelector?: boolean;
   accessibleWorkspaces?: { id: string; name: string }[];
   selectedLocalWorkspaceId?: string | null;
   onSelectWorkspace?: (id: string) => void;
+  onDelete: (m: SavedMapping) => void;
+  currentUserId?: string;
+  userRole?: string;
 }
 
 function MappingListPanel({
@@ -66,6 +68,9 @@ function MappingListPanel({
   accessibleWorkspaces = [],
   selectedLocalWorkspaceId,
   onSelectWorkspace,
+  onDelete,        // ✅ correctement destructuré
+  currentUserId,   // ✅ correctement destructuré
+  userRole,        // ✅ correctement destructuré
 }: MappingListPanelProps) {
   if (blocked) {
     return (
@@ -85,7 +90,6 @@ function MappingListPanel({
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white">
-      {/* Sélecteur workspace pour admin sans entité sélectionnée */}
       {showWorkspaceSelector && accessibleWorkspaces.length > 0 && (
         <div className="flex-shrink-0 p-3 border-b border-slate-100 bg-slate-50">
           <label className="text-xs font-semibold text-slate-600 mb-1 block">
@@ -118,7 +122,6 @@ function MappingListPanel({
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-3">
-          {/* Si admin sans workspace sélectionné → invite à choisir */}
           {showWorkspaceSelector && !selectedLocalWorkspaceId ? (
             <div className="text-center py-8">
               <div className="inline-flex p-3 rounded-full bg-slate-100 mb-3">
@@ -171,7 +174,31 @@ function MappingListPanel({
                           </span>
                         </div>
                       </div>
-                      <Eye className="h-4 w-4 text-slate-400 flex-shrink-0" aria-hidden="true" />
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Eye className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                        {(() => {
+                          const isGlobal = !m.workspaceId || m.scope === 'GLOBAL';
+                          // ✅ Correction : utilisation de userRole uniquement (plus de fetchUserPermissionDetail)
+                          const canDelete = isGlobal
+                            ? (userRole === 'SUPER_ADMIN' || userRole === 'ADMIN')
+                            : (
+                                userRole === 'SUPER_ADMIN' ||
+                                userRole === 'ADMIN' ||
+                                userRole === 'HEAD_MANAGER' ||
+                                (userRole === 'MANAGER' && m.createdBy === currentUserId)
+                              );
+                          return canDelete ? (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onDelete(m); }} // ✅ onDelete correctement résolu
+                              className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
+                              title="Supprimer ce mapping"
+                              aria-label={`Supprimer ${m.name}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          ) : null;
+                        })()}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -181,6 +208,78 @@ function MappingListPanel({
         </div>
       )}
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Toggle Local / Global
+// ─────────────────────────────────────────────────────────────
+interface ScopeToggleProps {
+  scope: 'LOCAL' | 'GLOBAL';
+  onChange: (scope: 'LOCAL' | 'GLOBAL') => void;
+  disabled?: boolean;
+}
+
+function ScopeToggle({ scope, onChange, disabled }: ScopeToggleProps) {
+  return (
+    <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChange('LOCAL')}
+        className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+          scope === 'LOCAL' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        <FolderOpen className="h-3 w-3" />
+        Local
+      </button>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChange('GLOBAL')}
+        className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+          scope === 'GLOBAL' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        <Globe className="h-3 w-3" />
+        Global
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Select workspace inline (pour admin en mode LOCAL)
+// ─────────────────────────────────────────────────────────────
+interface WorkspaceSelectorInlineProps {
+  workspaces: { id: string; name: string }[];
+  value: string | null;
+  onChange: (id: string) => void;
+  isLoading?: boolean;
+}
+
+function WorkspaceSelectorInline({ workspaces, value, onChange, isLoading }: WorkspaceSelectorInlineProps) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Chargement...
+      </div>
+    );
+  }
+
+  return (
+    <select
+      value={value ?? ""}
+      onChange={(e) => onChange(e.target.value)}
+      className="px-2 py-1 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white min-w-[200px]"
+    >
+      <option value="">— Choisir un workspace —</option>
+      {workspaces.map(ws => (
+        <option key={ws.id} value={ws.id}>{ws.name}</option>
+      ))}
+    </select>
   );
 }
 
@@ -203,6 +302,13 @@ interface MappingDetailModalProps {
   newMappingName: string;
   setNewMappingName: (v: string) => void;
   isSaving: boolean;
+  isAdmin: boolean;
+  saveAsNewScope: 'LOCAL' | 'GLOBAL';
+  setSaveAsNewScope: (v: 'LOCAL' | 'GLOBAL') => void;
+  accessibleWorkspaces: { id: string; name: string }[];
+  saveAsNewWorkspaceId: string | null;
+  setSaveAsNewWorkspaceId: (id: string) => void;
+  isLoadingWorkspaces?: boolean;
 }
 
 function MappingDetailModal({
@@ -221,6 +327,13 @@ function MappingDetailModal({
   newMappingName,
   setNewMappingName,
   isSaving,
+  isAdmin,
+  saveAsNewScope,
+  setSaveAsNewScope,
+  accessibleWorkspaces,
+  saveAsNewWorkspaceId,
+  setSaveAsNewWorkspaceId,
+  isLoadingWorkspaces,
 }: MappingDetailModalProps) {
   return (
     <Dialog open={showMappingDetail} onOpenChange={setShowMappingDetail}>
@@ -269,22 +382,56 @@ function MappingDetailModal({
         </DialogHeader>
 
         {detailMode === "edit" && (
-          <div className="flex-shrink-0 p-4 border-b bg-white">
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Nom du nouveau mapping <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={newMappingName}
-              onChange={(e) => setNewMappingName(e.target.value)}
-              placeholder="Ex: Mapping fournisseur A - Mars 2024"
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
-              autoFocus
-            />
-            {!newMappingName.trim() && (
-              <p className="text-[10px] text-amber-600 mt-1">
-                Un nom est requis pour enregistrer ce mapping
-              </p>
+          <div className="flex-shrink-0 p-4 border-b bg-white space-y-3">
+            {/* Nom */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Nom du nouveau mapping <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={newMappingName}
+                onChange={(e) => setNewMappingName(e.target.value)}
+                placeholder="Ex: Mapping fournisseur A - Mars 2024"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
+                autoFocus
+              />
+              {!newMappingName.trim() && (
+                <p className="text-[10px] text-amber-600 mt-1">Un nom est requis pour enregistrer ce mapping</p>
+              )}
+            </div>
+
+            {/* Toggle scope + select workspace — uniquement pour SUPER_ADMIN / ADMIN */}
+            {isAdmin && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-xs font-semibold text-slate-600">Scope :</span>
+                  <ScopeToggle scope={saveAsNewScope} onChange={setSaveAsNewScope} />
+                  <span className="text-[10px] text-slate-400">
+                    {saveAsNewScope === 'GLOBAL'
+                      ? 'Partagé sur toute la plateforme (aucun workspace requis)'
+                      : 'Lié à un workspace spécifique'}
+                  </span>
+                </div>
+
+                {/* Select workspace visible uniquement en LOCAL */}
+                {saveAsNewScope === 'LOCAL' && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-semibold text-slate-600">
+                      Workspace <span className="text-red-500">*</span> :
+                    </span>
+                    <WorkspaceSelectorInline
+                      workspaces={accessibleWorkspaces}
+                      value={saveAsNewWorkspaceId}
+                      onChange={setSaveAsNewWorkspaceId}
+                      isLoading={isLoadingWorkspaces}
+                    />
+                    {!saveAsNewWorkspaceId && (
+                      <p className="text-[10px] text-amber-600">Un workspace est requis pour un mapping local</p>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -394,8 +541,17 @@ function MappingDetailModal({
               <Button
                 size="sm"
                 onClick={handleSaveAsNewMapping}
-                disabled={!isEditValid || !newMappingName.trim() || isSaving}
-                className={(!isEditValid || !newMappingName.trim() || isSaving) ? "opacity-50 cursor-not-allowed" : ""}
+                disabled={
+                  !isEditValid ||
+                  !newMappingName.trim() ||
+                  isSaving ||
+                  (isAdmin && saveAsNewScope === 'LOCAL' && !saveAsNewWorkspaceId)
+                }
+                className={
+                  (!isEditValid || !newMappingName.trim() || isSaving ||
+                  (isAdmin && saveAsNewScope === 'LOCAL' && !saveAsNewWorkspaceId))
+                    ? "opacity-50 cursor-not-allowed" : ""
+                }
               >
                 {isSaving
                   ? <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -440,20 +596,18 @@ export function MappingModal({
   const [showMappedOnly, setShowMappedOnly] = useState(false);
   const [configMode, setConfigMode] = useState<ConfigMode>('file');
 
-  const [manualMapping, setManualMapping] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Mappings locaux
   const [localMappings, setLocalMappings] = useState<SavedMapping[]>([]);
   const [isLoadingLocal, setIsLoadingLocal] = useState(false);
 
-  // Mappings globaux
   const [globalMappings, setGlobalMappings] = useState<SavedMapping[]>([]);
   const [isLoadingGlobal, setIsLoadingGlobal] = useState(false);
 
-  // Workspaces accessibles (admin sans entité)
+  // Workspaces accessibles
   const [accessibleWorkspaces, setAccessibleWorkspaces] = useState<{ id: string; name: string }[]>([]);
+  const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
   const [selectedLocalWorkspaceId, setSelectedLocalWorkspaceId] = useState<string | null>(null);
 
   // Détail / édition
@@ -462,55 +616,84 @@ export function MappingModal({
   const [editSavedMapping, setEditSavedMapping] = useState<Record<string, string>>({});
   const [detailMode, setDetailMode] = useState<DetailMode>("view");
   const [originalEditMapping, setOriginalEditMapping] = useState<Record<string, string>>({});
+  const [mappingDeleteError, setMappingDeleteError] = useState<{
+    show: boolean;
+    mappingName: string;
+    details: string;
+  } | null>(null);
 
-  // Formulaire
   const [mappingName, setMappingName] = useState("");
   const [newMappingName, setNewMappingName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // ── Fetches ────────────────────────────────────────────────
-  const fetchLocalMappings = useCallback(async () => {
-  setIsLoadingLocal(true);
-  console.log("🔍 [fetchLocalMappings] START", { workspaceId, isAdmin, role: currentUser?.role });
-  try {
-    if (workspaceId) {
-      const data = await apiFetch<SavedMapping[]>(
-        `/mapping-templates/workspace/${workspaceId}`,
-        { snackbar: { showSuccess: false, showError: false } }
-      );
-      setLocalMappings(data ?? []);
-    } else if (isAdmin) {
+  // ── Scope + workspace pour sauvegarde courante ──
+  const [saveScope, setSaveScope] = useState<'LOCAL' | 'GLOBAL'>('LOCAL');
+  const [saveWorkspaceId, setSaveWorkspaceId] = useState<string | null>(null);
+
+  // ── Scope + workspace pour "enregistrer comme nouveau" (depuis détail) ──
+  const [saveAsNewScope, setSaveAsNewScope] = useState<'LOCAL' | 'GLOBAL'>('LOCAL');
+  const [saveAsNewWorkspaceId, setSaveAsNewWorkspaceId] = useState<string | null>(null);
+
+  // ── Dérivé : admin sans workspaceId connu → afficher le sélecteur de workspace ──
+  const showHeaderWorkspaceSelector = isAdmin && !workspaceId;
+
+  // ── Fetch workspaces accessibles ──────────────────────────
+  const fetchAccessibleWorkspaces = useCallback(async () => {
+    setIsLoadingWorkspaces(true);
+    try {
       const wsList = await apiFetch<{ id: string; name: string }[]>(
-        '/mapping-templates/my-workspaces', // ← corrigé
+        '/mapping-templates/my-workspaces',
         { snackbar: { showSuccess: false, showError: false } }
       );
       setAccessibleWorkspaces(wsList ?? []);
-      setLocalMappings([]);
-    } else {
-      const wsList = await apiFetch<{ id: string; name: string }[]>(
-        '/mapping-templates/my-workspaces', // ← corrigé
-        { snackbar: { showSuccess: false, showError: false } }
-      );
-      if (!wsList?.length) { setLocalMappings([]); return; }
-      const results = await Promise.all(
-        wsList.map(ws =>
-          apiFetch<SavedMapping[]>(
-            `/mapping-templates/workspace/${ws.id}`,
-            { snackbar: { showSuccess: false, showError: false } }
-          ).catch(() => [] as SavedMapping[])
-        )
-      );
-      setLocalMappings(results.flat());
+    } catch {
+      setAccessibleWorkspaces([]);
+    } finally {
+      setIsLoadingWorkspaces(false);
     }
-  } catch (err) {
-    console.error("❌ [fetchLocalMappings] CATCH global:", err);
-    setLocalMappings([]);
-  } finally {
-    setIsLoadingLocal(false);
-  }
-}, [workspaceId, isAdmin, currentUser?.role]);
+  }, []);
 
-  // ── Sélection workspace (admin) ────────────────────────────
+  // ── Fetch mappings locaux ─────────────────────────────────
+  const fetchLocalMappings = useCallback(async () => {
+    setIsLoadingLocal(true);
+    try {
+      if (workspaceId) {
+        const data = await apiFetch<SavedMapping[]>(
+          `/mapping-templates/workspace/${workspaceId}`,
+          { snackbar: { showSuccess: false, showError: false } }
+        );
+        setLocalMappings(data ?? []);
+      } else if (isAdmin) {
+        const wsList = await apiFetch<{ id: string; name: string }[]>(
+          '/mapping-templates/my-workspaces',
+          { snackbar: { showSuccess: false, showError: false } }
+        );
+        setAccessibleWorkspaces(wsList ?? []);
+        setLocalMappings([]);
+      } else {
+        const wsList = await apiFetch<{ id: string; name: string }[]>(
+          '/mapping-templates/my-workspaces',
+          { snackbar: { showSuccess: false, showError: false } }
+        );
+        if (!wsList?.length) { setLocalMappings([]); return; }
+        const results = await Promise.all(
+          wsList.map(ws =>
+            apiFetch<SavedMapping[]>(
+              `/mapping-templates/workspace/${ws.id}`,
+              { snackbar: { showSuccess: false, showError: false } }
+            ).catch(() => [] as SavedMapping[])
+          )
+        );
+        setLocalMappings(results.flat());
+      }
+    } catch (err) {
+      console.error("❌ [fetchLocalMappings]:", err);
+      setLocalMappings([]);
+    } finally {
+      setIsLoadingLocal(false);
+    }
+  }, [workspaceId, isAdmin, currentUser?.role]);
+
   const handleSelectLocalWorkspace = useCallback(async (wsId: string) => {
     setSelectedLocalWorkspaceId(wsId);
     if (!wsId) { setLocalMappings([]); return; }
@@ -547,14 +730,18 @@ export function MappingModal({
     if (open) {
       fetchLocalMappings();
       fetchGlobalMappings();
-      setManualMapping({});
+      fetchAccessibleWorkspaces();
       setSelectedSavedMapping(null);
       setErrorMessage(null);
       setSuccessMessage(null);
       setMappingName("");
       setNewMappingName("");
       setSelectedLocalWorkspaceId(null);
-      setAccessibleWorkspaces([]);
+      // Reset scopes et workspaces
+      setSaveScope('LOCAL');
+      setSaveWorkspaceId(workspaceId ?? null);
+      setSaveAsNewScope('LOCAL');
+      setSaveAsNewWorkspaceId(workspaceId ?? null);
     }
   }, [open, workspaceId]);
 
@@ -565,7 +752,6 @@ export function MappingModal({
     setErrorMessage(null);
   }, [onOpenChange]);
 
-  // ── Formatage date ─────────────────────────────────────────
   const formatDate = useCallback((dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -576,7 +762,6 @@ export function MappingModal({
     }
   }, []);
 
-  // ── Voir le détail d'un mapping ────────────────────────────
   const viewMappingDetail = useCallback((m: SavedMapping) => {
     setSelectedSavedMapping(m);
     const rules = m.rules || {};
@@ -589,8 +774,10 @@ export function MappingModal({
     setOriginalEditMapping(fullRules);
     setDetailMode("view");
     setNewMappingName("");
+    setSaveAsNewScope('LOCAL');
+    setSaveAsNewWorkspaceId(workspaceId ?? null);
     setShowMappingDetail(true);
-  }, []);
+  }, [workspaceId]);
 
   const isMappingChanged = useMemo(
     () => JSON.stringify(editSavedMapping) !== JSON.stringify(originalEditMapping),
@@ -604,7 +791,6 @@ export function MappingModal({
     });
   }, [editSavedMapping]);
 
-  // ── Mapping par fichier ────────────────────────────────────
   const handleMappingChange = useCallback((fieldName: string, value: string) => {
     const newMapping = { ...mapping };
     Object.keys(newMapping).forEach((k) => { if (newMapping[k] === fieldName) newMapping[k] = ""; });
@@ -612,18 +798,6 @@ export function MappingModal({
     onMappingChange(newMapping);
   }, [mapping, onMappingChange]);
 
-  // ── Mapping manuel ─────────────────────────────────────────
-  const handleManualMappingChange = useCallback((dbField: string, userValue: string) => {
-    setManualMapping(prev => {
-      const next = { ...prev };
-      const cleanValue = userValue.trim().replace(/[<>"']/g, '');
-      Object.keys(next).forEach(k => { if (next[k] === dbField) delete next[k]; });
-      if (cleanValue !== "") next[cleanValue] = dbField;
-      return next;
-    });
-  }, []);
-
-  // ── Calculs dérivés ────────────────────────────────────────
   const mappingValuesHash = useMemo(() => Object.values(mapping).sort().join('|'), [mapping]);
 
   const filteredHeaders = useMemo(() => {
@@ -638,46 +812,46 @@ export function MappingModal({
   const totalMapped = Object.values(mapping).filter(v => v && v !== "").length;
   const isComplete = mappedRequired === requiredColumns.length;
   const hasFile = csvHeaders.length > 0;
-  const manualMappedRequired = requiredColumns.filter(col => Object.values(manualMapping).includes(col.name)).length;
-  const isManualComplete = manualMappedRequired === requiredColumns.length;
 
-  // ── Effacer ────────────────────────────────────────────────
   const clearMapping = useCallback(() => {
-    if (configMode === 'file') {
-      const initial: Record<string, string> = {};
-      csvHeaders.forEach((h) => {
-        const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
-        initial[h] = match ? match.name : "";
-      });
-      onMappingChange(initial);
-    } else if (configMode === 'manual') {
-      setManualMapping({});
-    }
+    const initial: Record<string, string> = {};
+    csvHeaders.forEach((h) => {
+      const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+      initial[h] = match ? match.name : "";
+    });
+    onMappingChange(initial);
     setSelectedSavedMapping(null);
-  }, [configMode, csvHeaders, onMappingChange]);
+  }, [csvHeaders, onMappingChange]);
 
-  // ── Import ─────────────────────────────────────────────────
   const handleImportClick = useCallback(() => {
     if (onImport) onImport();
   }, [onImport]);
 
-  // ── Enregistrer le mapping courant (fichier ou manuel) ─────
+  // ── Enregistrer mapping courant ────────
   const handleSaveCurrentMapping = useCallback(async () => {
     if (!mappingName.trim()) return;
     setIsSaving(true);
 
-    let currentRules: Record<string, string> = {};
-    if (configMode === 'file') currentRules = cleanMapping(mapping);
-    else if (configMode === 'manual') currentRules = cleanMapping(manualMapping);
-    else { setIsSaving(false); return; }
+    const currentRules = cleanMapping(mapping);
+
+    const effectiveScope = isAdmin ? saveScope : 'LOCAL';
+    const effectiveWorkspaceId = effectiveScope === 'GLOBAL'
+      ? null
+      : (workspaceId ?? saveWorkspaceId ?? null);
+
+    if (effectiveScope === 'LOCAL' && !effectiveWorkspaceId) {
+      setErrorMessage("Un workspace est requis pour un mapping local. Sélectionnez un workspace ci-dessus.");
+      setIsSaving(false);
+      return;
+    }
 
     const payload = {
       name: mappingName.trim(),
       rules: currentRules,
-      entityId: entityId || null,
-      entityType: entityType || null,
-      workspaceId: workspaceId ?? null,
-      scope: workspaceId ? 'LOCAL' : 'GLOBAL',
+      entityId: effectiveScope === 'LOCAL' ? (entityId || null) : null,
+      entityType: effectiveScope === 'LOCAL' ? (entityType || null) : null,
+      workspaceId: effectiveWorkspaceId,
+      scope: effectiveScope,
     };
 
     try {
@@ -696,7 +870,7 @@ export function MappingModal({
     } finally {
       setIsSaving(false);
     }
-  }, [configMode, mapping, manualMapping, mappingName, entityId, entityType, workspaceId]);
+  }, [mapping, mappingName, entityId, entityType, workspaceId, isAdmin, saveScope, saveWorkspaceId]);
 
   // ── Enregistrer comme nouveau (depuis détail) ──────────────
   const handleSaveAsNewMapping = useCallback(async () => {
@@ -709,13 +883,24 @@ export function MappingModal({
     });
     const cleaned = cleanMapping(invertedMapping);
 
+    const effectiveScope = isAdmin ? saveAsNewScope : 'LOCAL';
+    const effectiveWorkspaceId = effectiveScope === 'GLOBAL'
+      ? null
+      : (workspaceId ?? saveAsNewWorkspaceId ?? null);
+
+    if (effectiveScope === 'LOCAL' && !effectiveWorkspaceId) {
+      setErrorMessage("Un workspace est requis pour un mapping local. Sélectionnez un workspace.");
+      setIsSaving(false);
+      return;
+    }
+
     const payload = {
       name: newMappingName.trim(),
       rules: cleaned,
-      entityId: entityId || selectedSavedMapping.entityId || null,
-      entityType: entityType || selectedSavedMapping.entityType || null,
-      workspaceId: workspaceId ?? null,
-      scope: 'LOCAL',
+      entityId: effectiveScope === 'LOCAL' ? (entityId || selectedSavedMapping.entityId || null) : null,
+      entityType: effectiveScope === 'LOCAL' ? (entityType || selectedSavedMapping.entityType || null) : null,
+      workspaceId: effectiveWorkspaceId,
+      scope: effectiveScope,
     };
 
     try {
@@ -738,9 +923,51 @@ export function MappingModal({
     } finally {
       setIsSaving(false);
     }
-  }, [selectedSavedMapping, editSavedMapping, newMappingName, entityId, entityType, workspaceId]);
+  }, [selectedSavedMapping, editSavedMapping, newMappingName, entityId, entityType, workspaceId, isAdmin, saveAsNewScope, saveAsNewWorkspaceId]);
 
-  // ── Fichier input ──────────────────────────────────────────
+ const handleDeleteMapping = useCallback(async (m: SavedMapping) => {
+  if (!confirm(`Supprimer le mapping "${m.name}" ?`)) return;
+  
+  try {
+    await apiFetch(`/mapping-templates/${m.id}`, {
+      method: 'DELETE',
+      snackbar: {
+        showSuccess: true,
+        showError: false, // IMPORTANT: mettre à false pour éviter l'affichage automatique
+        successMessage: `✅ Mapping "${m.name}" supprimé`,
+      },
+    });
+    await Promise.all([fetchLocalMappings(), fetchGlobalMappings()]);
+  } catch (err: any) {
+    console.error('Erreur suppression mapping:', err);
+    
+    // Récupérer le message d'erreur (l'erreur est dans err.message)
+    const errorMessage = err?.message || '';
+    const errorString = String(errorMessage).toLowerCase();
+    
+    // Vérifier si c'est une erreur de contrainte de clé étrangère
+    const isForeignKeyViolation = 
+      errorString.includes('contrainte de clé étrangère') ||
+      errorString.includes('violation de clé étrangère') ||
+      errorString.includes('foreign key') ||
+      errorString.includes('fk_entry_mapping') ||
+      errorString.includes('accounting_entries');
+    
+    if (isForeignKeyViolation) {
+      // Afficher la modale personnalisée
+      setMappingDeleteError({
+        show: true,
+        mappingName: m.name,
+        details: "Ce mapping est utilisé par des écritures comptables existantes."
+      });
+    } else {
+      // Autre erreur - afficher un message simple
+      setErrorMessage(`Impossible de supprimer le mapping "${m.name}". ${errorMessage || 'Erreur inconnue'}`);
+      setTimeout(() => setErrorMessage(null), 5000);
+    }
+  }
+}, [fetchLocalMappings, fetchGlobalMappings]);
+
   const handleFileInputClick = useCallback(() => {
     document.getElementById('mapping-file-input')?.click();
   }, []);
@@ -750,37 +977,95 @@ export function MappingModal({
     if (file && onFileUpload) onFileUpload(file);
   }, [onFileUpload]);
 
-  // ── Validation bouton Enregistrer ─────────────────────────
   const canSaveMapping = useMemo(() => {
-    if (configMode === 'file') return mappingName.trim() !== "" && isComplete && hasFile;
-    if (configMode === 'manual') return mappingName.trim() !== "" && isManualComplete;
-    return false;
-  }, [configMode, mappingName, isComplete, hasFile, isManualComplete]);
+    const baseValid = mappingName.trim() !== "" && isComplete && hasFile;
+
+    if (!baseValid) return false;
+    if (isAdmin && saveScope === 'LOCAL' && !workspaceId && !saveWorkspaceId) return false;
+    return true;
+  }, [mappingName, isComplete, hasFile, isAdmin, saveScope, workspaceId, saveWorkspaceId]);
 
   const getImportButtonDisabled = useCallback(() => {
     if (configMode === 'file') return !isComplete || !hasFile;
-    if (configMode === 'manual') return !isManualComplete;
     if (configMode === 'local' || configMode === 'global') return !selectedSavedMapping;
     return false;
-  }, [configMode, isComplete, hasFile, isManualComplete, selectedSavedMapping]);
+  }, [configMode, isComplete, hasFile, selectedSavedMapping]);
 
-  // ── Sous-titre header selon mode ───────────────────────────
   const headerSubtitle = {
     file: "Associez les colonnes de votre fichier aux champs attendus par le système",
-    manual: "Saisissez manuellement le nom de chaque colonne de votre fichier",
     local: "Réutilisez un mapping déjà configuré pour ce workspace",
     global: "Réutilisez un mapping partagé sur toute la plateforme",
   }[configMode];
-
-  // ── Afficher le sélecteur workspace pour admin sans entité ─
-  const showWorkspaceSelector = !workspaceId && isAdmin;
-
+  const DeleteErrorDialog = () => {
+    if (!mappingDeleteError?.show) return null;
+    
+    return (
+      <Dialog open={mappingDeleteError.show} onOpenChange={() => setMappingDeleteError(null)}>
+        <DialogContent className="max-w-md bg-white rounded-xl">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-amber-100 p-2">
+                <AlertCircle className="h-6 w-6 text-amber-600" />
+              </div>
+              <DialogTitle className="text-lg font-bold text-slate-800">
+                Impossible de supprimer ce mapping
+              </DialogTitle>
+            </div>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-slate-700">
+              Le mapping <span className="font-semibold text-primary">"{mappingDeleteError.mappingName}"</span> ne peut pas être supprimé car il est actuellement utilisé.
+            </p>
+            
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="text-sm font-medium text-amber-800 mb-2">
+                📌 Pourquoi ce message ?
+              </p>
+              <p className="text-sm text-amber-700">
+                Ce mapping a été utilisé pour importer ou structurer des données. 
+                La suppression pourrait causer des incohérences dans votre base de données.
+              </p>
+            </div>
+            
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+              <p className="text-sm font-medium text-slate-700 mb-2">
+                ✅ Comment faire ?
+              </p>
+              <ul className="text-sm text-slate-600 space-y-2 list-disc list-inside">
+                <li>Créez un <strong>nouveau mapping</strong> si besoin</li>
+                <li>Le mapping existant restera disponible en lecture seule</li>
+                <li>Contactez un administrateur si vous souhaitez forcer la suppression</li>
+              </ul>
+            </div>
+            
+            {mappingDeleteError.details && (
+              <details className="text-xs text-slate-500 mt-2">
+                <summary className="cursor-pointer">Détails techniques</summary>
+                <pre className="mt-2 p-2 bg-slate-100 rounded overflow-x-auto">
+                  {mappingDeleteError.details}
+                </pre>
+              </details>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button onClick={() => setMappingDeleteError(null)} variant="outline">
+              Fermer
+            </Button>
+            <Button onClick={() => setMappingDeleteError(null)} className="bg-primary">
+              Compris
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  };
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-[95vw] w-[1600px] h-[90vh] flex flex-col p-0 bg-white rounded-xl overflow-hidden">
 
-          {/* Messages */}
           {errorMessage && (
             <div className="flex-shrink-0 mx-4 mt-4 p-2 bg-red-50 border border-red-200 rounded-md">
               <p className="text-xs text-red-600 flex items-center gap-2">
@@ -812,22 +1097,56 @@ export function MappingModal({
                   </div>
                 </div>
 
-                {(configMode === 'file' || configMode === 'manual') && (
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs font-medium text-slate-600">
-                      Nom du mapping <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={mappingName}
-                      onChange={(e) => setMappingName(e.target.value)}
-                      placeholder="Ex: Mapping fournisseur A"
-                      className="w-64 px-2 py-1 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
+                {/* Nom + Toggle scope + Select workspace (mode fichier) */}
+                {configMode === 'file' && (
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <label className="text-xs font-medium text-slate-600">
+                        Nom du mapping <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={mappingName}
+                        onChange={(e) => setMappingName(e.target.value)}
+                        placeholder="Ex: Mapping fournisseur A"
+                        className="w-56 px-2 py-1 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                      {/* Toggle scope uniquement pour SUPER_ADMIN / ADMIN */}
+                      {isAdmin && (
+                        <>
+                          <span className="text-xs text-slate-300">|</span>
+                          <ScopeToggle
+                            scope={saveScope}
+                            onChange={(s) => {
+                              setSaveScope(s);
+                              if (s === 'GLOBAL') setSaveWorkspaceId(null);
+                            }}
+                          />
+                        </>
+                      )}
+                    </div>
+
+                    {/* Select workspace : visible pour admin en LOCAL sans entité sélectionnée */}
+                    {showHeaderWorkspaceSelector && saveScope === 'LOCAL' && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-medium text-slate-600">
+                          Workspace <span className="text-red-500">*</span> :
+                        </span>
+                        <WorkspaceSelectorInline
+                          workspaces={accessibleWorkspaces}
+                          value={saveWorkspaceId}
+                          onChange={setSaveWorkspaceId}
+                          isLoading={isLoadingWorkspaces}
+                        />
+                        {!saveWorkspaceId && (
+                          <span className="text-[10px] text-amber-600">Requis pour un mapping local</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Onglets */}
+                {/* Onglets — ordre : Fichier · Globaux · Locaux */}
                 <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
                   <button
                     onClick={() => setConfigMode('file')}
@@ -835,25 +1154,6 @@ export function MappingModal({
                   >
                     <Upload className="h-3.5 w-3.5" />
                     Par fichier
-                  </button>
-                  <button
-                    onClick={() => setConfigMode('manual')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${configMode === 'manual' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    <PenTool className="h-3.5 w-3.5" />
-                    Manuel
-                  </button>
-                  <button
-                    onClick={() => setConfigMode('local')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${configMode === 'local' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    <FolderOpen className="h-3.5 w-3.5" />
-                    Locaux
-                    {localMappings.length > 0 && (
-                      <span className="ml-1 text-[10px] bg-primary/10 text-primary px-1 rounded-full">
-                        {localMappings.length}
-                      </span>
-                    )}
                   </button>
                   <button
                     onClick={() => setConfigMode('global')}
@@ -867,6 +1167,18 @@ export function MappingModal({
                       </span>
                     )}
                   </button>
+                  <button
+                    onClick={() => setConfigMode('local')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${configMode === 'local' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    <FolderOpen className="h-3.5 w-3.5" />
+                    Locaux
+                    {localMappings.length > 0 && (
+                      <span className="ml-1 text-[10px] bg-primary/10 text-primary px-1 rounded-full">
+                        {localMappings.length}
+                      </span>
+                    )}
+                  </button>
                 </div>
               </div>
             </DialogHeader>
@@ -875,7 +1187,6 @@ export function MappingModal({
           {/* Corps */}
           <div className="flex-1 overflow-hidden flex flex-row min-h-0">
 
-            {/* ── Mode fichier ── */}
             {configMode === 'file' ? (
               <>
                 <div className="flex-1 flex flex-col min-w-0 overflow-hidden border-r border-slate-100 bg-slate-50/30">
@@ -1046,108 +1357,7 @@ export function MappingModal({
                 </div>
               </>
 
-            ) : configMode === 'manual' ? (
-              <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white">
-                <div className="flex-shrink-0 p-3 border-b border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                        <PenTool className="h-3.5 w-3.5 text-primary" />
-                        Saisie manuelle
-                      </h3>
-                      <p className="text-[10px] text-slate-400">Saisissez le nom exact des colonnes de votre fichier</p>
-                    </div>
-                    <button
-                      onClick={() => setShowOnlyRequired(!showOnlyRequired)}
-                      className={`flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded-md transition-all ${showOnlyRequired ? "bg-primary/10 text-primary font-medium" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
-                    >
-                      <Filter className="h-2.5 w-2.5" />
-                      {showOnlyRequired ? "Requis" : "Tous"}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-4">
-                  <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="flex justify-between text-[11px] mb-1.5">
-                      <span className="text-slate-600 font-medium">Progression du mapping</span>
-                      <span className={manualMappedRequired === requiredColumns.length ? "text-emerald-600 font-semibold" : "text-slate-600"}>
-                        {manualMappedRequired} / {requiredColumns.length} requis
-                      </span>
-                    </div>
-                    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-500 rounded-full transition-all"
-                        style={{ width: `${(manualMappedRequired / requiredColumns.length) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    {displayedColumns.map((field) => {
-                      const sourceValue = Object.entries(manualMapping).find(([, v]) => v === field.name)?.[0] || "";
-                      const isMapped = sourceValue.trim() !== "";
-                      return (
-                        <div
-                          key={field.name}
-                          className={`rounded-lg border p-3 transition-all ${field.required ? "bg-white border-slate-200" : "bg-slate-50/50 border-slate-100"} ${isMapped ? "border-emerald-200 bg-emerald-50/10" : ""}`}
-                        >
-                          <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
-                            <div className="flex items-center gap-2">
-                              <label htmlFor={`manual-${field.name}`} className={`text-sm font-semibold ${field.required ? "text-slate-800" : "text-slate-600"}`}>
-                                {field.name}
-                              </label>
-                              {field.required && (
-                                <span className="text-[10px] bg-red-50 text-red-500 px-2 py-0.5 rounded-full">Requis</span>
-                              )}
-                            </div>
-                            {isMapped && (
-                              <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full truncate max-w-[200px]" title={sourceValue}>
-                                ← {sourceValue}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 w-full">
-                            <ArrowRight className={`h-3.5 w-3.5 flex-shrink-0 ${isMapped ? "text-emerald-500" : "text-slate-400"}`} />
-                            <input
-                              id={`manual-${field.name}`}
-                              type="text"
-                              value={sourceValue}
-                              onChange={(e) => handleManualMappingChange(field.name, e.target.value)}
-                              placeholder="Nom exact de la colonne dans votre fichier..."
-                              className={`flex-1 min-w-0 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${isMapped ? "border-emerald-200 bg-emerald-50/30 text-emerald-700 placeholder:text-emerald-300" : "border-slate-200 bg-white text-slate-600 placeholder:text-slate-400"}`}
-                            />
-                          </div>
-                          {!isMapped && field.required && (
-                            <p className="text-[10px] text-amber-600 mt-1 ml-5">Ce champ est requis pour l'import</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-            ) : configMode === 'local' ? (
-              <MappingListPanel
-                title="Mappings locaux"
-                subtitle={showWorkspaceSelector
-                  ? "Sélectionnez un workspace pour voir ses mappings"
-                  : "Mappings de votre workspace — cliquez pour voir les détails"
-                }
-                icon={<FolderOpen className="h-4 w-4 text-primary" />}
-                mappings={localMappings}
-                isLoading={isLoadingLocal}
-                blocked={false}
-                onView={viewMappingDetail}
-                formatDate={formatDate}
-                showWorkspaceSelector={showWorkspaceSelector}
-                accessibleWorkspaces={accessibleWorkspaces}
-                selectedLocalWorkspaceId={selectedLocalWorkspaceId}
-                onSelectWorkspace={handleSelectLocalWorkspace}
-              />
-
-            ) : (
+            ) : configMode === 'global' ? (
               <MappingListPanel
                 title="Mappings globaux"
                 subtitle="Mappings partagés sur toute la plateforme — cliquez pour voir les détails"
@@ -1157,7 +1367,35 @@ export function MappingModal({
                 blocked={false}
                 onView={viewMappingDetail}
                 formatDate={formatDate}
+                onDelete={handleDeleteMapping}
+                currentUserId={currentUser?.id}
+                userRole={currentUser?.role}
               />
+
+            ) : (
+              // configMode === 'local'
+              <MappingListPanel
+                title="Mappings locaux"
+                subtitle={
+                  showHeaderWorkspaceSelector && !selectedLocalWorkspaceId
+                    ? "Sélectionnez un workspace pour voir ses mappings"
+                    : "Mappings de votre workspace — cliquez pour voir les détails"
+                }
+                icon={<FolderOpen className="h-4 w-4 text-primary" />}
+                mappings={localMappings}
+                isLoading={isLoadingLocal}
+                blocked={false}
+                onView={viewMappingDetail}
+                formatDate={formatDate}
+                showWorkspaceSelector={showHeaderWorkspaceSelector && !selectedLocalWorkspaceId}
+                accessibleWorkspaces={accessibleWorkspaces}
+                selectedLocalWorkspaceId={selectedLocalWorkspaceId}
+                onSelectWorkspace={handleSelectLocalWorkspace}
+                onDelete={handleDeleteMapping}
+                currentUserId={currentUser?.id}
+                userRole={currentUser?.role}
+              />
+              
             )}
           </div>
 
@@ -1172,7 +1410,7 @@ export function MappingModal({
                   ✕ Effacer le mapping actuel
                 </button>
                 <div className="flex gap-2">
-                  {(configMode === 'file' || configMode === 'manual') && (
+                  {configMode === 'file' && (
                     <Button
                       size="sm"
                       onClick={handleSaveCurrentMapping}
@@ -1220,6 +1458,16 @@ export function MappingModal({
         newMappingName={newMappingName}
         setNewMappingName={setNewMappingName}
         isSaving={isSaving}
+        isAdmin={isAdmin}
+        saveAsNewScope={saveAsNewScope}
+        setSaveAsNewScope={(s) => {
+          setSaveAsNewScope(s);
+          if (s === 'GLOBAL') setSaveAsNewWorkspaceId(null);
+        }}
+        accessibleWorkspaces={accessibleWorkspaces}
+        saveAsNewWorkspaceId={saveAsNewWorkspaceId}
+        setSaveAsNewWorkspaceId={setSaveAsNewWorkspaceId}
+        isLoadingWorkspaces={isLoadingWorkspaces}
       />
     </>
   );

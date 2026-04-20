@@ -15,6 +15,7 @@ interface ImportHistoryProps {
 export function ImportHistory({ history, historyOpen, onToggle, onRollback }: ImportHistoryProps) {
   return (
     <Card className="bg-white overflow-hidden w-full">
+      {/* HEADER */}
       <button
         type="button"
         onClick={onToggle}
@@ -35,6 +36,8 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback }: Im
           )}
         </span>
       </button>
+
+      {/* CONTENT */}
       {historyOpen && (
         <>
           {history.length === 0 ? (
@@ -42,26 +45,33 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback }: Im
               <div className="mb-4 rounded-2xl bg-slate-50 p-4">
                 <History className="h-8 w-8 text-slate-300" />
               </div>
-              <p className="text-sm text-slate-500">Aucun import réalisé pour le moment</p>
+              <p className="text-sm text-slate-500">
+                Aucun import réalisé pour le moment
+              </p>
             </CardContent>
           ) : (
             <div className="overflow-x-auto">
               <Table>
+                {/* HEADER TABLE */}
                 <TableHeader>
                   <TableRow className="bg-slate-50/50">
                     <TableHead className="font-semibold text-slate-600">Fichier</TableHead>
                     <TableHead className="font-semibold text-slate-600">Date</TableHead>
                     <TableHead className="font-semibold text-slate-600">Statut</TableHead>
+                    <TableHead className="font-semibold text-slate-600">Entité</TableHead>
                     <TableHead className="font-semibold text-slate-600">Utilisateur</TableHead>
                     <TableHead className="font-semibold text-slate-600 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
+
+                {/* BODY */}
                 <TableBody>
                   {history.map((row) => (
                     <TableRow
                       key={row.id}
                       className="hover:bg-slate-50/50 transition-colors"
                     >
+                      {/* Fichier */}
                       <TableCell>
                         <div className="flex items-center gap-2.5">
                           <div className="rounded-lg bg-primary/5 p-1.5">
@@ -72,18 +82,42 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback }: Im
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-slate-600">{row.date}</TableCell>
+
+                      {/* Date */}
+                      <TableCell className="text-slate-600">
+                        {row.date}
+                      </TableCell>
+
+                      {/* Statut */}
                       <TableCell>
                         <StatusBadge status={row.status} />
                       </TableCell>
+
+                      {/* ✅ ENTITÉ */}
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-slate-700">
+                            {row.entityName || "—"}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            {row.entityType || "—"}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      {/* 👤 UTILISATEUR */}
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100">
                             <User className="h-3.5 w-3.5 text-slate-500" />
                           </div>
-                          <span className="text-sm text-slate-600">{row.user}</span>
+                          <span className="text-sm text-slate-600">
+                            {row.user || "Inconnu"}
+                          </span>
                         </div>
                       </TableCell>
+
+                      {/* ACTIONS */}
                       <TableCell className="text-right">
                         {row.status === "Terminé" && (
                           <Button
@@ -107,4 +141,4 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback }: Im
       )}
     </Card>
   );
-} 
+}

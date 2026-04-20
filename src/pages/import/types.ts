@@ -4,10 +4,12 @@ export interface ImportHistoryRow {
   file: string;
   date: string;
   status: "Terminé" | "En cours" | "Échoué" | "Annulé";
+  entityType: string;
+  entityName: string;
   user: string;
-  details?: string;  // Ajoutez cette propriété optionnelle
-  linesCount?: number;  // Optionnel: nombre de lignes importées
-  errorsCount?: number;  // Optionnel: nombre d'erreurs
+  details?: string;  
+  linesCount?: number;  
+  errorsCount?: number;  
 }
 
 // types.ts
@@ -36,7 +38,10 @@ export interface SavedMapping {
   entityId?: string;
   entityType?: 'Group' | 'Company';
   createdAt: string;
-  updatedAt: string;
+  updatedAt: string;   
+  workspaceId?: string | null;  
+  scope?: 'LOCAL' | 'GLOBAL';  
+  createdBy?: string;              
 };
 export type MappingPayload = {
   name: string;

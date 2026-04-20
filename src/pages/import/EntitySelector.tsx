@@ -1,7 +1,7 @@
 // pages/import/EntitySelector.tsx
 import { Building, Users, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/apiClient";
+import { fetchStructureTree } from "@/lib/structureApi"; // adaptez le chemin
 
 interface Entity {
   id: string;
@@ -23,23 +23,58 @@ export function EntitySelector({
   const [companies, setCompanies] = useState<Entity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Charger les groupes et entreprises
   useEffect(() => {
     const fetchEntities = async () => {
       setIsLoading(true);
       try {
-        const [groupsData, companiesData] = await Promise.all([
-          apiFetch<Entity[]>("/groups", { snackbar: { showSuccess: false, showError: false } }),
-          apiFetch<Entity[]>("/companies", { snackbar: { showSuccess: false, showError: false } }),
-        ]);
-        setGroups(groupsData || []);
-        setCompanies(companiesData || []);
+        const tree = await fetchStructureTree();
+
+        const allGroups: Entity[] = [];
+        const allCompanies: Entity[] = [];
+
+        // ── Cas SUPER_ADMIN / ADMIN : tree.workspaces ──
+        if (tree.workspaces?.length) {
+          for (const ws of tree.workspaces) {
+            for (const group of ws.groups ?? []) {
+              allGroups.push({ id: group.id, name: group.name });
+              for (const company of group.companies ?? []) {
+                allCompanies.push({ id: company.id, name: company.name });
+              }
+            }
+            for (const company of ws.standaloneCompanies ?? []) {
+              allCompanies.push({ id: company.id, name: company.name });
+            }
+          }
+        }
+
+        // ── Cas HEAD_MANAGER / MANAGER : tree.groups + tree.standaloneCompanies ──
+        if (tree.groups?.length) {
+          for (const group of tree.groups) {
+            allGroups.push({ id: group.id, name: group.name });
+            for (const company of group.companies ?? []) {
+              allCompanies.push({ id: company.id, name: company.name });
+            }
+          }
+        }
+
+        if (tree.standaloneCompanies?.length) {
+          for (const company of tree.standaloneCompanies) {
+            allCompanies.push({ id: company.id, name: company.name });
+          }
+        }
+
+        // Dédoublonnage par id
+        setGroups(Array.from(new Map(allGroups.map(g => [g.id, g])).values()));
+        setCompanies(Array.from(new Map(allCompanies.map(c => [c.id, c])).values()));
       } catch (error) {
         console.error("Erreur chargement entités:", error);
+        setGroups([]);
+        setCompanies([]);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchEntities();
   }, []);
 
@@ -96,7 +131,11 @@ export function EntitySelector({
         {/* Entité spécifique */}
         <div>
           <label className="block text-xs font-medium text-slate-600 mb-1.5">
-            {selectedEntityType === 'Company' ? 'Entreprise' : selectedEntityType === 'Group' ? 'Groupe' : 'Entité'}
+            {selectedEntityType === 'Company'
+              ? 'Entreprise'
+              : selectedEntityType === 'Group'
+                ? 'Groupe'
+                : 'Entité'}
           </label>
           <select
             value={selectedEntityId || ''}
@@ -114,9 +153,9 @@ export function EntitySelector({
             }`}
           >
             <option value="">
-              {isLoading 
-                ? "Chargement..." 
-                : !selectedEntityType 
+              {isLoading
+                ? "Chargement..."
+                : !selectedEntityType
                   ? "Sélectionnez d'abord le type"
                   : `Sélectionner ${selectedEntityType === 'Company' ? 'une entreprise' : 'un groupe'}`
               }
@@ -138,21 +177,33 @@ export function EntitySelector({
             <Building className="h-3 w-3 text-emerald-600" />
           </div>
           <span>
-            Les données seront importées pour {selectedEntityType === 'Company' ? 'l\'entreprise' : 'le groupe'}{' '}
+            Les données seront importées pour{' '}
+            {selectedEntityType === 'Company' ? "l'entreprise" : 'le groupe'}{' '}
             <span className="font-semibold">
-              {selectedEntityType === 'Company' 
-                ? companies.find(c => c.id === selectedEntityId)?.name 
+              {selectedEntityType === 'Company'
+                ? companies.find(c => c.id === selectedEntityId)?.name
                 : groups.find(g => g.id === selectedEntityId)?.name}
             </span>
           </span>
         </div>
       )}
 
-      {/* Message d'erreur si non sélectionné */}
+      {/* Message si entité non encore sélectionnée */}
       {!selectedEntityId && selectedEntityType && (
         <div className="mt-3 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 p-2 rounded-lg">
           <AlertCircle className="h-3 w-3" />
-          <span>Veuillez sélectionner {selectedEntityType === 'Company' ? 'une entreprise' : 'un groupe'}</span>
+          <span>
+            Veuillez sélectionner{' '}
+            {selectedEntityType === 'Company' ? 'une entreprise' : 'un groupe'}
+          </span>
+        </div>
+      )}
+
+      {/* Message si aucune entité accessible */}
+      {!isLoading && groups.length === 0 && companies.length === 0 && (
+        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2 rounded-lg">
+          <AlertCircle className="h-3 w-3" />
+          <span>Aucune entité accessible dans votre périmètre.</span>
         </div>
       )}
     </div>
