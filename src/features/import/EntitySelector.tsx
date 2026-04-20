@@ -6,12 +6,17 @@ import { apiFetch } from "@/lib/apiClient";
 interface Entity {
   id: string;
   name: string;
+  last_closed_fiscal_year?: number | null;
 }
 
 interface EntitySelectorProps {
   selectedEntityId: string | null;
   selectedEntityType: 'Group' | 'Company' | null;
-  onEntityChange: (entityId: string, entityType: 'Group' | 'Company') => void;
+  onEntityChange: (
+    entityId: string,
+    entityType: 'Group' | 'Company',
+    entity?: Entity,
+  ) => void;
 }
 
 export function EntitySelector({
@@ -103,7 +108,11 @@ export function EntitySelector({
             onChange={(e) => {
               const value = e.target.value;
               if (value && selectedEntityType) {
-                onEntityChange(value, selectedEntityType);
+                const selectedEntity =
+                  selectedEntityType === 'Company'
+                    ? companies.find((company) => company.id === value)
+                    : groups.find((group) => group.id === value);
+                onEntityChange(value, selectedEntityType, selectedEntity);
               }
             }}
             disabled={!selectedEntityType || isLoading}

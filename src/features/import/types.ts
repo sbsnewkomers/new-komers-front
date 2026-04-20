@@ -24,11 +24,18 @@ export interface ImportedAccountingEntry {
   debit: number;
   credit: number;
   createdAt: string;
+  fiscalYearLabel?: number | null;
 }
 
 export interface ImportEntriesResponse {
   file: string;
   items: ImportedAccountingEntry[];
+  context?: {
+    entityId: string;
+    entityType: "Group" | "Company" | "BusinessUnit";
+    entityName: string | null;
+    lastClosedFiscalYear: number | null;
+  } | null;
   summary: {
     totalRows: number;
     totalDebit: number;
