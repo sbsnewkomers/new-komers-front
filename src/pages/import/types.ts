@@ -12,45 +12,6 @@ export interface ImportHistoryRow {
   errorsCount?: number;  
 }
 
-export type EntryMovementFilter = "all" | "debit" | "credit";
-
-export interface ImportedAccountingEntry {
-  id: string;
-  writingDate: string;
-  writingNumber: string;
-  writingLib: string;
-  journalCode: string;
-  accountNumber: string;
-  accountLib: string;
-  pieceReference: string;
-  debit: number;
-  credit: number;
-  createdAt: string;
-  fiscalYearLabel?: number | null;
-}
-
-export interface ImportEntriesResponse {
-  file: string;
-  items: ImportedAccountingEntry[];
-  context?: {
-    entityId: string;
-    entityType: "Group" | "Company" | "BusinessUnit";
-    entityName: string | null;
-    lastClosedFiscalYear: number | null;
-  } | null;
-  summary: {
-    totalRows: number;
-    totalDebit: number;
-    totalCredit: number;
-  };
-  pagination: {
-    page: number;
-    pageSize: number;
-    totalFilteredRows: number;
-    totalPages: number;
-  };
-}
-
 // types.ts
 export interface ValidationError {
   line: number;

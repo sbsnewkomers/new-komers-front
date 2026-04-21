@@ -2,50 +2,34 @@
 import * as XLSX from 'xlsx';
 import { useEffect, useState, useCallback, useRef } from "react";
 import Head from "next/head";
-import { useRouter } from "next/router";
 import { useCompanies } from "@/hooks";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
 import { Sheet, Plug, ArrowRight, FileUp } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/apiClient";
-
-import { EntitySelector } from "@/features/import/EntitySelector";
-import { cleanMapping } from "@/features/import/MappingUtils";
-import { SavedMappingModal } from "@/features/import/SavedMappingModal";
-import { UploadZone } from "@/features/import/UploadZone";
-import { ImportInProgress } from "@/features/import/ImportInProgress";
-import { ImportHistory } from "@/features/import/ImportHistory";
-import { MappingModal } from "@/features/import/MappingModal";
-import { ValidationErrorsModal } from "@/features/import/ValidationErrorsModal";
-import { ConfirmReplaceDialog } from "@/features/import/ConfirmReplaceDialog";
-import { RollbackConfirmDialog } from "@/features/import/RollbackConfirmDialog";
-import { ApiTabContent } from "@/features/import/ApiTabContent";
-import { Basic_COLUMNS } from "@/features/import/constants";
-import { ImportHistoryRow, ImportProgress, ValidationError, SavedMapping, MappingPayload } from "@/features/import/types";
+import { usePermissionsContext } from "@/permissions/PermissionsProvider";
+import { Toast } from "@/components/ui/Toast";
+import { EntitySelector } from "./EntitySelector";
+import { cleanMapping } from './MappingUtils';
+import { SavedMappingModal } from './SavedMappingModal';
+import { UploadZone } from "./UploadZone";
+import { ImportInProgress } from "./ImportInProgress";
+import { ImportHistory } from "./ImportHistory";
+import { MappingModal } from "./MappingModal";
+import { ValidationErrorsModal } from "./ValidationErrorsModal";
+import { ConfirmReplaceDialog } from "./ConfirmReplaceDialog";
+import { RollbackConfirmDialog } from "./RollbackConfirmDialog";
+import { ApiTabContent } from "./ApiTabContent";
+import { Basic_COLUMNS } from "./constants";
+import { ImportHistoryRow, ImportProgress, ValidationError, SavedMapping, MappingPayload } from "./types";
 
 export default function ImportPage() {
-  const router = useRouter();
   const companies = useCompanies();
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [activeTab, setActiveTab] = useState("excel");
   const [importsInProgress, setImportsInProgress] = useState<ImportProgress[]>([]);
-  const [history, setHistory] = useState<ImportHistoryRow[]>([
-    {
-      id: "1",
-      file: "export_fec_2024.csv",
-      date: "2025-02-18",
-      status: "Terminé",
-      user: "admin@example.com",
-    },
-    {
-      id: "2",
-      file: "compta.xlsx",
-      date: "2025-02-17",
-      status: "Terminé",
-      user: "admin@example.com",
-    },
-  ]);
+  const [history, setHistory] = useState<ImportHistoryRow[]>([]);
 
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -56,50 +40,61 @@ export default function ImportPage() {
   const [confirmReplaceOpen, setConfirmReplaceOpen] = useState(false);
   const [confirmReplaceInput, setConfirmReplaceInput] = useState("");
   const [dragOver, setDragOver] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [rollbackTarget, setRollbackTarget] = useState<ImportHistoryRow | null>(null);
   const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   const [selectedEntityType, setSelectedEntityType] = useState<'Group' | 'Company' | null>(null);
-  const [selectedEntityMeta, setSelectedEntityMeta] = useState<{
-    name: string;
-    lastClosedFiscalYear: number | null;
-  } | null>(null);
   
   const [selectedSavedMapping, setSelectedSavedMapping] = useState<SavedMapping | null>(null);
   const [savedMappingModalOpen, setSavedMappingModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingMappingId, setPendingMappingId] = useState<string | null>(null);
-  
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successDetails, setSuccessDetails] = useState<{
+    linesCount?: number;
+    fileName?: string;
+    entityName?: string;
+  } | null>(null);
+
+  // Récupération du rôle utilisateur courant
+  const { user: currentUser } = usePermissionsContext();
+  const isAdmin = currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN';
+
   // Ref pour éviter les appels multiples
   const isImportingRef = useRef(false);
+  const fetchHistory = useCallback( async () => {
+    try {
+      const data = await apiFetch<any[]>("/generic-import/history", {
+        method: "GET",
+        snackbar: { showError: false, showSuccess: false },
+      });
+
+      const mapped: ImportHistoryRow[] = data.map((item) => ({
+        id: item.id,
+        file: item.file,
+        date: item.date,
+        status: item.status ?? "Terminé",
+        entityType: item.entityType ?? "—",
+        entityName: item.entityName ?? "—",
+        user: item.user,
+        linesCount: item.linesCount,
+      }));
+
+      setHistory(mapped);
+    } catch (err) {
+      console.error("Erreur load history:", err);
+    }
+  }, []);
 
   useEffect(() => {
-  companies.fetchList();
-  fetchHistory();
+    companies.fetchList();
+    fetchHistory();
   }, []);
-  const fetchHistory = async () => {
-  try {
-    const data = await apiFetch<any[]>("/generic-import/history", {
-      method: "GET",
-      snackbar: { showError: false, showSuccess: false },
-    });
 
-    const mapped: ImportHistoryRow[] = data.map((item) => ({
-      id: item.id,
-      file: item.file,
-      date: item.date,
-      status: item.status ?? "Terminé",
-      user: item.user,
-      linesCount: item.linesCount,
-    }));
-
-    setHistory(mapped);
-  } catch (err) {
-    console.error("Erreur load history:", err);
-  }
-};
+  
 
   const companyList = companies.list ?? [];
 
@@ -176,7 +171,7 @@ export default function ImportPage() {
         } else {
           const text = reader.result as string;
           const firstLine = text.split("\n")[0];
-          headers = firstLine.split(/[,	;]/).map((h) => h.trim().replace(/^"|"$/g, ''));
+          headers = firstLine.split(/[,\t;]/).map((h) => h.trim().replace(/^"|"$/g, ''));
         }
 
         setCsvHeaders(headers);
@@ -245,90 +240,27 @@ export default function ImportPage() {
     }
   };
 
-  const handleEntityChange = (
-    entityId: string,
-    entityType: 'Group' | 'Company',
-    entity?: { name: string; last_closed_fiscal_year?: number | null },
-  ) => {
+  const handleEntityChange = async (entityId: string, entityType: 'Group' | 'Company') => {
     setSelectedEntityId(entityId);
     setSelectedEntityType(entityType);
-    setSelectedEntityMeta(
-      entityId && entity
-        ? {
-            name: entity.name,
-            lastClosedFiscalYear: entity.last_closed_fiscal_year ?? null,
-          }
-        : null,
-    );
-  };
-
-  const mapErrorToValidationErrors = (error: unknown): ValidationError[] => {
-    if (error instanceof ApiError) {
-      const originalResponse = error.details?.originalResponse as
-        | { message?: string | string[]; code?: string }
-        | undefined;
-      const originalMessage = originalResponse?.message;
-      const normalizedMessage = Array.isArray(originalMessage)
-        ? originalMessage.join(", ")
-        : originalMessage;
-
-      if (error.details?.code === "MAPPING_MISMATCH") {
-        return [
-          {
-            line: 0,
-            column: "N/A",
-            value: "",
-            reason:
-              "Le fichier ne correspond pas au mapping sélectionné. Les colonnes de votre fichier ne correspondent pas aux colonnes attendues par le mapping.",
-            message: "Le fichier ne correspond pas au mapping sélectionné.",
-          },
-        ];
+    setWorkspaceId(null);
+    try {
+      if (entityType === 'Company') {
+        const company = await apiFetch<{ workspace_id: string }>(
+          `/companies/${entityId}`,
+          { snackbar: { showSuccess: false, showError: false } }
+        );
+        setWorkspaceId(company.workspace_id ?? null);
+      } else {
+        const group = await apiFetch<{ workspace_id: string }>(
+          `/groups/${entityId}`,
+          { snackbar: { showSuccess: false, showError: false } }
+        );
+        setWorkspaceId(group.workspace_id ?? null);
       }
-
-      const message =
-        normalizedMessage ||
-        error.details?.message ||
-        error.message ||
-        "Erreur de validation";
-
-      return [
-        {
-          line: 0,
-          column: "N/A",
-          value: "",
-          reason: message,
-          message,
-        },
-      ];
+    } catch {
+      setWorkspaceId(null);
     }
-
-    if (error instanceof Error) {
-      return [
-        {
-          line: 0,
-          column: "N/A",
-          value: "",
-          reason: error.message,
-          message: error.message,
-        },
-      ];
-    }
-
-    return [
-      {
-        line: 0,
-        column: "N/A",
-        value: "",
-        reason: "Erreur inconnue",
-        message: "Erreur inconnue",
-      },
-    ];
-  };
-
-  const showValidationError = (error: unknown) => {
-    const mappedErrors = mapErrorToValidationErrors(error);
-    setValidationErrors(mappedErrors);
-    setValidationModalOpen(true);
   };
 
   const performImport = async (
@@ -337,7 +269,6 @@ export default function ImportPage() {
     entityIdOverride?: string,
     entityTypeOverride?: 'Group' | 'Company'
   ) => {
-    // Éviter les imports multiples simultanés
     if (isImportingRef.current) {
       console.log("Import déjà en cours, ignore");
       return;
@@ -349,7 +280,21 @@ export default function ImportPage() {
 
     if (!fileToUse || !entityId || !entityType) {
       console.error("Paramètres manquants :", { fileToUse, entityId, entityType });
-      // Pas d'alert, juste un log silencieux
+      return;
+    }
+
+    // ── Vérification workspaceId pour les non-admins ───────────────────────
+    // Les HEAD_MANAGER et MANAGER ne peuvent créer que des mappings locaux.
+    // Sans workspaceId résolu, on bloque l'import plutôt que d'envoyer GLOBAL.
+    if (!workspaceId && !isAdmin) {
+      setValidationErrors([{
+        line: 0,
+        column: 'N/A',
+        value: '',
+        reason: "Impossible de déterminer le workspace de l'entité sélectionnée. Veuillez resélectionner l'entité.",
+        message: "Workspace manquant pour l'import local."
+      }]);
+      setValidationModalOpen(true);
       return;
     }
 
@@ -363,12 +308,20 @@ export default function ImportPage() {
         mappingId = existingMappingId;
       } else {
         const cleanedRules = cleanMapping(mapping);
-        
+
+        // ── Calcul du scope pour le mapping auto-créé ──────────────────────
+        // - workspaceId présent → LOCAL pour tout le monde
+        // - workspaceId absent + admin → GLOBAL (cas légal)
+        // - workspaceId absent + non-admin → déjà bloqué ci-dessus
+        const effectiveScope = workspaceId ? 'LOCAL' : 'GLOBAL';
+
         const templatePayload: any = {
           name: `Mapping_${fileToUse.name}_${new Date().toLocaleDateString()}`,
           rules: cleanedRules,
           entityId,
           entityType,
+          workspaceId: workspaceId ?? null,
+          scope: effectiveScope,
         };
 
         const templateData = await apiFetch<any>("/mapping-templates", {
@@ -404,12 +357,43 @@ export default function ImportPage() {
           snackbar: { showSuccess: false, showError: false },
         });
       } catch (apiError: unknown) {
-        if (apiError instanceof ApiError && apiError.status === 400) {
-          console.warn("Import refusé par règle métier:", apiError.message);
-        } else {
-          console.error("Erreur API capturée:", apiError);
+        console.error("Erreur API capturée:", apiError);
+        
+        let mappedErrors: ValidationError[] = [];
+        
+        if (apiError instanceof ApiError) {
+          if (apiError.details?.code === 'MAPPING_MISMATCH') {
+            mappedErrors = [{
+              line: 0,
+              column: 'N/A',
+              value: '',
+              reason: "Le fichier ne correspond pas au mapping sélectionné. Les colonnes de votre fichier ne correspondent pas aux colonnes attendues par le mapping.",
+              message: "Le fichier ne correspond pas au mapping sélectionné."
+            }];
+          } else {
+            mappedErrors = [{
+              line: 0,
+              column: 'N/A',
+              value: '',
+              reason: apiError.details?.message || apiError.message,
+              message: apiError.details?.message || apiError.message
+            }];
+          }
+        } else if (apiError instanceof Error) {
+          mappedErrors = [{
+            line: 0,
+            column: 'N/A',
+            value: '',
+            reason: apiError.message,
+            message: apiError.message
+          }];
         }
-        showValidationError(apiError);
+        
+        if (mappedErrors.length > 0) {
+          setValidationErrors(mappedErrors);
+          setValidationModalOpen(true);
+        }
+        
         return;
       }
 
@@ -417,21 +401,13 @@ export default function ImportPage() {
 
       if (importResult && importResult.success === false) {
         if (importResult.errors && Array.isArray(importResult.errors) && importResult.errors.length > 0) {
-          const mappedErrors: ValidationError[] = importResult.errors.map(
-            (err: {
-              line?: number;
-              column?: string;
-              value?: string;
-              reason?: string;
-              message?: string;
-            }) => ({
-              line: err.line || 0,
-              column: err.column || 'N/A',
-              value: err.value || '',
-              reason: err.reason || err.message || 'Erreur inconnue',
-              message: err.reason || err.message,
-            }),
-          );
+          const mappedErrors: ValidationError[] = importResult.errors.map((err: any) => ({
+            line: err.line || 0,
+            column: err.column || 'N/A',
+            value: err.value || '',
+            reason: err.reason || err.message || 'Erreur inconnue',
+            message: err.reason || err.message
+          }));
           
           setValidationErrors(mappedErrors);
           setValidationModalOpen(true);
@@ -450,29 +426,63 @@ export default function ImportPage() {
       }
 
       if (importResult && importResult.success === true) {
-        setConfirmReplaceOpen(false);
-        setConfirmReplaceInput("");
-        setPendingMappingId(null);
-        setCsvFile(null);
-        setCsvHeaders([]);
-        setValidationErrors([]);
-        setValidationModalOpen(false);
-        
+  // Récupérer le nom de l'entité pour le message de succès
+  let entityName = '';
+  try {
+    if (entityType === 'Company') {
+      const company = await apiFetch<{ name: string }>(
+        `/companies/${entityId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      entityName = company.name;
+    } else {
+      const group = await apiFetch<{ name: string }>(
+        `/groups/${entityId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      entityName = group.name;
+    }
+  } catch {
+    entityName = entityId;
+  }
 
-        const newHistoryEntry: ImportHistoryRow = {
-          id: importResult?.importId || importResult?.id || String(Date.now()),
-          file: fileToUse.name,
-          date: new Date().toISOString().slice(0, 10),
-          status: "Terminé",
-          user: "Utilisateur",
-        };
-        await fetchHistory();
-        setHistoryOpen(true);
-      }
+  // Afficher le message de succès
+  const linesCount = importResult.linesCount || importResult.count || 0;
+  setSuccessMessage(`✅ Import réussi pour ${entityName}`);
+  setSuccessDetails({
+    linesCount: linesCount,
+    fileName: fileToUse.name,
+    entityName: entityName,
+  });
 
-    } catch (error: unknown) {
+  // Masquer automatiquement après 6 secondes
+  setTimeout(() => {
+    setSuccessMessage(null);
+    setSuccessDetails(null);
+  }, 6000);
+
+  setConfirmReplaceOpen(false);
+  setConfirmReplaceInput("");
+  setPendingMappingId(null);
+  setCsvFile(null);
+  setCsvHeaders([]);
+  setValidationErrors([]);
+  setValidationModalOpen(false);
+  await new Promise(resolve => setTimeout(resolve, 500));
+  await fetchHistory();
+  setHistoryOpen(true);
+}
+
+    } catch (error: any) {
       console.error("Erreur inattendue:", error);
-      showValidationError(error);
+      setValidationErrors([{
+        line: 0,
+        column: 'N/A',
+        value: '',
+        reason: error.message || 'Erreur inconnue',
+        message: error.message || 'Erreur inconnue'
+      }]);
+      setValidationModalOpen(true);
     } finally {
       setIsSubmitting(false);
       isImportingRef.current = false;
@@ -513,7 +523,15 @@ export default function ImportPage() {
     setPendingFile(f);
     const headers = await parseHeaders(f);
     setCsvHeaders(headers);
+    const initialMapping: Record<string, string> = {};
+    //  Créer le mapping automatique (mais ne pas ouvrir le modal tout de suite)
+    headers.forEach((h) => {
+      const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+      initialMapping[h] = match ? match.name : "";
+    });
+    setMapping(initialMapping);
 
+    // Ouvrir le modal pour choisir entre mapping existant ou nouveau
     setSavedMappingModalOpen(true);
   }, []);
 
@@ -577,102 +595,150 @@ export default function ImportPage() {
   };
 
   const handleSelectSavedMapping = async (savedMapping: SavedMapping) => {
-  try {
-    const fileToUse = pendingFile;
-    const entityId = selectedEntityId;
-    const entityType = selectedEntityType;
+    try {
+      const fileToUse = pendingFile;
+      const entityId = selectedEntityId;
+      const entityType = selectedEntityType;
 
-    if (!fileToUse || !entityId || !entityType) {
+      if (!fileToUse || !entityId || !entityType) {
+        setValidationErrors([{
+          line: 0,
+          column: 'N/A',
+          value: '',
+          reason: "Veuillez sélectionner une entité et un fichier avant d'importer.",
+          message: "Veuillez sélectionner une entité et un fichier avant d'importer."
+        }]);
+        setValidationModalOpen(true);
+        return;
+      }
+
+      const newMapping: Record<string, string> = {};
+      csvHeaders.forEach((h) => {
+        newMapping[h] = savedMapping.rules[h] ??
+          (Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase())?.name ?? "");
+      });
+      setMapping(newMapping);
+
+      const hasData = await checkEntityHasData(entityId, entityType);
+      if (hasData) {
+        setPendingMappingId(savedMapping.id);
+        setConfirmReplaceOpen(true);
+        return;
+      }
+
+      await performImport(savedMapping.id, fileToUse, entityId, entityType);
+    } catch (error) {
+      console.error("Erreur dans handleSelectSavedMapping:", error);
+      
+      let mappedErrors: ValidationError[] = [];
+      
+      if (error instanceof ApiError) {
+        if (error.details?.code === 'MAPPING_MISMATCH') {
+          mappedErrors = [{
+            line: 0,
+            column: 'N/A',
+            value: '',
+            reason: "Le fichier ne correspond pas au mapping sélectionné. Les colonnes de votre fichier ne correspondent pas aux colonnes attendues par le mapping.",
+            message: "Le fichier ne correspond pas au mapping sélectionné."
+          }];
+        } else {
+          mappedErrors = [{
+            line: 0,
+            column: 'N/A',
+            value: '',
+            reason: error.details?.message || error.message,
+            message: error.details?.message || error.message
+          }];
+        }
+      } else if (error instanceof Error) {
+        mappedErrors = [{
+          line: 0,
+          column: 'N/A',
+          value: '',
+          reason: error.message,
+          message: error.message
+        }];
+      }
+      
+      if (mappedErrors.length > 0) {
+        setValidationErrors(mappedErrors);
+        setValidationModalOpen(true);
+      }
+    }
+  };
+
+  const handleConfirmReplace = async () => {
+    if (!csvFile) {
       setValidationErrors([{
         line: 0,
         column: 'N/A',
         value: '',
-        reason: "Veuillez sélectionner une entité et un fichier avant d'importer.",
-        message: "Veuillez sélectionner une entité et un fichier avant d'importer."
+        reason: "Veuillez d'abord sélectionner un fichier.",
+        message: "Veuillez d'abord sélectionner un fichier."
       }]);
       setValidationModalOpen(true);
       return;
     }
 
-    const newMapping: Record<string, string> = {};
-    csvHeaders.forEach((h) => {
-      newMapping[h] = savedMapping.rules[h] ??
-        (Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase())?.name ?? "");
-    });
-    setMapping(newMapping);
-
-    const hasData = await checkEntityHasData(entityId, entityType);
-    if (hasData) {
-      setPendingMappingId(savedMapping.id);
-      setConfirmReplaceOpen(true);
+    if (!selectedEntityId || !selectedEntityType) {
+      setValidationErrors([{
+        line: 0,
+        column: 'N/A',
+        value: '',
+        reason: "Veuillez sélectionner une entité (Groupe ou Entreprise) avant d'importer.",
+        message: "Veuillez sélectionner une entité (Groupe ou Entreprise) avant d'importer."
+      }]);
+      setValidationModalOpen(true);
       return;
     }
 
-    await performImport(savedMapping.id, fileToUse, entityId, entityType);
-  } catch (error) {
-    // ✅ Capturer l'erreur ici pour éviter l'overlay Next.js
-    if (error instanceof ApiError && error.status === 400) {
-      console.warn("Sélection mapping refusée par règle métier:", error.message);
-    } else {
-      console.error("Erreur dans handleSelectSavedMapping:", error);
-    }
-    showValidationError(error);
-  }
-};
+    setIsSubmitting(true);
 
-  const handleConfirmReplace = async () => {
-  if (!csvFile) {
-    setValidationErrors([{
-      line: 0,
-      column: 'N/A',
-      value: '',
-      reason: "Veuillez d'abord sélectionner un fichier.",
-      message: "Veuillez d'abord sélectionner un fichier."
-    }]);
-    setValidationModalOpen(true);
-    return;
-  }
+    try {
+      const hasData = await checkEntityHasData(selectedEntityId, selectedEntityType);
+      
+      if (hasData) {
+        setConfirmReplaceOpen(true);
+        setIsSubmitting(false);
+        return;
+      }
 
-  if (!selectedEntityId || !selectedEntityType) {
-    setValidationErrors([{
-      line: 0,
-      column: 'N/A',
-      value: '',
-      reason: "Veuillez sélectionner une entité (Groupe ou Entreprise) avant d'importer.",
-      message: "Veuillez sélectionner une entité (Groupe ou Entreprise) avant d'importer."
-    }]);
-    setValidationModalOpen(true);
-    return;
-  }
-
-  setIsSubmitting(true);
-
-  try {
-    const hasData = await checkEntityHasData(selectedEntityId, selectedEntityType);
-    
-    if (hasData) {
-      setConfirmReplaceOpen(true);
-      setIsSubmitting(false);
-      return;
-    }
-
-    await performImport();
-  } catch (error) {
-    // ✅ Capturer l'erreur ici aussi
-    if (error instanceof ApiError && error.status === 400) {
-      console.warn("Import confirmé mais refusé par règle métier:", error.message);
-    } else {
+      await performImport();
+    } catch (error) {
       console.error("Erreur dans handleConfirmReplace:", error);
+      
+      let mappedErrors: ValidationError[] = [];
+      
+      if (error instanceof ApiError) {
+        mappedErrors = [{
+          line: 0,
+          column: 'N/A',
+          value: '',
+          reason: error.details?.message || error.message,
+          message: error.details?.message || error.message
+        }];
+      } else if (error instanceof Error) {
+        mappedErrors = [{
+          line: 0,
+          column: 'N/A',
+          value: '',
+          reason: error.message,
+          message: error.message
+        }];
+      }
+      
+      if (mappedErrors.length > 0) {
+        setValidationErrors(mappedErrors);
+        setValidationModalOpen(true);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    showValidationError(error);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   const handleImport = () => {
     setMappingOpen(false);
-    void handleConfirmReplace();
+    handleConfirmReplace();
   };
 
   return (
@@ -685,6 +751,17 @@ export default function ImportPage() {
       <Head>
         <title>Import</title>
       </Head>
+      {successMessage && (
+      <Toast
+        message={successMessage}
+        type="success"
+        details={successDetails || undefined}
+        onClose={() => {
+          setSuccessMessage(null);
+          setSuccessDetails(null);
+        }}
+      />
+    )}
 
       <div className="space-y-8">
         <div>
@@ -706,16 +783,6 @@ export default function ImportPage() {
           selectedEntityType={selectedEntityType}
           onEntityChange={handleEntityChange}
         />
-
-        {selectedEntityMeta && (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700">
-            <span className="font-medium">{selectedEntityMeta.name}</span>
-            <span className="mx-2 text-slate-400">•</span>
-            {selectedEntityMeta.lastClosedFiscalYear !== null
-              ? `Dernier exercice clos: ${selectedEntityMeta.lastClosedFiscalYear}`
-              : 'Aucun exercice clos renseigné'}
-          </div>
-        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="h-12 p-1.5 bg-slate-100 rounded-xl gap-1">
@@ -767,9 +834,6 @@ export default function ImportPage() {
           history={history}
           historyOpen={historyOpen}
           onToggle={() => setHistoryOpen(!historyOpen)}
-          onViewEntries={(row) => {
-            void router.push(`/import/entries?file=${encodeURIComponent(row.file)}`);
-          }}
           onRollback={(row) => {
             setRollbackTarget(row);
             setRollbackConfirmOpen(true);
@@ -790,6 +854,7 @@ export default function ImportPage() {
         entityType={selectedEntityType}
         showImportButton={!!csvFile}
         onFileUpload={handleFileUpload}
+        workspaceId={workspaceId}
       />
       
       <SavedMappingModal
@@ -798,6 +863,7 @@ export default function ImportPage() {
         fileName={csvFile?.name ?? ""}
         onSelectMapping={handleSelectSavedMapping}
         onCreateNew={() => setMappingOpen(true)}
+        workspaceId={workspaceId}
       />
 
       <ValidationErrorsModal

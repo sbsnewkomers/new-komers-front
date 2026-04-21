@@ -16,6 +16,7 @@ type Company = {
   size?: CompanySize;
   model?: CompanyModel;
   group_id: string;
+  workspace_id: string;
   createdAt?: string;
   updatedAt?: string;
 };

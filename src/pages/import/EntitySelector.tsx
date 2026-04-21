@@ -6,17 +6,12 @@ import { fetchStructureTree } from "@/lib/structureApi"; // adaptez le chemin
 interface Entity {
   id: string;
   name: string;
-  last_closed_fiscal_year?: number | null;
 }
 
 interface EntitySelectorProps {
   selectedEntityId: string | null;
   selectedEntityType: 'Group' | 'Company' | null;
-  onEntityChange: (
-    entityId: string,
-    entityType: 'Group' | 'Company',
-    entity?: Entity,
-  ) => void;
+  onEntityChange: (entityId: string, entityType: 'Group' | 'Company') => void;
 }
 
 export function EntitySelector({
@@ -147,11 +142,7 @@ export function EntitySelector({
             onChange={(e) => {
               const value = e.target.value;
               if (value && selectedEntityType) {
-                const selectedEntity =
-                  selectedEntityType === 'Company'
-                    ? companies.find((company) => company.id === value)
-                    : groups.find((group) => group.id === value);
-                onEntityChange(value, selectedEntityType, selectedEntity);
+                onEntityChange(value, selectedEntityType);
               }
             }}
             disabled={!selectedEntityType || isLoading}

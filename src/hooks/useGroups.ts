@@ -8,6 +8,7 @@ type Group = {
   last_closed_fiscal_year?: number | null;
   siret: string;
   mainActivity?: string;
+  workspace_id: string;
   createdAt?: string;
   updatedAt?: string;
 };
