@@ -2,6 +2,7 @@ import { apiFetch } from './apiClient';
 import {
   Asset,
   CreateAssetDto,
+  UpdateAssetDto,
   UpdateAssetStatusDto,
   TotalAmortizationResponse,
   TotalAmortizationsResponse,
@@ -49,6 +50,16 @@ export const assetsApi = {
       url += `?${queryString}`;
     }
     return apiFetch<TotalAmortizationsResponse>(url);
+  },
+
+  updateAsset: async (
+    id: string,
+    data: UpdateAssetDto,
+  ): Promise<Asset> => {
+    return apiFetch<Asset>(`/assets/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
   },
 
   updateAssetStatus: async (

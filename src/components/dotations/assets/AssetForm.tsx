@@ -120,11 +120,11 @@ export function AssetForm({ asset, entityType = EntityType.COMPANY, entityId = '
           ? new Date(asset.disposalDate).toISOString().split('T')[0]
           : undefined,
         disposalAmount: asset.disposalAmount,
-        entityType,
-        entityId,
+        entityType: asset.entityType,
+        entityId: asset.entityId,
       });
     }
-  }, [asset, entityType, entityId]);
+  }, [asset]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
