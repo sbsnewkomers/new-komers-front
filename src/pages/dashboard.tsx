@@ -68,13 +68,54 @@ const DEMO_CHART_DATA = [
   { name: "Juin", value: 700 },
 ];
 
-const inferFiscalYearEnd = (fiscalYearStart: string): Date | null => {
-  const start = new Date(fiscalYearStart);
-  if (Number.isNaN(start.getTime())) return null;
+const MONTH_DAY_REGEX = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])$/;
+const LEGACY_MONTH_DAY_REGEX = /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
+
+const parseMonthDay = (value: string): { month: number; day: number } | null => {
+  const normalized = LEGACY_MONTH_DAY_REGEX.test(value)
+    ? `${value.split("-")[1]}-${value.split("-")[0]}`
+    : value;
+
+  if (!MONTH_DAY_REGEX.test(normalized)) return null;
+  const [dayPart, monthPart] = normalized.split("-");
+  const day = Number(dayPart);
+  const month = Number(monthPart);
+  const probe = new Date(Date.UTC(2000, month - 1, day));
+  if (probe.getUTCMonth() + 1 !== month || probe.getUTCDate() !== day) return null;
+  return { month, day };
+};
+
+const getFiscalBoundsForYear = (
+  fiscalYearStart: string,
+  year: number,
+): { start: Date; end: Date } | null => {
+  const parsed = parseMonthDay(fiscalYearStart);
+  if (!parsed) return null;
+
+  const start = new Date(year, parsed.month - 1, parsed.day);
   const end = new Date(start);
   end.setFullYear(end.getFullYear() + 1);
   end.setDate(end.getDate() - 1);
-  return end;
+  return { start, end };
+};
+
+const isFiscalYearActiveToday = (fiscalYearStart: string, today: Date): boolean => {
+  const currentYearBounds = getFiscalBoundsForYear(fiscalYearStart, today.getFullYear());
+  if (!currentYearBounds) return false;
+
+  const activeBounds =
+    today < currentYearBounds.start
+      ? getFiscalBoundsForYear(fiscalYearStart, today.getFullYear() - 1)
+      : currentYearBounds;
+
+  if (!activeBounds) return false;
+  return today >= activeBounds.start && today <= activeBounds.end;
+};
+
+const formatMonthDay = (fiscalYearStart: string): string => {
+  const parsed = parseMonthDay(fiscalYearStart);
+  if (!parsed) return fiscalYearStart;
+  return `${String(parsed.day).padStart(2, "0")}/${String(parsed.month).padStart(2, "0")}`;
 };
 
 export default function DashboardPage() {
@@ -112,10 +153,7 @@ export default function DashboardPage() {
     const today = new Date();
     const activeFiscalYears = list.filter((c) => {
       if (!c.fiscal_year_start) return false;
-      const start = new Date(c.fiscal_year_start);
-      const end = inferFiscalYearEnd(c.fiscal_year_start);
-      if (Number.isNaN(start.getTime()) || !end) return false;
-      return start <= today && end >= today;
+      return isFiscalYearActiveToday(c.fiscal_year_start, today);
     }).length;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -129,12 +167,12 @@ export default function DashboardPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     list.forEach((c: any) => {
       if (!c.fiscal_year_start) return;
-      const year = new Date(c.fiscal_year_start).getFullYear().toString();
-      byYearMap.set(year, (byYearMap.get(year) ?? 0) + 1);
+      const label = formatMonthDay(c.fiscal_year_start);
+      byYearMap.set(label, (byYearMap.get(label) ?? 0) + 1);
     });
     const byYearData = Array.from(byYearMap.entries())
-      .sort(([a], [b]) => Number(a) - Number(b))
-      .map(([year, count]) => ({ name: year, value: count }));
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([label, count]) => ({ name: label, value: count }));
 
     setWidgets(
       [
@@ -186,7 +224,7 @@ export default function DashboardPage() {
         {
           id: "c-companies-by-year",
           type: "chart",
-          title: "Entreprises par année d'exercice",
+          title: "Entreprises par début d'exercice",
           chartType: "bar",
           data: byYearData,
         },
