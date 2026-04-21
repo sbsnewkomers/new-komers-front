@@ -72,6 +72,22 @@ export interface UpdateAssetStatusDto {
   disposalAmount?: number;
 }
 
+export interface UpdateAssetDto {
+  name?: string;
+  description?: string;
+  acquisitionAmount?: number;
+  acquisitionDate?: string;
+  amortizationDurationYears?: number;
+  amortizationType?: AmortizationType;
+  status?: AssetStatus;
+  residualValue?: number;
+  commissioningDate?: string;
+  disposalDate?: string;
+  disposalAmount?: number;
+  entityType?: EntityType;
+  entityId?: string;
+}
+
 export interface TotalAmortizationResponse {
   total: number;
   year: number;
