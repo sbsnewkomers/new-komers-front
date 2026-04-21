@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Plug, Sparkles, ArrowRight } from "lucide-react";
 
-export function ApiTabContent() {
+function ApiTabContent() {
   return (
     <Card className="bg-white">
       <CardContent className="py-16! flex flex-col items-center justify-center">
@@ -41,3 +41,5 @@ export function ApiTabContent() {
     </Card>
   );
 }
+
+export default ApiTabContent;
