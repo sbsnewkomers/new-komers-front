@@ -155,11 +155,13 @@ export function AssetForm({ asset, entityType = EntityType.COMPANY, entityId = '
       newErrors.amortizationDurationYears = 'La durée d\'amortissement doit être supérieure à 0';
     }
 
-    if (formData.residualValue < 0) {
+    const residualValue = formData.residualValue ?? 0;
+
+    if (residualValue < 0) {
       newErrors.residualValue = 'La valeur résiduelle ne peut pas être négative';
     }
 
-    if (formData.residualValue > formData.acquisitionAmount) {
+    if (residualValue > formData.acquisitionAmount) {
       newErrors.residualValue = 'La valeur résiduelle ne peut pas dépasser le montant d\'acquisition';
     }
 

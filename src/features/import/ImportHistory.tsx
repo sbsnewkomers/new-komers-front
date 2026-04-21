@@ -10,17 +10,12 @@ interface ImportHistoryProps {
   historyOpen: boolean;
   onToggle: () => void;
   onRollback: (row: ImportHistoryRow) => void;
-  onViewEntries: (row: ImportHistoryRow) => void;
+  onViewEntries?: (row: ImportHistoryRow) => void;
 }
 
 export function ImportHistory({ history, historyOpen, onToggle, onRollback, onViewEntries }: ImportHistoryProps) {
   return (
-<<<<<<< HEAD:src/pages/import/ImportHistory.tsx
-    <Card className="bg-white overflow-hidden w-full">
-      {/* HEADER */}
-=======
     <Card className="w-full overflow-hidden bg-white shadow-sm ring-1 ring-slate-100">
->>>>>>> staging:src/features/import/ImportHistory.tsx
       <button
         type="button"
         onClick={onToggle}
@@ -56,12 +51,7 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback, onVi
             </CardContent>
           ) : (
             <div className="overflow-x-auto">
-<<<<<<< HEAD:src/pages/import/ImportHistory.tsx
               <Table>
-                {/* HEADER TABLE */}
-=======
-                <Table>
->>>>>>> staging:src/features/import/ImportHistory.tsx
                 <TableHeader>
                   <TableRow className="bg-slate-50/70">
                     <TableHead className="font-semibold text-slate-600">Fichier</TableHead>
@@ -75,15 +65,7 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback, onVi
                 {/* BODY */}
                 <TableBody>
                   {history.map((row) => (
-<<<<<<< HEAD:src/pages/import/ImportHistory.tsx
-                    <TableRow
-                      key={row.id}
-                      className="hover:bg-slate-50/50 transition-colors"
-                    >
-                      {/* Fichier */}
-=======
                     <TableRow key={row.id} className="transition-colors hover:bg-slate-50/60">
->>>>>>> staging:src/features/import/ImportHistory.tsx
                       <TableCell>
                         <div className="flex items-center gap-2.5">
                           <div className="rounded-lg bg-primary/5 p-1.5">
@@ -128,23 +110,21 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback, onVi
                           </span>
                         </div>
                       </TableCell>
-<<<<<<< HEAD:src/pages/import/ImportHistory.tsx
-
-                      
-=======
                       <TableCell className="text-right">
                         <div className="inline-flex items-center gap-1">
                           {row.status === "Terminé" && (
                             <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="gap-1.5 rounded-md border border-sky-100 bg-sky-50/60 text-sky-700 shadow-sm hover:bg-sky-100/70 hover:text-sky-800"
-                                onClick={() => onViewEntries(row)}
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                                Voir écritures
-                              </Button>
+                              {onViewEntries && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="gap-1.5 rounded-md border border-sky-100 bg-sky-50/60 text-sky-700 shadow-sm hover:bg-sky-100/70 hover:text-sky-800"
+                                  onClick={() => onViewEntries(row)}
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                  Voir écritures
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -158,7 +138,6 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback, onVi
                           )}
                         </div>
                       </TableCell>
->>>>>>> staging:src/features/import/ImportHistory.tsx
                     </TableRow>
                   ))}
                 </TableBody>
