@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/Button";
 import {
   LayoutDashboard,
   BarChart3,
-  Settings,
   BookOpen,
   Network,
   Bell,

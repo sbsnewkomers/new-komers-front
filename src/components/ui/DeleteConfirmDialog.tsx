@@ -8,9 +8,20 @@ interface DeleteConfirmDialogProps {
     onOpenChange: (open: boolean) => void;
     onConfirm: () => void;
     onCancel: () => void;
+    itemType?: 'emprunt' | 'actif';
 }
 
-export function DeleteConfirmDialog({ open, onOpenChange, onConfirm, onCancel }: DeleteConfirmDialogProps) {
+export function DeleteConfirmDialog({ open, onOpenChange, onConfirm, onCancel, itemType = 'emprunt' }: DeleteConfirmDialogProps) {
+    const getItemText = () => {
+        switch (itemType) {
+            case 'actif':
+                return 'cet actif';
+            case 'emprunt':
+            default:
+                return 'cet emprunt';
+        }
+    };
+
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
@@ -20,7 +31,7 @@ export function DeleteConfirmDialog({ open, onOpenChange, onConfirm, onCancel }:
                         Confirmer la suppression
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                        Êtes-vous sûr de vouloir supprimer cet emprunt ? Cette action est irréversible.
+                        Êtes-vous sûr de vouloir supprimer {getItemText()} ? Cette action est irréversible.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
