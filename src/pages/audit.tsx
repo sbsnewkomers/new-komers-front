@@ -381,8 +381,8 @@ export default function AuditPage() {
       </Head>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3 mb-1">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="mb-1 flex items-center gap-3">
             <div className="rounded-xl bg-primary/10 p-2.5">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-history h-5 w-5 text-primary" aria-hidden="true">
                 <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
@@ -397,10 +397,10 @@ export default function AuditPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center gap-3 sm:w-auto">
             <Button
               variant="outline"
-              className="h-9 gap-2 border-slate-200 text-slate-700"
+              className="h-9 w-full gap-2 border-slate-200 text-slate-700 sm:w-auto"
               onClick={handleExportCsv}
               >
               <Download className="h-4 w-4" />
@@ -434,8 +434,8 @@ export default function AuditPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
               placeholder="Rechercher..."
@@ -451,7 +451,7 @@ export default function AuditPage() {
             onValueChange={(v) => {
               setCategoryFilter(v as AuditCategory | "");
             }}
-            className="h-9 flex-1 border-slate-200 bg-white text-sm"
+            className="h-9 w-full border-slate-200 bg-white text-sm sm:flex-1"
           >
             <option value="">Toutes catégories</option>
             {(Object.keys(categoryLabels) as AuditCategory[]).map((c) => (
@@ -465,7 +465,7 @@ export default function AuditPage() {
             onValueChange={(v) => {
               setActionFilter(v as AuditActionUi | "");
             }}
-            className="h-9 flex-1 border-slate-200 bg-white text-sm"
+            className="h-9 w-full border-slate-200 bg-white text-sm sm:flex-1"
           >
             <option value="">Toutes actions</option>
             {(Object.keys(actionConfig) as AuditActionUi[]).map((a) => (
@@ -479,25 +479,25 @@ export default function AuditPage() {
             onValueChange={(v) => {
               setStatusFilter(v as "" | "success" | "failure");
             }}
-            className="h-9 flex-1 border-slate-200 bg-white text-sm"
+            className="h-9 w-full border-slate-200 bg-white text-sm sm:flex-1"
           >
             <option value="">Tous statuts</option>
             <option value="success">Succès</option>
             <option value="failure">Échec</option>
           </Select>
-          <div className="flex items-center gap-2">
+          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[1fr_auto_1fr] sm:items-center">
             <Input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="h-9 w-[50px] border-slate-200 bg-white text-sm"
+              className="h-9 w-full min-w-[150px] border-slate-200 bg-white text-sm"
             />
-            <span className="text-xs text-slate-400">à</span>
+            <span className="text-xs text-slate-400 sm:text-center">à</span>
             <Input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="h-9 w-[50px] border-slate-200 bg-white text-sm"
+              className="h-9 w-full min-w-[150px] border-slate-200 bg-white text-sm"
             />
           </div>
           {(search || actionFilter || categoryFilter || statusFilter) && (
@@ -640,11 +640,11 @@ export default function AuditPage() {
 
               {/* Pagination (backend-level) */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
+                <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-xs text-slate-500">
                     {stats.total} log{stats.total > 1 ? "s" : ""} &mdash; page {page}/{totalPages}
                   </p>
-                  <div className="flex items-center gap-1">
+                  <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -653,6 +653,7 @@ export default function AuditPage() {
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
+                    <div className="hidden items-center gap-1 sm:flex">
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                       <button
                         key={p}
@@ -664,6 +665,10 @@ export default function AuditPage() {
                         {p}
                       </button>
                     ))}
+                    </div>
+                    <span className="text-xs font-medium text-slate-500 sm:hidden">
+                      {page}/{totalPages}
+                    </span>
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

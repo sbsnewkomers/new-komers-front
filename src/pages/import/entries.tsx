@@ -109,17 +109,17 @@ export default function ImportEntriesPage() {
       </Head>
 
       <div className="space-y-6">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <Button
             variant="outline"
-            className="gap-2 border-slate-200 bg-white/90 shadow-sm hover:shadow-md"
+            className="w-full gap-2 border-slate-200 bg-white/90 shadow-sm hover:shadow-md sm:w-auto"
             onClick={() => void router.push("/import")}
           >
             <ArrowLeft className="h-4 w-4" />
             Retour aux imports
           </Button>
-          <div className="flex items-center gap-2 text-sm">Fichier:
-            <span className="rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 shadow-sm">
+          <div className="flex min-w-0 items-center gap-2 text-sm">Fichier:
+            <span className="max-w-full truncate rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 shadow-sm sm:max-w-[420px]" title={selectedFile || "-"}>
               {selectedFile || "-"}
             </span>
           </div>

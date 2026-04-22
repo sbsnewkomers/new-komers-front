@@ -98,7 +98,7 @@ export function DialogContent({
   return (
     <DialogPortal>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-end justify-center p-2 sm:items-center sm:p-4"
         onClick={() => {
           ctx.setOpen(false);
           onClose?.();
@@ -108,7 +108,7 @@ export function DialogContent({
         <div
           ref={ref}
           role="dialog"
-          className={`relative z-50 grid w-full max-w-lg gap-4 rounded-lg border border-border bg-background shadow-lg ${className ?? ""}`}
+          className={`relative z-50 grid w-[calc(100vw-1rem)] max-w-lg gap-4 overflow-hidden rounded-t-xl border border-border bg-background shadow-lg max-sm:max-h-[calc(100dvh-1rem)] sm:w-full sm:max-h-[85dvh] sm:rounded-lg ${className ?? ""}`}
           onClick={(e) => e.stopPropagation()}
         >
           {children}

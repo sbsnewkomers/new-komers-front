@@ -787,21 +787,21 @@ export default function ImportPage() {
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex justify-between items-center">
-            <TabsList className="h-12 p-1.5 bg-slate-100 rounded-xl gap-1">
-              <TabsTrigger value="excel" className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <TabsList className="h-auto w-full gap-1 rounded-xl bg-slate-100 p-1.5 sm:h-12 sm:w-auto">
+              <TabsTrigger value="excel" className="gap-2 flex-1 rounded-lg px-4 py-2 data-[state=active]:shadow-md">
                 <Sheet className="h-4 w-4" />
                 Excel / CSV
               </TabsTrigger>
-              <TabsTrigger value="api" className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md">
+              <TabsTrigger value="api" className="gap-2 flex-1 rounded-lg px-4 py-2 data-[state=active]:shadow-md">
                 <Plug className="h-4 w-4" />
                 API
               </TabsTrigger>
             </TabsList>
-            <div className="flex justify-end items-center">
+            <div className="flex items-center justify-end">
               <Button
                 variant="outline"
-                className="gap-2"
+                className="w-full gap-2 sm:w-auto"
                 onClick={() => setMappingOpen(true)}
               >
                 <Settings className="h-4 w-4" />

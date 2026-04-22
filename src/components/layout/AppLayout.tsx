@@ -111,10 +111,10 @@ export function AppLayout({
       : "text-slate-500 hover:bg-slate-50 hover:text-primary");
 
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr]">
+    <div className="relative h-screen w-full overflow-hidden">
       {/* Sidebar */}
 
-      <div className="hidden border-r border-slate-100 bg-white md:block z-10 shadow-[1px_0px_3px_-1px_rgba(0,0,0,0.1)]">
+      <div className="fixed inset-y-0 left-0 z-20 hidden w-[240px] border-r border-slate-100 bg-white shadow-[1px_0px_3px_-1px_rgba(0,0,0,0.1)] md:block lg:w-[260px]">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-20 items-center px-6">
             <Link href="/" className="flex items-center gap-3">
@@ -316,11 +316,11 @@ export function AppLayout({
 
       {/* Main */}
 
-      <div className="flex flex-col bg-background">
+      <div className="flex h-screen min-w-0 flex-col bg-background md:pl-[240px] lg:pl-[260px]">
         <header className="flex h-16 items-center justify-between border-b border-slate-100 bg-white px-4 md:px-6 shadow-sm z-10">
           {/* Left: mobile menu button + breadcrumbs */}
 
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 md:hidden"
@@ -330,7 +330,7 @@ export function AppLayout({
               <Menu className="h-5 w-5" />
             </button>
 
-            <div className="flex items-center gap-1 text-sm text-slate-500">
+            <div className="flex min-w-0 items-center gap-1 text-sm text-slate-500">
               {/* <span
                 className="cursor-pointer hover:text-primary transition-colors"
                 onClick={() => void router.push("/")}
@@ -351,7 +351,7 @@ export function AppLayout({
                 </>
               )}
 
-              <span className="font-medium text-primary line-clamp-1">
+              <span className="line-clamp-1 font-medium text-primary">
                 {title}
               </span>
 
@@ -360,7 +360,7 @@ export function AppLayout({
 
           {/* Right Actions */}
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-1 border-l border-slate-100 pl-4">
               <Button
                 variant="ghost"
@@ -383,7 +383,7 @@ export function AppLayout({
           </div>
         </header>
 
-        <main className="flex flex-1 flex-col gap-6 p-6 bg-blue-100/60 max-h-[calc(100vh-64px)] overflow-y-auto">
+        <main className="safe-area-pb flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-blue-100/60 p-4 sm:gap-6 sm:p-6">
           {children}
         </main>
       </div>
@@ -397,7 +397,7 @@ export function AppLayout({
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          <div className="relative z-10 flex h-full w-[260px] flex-col bg-white border-r border-slate-100 shadow-xl">
+          <div className="relative z-10 flex h-full w-[min(85vw,260px)] flex-col border-r border-slate-100 bg-white shadow-xl">
             <div className="flex items-center justify-between px-4 py-4 border-b border-slate-100">
               <Link
                 href="/"

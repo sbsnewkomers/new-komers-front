@@ -187,13 +187,13 @@ export default function ShareholdersPage() {
         </div>
 
         {/* Search and Actions */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="relative">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:w-auto">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
               type="search"
               placeholder="Rechercher par nom, email ou entreprise..."
-              className="h-9 w-[260px] rounded-lg border-slate-200 pl-9 text-sm"
+              className="h-9 w-full rounded-lg border-slate-200 pl-9 text-sm sm:w-[260px]"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -202,7 +202,7 @@ export default function ShareholdersPage() {
             <Button
               type="button"
               onClick={openCreate}
-              className="bg-primary text-white hover:bg-slate-800"
+              className="w-full bg-primary text-white hover:bg-slate-800 sm:w-auto"
             >
               <Plus className="h-4 w-4" />
               Nouvel actionnaire
@@ -218,7 +218,7 @@ export default function ShareholdersPage() {
             Chargement des actionnaires...
           </div>
         ) : (
-          <div className="overflow-x-visible">
+          <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-100 text-sm">
               <thead className="bg-slate-50/60">
                 <tr>

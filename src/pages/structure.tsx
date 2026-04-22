@@ -2004,18 +2004,18 @@ export default function StructurePage() {
         </div>
 
         {/* Search and Actions */}
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <div className="flex gap-1 items-center">
+          <div className="relative w-full sm:w-auto">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
               type="search"
               placeholder="Rechercher..."
-              className="h-9 w-[260px] rounded-lg border-slate-200 pl-9 text-sm"
+              className="h-9 w-full rounded-lg border-slate-200 pl-9 text-sm sm:w-[260px]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex justify-end gap-3 w-full">
+          <div className="flex w-full flex-wrap justify-end gap-3">
             {canImportStructure && (
               <Link
                 href="/structure/import/upload"
@@ -2129,7 +2129,7 @@ export default function StructurePage() {
         </div>
 
         {/* Main content */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-visible">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           {treeError && (
             <div className="m-6 p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
               <div className="h-4 w-4 rounded-full bg-red-100 flex items-center justify-center">
@@ -2202,10 +2202,10 @@ export default function StructurePage() {
               </div>
             </>
           ) : (
-            <div className="min-w-full">
+            <div className="overflow-x-auto">
               {/* Indicateur de recherche active */}
               {searchQuery.trim() && (
-                <div className="bg-amber-50 border border-amber-200 px-4 py-2 flex items-center gap-2 justify-between">
+                <div className="flex flex-col gap-2 border border-amber-200 bg-amber-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-4">
                   <div className="flex items-center gap-2 text-sm text-amber-700">
                     <svg
                       className="h-4 w-4"
@@ -2237,15 +2237,16 @@ export default function StructurePage() {
                     onClick={() => setSearchQuery("")}
                     variant="ghost"
                     size="sm"
-                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 h-8 px-3"
+                    className="h-8 w-full px-3 text-amber-600 hover:bg-amber-100 hover:text-amber-700 sm:w-auto"
                   >
                     Effacer
                   </Button>
                 </div>
               )}
 
+              <div className="min-w-[720px]">
               {tree?.workspaces && tree.workspaces.length > 0 && (
-                <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-slate-100 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-slate-100 px-3 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600 sm:px-6">
                   <div className="flex items-center">
                     Nom
                   </div>
@@ -2269,7 +2270,7 @@ export default function StructurePage() {
                         key={node.id}
                         className="bg-slate-50/80 border-y border-slate-100"
                       >
-                        <div className="px-6 py-3 flex items-center gap-2">
+                        <div className="flex items-center gap-2 px-3 py-3 sm:px-6">
                           <div className="h-px flex-1 bg-slate-200" />
                           <div className="flex items-center gap-2">
                             {isPackageIcon ? (
@@ -2334,7 +2335,7 @@ export default function StructurePage() {
                       className="group/row transition-all duration-200 hover:bg-slate-50/50 hover:shadow-sm"
                     >
                       <div
-                        className="grid cursor-pointer grid-cols-[1fr_120px_100px_60px] items-center gap-4 px-6 py-3"
+                        className="grid cursor-pointer grid-cols-[1fr_120px_100px_60px] items-center gap-4 px-3 py-3 sm:px-6"
                         onClick={() => openDetail(node)}
                       >
                         <div
@@ -2418,7 +2419,7 @@ export default function StructurePage() {
                                 <button
                                   type="button"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-primary hover:shadow-md group-hover/row:opacity-100"
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 opacity-100 transition-all hover:bg-white hover:text-primary hover:shadow-md md:opacity-0 md:group-hover/row:opacity-100"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </button>
@@ -2556,7 +2557,7 @@ export default function StructurePage() {
                                 <button
                                   type="button"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-primary hover:shadow-sm group-hover/row:opacity-100"
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 opacity-100 transition-all hover:bg-white hover:text-primary hover:shadow-sm md:opacity-0 md:group-hover/row:opacity-100"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </button>
@@ -2622,6 +2623,7 @@ export default function StructurePage() {
                   </li>
                 )}
               </ul>
+              </div>
             </div>
           )}
         </div>
@@ -3408,7 +3410,7 @@ export default function StructurePage() {
 
       {/* Fiche Entreprise Modal */}
       <Dialog open={ficheOpen} onOpenChange={setFicheOpen}>
-        <DialogContent className="max-h-[70vh] max-w-7xl gap-2!">
+        <DialogContent className="max-h-[85dvh] w-full max-w-[95vw] lg:max-w-7xl gap-2!">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="h-6 w-6 text-blue-600" />
@@ -3428,7 +3430,7 @@ export default function StructurePage() {
             const bus = busByCompany[ficheCompany.id] ?? [];
             return (
               <Tabs value={ficheTab} onValueChange={setFicheTab}>
-                <TabsList className="gap-4">
+                <TabsList className="w-full justify-start gap-2 overflow-x-auto">
                   <TabsTrigger value="informations">Informations</TabsTrigger>
                   <TabsTrigger value="business-units">
                     Business Units
@@ -3697,7 +3699,7 @@ export default function StructurePage() {
 
       {/* Fiche Group Modal */}
       <Dialog open={ficheGroupOpen} onOpenChange={setFicheGroupOpen}>
-        <DialogContent className="max-w-7xl gap-2!">
+        <DialogContent className="max-h-[85dvh] w-full max-w-[95vw] lg:max-w-7xl gap-2!">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Layers className="h-5 w-5 text-blue-500" />
@@ -3717,7 +3719,7 @@ export default function StructurePage() {
             const groupCompanies = allTreeCompanies.filter(c => c.groupId === ficheGroup.id);
             return (
               <Tabs value={ficheGroupTab} onValueChange={setFicheGroupTab}>
-                <TabsList className="gap-4">
+                <TabsList className="w-full justify-start gap-2 overflow-x-auto">
                   <TabsTrigger value="informations">Informations</TabsTrigger>
                   <TabsTrigger value="entreprises">Entreprises</TabsTrigger>
                   <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
@@ -3881,7 +3883,7 @@ export default function StructurePage() {
 
       {/* Fiche BU Modal */}
       <Dialog open={ficheBUOpen} onOpenChange={setFicheBUOpen}>
-        <DialogContent className="max-w-7xl gap-2!">
+        <DialogContent className="max-h-[85dvh] w-full max-w-[95vw] lg:max-w-7xl gap-2!">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Briefcase className="h-5 w-5 text-blue-500" />
@@ -3898,7 +3900,7 @@ export default function StructurePage() {
             }
             return (
               <Tabs value={ficheBUTab} onValueChange={setFicheBUTab}>
-                <TabsList className="gap-4">
+                <TabsList className="w-full justify-start gap-2 overflow-x-auto">
                   <TabsTrigger value="informations">Informations</TabsTrigger>
                   <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
                 </TabsList>

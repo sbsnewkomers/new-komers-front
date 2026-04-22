@@ -1192,7 +1192,7 @@ export function MappingModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[95vw] w-[1600px] h-[90vh] flex flex-col p-0 bg-white rounded-xl overflow-hidden">
+        <DialogContent className="h-[92dvh] w-full max-w-[98vw] sm:max-w-[95vw] lg:max-w-7xl flex flex-col overflow-hidden rounded-xl bg-white p-0">
 
           {errorMessage && (
             <div className="flex-shrink-0 mx-4 mt-4 p-2 bg-red-50 border border-red-200 rounded-md">
@@ -1244,7 +1244,7 @@ export function MappingModal({
                         value={mappingName}
                         onChange={(e) => setMappingName(e.target.value)}
                         placeholder="Ex: Mapping fournisseur A"
-                        className="w-56 px-2 py-1 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full px-2 py-1 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 sm:w-56"
                       />
                       {isAdmin && (
                         <>
@@ -1305,7 +1305,7 @@ export function MappingModal({
                 )}
 
                 {/* Onglets */}
-                <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
+                <div className="flex flex-wrap items-center gap-1 rounded-lg bg-slate-100 p-0.5">
                   <button
                     onClick={() => setConfigMode('file')}
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${configMode === 'file' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
@@ -1345,12 +1345,12 @@ export function MappingModal({
           </div>
 
           {/* Corps */}
-          <div className="flex-1 overflow-hidden flex flex-row min-h-0">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
 
             {configMode === 'file' ? (
               <>
                 {/* Panneau gauche : colonnes du fichier */}
-                <div className="flex-1 flex flex-col min-w-0 overflow-hidden border-r border-slate-100 bg-slate-50/30">
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden border-b border-slate-100 bg-slate-50/30 lg:border-b-0 lg:border-r">
                   <div className="flex-shrink-0 p-3 border-b border-slate-100">
                     <div className="flex items-center justify-between mb-2">
                       <div>
@@ -1452,7 +1452,7 @@ export function MappingModal({
                 </div>
 
                 {/* Panneau droit : champs attendus */}
-                <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white">
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-white">
                   <div className="flex-shrink-0 p-3 border-b border-slate-100">
                     <div className="flex items-center justify-between">
                       <div>
@@ -1567,19 +1567,19 @@ export function MappingModal({
           {/* Footer */}
           <div className="flex-shrink-0">
             <DialogFooter className="p-3 border-t bg-slate-50/50">
-              <div className="flex flex-wrap gap-2 w-full justify-between items-center">
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <button
                   onClick={clearMapping}
                   className="text-[10px] text-slate-500 hover:text-amber-600 transition-colors px-2 py-1"
                 >
                   ✕ Effacer le mapping actuel
                 </button>
-                <div className="flex gap-2">
+                <div className="flex w-full flex-wrap gap-2 sm:w-auto">
                   {configMode === 'file' && (
                     <Button
                       size="sm"
                       onClick={handleSaveCurrentMapping}
-                      className="h-7 text-xs px-3 bg-emerald-600 hover:bg-emerald-700"
+                      className="h-8 w-full bg-emerald-600 px-3 text-xs hover:bg-emerald-700 sm:h-7 sm:w-auto"
                       disabled={!canSaveMapping || isSaving}
                     >
                       {isSaving
@@ -1593,7 +1593,7 @@ export function MappingModal({
                     <Button
                       size="sm"
                       onClick={handleImportClick}
-                      className="h-7 text-xs px-3 bg-primary hover:bg-primary/90"
+                      className="h-8 w-full bg-primary px-3 text-xs hover:bg-primary/90 sm:h-7 sm:w-auto"
                       disabled={getImportButtonDisabled() || isSaving}
                     >
                       <FileUp className="h-3 w-3 mr-1" />

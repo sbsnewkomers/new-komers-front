@@ -68,7 +68,7 @@ export default function BudgetPage() {
         <title>Budget</title>
       </Head>
       <div className="space-y-4">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <Link href="/reporting" className="text-sm text-muted-foreground hover:text-foreground">
             ← Reporting
           </Link>
@@ -76,7 +76,7 @@ export default function BudgetPage() {
         <p className="text-sm text-muted-foreground">
           Saisissez les montants prévisionnels par ligne et par mois.
         </p>
-        <div className="overflow-auto rounded-xl border border-border">
+        <div className="overflow-x-auto rounded-xl border border-border">
           <Table className="bg-white">
             <TableHeader>
               <TableRow className="bg-black!">

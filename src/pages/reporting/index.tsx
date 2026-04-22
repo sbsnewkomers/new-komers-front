@@ -121,8 +121,8 @@ export default function ReportingPage() {
       <Head>
         <title>Reporting</title>
       </Head>
-      <div className="flex flex-col">
-        <div className="flex items-center gap-4 border-b p-4">
+      <div className="flex min-w-0 flex-col">
+        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:flex-wrap sm:items-center">
           <Select value={period} onValueChange={setPeriod}>
             {PERIODS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -147,13 +147,13 @@ export default function ReportingPage() {
           <Button
             variant="outline"
             onClick={() => setEditMode((e) => !e)}
-            className={editMode ? "ring-2 ring-primary" : ""}
+            className={`w-full sm:w-auto ${editMode ? "ring-2 ring-primary" : ""}`}
           >
             {editMode ? "Désactiver" : "Mode édition cartographie"}
           </Button>
         </div>
 
-        <div className="overflow-auto flex-1">
+        <div className="flex-1 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -217,7 +217,7 @@ export default function ReportingPage() {
         </div>
 
         {editMode && (
-          <div className="flex items-center gap-4 border-t p-4 bg-muted/30">
+          <div className="flex flex-col gap-3 border-t bg-muted/30 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
             <span className="text-sm text-muted-foreground">
               {selectedRowIds.size} ligne(s) sélectionnée(s)
             </span>
