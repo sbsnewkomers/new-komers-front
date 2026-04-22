@@ -6,7 +6,7 @@ import { useCompanies } from "@/hooks";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
-import { Sheet, Plug, ArrowRight, FileUp } from "lucide-react";
+import { Sheet, Plug, ArrowRight, FileUp, Settings } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/apiClient";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { Toast } from "@/components/ui/Toast";
@@ -23,9 +23,11 @@ import { RollbackConfirmDialog } from "@/features/import/RollbackConfirmDialog";
 import { ApiTabContent } from "@/features/import/ApiTabContent";
 import { Basic_COLUMNS } from "@/features/import/constants";
 import { ImportHistoryRow, ImportProgress, ValidationError, SavedMapping, MappingPayload } from "@/features/import/types";
+import { useRouter } from 'next/navigation';
 
 export default function ImportPage() {
   const companies = useCompanies();
+  const router = useRouter();
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [activeTab, setActiveTab] = useState("excel");
   const [importsInProgress, setImportsInProgress] = useState<ImportProgress[]>([]);
@@ -785,17 +787,28 @@ export default function ImportPage() {
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="h-12 p-1.5 bg-slate-100 rounded-xl gap-1">
-            <TabsTrigger value="excel" className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md">
-              <Sheet className="h-4 w-4" />
-              Excel / CSV
-            </TabsTrigger>
-            <TabsTrigger value="api" className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md">
-              <Plug className="h-4 w-4" />
-              API
-            </TabsTrigger>
-          </TabsList>
-
+          <div className="flex justify-between items-center">
+            <TabsList className="h-12 p-1.5 bg-slate-100 rounded-xl gap-1">
+              <TabsTrigger value="excel" className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md">
+                <Sheet className="h-4 w-4" />
+                Excel / CSV
+              </TabsTrigger>
+              <TabsTrigger value="api" className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md">
+                <Plug className="h-4 w-4" />
+                API
+              </TabsTrigger>
+            </TabsList>
+            <div className="flex justify-end items-center">
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => setMappingOpen(true)}
+              >
+                <Settings className="h-4 w-4" />
+                Mappings
+              </Button>
+            </div>
+          </div>
           <TabsContent value="excel" className="mt-6 space-y-4">
             <UploadZone
               type="excel"
@@ -810,17 +823,6 @@ export default function ImportPage() {
               onDragLeave={handleDragLeave}
               onFileInput={handleFileInput}
             />
-            
-            <div className="flex justify-end items-center">
-              <Button
-                variant="outline"
-                className="gap-2"
-                onClick={() => setMappingOpen(true)}
-              >
-                <ArrowRight className="h-4 w-4" />
-                Configurer le mapping
-              </Button>
-            </div>
           </TabsContent>
 
           <TabsContent value="api" className="mt-6">
@@ -837,6 +839,9 @@ export default function ImportPage() {
           onRollback={(row) => {
             setRollbackTarget(row);
             setRollbackConfirmOpen(true);
+          }}
+          onViewEntries={(row) => {
+            void router.push(`/import/entries?file=${encodeURIComponent(row.file)}`);
           }}
         />
       </div>

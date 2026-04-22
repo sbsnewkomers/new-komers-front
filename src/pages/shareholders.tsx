@@ -187,7 +187,7 @@ export default function ShareholdersPage() {
         </div>
 
         {/* Search and Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input

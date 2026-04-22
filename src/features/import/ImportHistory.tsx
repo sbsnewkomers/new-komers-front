@@ -10,7 +10,7 @@ interface ImportHistoryProps {
   historyOpen: boolean;
   onToggle: () => void;
   onRollback: (row: ImportHistoryRow) => void;
-  onViewEntries?: (row: ImportHistoryRow) => void;
+  onViewEntries: (row: ImportHistoryRow) => void;
 }
 
 export function ImportHistory({ history, historyOpen, onToggle, onRollback, onViewEntries }: ImportHistoryProps) {
@@ -114,7 +114,7 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback, onVi
                         <div className="inline-flex items-center gap-1">
                           {row.status === "Terminé" && (
                             <>
-                              {onViewEntries && (
+                              {/* {onViewEntries && ( */}
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -124,7 +124,7 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback, onVi
                                   <Eye className="h-3.5 w-3.5" />
                                   Voir écritures
                                 </Button>
-                              )}
+                              {/* )} */}
                               <Button
                                 variant="ghost"
                                 size="sm"

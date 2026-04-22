@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
@@ -1997,7 +1998,7 @@ export default function StructurePage() {
                   ? "Structure des workspaces"
                   : tree?.workspaces?.[0]?.name || "Structure des workspaces"}
               </h2>
-              <p className="text-sm text-slate-500">Gérez la structure hiérarchique de votre workspace et pilotez l'ensemble de vos entités.</p>
+              <p className="text-sm text-slate-500">Gérez la structure hiérarchique de votre workspace et pilotez l&apos;ensemble de vos entités.</p>
             </div>
           </div>
         </div>
@@ -2244,7 +2245,7 @@ export default function StructurePage() {
               )}
 
               {tree?.workspaces && tree.workspaces.length > 0 && (
-                <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-linear-to-r from-slate-50 to-blue-50/30 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-slate-100 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600">
                   <div className="flex items-center">
                     Nom
                   </div>
@@ -3407,7 +3408,7 @@ export default function StructurePage() {
 
       {/* Fiche Entreprise Modal */}
       <Dialog open={ficheOpen} onOpenChange={setFicheOpen}>
-        <DialogContent className="max-h-[70vh] max-w-screen-xl gap-2!">
+        <DialogContent className="max-h-[70vh] max-w-7xl gap-2!">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="h-6 w-6 text-blue-600" />
@@ -3662,7 +3663,7 @@ export default function StructurePage() {
                                         )}
                                         {emprunt.interest_rate && (
                                           <span className="ml-2">
-                                            â¢ {emprunt.interest_rate}% d'intérêt
+                                            â¢ {emprunt.interest_rate}% d&apos;intérêt
                                           </span>
                                         )}
                                       </div>
@@ -3696,7 +3697,7 @@ export default function StructurePage() {
 
       {/* Fiche Group Modal */}
       <Dialog open={ficheGroupOpen} onOpenChange={setFicheGroupOpen}>
-        <DialogContent className="max-w-screen-xl gap-2!">
+        <DialogContent className="max-w-7xl gap-2!">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Layers className="h-5 w-5 text-blue-500" />
@@ -3851,7 +3852,7 @@ export default function StructurePage() {
                                         )}
                                         {emprunt.interest_rate && (
                                           <span className="ml-2">
-                                            â¢ {emprunt.interest_rate}% d'intérêt
+                                            â¢ {emprunt.interest_rate}% d&apos;intérêt
                                           </span>
                                         )}
                                       </div>
@@ -3880,7 +3881,7 @@ export default function StructurePage() {
 
       {/* Fiche BU Modal */}
       <Dialog open={ficheBUOpen} onOpenChange={setFicheBUOpen}>
-        <DialogContent className="max-w-screen-xl gap-2!">
+        <DialogContent className="max-w-7xl gap-2!">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Briefcase className="h-5 w-5 text-blue-500" />
@@ -3984,7 +3985,7 @@ export default function StructurePage() {
                                         )}
                                         {emprunt.interest_rate && (
                                           <span className="ml-2">
-                                            â¢ {emprunt.interest_rate}% d'intérêt
+                                            â¢ {emprunt.interest_rate}% d&apos;intérêt
                                           </span>
                                         )}
                                       </div>

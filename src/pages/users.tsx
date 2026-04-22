@@ -466,7 +466,7 @@ export default function UsersPage() {
       <Head><title>Gestion des utilisateurs</title></Head>
       <div className="space-y-6">
         {/* Header */}
-        <div>
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 mb-1">
             <div className="rounded-xl bg-primary/10 p-2.5">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users h-5 w-5 text-primary" aria-hidden="true">
@@ -481,18 +481,18 @@ export default function UsersPage() {
               <p className="text-sm text-slate-500">G&eacute;rez les utilisateurs, invitations et permissions.</p>
             </div>
           </div>
-        </div>
+        
 
-        {/* Actions */}
-        <div className="flex items-center gap-3">
-          {invitableRoles.length > 0 && (
-            <Button onClick={openInviteModal} className="bg-primary text-white hover:bg-slate-800">
-              <Send className="h-4 w-4" />
-              Inviter un utilisateur
-            </Button>
-          )}
+          {/* Actions */}
+          <div className="flex items-center gap-3">
+            {invitableRoles.length > 0 && (
+              <Button onClick={openInviteModal} className="bg-primary text-white hover:bg-slate-800">
+                <Send className="h-4 w-4" />
+                Inviter un utilisateur
+              </Button>
+            )}
+          </div>
         </div>
-
         {/* Tabs */}
         <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
           {([
@@ -523,13 +523,13 @@ export default function UsersPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {([
-                { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-slate-50" },
-                { label: "Actifs", value: stats.active, color: "text-emerald-700", bg: "bg-emerald-50" },
-                { label: "En attente", value: stats.pending, color: "text-amber-700", bg: "bg-amber-50" },
-                { label: "Suspendus", value: stats.suspended, color: "text-red-600", bg: "bg-red-50" },
+                { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" },
+                { label: "Actifs", value: stats.active, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
+                { label: "En attente", value: stats.pending, color: "text-amber-700", bg: "bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100" },
+                { label: "Suspendus", value: stats.suspended, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
               ]).map((s) => (
                 <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{s.label}</p>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>{s.label}</p>
                   <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
                 </div>
               ))}
@@ -537,7 +537,7 @@ export default function UsersPage() {
 
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[200px] max-w-xs">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input placeholder="Rechercher un utilisateur..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
               </div>
@@ -680,13 +680,13 @@ export default function UsersPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {([
-                { label: "Total", value: invStats.total, color: "text-slate-900", bg: "bg-slate-50" },
-                { label: "En attente", value: invStats.pending, color: "text-yellow-700", bg: "bg-yellow-50" },
-                { label: "Accept\u00e9es", value: invStats.accepted, color: "text-emerald-700", bg: "bg-emerald-50" },
-                { label: "Rejet\u00e9es", value: invStats.rejected, color: "text-red-600", bg: "bg-red-50" },
+                { label: "Total", value: invStats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" }, 
+                { label: "En attente", value: invStats.pending, color: "text-yellow-700", bg: "bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100" },
+                { label: "Accept\u00e9es", value: invStats.accepted, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
+                { label: "Rejet\u00e9es", value: invStats.rejected, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
               ]).map((s) => (
                 <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{s.label}</p>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>{s.label}</p>
                   <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
                 </div>
               ))}

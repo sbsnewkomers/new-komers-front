@@ -381,7 +381,7 @@ export default function AuditPage() {
       </Head>
       <div className="space-y-6">
         {/* Header */}
-        <div>
+        <div className="flex justify-between items-center">
           <div className="flex items-center gap-3 mb-1">
             <div className="rounded-xl bg-primary/10 p-2.5">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-history h-5 w-5 text-primary" aria-hidden="true">
@@ -395,18 +395,18 @@ export default function AuditPage() {
               <p className="text-sm text-slate-500">Historique complet des actions sur la plateforme.</p>
             </div>
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            className="h-9 gap-2 border-slate-200 text-slate-700"
-            onClick={handleExportCsv}
-          >
-            <Download className="h-4 w-4" />
-            Exporter CSV
-          </Button>
+          {/* Actions */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              className="h-9 gap-2 border-slate-200 text-slate-700"
+              onClick={handleExportCsv}
+              >
+              <Download className="h-4 w-4" />
+              Exporter CSV
+            </Button>
+          </div>
         </div>
 
         {/* Error message */}
@@ -419,13 +419,13 @@ export default function AuditPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
-            { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-white" },
-            { label: "Aujourd’hui", value: stats.today, color: "text-blue-700", bg: "bg-blue-50" },
-            { label: "Échecs", value: stats.failures, color: "text-red-600", bg: "bg-red-50" },
-            { label: "Utilisateurs", value: stats.users, color: "text-emerald-700", bg: "bg-emerald-50" },
+            { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" },
+            { label: "Aujourd’hui", value: stats.today, color: "text-blue-700", bg: "bg-linear-to-l from-blue-200 to-white ring-1 ring-blue-100" },
+            { label: "Échecs", value: stats.failures, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
+            { label: "Utilisateurs", value: stats.users, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
           ].map((s) => (
             <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+              <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>
                 {s.label}
               </p>
               <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
@@ -435,7 +435,7 @@ export default function AuditPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px] max-w-xs">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
               placeholder="Rechercher..."
@@ -485,19 +485,19 @@ export default function AuditPage() {
             <option value="success">Succès</option>
             <option value="failure">Échec</option>
           </Select>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
             <Input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="h-9 w-[150px] border-slate-200 bg-white text-sm"
+              className="h-9 w-[50px] border-slate-200 bg-white text-sm"
             />
             <span className="text-xs text-slate-400">à</span>
             <Input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="h-9 w-[150px] border-slate-200 bg-white text-sm"
+              className="h-9 w-[50px] border-slate-200 bg-white text-sm"
             />
           </div>
           {(search || actionFilter || categoryFilter || statusFilter) && (

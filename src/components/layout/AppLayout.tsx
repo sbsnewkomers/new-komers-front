@@ -107,14 +107,14 @@ export function AppLayout({
   const navLinkClass = (href: string) =>
     "group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-sm font-medium " +
     (isActive(href)
-      ? "bg-slate-100 text-primary"
+      ? "bg-primary text-white"
       : "text-slate-500 hover:bg-slate-50 hover:text-primary");
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr]">
       {/* Sidebar */}
 
-      <div className="hidden border-r border-slate-100 bg-white md:block">
+      <div className="hidden border-r border-slate-100 bg-white md:block z-10 shadow-[1px_0px_3px_-1px_rgba(0,0,0,0.1)]">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-20 items-center px-6">
             <Link href="/" className="flex items-center gap-3">
@@ -317,7 +317,7 @@ export function AppLayout({
       {/* Main */}
 
       <div className="flex flex-col bg-background">
-        <header className="flex h-16 items-center justify-between border-b border-slate-100 bg-white px-4 md:px-6">
+        <header className="flex h-16 items-center justify-between border-b border-slate-100 bg-white px-4 md:px-6 shadow-sm z-10">
           {/* Left: mobile menu button + breadcrumbs */}
 
           <div className="flex items-center gap-3">
@@ -383,7 +383,7 @@ export function AppLayout({
           </div>
         </header>
 
-        <main className="flex flex-1 flex-col gap-6 p-6 bg-slate-50 max-h-[calc(100vh-64px)] overflow-y-auto">
+        <main className="flex flex-1 flex-col gap-6 p-6 bg-blue-100/60 max-h-[calc(100vh-64px)] overflow-y-auto">
           {children}
         </main>
       </div>

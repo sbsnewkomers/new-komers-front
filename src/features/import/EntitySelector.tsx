@@ -90,7 +90,7 @@ export function EntitySelector({
           <Building className="h-4 w-4 text-primary" />
         </div>
         <h3 className="text-sm font-semibold text-slate-700">
-          Sélectionner l'entité cible
+          Sélectionner l&apos;entité cible
         </h3>
         {!selectedEntityId && (
           <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
@@ -103,16 +103,16 @@ export function EntitySelector({
         {/* Type d'entité */}
         <div>
           <label className="block text-xs font-medium text-slate-600 mb-1.5">
-            Type d'entité
+            Type d&apos;entité
           </label>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => onEntityChange('', 'Company')}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all cursor-pointer ${
                 selectedEntityType === 'Company'
                   ? 'bg-primary/10 border-primary text-primary font-medium ring-2 ring-primary/20'
-                  : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  : 'bg-white border-slate-300 text-slate-600 hover:border-slate-300! hover:bg-slate-100'
               }`}
             >
               <Building className="h-4 w-4" />
@@ -121,10 +121,10 @@ export function EntitySelector({
             <button
               type="button"
               onClick={() => onEntityChange('', 'Group')}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all cursor-pointer ${
                 selectedEntityType === 'Group'
                   ? 'bg-primary/10 border-primary text-primary font-medium ring-2 ring-primary/20'
-                  : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  : 'bg-white border-slate-300 text-slate-600 hover:border-slate-300! hover:bg-slate-100'
               }`}
             >
               <Users className="h-4 w-4" />
