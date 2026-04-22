@@ -14,6 +14,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/Dialog";
 
@@ -101,13 +102,13 @@ export default function ImportConnectorsPage() {
       </div>
 
       <Dialog open={configOpen} onOpenChange={setConfigOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent size="md">
           <DialogHeader>
             <DialogTitle>
               {selectedConnector ? `Configuration — ${selectedConnector.name}` : "Configuration"}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <DialogBody className="space-y-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-muted-foreground">
                 URL de l&apos;API
@@ -144,7 +145,7 @@ export default function ImportConnectorsPage() {
                 ))}
               </Select>
             </div>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" type="button" onClick={() => setConfigOpen(false)}>
               Annuler

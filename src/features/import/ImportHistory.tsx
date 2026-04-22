@@ -10,7 +10,7 @@ interface ImportHistoryProps {
   historyOpen: boolean;
   onToggle: () => void;
   onRollback: (row: ImportHistoryRow) => void;
-  onViewEntries?: (row: ImportHistoryRow) => void;
+  onViewEntries: (row: ImportHistoryRow) => void;
 }
 
 export function ImportHistory({ history, historyOpen, onToggle, onRollback, onViewEntries }: ImportHistoryProps) {
@@ -19,7 +19,7 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback, onVi
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full cursor-pointer items-center gap-3 border-b border-slate-100 bg-linear-to-r from-slate-50/80 to-white px-6 py-4 transition-colors hover:from-slate-50 hover:to-slate-50/30"
+        className="flex w-full cursor-pointer flex-wrap items-center gap-3 border-b border-slate-100 bg-linear-to-r from-slate-50/80 to-white px-4 py-4 transition-colors hover:from-slate-50 hover:to-slate-50/30 sm:px-6"
       >
         <div className="rounded-lg bg-slate-100 p-2 shadow-inner">
           <History className="h-4 w-4 text-slate-600" />
@@ -111,24 +111,24 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback, onVi
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="inline-flex items-center gap-1">
+                          <div className="inline-flex flex-wrap items-center justify-end gap-1">
                           {row.status === "Terminé" && (
                             <>
-                              {onViewEntries && (
+                              {/* {onViewEntries && ( */}
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="gap-1.5 rounded-md border border-sky-100 bg-sky-50/60 text-sky-700 shadow-sm hover:bg-sky-100/70 hover:text-sky-800"
+                                  className="w-full gap-1.5 rounded-md border border-sky-100 bg-sky-50/60 text-sky-700 shadow-sm hover:bg-sky-100/70 hover:text-sky-800 sm:w-auto"
                                   onClick={() => onViewEntries(row)}
                                 >
                                   <Eye className="h-3.5 w-3.5" />
                                   Voir écritures
                                 </Button>
-                              )}
+                              {/* )} */}
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="gap-1.5 rounded-md border border-amber-100 bg-amber-50/60 text-amber-700 shadow-sm hover:bg-amber-100/70 hover:text-amber-800"
+                                className="w-full gap-1.5 rounded-md border border-amber-100 bg-amber-50/60 text-amber-700 shadow-sm hover:bg-amber-100/70 hover:text-amber-800 sm:w-auto"
                                 onClick={() => onRollback(row)}
                               >
                                 <RotateCcw className="h-3.5 w-3.5" />

@@ -41,16 +41,16 @@ export function UploadZone({
       onDragLeave={onDragLeave}
     >
       <div className="absolute inset-0 bg-linear-to-br from-primary/2 to-transparent pointer-events-none" />
-      <CardContent className="p-8! flex flex-col items-center justify-center min-h-[260px] relative">
+      <CardContent className="p-0! flex flex-col items-center justify-center min-h-[230px] relative">
         <div
-          className={`mb-5 rounded-2xl p-4 transition-all duration-300 ${
+          className={`mb-4 rounded-2xl p-2 transition-all duration-300 ${
             dragOver
               ? "bg-primary/10 scale-110"
               : "bg-slate-50 group-hover:bg-primary/5 group-hover:scale-105"
           }`}
         >
           <Upload
-            className={`h-8 w-8 transition-colors duration-300 ${
+            className={`h-6 w-6 transition-colors duration-300 ${
               dragOver ? "text-primary" : "text-slate-400 group-hover:text-primary/70"
             }`}
           />
@@ -71,7 +71,7 @@ export function UploadZone({
           <Button
             type="button"
             variant="outline"
-            className="pointer-events-none gap-2"
+            className="cursor-pointer gap-2 bg-slate-100! text-slate-600 hover:bg-slate-200! hover:text-slate-600"
           >
             <FileUp className="h-4 w-4" />
             Parcourir les fichiers

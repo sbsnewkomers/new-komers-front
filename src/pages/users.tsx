@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/Dialog";
 import {
@@ -481,10 +482,10 @@ export default function UsersPage() {
   return (
     <AppLayout title="User Management" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
       <Head><title>Gestion des utilisateurs</title></Head>
-      <div className="space-y-6">
+      <div className="space-y-3 md:space-y-6">
         {/* Header */}
-        <div>
-          <div className="flex items-center gap-3 mb-1">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="mb-1 flex items-center gap-3">
             <div className="rounded-xl bg-primary/10 p-2.5">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users h-5 w-5 text-primary" aria-hidden="true">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
@@ -498,20 +499,20 @@ export default function UsersPage() {
               <p className="text-sm text-slate-500">G&eacute;rez les utilisateurs, invitations et permissions.</p>
             </div>
           </div>
-        </div>
+        
 
-        {/* Actions */}
-        <div className="flex items-center gap-3">
-          {invitableRoles.length > 0 && (
-            <Button onClick={openInviteModal} className="bg-primary text-white hover:bg-slate-800">
-              <Send className="h-4 w-4" />
-              Inviter un utilisateur
-            </Button>
-          )}
+          {/* Actions */}
+          <div className="flex w-full items-center gap-3 sm:w-auto">
+            {invitableRoles.length > 0 && (
+              <Button onClick={openInviteModal} className="w-full bg-primary text-white hover:bg-slate-800 sm:w-auto">
+                <Send className="h-4 w-4" />
+                Inviter un utilisateur
+              </Button>
+            )}
+          </div>
         </div>
-
         {/* Tabs */}
-        <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+        <div className="grid grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
           {([
             { key: "users" as ActiveTab, label: "Utilisateurs", count: stats.total },
             { key: "invitations" as ActiveTab, label: "Invitations", count: invStats.total },
@@ -540,29 +541,29 @@ export default function UsersPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {([
-                { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-slate-50" },
-                { label: "Actifs", value: stats.active, color: "text-emerald-700", bg: "bg-emerald-50" },
-                { label: "En attente", value: stats.pending, color: "text-amber-700", bg: "bg-amber-50" },
-                { label: "Suspendus", value: stats.suspended, color: "text-red-600", bg: "bg-red-50" },
+                { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" },
+                { label: "Actifs", value: stats.active, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
+                { label: "En attente", value: stats.pending, color: "text-amber-700", bg: "bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100" },
+                { label: "Suspendus", value: stats.suspended, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
               ]).map((s) => (
                 <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{s.label}</p>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>{s.label}</p>
                   <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
                 </div>
               ))}
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[200px] max-w-xs">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="relative min-w-0 flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input placeholder="Rechercher un utilisateur..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
               </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-fit! border-slate-200 bg-white text-sm">
+              <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
                 <option value="">Tous les r&ocirc;les</option>
                 {ALL_ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
               </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-fit! border-slate-200 bg-white text-sm">
+              <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
                 <option value="">Tous les statuts</option>
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
               </Select>
@@ -581,7 +582,7 @@ export default function UsersPage() {
                   <p className="mt-1 text-sm text-slate-500">{search || roleFilter || statusFilter ? "Essayez de modifier vos filtres." : "Invitez votre premier utilisateur."}</p>
                 </div>
               ) : (
-                <div className="overflow-x-visible">
+                <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50/50">
@@ -609,9 +610,9 @@ export default function UsersPage() {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4">
-                              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${roleBadgeColor[u.role]}`}>
-                                <Shield className="h-3 w-3" />{roleLabel(u.role)}
+                            <td className="px-2 py-4">
+                              <span className={`inline-flex items-center gap-1 rounded-full border w-fit px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide ${roleBadgeColor[u.role]}`}>
+                                <Shield className="h-3 w-3 hidden md:block" />{roleLabel(u.role)}
                               </span>
                             </td>
                             <td className="px-6 py-4">
@@ -624,7 +625,7 @@ export default function UsersPage() {
                               <div className="flex justify-end">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-slate-900 hover:shadow-sm group-hover:opacity-100">
+                                    <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 opacity-100 transition-all hover:bg-white hover:text-slate-900 hover:shadow-sm sm:opacity-100 md:opacity-0 md:group-hover:opacity-100">
                                       <MoreHorizontal className="h-4 w-4" />
                                     </button>
                                   </DropdownMenuTrigger>
@@ -714,25 +715,25 @@ export default function UsersPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {([
-                { label: "Total", value: invStats.total, color: "text-slate-900", bg: "bg-slate-50" },
-                { label: "En attente", value: invStats.pending, color: "text-yellow-700", bg: "bg-yellow-50" },
-                { label: "Accept\u00e9es", value: invStats.accepted, color: "text-emerald-700", bg: "bg-emerald-50" },
-                { label: "Rejet\u00e9es", value: invStats.rejected, color: "text-red-600", bg: "bg-red-50" },
+                { label: "Total", value: invStats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" }, 
+                { label: "En attente", value: invStats.pending, color: "text-yellow-700", bg: "bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100" },
+                { label: "Accept\u00e9es", value: invStats.accepted, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
+                { label: "Rejet\u00e9es", value: invStats.rejected, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
               ]).map((s) => (
                 <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{s.label}</p>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>{s.label}</p>
                   <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
                 </div>
               ))}
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[200px] max-w-xs">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="relative min-w-0 flex-1 sm:min-w-[200px] sm:max-w-xs">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input placeholder="Rechercher par email..." value={invSearch} onChange={(e) => setInvSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
               </div>
-              <Select value={invStatusFilter} onValueChange={(v) => setInvStatusFilter(v as InvitationStatus | "")} className="h-9 w-fit! border-slate-200 bg-white text-sm">
+              <Select value={invStatusFilter} onValueChange={(v) => setInvStatusFilter(v as InvitationStatus | "")} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
                 <option value="">Tous les statuts</option>
                 {INVITATION_STATUSES.map((s) => <option key={s} value={s}>{invitationStatusLabel(s)}</option>)}
               </Select>
@@ -899,11 +900,11 @@ export default function UsersPage() {
 
       {/* ═══════════════ INVITE MODAL ═══════════════ */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Send className="h-5 w-5 text-slate-700" /> Inviter un utilisateur</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <DialogBody className="space-y-4">
             {/* <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Pr&eacute;nom</label>
@@ -991,7 +992,7 @@ export default function UsersPage() {
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-3">
-                    <div className="flex flex-wrap items-end gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
                       <div>
                         <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Type</label>
                         <select
@@ -1013,7 +1014,7 @@ export default function UsersPage() {
                           <select
                             value={perimCompanyId}
                             onChange={(e) => { setPerimCompanyId(e.target.value); setPerimNodeId(""); }}
-                            className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
+                            className="h-8 w-full rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 sm:min-w-[140px] sm:w-auto"
                           >
                             <option value="">Choisir&hellip;</option>
                             {(companiesHook.list ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -1026,7 +1027,7 @@ export default function UsersPage() {
                           value={perimNodeId}
                           onChange={(e) => setPerimNodeId(e.target.value)}
                           disabled={perimNodeType === "BUSINESS_UNIT" && !perimCompanyId}
-                          className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 disabled:opacity-50"
+                          className="h-8 w-full rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 disabled:opacity-50 sm:min-w-[140px] sm:w-auto"
                         >
                           <option value="">Choisir&hellip;</option>
                           {perimNodeOptions.map((n: { id: string; name: string }) => <option key={n.id} value={n.id}>{n.name}</option>)}
@@ -1040,7 +1041,7 @@ export default function UsersPage() {
                 )}
               </div>
             )}
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Annuler</Button>
             <Button
@@ -1062,11 +1063,11 @@ export default function UsersPage() {
 
       {/* Existing user confirmation dialog */}
       <Dialog open={inviteConfirmOpen} onOpenChange={setInviteConfirmOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent size="md">
           <DialogHeader>
             <DialogTitle>Utilisateur déjà existant</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-2 text-sm text-slate-700">
+          <DialogBody className="space-y-3 text-sm text-slate-700">
             <p>Un utilisateur avec cet email existe déjà dans l’application :</p>
             {inviteExistingUser && (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
@@ -1080,7 +1081,7 @@ export default function UsersPage() {
               Confirmez-vous vouloir lui attribuer ce nouveau périmètre d’accès
               et lui envoyer l’email d’information&nbsp;?
             </p>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button
               variant="outline"
@@ -1106,9 +1107,9 @@ export default function UsersPage() {
 
       {/* ═══════════════ EDIT MODAL ═══════════════ */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent size="md">
           <DialogHeader><DialogTitle>Modifier l&apos;utilisateur</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
+          <DialogBody className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Pr&eacute;nom</label>
@@ -1131,7 +1132,7 @@ export default function UsersPage() {
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
               </Select>
             </div>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Annuler</Button>
             <Button onClick={handleEdit} disabled={editLoading}>{editLoading ? "Enregistrement\u2026" : "Enregistrer"}</Button>
@@ -1141,9 +1142,9 @@ export default function UsersPage() {
 
       {/* ═══════════════ DELETE MODAL ═══════════════ */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent size="sm">
           <DialogHeader><DialogTitle>Confirmer la suppression</DialogTitle></DialogHeader>
-          <p className="py-2 text-sm text-slate-600">Supprimer <strong>{deleteTarget?.email}</strong> ? Cette action est irr&eacute;versible.</p>
+          <DialogBody><p className="text-sm text-slate-600">Supprimer <strong>{deleteTarget?.email}</strong> ? Cette action est irr&eacute;versible.</p></DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteOpen(false)}>Annuler</Button>
             <Button className="bg-red-600 text-white hover:bg-red-700" onClick={handleDelete} disabled={deleteLoading}>{deleteLoading ? "Suppression\u2026" : "Supprimer"}</Button>
@@ -1153,16 +1154,16 @@ export default function UsersPage() {
 
       {/* ═══════════════ PERMISSIONS MODAL ═══════════════ */}
       <Dialog open={permOpen} onOpenChange={setPermOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent size="2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5 text-slate-700" /> Permissions &mdash; {permUser?.email}</DialogTitle>
           </DialogHeader>
           {permLoading ? (
-            <div className="flex items-center justify-center py-8"><div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" /></div>
+            <DialogBody className="flex items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" /></DialogBody>
           ) : !permDetail ? (
-            <p className="py-6 text-center text-sm text-slate-400">Impossible de charger les permissions.</p>
+            <DialogBody><p className="text-center text-sm text-slate-400">Impossible de charger les permissions.</p></DialogBody>
           ) : (
-            <div className="space-y-6 py-2">
+            <DialogBody className="space-y-6">
               {/* Entity-level */}
               <div>
                 <h3 className="mb-3 text-sm font-semibold text-slate-900">Permissions par entit&eacute;</h3>
@@ -1214,7 +1215,7 @@ export default function UsersPage() {
                 )}
                 <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-4">
                   <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Ajouter un acc&egrave;s</p>
-                  <div className="flex flex-wrap items-end gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                     <div>
                       <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Type</label>
                       {permUser?.role === "HEAD_MANAGER" ? (
@@ -1230,7 +1231,7 @@ export default function UsersPage() {
                     {addNodeType === "BUSINESS_UNIT" && (
                       <div>
                         <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Entreprise</label>
-                        <select value={companyIdForBU} onChange={(e) => { setCompanyIdForBU(e.target.value); setAddNodeId(""); }} className="h-9 min-w-[160px] rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700">
+                        <select value={companyIdForBU} onChange={(e) => { setCompanyIdForBU(e.target.value); setAddNodeId(""); }} className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 sm:min-w-[160px] sm:w-auto">
                           <option value="">Choisir&hellip;</option>
                           {(companiesHook.list ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
@@ -1238,7 +1239,7 @@ export default function UsersPage() {
                     )}
                     <div>
                       <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">&Eacute;l&eacute;ment</label>
-                      <select value={addNodeId} onChange={(e) => setAddNodeId(e.target.value)} disabled={addNodeType === "BUSINESS_UNIT" && !companyIdForBU} className="h-9 min-w-[160px] rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:opacity-50">
+                      <select value={addNodeId} onChange={(e) => setAddNodeId(e.target.value)} disabled={addNodeType === "BUSINESS_UNIT" && !companyIdForBU} className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:opacity-50 sm:min-w-[160px] sm:w-auto">
                         <option value="">Choisir&hellip;</option>
                         {permNodeOptions.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
                       </select>
@@ -1258,7 +1259,7 @@ export default function UsersPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </DialogBody>
           )}
           <DialogFooter><Button variant="outline" onClick={() => setPermOpen(false)}>Fermer</Button></DialogFooter>
         </DialogContent>

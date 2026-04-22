@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
@@ -121,8 +122,8 @@ export default function ReportingPage() {
       <Head>
         <title>Reporting</title>
       </Head>
-      <div className="flex flex-col">
-        <div className="flex items-center gap-4 border-b p-4">
+      <div className="flex min-w-0 flex-col">
+        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:flex-wrap sm:items-center">
           <Select value={period} onValueChange={setPeriod}>
             {PERIODS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -147,13 +148,13 @@ export default function ReportingPage() {
           <Button
             variant="outline"
             onClick={() => setEditMode((e) => !e)}
-            className={editMode ? "ring-2 ring-primary" : ""}
+            className={`w-full sm:w-auto ${editMode ? "ring-2 ring-primary" : ""}`}
           >
             {editMode ? "Désactiver" : "Mode édition cartographie"}
           </Button>
         </div>
 
-        <div className="overflow-auto flex-1">
+        <div className="flex-1 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -217,7 +218,7 @@ export default function ReportingPage() {
         </div>
 
         {editMode && (
-          <div className="flex items-center gap-4 border-t p-4 bg-muted/30">
+          <div className="flex flex-col gap-3 border-t bg-muted/30 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
             <span className="text-sm text-muted-foreground">
               {selectedRowIds.size} ligne(s) sélectionnée(s)
             </span>
@@ -233,18 +234,18 @@ export default function ReportingPage() {
       </div>
 
       <Dialog open={newGroupOpen} onOpenChange={setNewGroupOpen}>
-        <DialogContent>
+        <DialogContent size="md">
           <DialogHeader>
             <DialogTitle>Nouveau groupe</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <DialogBody>
             <Input
               type="text"
               placeholder="Nom du nouveau groupe"
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
             />
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNewGroupOpen(false)}>
               Annuler
@@ -262,11 +263,11 @@ export default function ReportingPage() {
       </Dialog>
 
       <Dialog open={coefficientsOpen} onOpenChange={setCoefficientsOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent size="md">
           <DialogHeader>
             <DialogTitle>Configurer les coefficients</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-4">
+          <DialogBody className="space-y-3">
             {Object.entries(coefficients).map(([name, pct]) => (
               <div key={name} className="flex items-center justify-between gap-4">
                 <span className="text-sm">{name}</span>
@@ -285,7 +286,7 @@ export default function ReportingPage() {
                 />
               </div>
             ))}
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCoefficientsOpen(false)}>
               Fermer

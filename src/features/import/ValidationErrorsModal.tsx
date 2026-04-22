@@ -1,5 +1,5 @@
 // ValidationErrorsModal.tsx
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/Dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { AlertTriangle, Copy, XCircle, AlertCircle, Info } from "lucide-react";
@@ -53,7 +53,7 @@ export function ValidationErrorsModal({ open, onOpenChange, errors }: Validation
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl max-h-[80vh] flex flex-col">
+      <DialogContent size="6xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-red-600">
             <div className="rounded-lg bg-red-50 p-1.5">
@@ -68,7 +68,7 @@ export function ValidationErrorsModal({ open, onOpenChange, errors }: Validation
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <DialogBody>
           {errors.length === 0 ? (
             <div className="text-center text-gray-500 py-8">
               Aucune erreur à afficher
@@ -86,13 +86,13 @@ export function ValidationErrorsModal({ open, onOpenChange, errors }: Validation
               </div>
 
               {/* Tableau des erreurs */}
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="overflow-x-auto rounded-lg border border-gray-200">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
-                      <TableHead className="w-20 font-semibold">Ligne</TableHead>
-                      <TableHead className="w-32 font-semibold">Colonne</TableHead>
-                      <TableHead className="w-40 font-semibold">Valeur reçue</TableHead>
+                      <TableHead className="min-w-[80px] font-semibold">Ligne</TableHead>
+                      <TableHead className="min-w-[140px] font-semibold">Colonne</TableHead>
+                      <TableHead className="min-w-[180px] font-semibold">Valeur reçue</TableHead>
                       <TableHead className="font-semibold" colSpan={2}>Raison / Erreur</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -133,9 +133,9 @@ export function ValidationErrorsModal({ open, onOpenChange, errors }: Validation
               )}
             </div>
           )}
-        </div>
+        </DialogBody>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter>
           {errors.length > 0 && (
             <Button
               type="button"

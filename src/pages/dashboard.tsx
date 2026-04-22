@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/Dialog";
 import { Select } from "@/components/ui/Select";
@@ -745,10 +746,11 @@ function DrillDownDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl" onClose={() => onOpenChange(false)}>
+      <DialogContent size="2xl" onClose={() => onOpenChange(false)}>
         <DialogHeader>
           <DialogTitle>Détail des données</DialogTitle>
         </DialogHeader>
+        <DialogBody>
         <div className="overflow-auto rounded-lg border border-slate-200">
           <table className="w-full border-collapse text-sm">
             <thead>
@@ -775,6 +777,7 @@ function DrillDownDialog({
             </tbody>
           </table>
         </div>
+        </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
         </DialogFooter>

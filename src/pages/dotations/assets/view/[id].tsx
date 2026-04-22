@@ -124,22 +124,24 @@ export default function ViewAssetPage() {
       <div className="container mx-auto py-6">
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Header */}
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{asset.name}</h1>
               <p className="text-gray-600 mt-2">
                 D&eacute;tails et plan d&apos;amortissement
               </p>
             </div>
-            <div className="flex space-x-4">
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:space-x-4 sm:gap-0">
               <Button
                 variant="outline"
                 onClick={handleBack}
+                className="w-full sm:w-auto"
               >
                 Retour
               </Button>
               <Button
                 onClick={handleEdit}
+                className="w-full sm:w-auto"
               >
                 Modifier
               </Button>

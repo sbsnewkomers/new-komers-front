@@ -240,7 +240,7 @@ export default function ProfilePage() {
 
               {/* Personal Information Section */}
               <div className="flex-1 space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h3 className="text-xl font-semibold text-foreground">Informations personnelles</h3>
                   {!isEditing && (
                     <Button onClick={handleEdit} size="sm">
@@ -307,12 +307,12 @@ export default function ProfilePage() {
 
                 {/* Action Buttons */}
                 {isEditing && (
-                  <div className="flex gap-3 pt-4 border-t">
-                    <Button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2">
+                  <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row">
+                    <Button onClick={handleSave} disabled={isSaving} className="flex w-full items-center gap-2 sm:w-auto">
                       <Save className="w-4 h-4" />
                       {isSaving ? 'Enregistrement...' : 'Enregistrer'}
                     </Button>
-                    <Button variant="outline" onClick={handleCancel} className="flex items-center gap-2">
+                    <Button variant="outline" onClick={handleCancel} className="flex w-full items-center gap-2 sm:w-auto">
                       <X className="w-4 h-4" />
                       Annuler
                     </Button>
@@ -325,7 +325,7 @@ export default function ProfilePage() {
           {/* Password Section */}
           <div className="p-6">
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
                   <Lock className="w-5 h-5" />
                   Mot de passe
@@ -423,12 +423,12 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-3 pt-4 border-t">
-                    <Button onClick={handleSavePassword} disabled={isSavingPassword} className="flex items-center gap-2">
+                  <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row">
+                    <Button onClick={handleSavePassword} disabled={isSavingPassword} className="flex w-full items-center gap-2 sm:w-auto">
                       <Save className="w-4 h-4" />
                       {isSavingPassword ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
                     </Button>
-                    <Button variant="outline" onClick={handleCancelPassword} className="flex items-center gap-2">
+                    <Button variant="outline" onClick={handleCancelPassword} className="flex w-full items-center gap-2 sm:w-auto">
                       <X className="w-4 h-4" />
                       Annuler
                     </Button>
