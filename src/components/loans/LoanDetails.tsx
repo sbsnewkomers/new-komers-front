@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import { Loan, LoanStatistics, InstallmentStatus } from '@/types/loans';
 import { entitiesApi } from '@/lib/entitiesApi';
-import { fetchUser } from '@/lib/usersApi';
 import { loansApi } from '@/lib/loansApi';
+import { apiFetch } from '@/lib/apiClient';
 
 interface LoanDetailsProps {
     loan: Loan;
@@ -86,13 +86,14 @@ export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete, onLoanU
 
         const fetchCreatorName = async () => {
             try {
-                const user = await fetchUser(loan.createdById);
-                const fullName = user.firstName && user.lastName
-                    ? `${user.firstName} ${user.lastName}`
-                    : user.email || loan.createdById;
-                setCreatorName(fullName);
+                // Utiliser le nouvel endpoint sécurisé pour récupérer le nom du créateur
+                const creatorName = await apiFetch<string>(`/loans/${loan.id}/creator-name`, {
+                    authRedirect: false
+                });
+                setCreatorName(creatorName);
             } catch (error) {
                 console.error('Erreur lors de la récupération du nom de l\'utilisateur:', error);
+                // Fallback: utiliser l'ID si l'endpoint échoue
                 setCreatorName(loan.createdById);
             }
         };
@@ -104,7 +105,7 @@ export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete, onLoanU
         if (loan.createdById) {
             fetchCreatorName();
         }
-    }, [loan.entityType, loan.entityId, loan.createdById]);
+    }, [loan.entityType, loan.entityId, loan.createdById, loan.id]);
 
     const handleMarkAsPaid = async (installmentId: string) => {
         setLoading(installmentId);
