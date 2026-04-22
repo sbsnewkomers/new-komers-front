@@ -6,6 +6,7 @@ import { Loan, LoanStatistics, InstallmentStatus } from '@/types/loans';
 import { entitiesApi } from '@/lib/entitiesApi';
 import { loansApi } from '@/lib/loansApi';
 import { apiFetch } from '@/lib/apiClient';
+import { usePermissionsContext } from '@/permissions/PermissionsProvider';
 
 interface LoanDetailsProps {
     loan: Loan;
@@ -72,6 +73,7 @@ export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete, onLoanU
     const [entityName, setEntityName] = useState<string>('');
     const [creatorName, setCreatorName] = useState<string>('');
     const [loading, setLoading] = useState<string | null>(null);
+    const { user } = usePermissionsContext();
 
     useEffect(() => {
         const fetchEntityName = async () => {
@@ -169,14 +171,16 @@ export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete, onLoanU
                     <CardTitle className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             {loan.name}
-                            <div className="flex gap-2">
-                                <Button variant="outline" onClick={() => onEdit(loan.id)}>
-                                    Modifier
-                                </Button>
-                                <Button variant="destructive" onClick={() => onDelete(loan.id)}>
-                                    Supprimer
-                                </Button>
-                            </div>
+                            {user?.role !== 'END_USER' && (
+                                <div className="flex gap-2">
+                                    <Button variant="outline" onClick={() => onEdit(loan.id)}>
+                                        Modifier
+                                    </Button>
+                                    <Button variant="destructive" onClick={() => onDelete(loan.id)}>
+                                        Supprimer
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                         <Button variant="outline" onClick={onBack}>
                             Retour
