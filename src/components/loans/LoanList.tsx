@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/Label';
 import { Select } from '@/components/ui/Select';
 import { Eye, Edit, Trash2, Calendar, Building2, Users, TrendingUp, AlertCircle } from 'lucide-react';
 import { Loan, LoanStatus, EntityType } from '@/types/loans';
+import { usePermissionsContext } from '@/permissions/PermissionsProvider';
 
 interface LoanListProps {
     loans: Loan[];
@@ -66,6 +67,7 @@ export function LoanList({
     onLoanEdit,
     onLoanDelete
 }: LoanListProps) {
+    const { user } = usePermissionsContext();
 
     const getEntityTypeIcon = (entityType: string) => {
         switch (entityType) {
@@ -233,24 +235,28 @@ export function LoanList({
                                                     <Eye className="h-4 w-4 mr-1" />
                                                     Voir
                                                 </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => onLoanEdit(loan.id)}
-                                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                                >
-                                                    <Edit className="h-4 w-4 mr-1" />
-                                                    Modifier
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => onLoanDelete(loan.id)}
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                >
-                                                    <Trash2 className="h-4 w-4 mr-1" />
-                                                    Supprimer
-                                                </Button>
+                                                {user?.role !== 'END_USER' && (
+                                                    <>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => onLoanEdit(loan.id)}
+                                                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                        >
+                                                            <Edit className="h-4 w-4 mr-1" />
+                                                            Modifier
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => onLoanDelete(loan.id)}
+                                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        >
+                                                            <Trash2 className="h-4 w-4 mr-1" />
+                                                            Supprimer
+                                                        </Button>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
