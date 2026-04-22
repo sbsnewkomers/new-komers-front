@@ -6,8 +6,6 @@ import {
   useState,
   useCallback,
   useMemo,
-  type Dispatch,
-  type SetStateAction,
 } from "react";
 import Head from "next/head";
 import Link from "next/link";
@@ -167,6 +165,48 @@ type TreeNode =
   | { type: "bu"; id: string; name: string; companyId: string; code: string }
   | { type: "section-header"; id: string; name: string };
 
+const MONTH_DAY_REGEX = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])$/;
+const LEGACY_MONTH_DAY_REGEX = /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
+
+const toMonthDay = (value: string | null | undefined): string => {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (MONTH_DAY_REGEX.test(trimmed)) return trimmed;
+
+  // Backward compatibility for legacy YYYY-MM-DD values.
+  const legacy = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  if (legacy) return `${legacy[3]}-${legacy[2]}`;
+
+  // Backward compatibility for previous MM-DD storage.
+  if (LEGACY_MONTH_DAY_REGEX.test(trimmed)) {
+    const [legacyMonth, legacyDay] = trimmed.split("-");
+    return `${legacyDay}-${legacyMonth}`;
+  }
+
+  return trimmed;
+};
+
+const isValidMonthDay = (value: string): boolean => {
+  if (!MONTH_DAY_REGEX.test(value)) return false;
+  const [dayPart, monthPart] = value.split("-");
+  const day = Number(dayPart);
+  const month = Number(monthPart);
+  const probe = new Date(Date.UTC(2000, month - 1, day));
+  return probe.getUTCMonth() + 1 === month && probe.getUTCDate() === day;
+};
+
+const normalizeMonthDayInput = (value: string): string => {
+  const cleaned = value.replace(/[./\s]/g, "-").replace(/[^\d-]/g, "");
+  return cleaned.slice(0, 5);
+};
+
+const formatMonthDayForDisplay = (value: string | null | undefined): string => {
+  const monthDay = toMonthDay(value);
+  if (!isValidMonthDay(monthDay)) return value ?? "—";
+  const [day, month] = monthDay.split("-");
+  return `${day}/${month}`;
+};
+
 export default function StructurePage() {
   const { user, isAuthReady } = usePermissionsContext();
   const router = useRouter();
@@ -194,19 +234,6 @@ export default function StructurePage() {
   if (!isAuthReady || !user) {
     return null;
   }
-
-  // Fonction utilitaire pour la date de début d'exercice
-  const handleFiscalYearStartChange = (
-    value: string,
-    updateForm: Dispatch<
-      SetStateAction<{ fiscal_year_start: string } & Record<string, unknown>>
-    >,
-  ) => {
-    updateForm((prev) => ({
-      ...prev,
-      fiscal_year_start: value,
-    }));
-  };
 
   const [tree, setTree] = useState<StructureTree | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);
@@ -1014,7 +1041,7 @@ export default function StructurePage() {
             name: g.name,
             siret: g.siret ?? "",
             ape_code: g.ape_code ?? "",
-            fiscal_year_start: g.fiscal_year_start ?? "",
+            fiscal_year_start: toMonthDay(g.fiscal_year_start),
             last_closed_fiscal_year:
               g.last_closed_fiscal_year !== null &&
               g.last_closed_fiscal_year !== undefined
@@ -1049,7 +1076,7 @@ export default function StructurePage() {
             country: c.country ?? "",
             ape_code: c.ape_code ?? "",
             main_activity: c.main_activity ?? "",
-            fiscal_year_start: c.fiscal_year_start ?? "",
+            fiscal_year_start: toMonthDay(c.fiscal_year_start),
             last_closed_fiscal_year:
               c.last_closed_fiscal_year !== null &&
               c.last_closed_fiscal_year !== undefined
@@ -1197,8 +1224,9 @@ export default function StructurePage() {
       if (editGroup.ape_code) {
         formData.append('ape_code', editGroup.ape_code);
       }
-      if (editGroup.fiscal_year_start) {
-        formData.append('fiscal_year_start', editGroup.fiscal_year_start);
+      const normalizedGroupFiscalYearStart = toMonthDay(editGroup.fiscal_year_start);
+      if (normalizedGroupFiscalYearStart) {
+        formData.append('fiscal_year_start', normalizedGroupFiscalYearStart);
       }
       if (editGroup.last_closed_fiscal_year.trim()) {
         formData.append('last_closed_fiscal_year', editGroup.last_closed_fiscal_year.trim());
@@ -1245,8 +1273,9 @@ export default function StructurePage() {
       if (editCompany.main_activity) {
         formData.append('main_activity', editCompany.main_activity);
       }
-      if (editCompany.fiscal_year_start) {
-        formData.append('fiscal_year_start', editCompany.fiscal_year_start);
+      const normalizedCompanyFiscalYearStart = toMonthDay(editCompany.fiscal_year_start);
+      if (normalizedCompanyFiscalYearStart) {
+        formData.append('fiscal_year_start', normalizedCompanyFiscalYearStart);
       }
       if (editCompany.last_closed_fiscal_year.trim()) {
         formData.append(
@@ -1461,8 +1490,9 @@ export default function StructurePage() {
     }
 
     // Validation supplémentaire
-    if (!addCompanyForm.fiscal_year_start) {
-      console.error("La date de début d'exercice est requise");
+    const normalizedCompanyFiscalYearStart = toMonthDay(addCompanyForm.fiscal_year_start);
+    if (!isValidMonthDay(normalizedCompanyFiscalYearStart)) {
+      console.error("La date de début d'exercice est invalide (DD-MM)");
       return;
     }
 
@@ -1489,7 +1519,7 @@ export default function StructurePage() {
       if (addCompanyForm.siret) {
         formData.append('siret', addCompanyForm.siret);
       }
-      formData.append('fiscal_year_start', addCompanyForm.fiscal_year_start);
+      formData.append('fiscal_year_start', normalizedCompanyFiscalYearStart);
       if (addCompanyForm.last_closed_fiscal_year.trim()) {
         formData.append(
           'last_closed_fiscal_year',
@@ -1606,6 +1636,11 @@ export default function StructurePage() {
 
   const handleCreateGroup = async () => {
     if (!addGroupForm.name.trim()) return;
+    const normalizedGroupFiscalYearStart = toMonthDay(addGroupForm.fiscal_year_start);
+    if (!isValidMonthDay(normalizedGroupFiscalYearStart)) {
+      console.error("La date de début d'exercice est invalide (DD-MM)");
+      return;
+    }
 
     // Valider le SIRET avant d'envoyer la requête
     if (addGroupForm.siret && !validateSiret(addGroupForm.siret)) {
@@ -1622,8 +1657,8 @@ export default function StructurePage() {
       if (addGroupForm.ape_code) {
         formData.append('ape_code', addGroupForm.ape_code);
       }
-      if (addGroupForm.fiscal_year_start) {
-        formData.append('fiscal_year_start', addGroupForm.fiscal_year_start);
+      if (normalizedGroupFiscalYearStart) {
+        formData.append('fiscal_year_start', normalizedGroupFiscalYearStart);
       }
       if (addGroupForm.last_closed_fiscal_year.trim()) {
         formData.append(
@@ -2790,11 +2825,16 @@ export default function StructurePage() {
                   Début d&apos;exercice
                 </label>
                 <Input
-                  type="date"
+                  type="text"
                   value={editGroup.fiscal_year_start}
                   onChange={(e) =>
-                    setEditGroup((prev) => ({ ...prev, fiscal_year_start: e.target.value }))
+                    setEditGroup((prev) => ({
+                      ...prev,
+                      fiscal_year_start: normalizeMonthDayInput(e.target.value),
+                    }))
                   }
+                  placeholder="DD-MM"
+                  maxLength={5}
                   disabled={!editing}
                   className={!editing ? "bg-gray-50 cursor-not-allowed" : ""}
                 />
@@ -2944,8 +2984,13 @@ export default function StructurePage() {
                 label="Début d&apos;exercice"
                 value={editCompany.fiscal_year_start}
                 editing={editing}
-                type="date"
-                onChange={(v) => setEditCompany((prev) => ({ ...prev, fiscal_year_start: v }))}
+                onChange={(v) =>
+                  setEditCompany((prev) => ({
+                    ...prev,
+                    fiscal_year_start: normalizeMonthDayInput(v),
+                  }))
+                }
+                placeholder="DD-MM"
               />
               <Field
                 label="Dernier exercice clos"
@@ -3405,7 +3450,7 @@ export default function StructurePage() {
                       </dd>
                       <dt className="text-slate-500">Début d&apos;exercice</dt>
                       <dd className="font-medium text-primary">
-                        {ficheCompany.fiscal_year_start || "—"}
+                        {formatMonthDayForDisplay(ficheCompany.fiscal_year_start)}
                       </dd>
                       {ficheCompany.address && (
                         <>
@@ -3691,7 +3736,7 @@ export default function StructurePage() {
                       </dd>
                       <dt className="text-slate-500">Début d&apos;exercice</dt>
                       <dd className="font-medium text-primary">
-                        {ficheGroup.fiscal_year_start || "—"}
+                        {formatMonthDayForDisplay(ficheGroup.fiscal_year_start)}
                       </dd>
                       {ficheGroup.ape_code && (
                         <>
@@ -4091,11 +4136,16 @@ export default function StructurePage() {
                   Début exercice *
                 </label>
                 <Input
-                  type="date"
+                  type="text"
                   value={addGroupForm.fiscal_year_start}
                   onChange={(e) =>
-                    setAddGroupForm((prev) => ({ ...prev, fiscal_year_start: e.target.value }))
+                    setAddGroupForm((prev) => ({
+                      ...prev,
+                      fiscal_year_start: normalizeMonthDayInput(e.target.value),
+                    }))
                   }
+                  placeholder="DD-MM"
+                  maxLength={5}
                 />
               </div>
               <div>
@@ -4132,7 +4182,7 @@ export default function StructurePage() {
                 !addGroupForm.siret.trim() ||
                 (addGroupForm.siret && !validateSiret(addGroupForm.siret)) ||
                 !addGroupForm.country.trim() ||
-                !addGroupForm.fiscal_year_start.trim()
+                !isValidMonthDay(toMonthDay(addGroupForm.fiscal_year_start))
               }
             >
               {addGroupLoading ? "Création..." : "Créer"}
@@ -4459,11 +4509,16 @@ export default function StructurePage() {
                   Début exercice *
                 </label>
                 <Input
-                  type="date"
+                  type="text"
                   value={addCompanyForm.fiscal_year_start}
                   onChange={(e) =>
-                    setAddCompanyForm((prev) => ({ ...prev, fiscal_year_start: e.target.value }))
+                    setAddCompanyForm((prev) => ({
+                      ...prev,
+                      fiscal_year_start: normalizeMonthDayInput(e.target.value),
+                    }))
                   }
+                  placeholder="DD-MM"
+                  maxLength={5}
                 />
               </div>
               <div>
@@ -4499,7 +4554,7 @@ export default function StructurePage() {
                 (addCompanyForm.siret && !validateSiret(addCompanyForm.siret)) ||
                 !addCompanyForm.ape_code.trim() ||
                 !addCompanyForm.country.trim() ||
-                !addCompanyForm.fiscal_year_start.trim() ||
+                !isValidMonthDay(toMonthDay(addCompanyForm.fiscal_year_start)) ||
                 (!addCompanyGroupId && !addCompanyForm.groupId.trim())
               }
             >
@@ -4767,6 +4822,7 @@ function Field({
   type = "text",
   onChange,
   validate,
+  placeholder,
 }: {
   label: string;
   value: string;
@@ -4774,6 +4830,7 @@ function Field({
   type?: string;
   onChange: (v: string) => void;
   validate?: (v: string) => boolean;
+  placeholder?: string;
 }) {
   const [error, setError] = useState<string>("");
 
@@ -4799,6 +4856,7 @@ function Field({
             type={type}
             value={value}
             onChange={(e) => handleChange(e.target.value)}
+            placeholder={placeholder}
             className={error ? "border-red-500" : ""}
           />
           {error && <p className="mt-1 text-xs text-red-500">{error}</p>}

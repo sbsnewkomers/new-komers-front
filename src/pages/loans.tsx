@@ -18,6 +18,7 @@ import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 import { useLoans, useLoanDetails } from '@/hooks/useLoans';
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
+import { usePermissionsContext } from '@/permissions/PermissionsProvider';
 import {
     Loan,
     EntityType,
@@ -36,6 +37,7 @@ export default function LoansPageOptimized() {
     const { loans, isLoading, error, setError, setLoans } = useLoans();
     const { selectedLoan, loanStats, loadLoanDetails, clearLoanDetails, setSelectedLoan } = useLoanDetails();
     const { deleteConfirmOpen, loanToDelete, confirmDelete, cancelDelete, closeDialog } = useDeleteConfirm();
+    const { user } = usePermissionsContext();
 
     // Gérer les paramètres query au chargement
     useEffect(() => {
@@ -217,15 +219,17 @@ export default function LoansPageOptimized() {
                                 </svg>
                                 Liste complète
                             </TabsTrigger>
-                            <TabsTrigger
-                                value="create"
-                                className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                Créer
-                            </TabsTrigger>
+                            {user?.role !== 'END_USER' && (
+                                <TabsTrigger
+                                    value="create"
+                                    className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Créer
+                                </TabsTrigger>
+                            )}
                         </TabsList>
 
                         {/* Overview Tab */}
@@ -255,11 +259,13 @@ export default function LoansPageOptimized() {
                         </TabsContent>
 
                         {/* Create Tab */}
-                        <TabsContent value="create">
-                            <LoanCreate
-                                onMethodSelect={handleMethodSelect}
-                            />
-                        </TabsContent>
+                        {user?.role !== 'END_USER' && (
+                            <TabsContent value="create">
+                                <LoanCreate
+                                    onMethodSelect={handleMethodSelect}
+                                />
+                            </TabsContent>
+                        )}
 
                         {/* Details Tab */}
                         <TabsContent value="details">

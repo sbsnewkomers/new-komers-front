@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import { Loan, LoanStatistics, InstallmentStatus } from '@/types/loans';
 import { entitiesApi } from '@/lib/entitiesApi';
-import { fetchUser } from '@/lib/usersApi';
 import { loansApi } from '@/lib/loansApi';
+import { apiFetch } from '@/lib/apiClient';
+import { usePermissionsContext } from '@/permissions/PermissionsProvider';
 
 interface LoanDetailsProps {
     loan: Loan;
@@ -72,6 +73,7 @@ export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete, onLoanU
     const [entityName, setEntityName] = useState<string>('');
     const [creatorName, setCreatorName] = useState<string>('');
     const [loading, setLoading] = useState<string | null>(null);
+    const { user } = usePermissionsContext();
 
     useEffect(() => {
         const fetchEntityName = async () => {
@@ -86,13 +88,14 @@ export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete, onLoanU
 
         const fetchCreatorName = async () => {
             try {
-                const user = await fetchUser(loan.createdById);
-                const fullName = user.firstName && user.lastName
-                    ? `${user.firstName} ${user.lastName}`
-                    : user.email || loan.createdById;
-                setCreatorName(fullName);
+                // Utiliser le nouvel endpoint sécurisé pour récupérer le nom du créateur
+                const creatorName = await apiFetch<string>(`/loans/${loan.id}/creator-name`, {
+                    authRedirect: false
+                });
+                setCreatorName(creatorName);
             } catch (error) {
                 console.error('Erreur lors de la récupération du nom de l\'utilisateur:', error);
+                // Fallback: utiliser l'ID si l'endpoint échoue
                 setCreatorName(loan.createdById);
             }
         };
@@ -104,7 +107,7 @@ export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete, onLoanU
         if (loan.createdById) {
             fetchCreatorName();
         }
-    }, [loan.entityType, loan.entityId, loan.createdById]);
+    }, [loan.entityType, loan.entityId, loan.createdById, loan.id]);
 
     const handleMarkAsPaid = async (installmentId: string) => {
         setLoading(installmentId);
@@ -168,14 +171,16 @@ export function LoanDetails({ loan, loanStats, onBack, onEdit, onDelete, onLoanU
                     <CardTitle className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             {loan.name}
-                            <div className="flex gap-2">
-                                <Button variant="outline" onClick={() => onEdit(loan.id)}>
-                                    Modifier
-                                </Button>
-                                <Button variant="destructive" onClick={() => onDelete(loan.id)}>
-                                    Supprimer
-                                </Button>
-                            </div>
+                            {user?.role !== 'END_USER' && (
+                                <div className="flex gap-2">
+                                    <Button variant="outline" onClick={() => onEdit(loan.id)}>
+                                        Modifier
+                                    </Button>
+                                    <Button variant="destructive" onClick={() => onDelete(loan.id)}>
+                                        Supprimer
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                         <Button variant="outline" onClick={onBack}>
                             Retour
