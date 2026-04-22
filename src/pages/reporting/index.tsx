@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
@@ -233,18 +234,18 @@ export default function ReportingPage() {
       </div>
 
       <Dialog open={newGroupOpen} onOpenChange={setNewGroupOpen}>
-        <DialogContent>
+        <DialogContent size="md">
           <DialogHeader>
             <DialogTitle>Nouveau groupe</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <DialogBody>
             <Input
               type="text"
               placeholder="Nom du nouveau groupe"
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
             />
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNewGroupOpen(false)}>
               Annuler
@@ -262,11 +263,11 @@ export default function ReportingPage() {
       </Dialog>
 
       <Dialog open={coefficientsOpen} onOpenChange={setCoefficientsOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent size="md">
           <DialogHeader>
             <DialogTitle>Configurer les coefficients</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-4">
+          <DialogBody className="space-y-3">
             {Object.entries(coefficients).map(([name, pct]) => (
               <div key={name} className="flex items-center justify-between gap-4">
                 <span className="text-sm">{name}</span>
@@ -285,7 +286,7 @@ export default function ReportingPage() {
                 />
               </div>
             ))}
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCoefficientsOpen(false)}>
               Fermer

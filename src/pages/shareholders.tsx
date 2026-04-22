@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/Dialog";
 import {
@@ -335,14 +336,16 @@ export default function ShareholdersPage() {
 
       {/* Delete dialog */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !deleteLoading && !open && setDeleteTarget(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent size="sm">
           <DialogHeader>
             <DialogTitle>Supprimer l&apos;actionnaire</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-slate-600">
-            Êtes-vous sûr de vouloir supprimer cet actionnaire ? Cette action est irréversible.
-          </p>
-          <DialogFooter className="mt-4">
+          <DialogBody>
+            <p className="text-sm text-slate-600">
+              Êtes-vous sûr de vouloir supprimer cet actionnaire ? Cette action est irréversible.
+            </p>
+          </DialogBody>
+          <DialogFooter>
             <Button
               type="button"
               variant="ghost"

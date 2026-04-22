@@ -1,5 +1,5 @@
 // ValidationErrorsModal.tsx
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/Dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { AlertTriangle, Copy, XCircle, AlertCircle, Info } from "lucide-react";
@@ -53,7 +53,7 @@ export function ValidationErrorsModal({ open, onOpenChange, errors }: Validation
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85dvh] w-full max-w-[95vw] sm:max-w-4xl lg:max-w-6xl flex flex-col">
+      <DialogContent size="6xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-red-600">
             <div className="rounded-lg bg-red-50 p-1.5">
@@ -68,7 +68,7 @@ export function ValidationErrorsModal({ open, onOpenChange, errors }: Validation
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <DialogBody>
           {errors.length === 0 ? (
             <div className="text-center text-gray-500 py-8">
               Aucune erreur à afficher
@@ -133,9 +133,9 @@ export function ValidationErrorsModal({ open, onOpenChange, errors }: Validation
               )}
             </div>
           )}
-        </div>
+        </DialogBody>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter>
           {errors.length > 0 && (
             <Button
               type="button"

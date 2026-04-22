@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/Dialog";
 import {
@@ -865,11 +866,11 @@ export default function UsersPage() {
 
       {/* ═══════════════ INVITE MODAL ═══════════════ */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Send className="h-5 w-5 text-slate-700" /> Inviter un utilisateur</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <DialogBody className="space-y-4">
             {/* <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Pr&eacute;nom</label>
@@ -1006,7 +1007,7 @@ export default function UsersPage() {
                 )}
               </div>
             )}
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Annuler</Button>
             <Button
@@ -1028,11 +1029,11 @@ export default function UsersPage() {
 
       {/* Existing user confirmation dialog */}
       <Dialog open={inviteConfirmOpen} onOpenChange={setInviteConfirmOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent size="md">
           <DialogHeader>
             <DialogTitle>Utilisateur déjà existant</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-2 text-sm text-slate-700">
+          <DialogBody className="space-y-3 text-sm text-slate-700">
             <p>Un utilisateur avec cet email existe déjà dans l’application :</p>
             {inviteExistingUser && (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
@@ -1046,7 +1047,7 @@ export default function UsersPage() {
               Confirmez-vous vouloir lui attribuer ce nouveau périmètre d’accès
               et lui envoyer l’email d’information&nbsp;?
             </p>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button
               variant="outline"
@@ -1072,9 +1073,9 @@ export default function UsersPage() {
 
       {/* ═══════════════ EDIT MODAL ═══════════════ */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent size="md">
           <DialogHeader><DialogTitle>Modifier l&apos;utilisateur</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
+          <DialogBody className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Pr&eacute;nom</label>
@@ -1097,7 +1098,7 @@ export default function UsersPage() {
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
               </Select>
             </div>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Annuler</Button>
             <Button onClick={handleEdit} disabled={editLoading}>{editLoading ? "Enregistrement\u2026" : "Enregistrer"}</Button>
@@ -1107,9 +1108,9 @@ export default function UsersPage() {
 
       {/* ═══════════════ DELETE MODAL ═══════════════ */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent size="sm">
           <DialogHeader><DialogTitle>Confirmer la suppression</DialogTitle></DialogHeader>
-          <p className="py-2 text-sm text-slate-600">Supprimer <strong>{deleteTarget?.email}</strong> ? Cette action est irr&eacute;versible.</p>
+          <DialogBody><p className="text-sm text-slate-600">Supprimer <strong>{deleteTarget?.email}</strong> ? Cette action est irr&eacute;versible.</p></DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteOpen(false)}>Annuler</Button>
             <Button className="bg-red-600 text-white hover:bg-red-700" onClick={handleDelete} disabled={deleteLoading}>{deleteLoading ? "Suppression\u2026" : "Supprimer"}</Button>
@@ -1119,16 +1120,16 @@ export default function UsersPage() {
 
       {/* ═══════════════ PERMISSIONS MODAL ═══════════════ */}
       <Dialog open={permOpen} onOpenChange={setPermOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent size="2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5 text-slate-700" /> Permissions &mdash; {permUser?.email}</DialogTitle>
           </DialogHeader>
           {permLoading ? (
-            <div className="flex items-center justify-center py-8"><div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" /></div>
+            <DialogBody className="flex items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" /></DialogBody>
           ) : !permDetail ? (
-            <p className="py-6 text-center text-sm text-slate-400">Impossible de charger les permissions.</p>
+            <DialogBody><p className="text-center text-sm text-slate-400">Impossible de charger les permissions.</p></DialogBody>
           ) : (
-            <div className="space-y-6 py-2">
+            <DialogBody className="space-y-6">
               {/* Entity-level */}
               <div>
                 <h3 className="mb-3 text-sm font-semibold text-slate-900">Permissions par entit&eacute;</h3>
@@ -1224,7 +1225,7 @@ export default function UsersPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </DialogBody>
           )}
           <DialogFooter><Button variant="outline" onClick={() => setPermOpen(false)}>Fermer</Button></DialogFooter>
         </DialogContent>

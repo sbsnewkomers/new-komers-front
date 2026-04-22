@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/Select";
 import {
   Dialog,
   DialogContent,
+  DialogBody,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -691,7 +692,7 @@ export default function AuditPage() {
             if (!open) setSelectedLog(null);
           }}
         >
-          <DialogContent className="max-w-2xl">
+          <DialogContent size="2xl">
             <DialogHeader>
               <DialogTitle>Détail audit</DialogTitle>
               {selectedEntry && (
@@ -701,7 +702,7 @@ export default function AuditPage() {
               )}
             </DialogHeader>
 
-            <div className="px-4 pb-1 space-y-4">
+            <DialogBody className="space-y-4">
               {!selectedLog || !selectedEntry ? (
                 <div className="text-sm text-slate-600">Aucun détail disponible.</div>
               ) : (
@@ -748,9 +749,9 @@ export default function AuditPage() {
                   )}
                 </>
               )}
-            </div>
+            </DialogBody>
 
-            <DialogFooter className="p-4 pt-0">
+            <DialogFooter>
               <Button
                 variant="outline"
                 className="h-9"

@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
@@ -223,14 +224,14 @@ export function ShareholderFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !saving && onOpenChange(v)}>
-      <DialogContent className="max-w-lg">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>
             {title ?? (isEditing ? "Modifier l'actionnaire" : "Nouvel actionnaire")}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-1">
+        <DialogBody className="space-y-5">
           {/* Owner type toggle */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">
@@ -378,13 +379,14 @@ export function ShareholderFormDialog({
               </div>
             </div>
           )}
-        </div>
+        </DialogBody>
 
-        <DialogFooter className="mt-2 gap-2">
+        <DialogFooter>
           <Button
             type="button"
             variant="ghost"
             onClick={() => !saving && onOpenChange(false)}
+            className="w-full sm:w-auto"
           >
             Annuler
           </Button>
@@ -392,7 +394,7 @@ export function ShareholderFormDialog({
             type="button"
             onClick={handleSubmit}
             disabled={saving || !isValid}
-            className="min-w-[120px]"
+            className="min-w-[120px] w-full sm:w-auto"
           >
             {saving
               ? "Enregistrement..."
