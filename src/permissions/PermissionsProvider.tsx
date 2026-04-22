@@ -31,11 +31,14 @@ export function PermissionsProvider(props: {
   const [grants, setGrants] = useState<PermissionGrant[]>(props.bootstrap?.grants ?? []);
   const [isLoading, setIsLoading] = useState(false);
 
+
   // Indicates that we've finished the initial token load + /auth/me attempt.
   const [isAuthReady, setIsAuthReady] = useState(false);
 
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
+  const [sessionKey, setSessionKey] = useState(0);
+
 
   // Ref updated synchronously so apiFetch sees the new token before the next React render/effect.
   // Fixes /me being called without Authorization right after login (setState is async).
@@ -177,20 +180,24 @@ export function PermissionsProvider(props: {
   }, [setTokens, refreshMe]);
 
   const exitImpersonation = useCallback(async () => {
-    const res = await exitImpersonationApi();
-
-    // 1. update tokens
-    setTokens(res.tokens);
-
-    // 2. reset immédiat du state (IMPORTANT)
+  const res = await exitImpersonationApi();
+  setTokens(res.tokens);
+  try {
+    const me = await apiFetch<PermissionsUser>("/auth/me", {
+      snackbar: { showError: false },
+      authRedirect: false,
+    });
+    setUser(me);
+    setGrants(me.permissions ?? []);
+    setSessionKey(k => k + 1);
+    return me;
+  } catch {
     setUser(null);
     setGrants([]);
-
-    // 3. reload real user
-    const me = await refreshMe({ silent: true });
-
-    return me;
-  }, [setTokens, refreshMe]);
+    setSessionKey(k => k + 1);
+    return null;
+  }
+}, [setTokens]);
 
   const value = useMemo<PermissionsContextValue>(
   () => ({
@@ -211,7 +218,13 @@ export function PermissionsProvider(props: {
    setTokens, refreshMe, logout, impersonate, exitImpersonation],
   );
 
-  return <PermissionsContext.Provider value={value}>{props.children}</PermissionsContext.Provider>;
+  return (
+    <PermissionsContext.Provider value={value}>
+      <React.Fragment key={sessionKey}>
+        {props.children}
+      </React.Fragment>
+    </PermissionsContext.Provider>
+  );
 }
 
 export function usePermissionsContext() {
