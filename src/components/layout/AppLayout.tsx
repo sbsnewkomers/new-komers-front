@@ -11,6 +11,8 @@ import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { useWorkspaceContext } from "@/providers/WorkspaceProvider";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
+import { useImpersonation } from "@/hooks/useImpersonation";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import {
@@ -31,6 +33,7 @@ import {
   Building,
   DollarSign,
   Database,
+  Shield,
 } from "lucide-react";
 
 type AppLayoutProps = {
@@ -67,6 +70,8 @@ export function AppLayout({
   const [extracomptablesMenuOpen, setExtracomptablesMenuOpen] = React.useState(false);
 
   const menuRef = React.useRef<HTMLDivElement>(null);
+  const { isImpersonating, exitImpersonation } = useImpersonation();
+  const [exitLoading, setExitLoading] = useState(false);
 
   // Récupérer le nom de l'workspace pour les rôles non-admin
 
@@ -98,6 +103,19 @@ export function AppLayout({
   }, [userMenuOpen]);
 
   const pathname = router.pathname;
+  const handleExitImpersonation = async () => {
+  setExitLoading(true);
+  try {
+    await exitImpersonation();
+
+    // petit délai pour laisser React re-render
+    await new Promise((r) => setTimeout(r, 50));
+
+    router.push("/users");
+  } finally {
+    setExitLoading(false);
+  }
+};
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -112,6 +130,36 @@ export function AppLayout({
       : "text-slate-500 hover:bg-slate-50 hover:text-primary");
 
   return (
+    <>
+    {/* Bannière impersonation — visible uniquement en mode impersonation */}
+    {isImpersonating && (
+      <div className="fixed top-0 left-0 right-0 z-[100] flex items-center 
+                      justify-between bg-amber-500 px-6 py-2 shadow-lg">
+        <div className="flex items-center gap-2 text-sm font-medium text-white">
+          <Shield className="h-4 w-4 shrink-0" />
+          <span>
+            Mode impersonation — vous naviguez en tant que{" "}
+            <strong>
+              {user?.firstName && user?.lastName
+                ? `${user.firstName} ${user.lastName}`
+                : user?.email}
+            </strong>
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleExitImpersonation}
+          disabled={exitLoading}
+          className="flex items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1 
+                     text-xs font-semibold text-white hover:bg-white/30 
+                     disabled:opacity-50 transition-colors"
+        >
+          {exitLoading
+            ? "Retour en cours..."
+            : "← Reprendre ma session"}
+        </button>
+      </div>
+    )}
     <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr]">
       {/* Sidebar */}
 
@@ -585,5 +633,6 @@ export function AppLayout({
         </div>
       )}
     </div>
+    </>
   );
 }

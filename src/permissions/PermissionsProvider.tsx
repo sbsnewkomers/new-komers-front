@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, setAccessTokenGetter } from "@/lib/apiClient";
-import { logout as authLogout, refreshTokens, type TokenPair } from "@/lib/authApi";
+import { logout as authLogout, refreshTokens, impersonateUser, exitImpersonation as exitImpersonationApi,type TokenPair } from "@/lib/authApi";
 import type { PermissionGrant, PermissionsUser } from "@/permissions/types";
 import { useAuthRevalidator } from "@/hooks/useAuthRevalidator";
 import { loansApi } from "@/lib/loansApi";
@@ -17,6 +17,8 @@ type PermissionsContextValue = {
   setGrants: (next: PermissionGrant[]) => void;
   refreshMe: (options?: { silent?: boolean }) => Promise<PermissionsUser | null>;
   logout: () => Promise<void>;
+  impersonate: (targetUserId: string) => Promise<void>;
+  exitImpersonation: () => Promise<PermissionsUser | null>;
 };
 
 const PermissionsContext = createContext<PermissionsContextValue | null>(null);
@@ -165,21 +167,48 @@ export function PermissionsProvider(props: {
 
   // Activate session revalidation
   useAuthRevalidator(refreshMe, isAuthReady, !!accessToken);
+  const impersonate = useCallback(async (targetUserId: string) => {
+  const res = await impersonateUser(targetUserId);
+  // On remplace les tokens par ceux de la session impersonifiée
+  setTokens(res.tokens);
+  // refreshMe va appeler /auth/me avec le nouveau token
+  // → user dans le contexte devient la cible
+  await refreshMe({ silent: true });
+  }, [setTokens, refreshMe]);
+
+  const exitImpersonation = useCallback(async () => {
+    const res = await exitImpersonationApi();
+
+    // 1. update tokens
+    setTokens(res.tokens);
+
+    // 2. reset immédiat du state (IMPORTANT)
+    setUser(null);
+    setGrants([]);
+
+    // 3. reload real user
+    const me = await refreshMe({ silent: true });
+
+    return me;
+  }, [setTokens, refreshMe]);
 
   const value = useMemo<PermissionsContextValue>(
-    () => ({
-      user,
-      grants,
-      isLoading,
-      isAuthReady,
-      accessToken,
-      refreshToken,
-      setTokens,
-      setGrants,
-      refreshMe,
-      logout,
-    }),
-    [user, grants, isLoading, isAuthReady, accessToken, refreshToken, setTokens, refreshMe, logout],
+  () => ({
+    user,
+    grants,
+    isLoading,
+    isAuthReady,
+    accessToken,
+    refreshToken,
+    setTokens,
+    setGrants,
+    refreshMe,
+    logout,
+    impersonate,        
+    exitImpersonation,  
+  }),
+  [user, grants, isLoading, isAuthReady, accessToken, refreshToken,
+   setTokens, refreshMe, logout, impersonate, exitImpersonation],
   );
 
   return <PermissionsContext.Provider value={value}>{props.children}</PermissionsContext.Provider>;
