@@ -43,6 +43,10 @@ class EntitiesApi {
         return apiFetch<BusinessUnit[]>(`/companies/${companyId}/business-units`);
     }
 
+    async getBusinessUnitsForUser(): Promise<BusinessUnit[]> {
+        return apiFetch<BusinessUnit[]>(`/business-units/user`);
+    }
+
     async getEntityName(entityType: string, entityId: string): Promise<string> {
         try {
             switch (entityType) {
