@@ -20,6 +20,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   placeholder = 'Cliquez pour uploader une image'
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const acceptedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -31,13 +32,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       return;
     }
 
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-      alert('Seules les images sont autorisées');
+    // Check file type (align with backend allowed formats)
+    if (!acceptedMimeTypes.includes(file.type)) {
+      alert('Formats autorisés: JPG, PNG, GIF, WEBP');
       return;
     }
 
     onChange(file);
+    // Allow selecting the same file again later if needed.
+    event.target.value = '';
   };
 
   const handleRemove = () => {
@@ -80,15 +83,30 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               className="object-cover rounded-lg border border-slate-200"
             />
           )}
-          <button
-            onClick={handleRemove}
-            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <X className="h-3 w-3" />
-          </button>
+          <div className="absolute -top-2 -right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              type="button"
+              onClick={handleClick}
+              className="rounded-full bg-slate-700 p-1 text-white"
+              title="Remplacer le logo"
+              aria-label="Remplacer le logo"
+            >
+              <Upload className="h-3 w-3" />
+            </button>
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="rounded-full bg-red-500 p-1 text-white"
+              title="Supprimer le logo"
+              aria-label="Supprimer le logo"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         </div>
       ) : (
         <button
+          type="button"
           onClick={handleClick}
           className="flex items-center justify-center w-full h-20 border-2 border-dashed border-slate-300 rounded-lg hover:border-slate-400 transition-colors"
         >
