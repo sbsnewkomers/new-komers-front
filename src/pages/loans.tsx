@@ -34,7 +34,7 @@ export default function LoansPageOptimized() {
     const [editingLoanId, setEditingLoanId] = useState<string | null>(null);
 
     // Custom hooks
-    const { loans, isLoading, error, setError, setLoans } = useLoans();
+    const { loans, isLoading, error, setError, setLoans, loadLoans } = useLoans();
     const { selectedLoan, loanStats, loadLoanDetails, clearLoanDetails, setSelectedLoan } = useLoanDetails();
     const { deleteConfirmOpen, loanToDelete, confirmDelete, cancelDelete, closeDialog } = useDeleteConfirm();
     const { user } = usePermissionsContext();
@@ -47,9 +47,9 @@ export default function LoansPageOptimized() {
             if (tab === 'details' && loanId && typeof loanId === 'string') {
                 // Charger l'emprunt et afficher l'onglet details
                 loadLoanDetails(loanId);
-                setActiveTab('details');
+                setTimeout(() => setActiveTab('details'), 0);
             } else if (tab && typeof tab === 'string') {
-                setActiveTab(tab);
+                setTimeout(() => setActiveTab(tab), 0);
             }
         }
     }, [router.isReady, router.query]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -114,8 +114,9 @@ export default function LoansPageOptimized() {
         }
     };
 
-    const handleLoanCreated = (loanId: string) => {
-        loadLoanDetails(loanId);
+    const handleLoanCreated = async (loanId: string) => {
+        await loadLoanDetails(loanId);
+        await loadLoans();
         setActiveTab('details');
     };
 
