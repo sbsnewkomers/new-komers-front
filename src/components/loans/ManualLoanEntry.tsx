@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -45,15 +45,27 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
 
     // Installments
     const [installments, setInstallments] = useState<EditableInstallment[]>([]);
+    const isInitialized = useRef(false);
 
     const addNewInstallment = useCallback(() => {
         // Simple sequential numbering based on current length
         const newNumber = installments.length + 1;
 
+        // Calculate default due date
+        let defaultDueDate = new Date().toISOString().split('T')[0];
+
+        // If this is the second installment, set date to first installment date + 1 month
+        if (installments.length === 1 && installments[0].dueDate) {
+            const firstDate = new Date(installments[0].dueDate);
+            const secondDate = new Date(firstDate);
+            secondDate.setMonth(secondDate.getMonth() + 1);
+            defaultDueDate = secondDate.toISOString().split('T')[0];
+        }
+
         // Set remaining balance to 0 for new installments (will be calculated when user enters values)
         const newInstallment: EditableInstallment = {
             installmentNumber: newNumber,
-            dueDate: new Date().toISOString().split('T')[0],
+            dueDate: defaultDueDate,
             principalPayment: 0,
             interestPayment: 0,
             insurancePayment: 0,
@@ -64,45 +76,7 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
         };
 
         setInstallments(prev => [...prev, newInstallment]);
-    }, [installments.length]);
-
-    // Load entities by default on component mount
-    useEffect(() => {
-        if (selectedEntityType === EntityType.GROUP) {
-            loadEntities(EntityType.GROUP);
-        }
-    }, [selectedEntityType]);
-
-    // Initialize with one empty row
-    useEffect(() => {
-        if (installments.length === 0) {
-            addNewInstallment();
-        }
-    }, [installments.length, addNewInstallment]);
-
-    const removeInstallment = (index: number) => {
-        setInstallments(prev => {
-            let updated = prev.filter((_, i) => i !== index);
-
-            // Recalculate installment numbers
-            updated = updated.map((installment, i) => ({
-                ...installment,
-                installmentNumber: i + 1,
-            }));
-
-            // Recalculate all remaining balances
-            if (updated.length > 0) {
-                const totalCapital = updated.reduce((sum, i) => sum + i.principalPayment, 0);
-                let cumulativePaid = 0;
-                for (let i = 0; i < updated.length; i++) {
-                    cumulativePaid += updated[i].principalPayment;
-                    updated[i].remainingBalance = totalCapital - cumulativePaid;
-                }
-            }
-
-            return updated;
-        });
-    };
+    }, [installments]);
 
     const loadEntities = async (entityType: EntityType) => {
         try {
@@ -133,6 +107,45 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
             console.error('Error loading entities:', error);
             setEntities([]);
         }
+    };
+
+    // Load entities by default on component mount
+    useEffect(() => {
+        if (selectedEntityType === EntityType.GROUP) {
+            setTimeout(() => loadEntities(EntityType.GROUP), 0);
+        }
+    }, [selectedEntityType]);
+
+    // Initialize with one empty row
+    useEffect(() => {
+        if (!isInitialized.current && installments.length === 0) {
+            isInitialized.current = true;
+            setTimeout(() => addNewInstallment(), 0);
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const removeInstallment = (index: number) => {
+        setInstallments(prev => {
+            let updated = prev.filter((_, i) => i !== index);
+
+            // Recalculate installment numbers
+            updated = updated.map((installment, i) => ({
+                ...installment,
+                installmentNumber: i + 1,
+            }));
+
+            // Recalculate all remaining balances
+            if (updated.length > 0) {
+                const totalCapital = updated.reduce((sum, i) => sum + i.principalPayment, 0);
+                let cumulativePaid = 0;
+                for (let i = 0; i < updated.length; i++) {
+                    cumulativePaid += updated[i].principalPayment;
+                    updated[i].remainingBalance = totalCapital - cumulativePaid;
+                }
+            }
+
+            return updated;
+        });
     };
 
     const handleEntityTypeChange = (value: string) => {
@@ -321,7 +334,7 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
                         <h3 className="text-lg font-semibold">Informations sur l&rsquo;emprunt</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <Label htmlFor="loanName">Nom de l&rsquo;emprunt</Label>
+                                <Label htmlFor="loanName">Nom de l&rsquo;emprunt<span className="text-red-500">*</span></Label>
                                 <Input
                                     id="loanName"
                                     placeholder="ex: Prêt BNP Agence X"
@@ -330,7 +343,7 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="entityType">Type d&rsquo;entité</Label>
+                                <Label htmlFor="entityType">Type d&rsquo;entité<span className="text-red-500">*</span></Label>
                                 <Select
                                     value={selectedEntityType}
                                     onValueChange={handleEntityTypeChange}
@@ -341,7 +354,7 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
                                 </Select>
                             </div>
                             <div>
-                                <Label htmlFor="entityId">Entité</Label>
+                                <Label htmlFor="entityId">Entité<span className="text-red-500">*</span></Label>
                                 <Select
                                     id="entityId"
                                     value={selectedEntityId || ''}
