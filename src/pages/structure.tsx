@@ -296,10 +296,18 @@ function DetailLogoPreview({
   size?: number;
 }) {
   if (!logo) return null;
-  const isExternal = logo.startsWith("http");
-  const src = isExternal
-    ? logo
-    : `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${logo}`;
+  const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
+  const normalized = logo.replace(/\\/g, "/").trim();
+  const isDirectSrc = /^(https?:\/\/|blob:|data:)/i.test(normalized);
+  const src = isDirectSrc
+    ? normalized
+    : normalized.startsWith("/uploads/")
+      ? `${baseUrl}${normalized}`
+      : normalized.startsWith("uploads/")
+        ? `${baseUrl}/${normalized}`
+        : normalized.includes("/uploads/")
+          ? `${baseUrl}${normalized.slice(normalized.indexOf("/uploads/"))}`
+          : `${baseUrl}/uploads/${normalized}`;
   return (
     <div
       className="relative shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
@@ -310,7 +318,7 @@ function DetailLogoPreview({
         alt={alt}
         width={size}
         height={size}
-        unoptimized={!isExternal}
+        unoptimized={!/^https?:\/\//i.test(src)}
         className="h-full w-full object-cover"
         onError={(e) => {
           e.currentTarget.style.display = "none";
@@ -3114,17 +3122,15 @@ export default function StructurePage() {
                       value={editworkspace.logo}
                       onChange={(file) => {
                         setEditworkspaceLogoFile(file);
-                        if (file) {
-                          setEditworkspace((f) => ({
+                        setEditworkspace((f) => {
+                          if (f.logo?.startsWith("blob:")) {
+                            URL.revokeObjectURL(f.logo);
+                          }
+                          return {
                             ...f,
-                            logo: file.name,
-                          }));
-                        } else {
-                          setEditworkspace((f) => ({
-                            ...f,
-                            logo: undefined,
-                          }));
-                        }
+                            logo: file ? URL.createObjectURL(file) : undefined,
+                          };
+                        });
                       }}
                       placeholder="Uploader une image de logo"
                       accept="image/*"
@@ -3359,11 +3365,12 @@ export default function StructurePage() {
                       value={editGroup.logo}
                       onChange={(file) => {
                         setEditGroupLogoFile(file);
-                        if (file) {
-                          setEditGroup((f) => ({ ...f, logo: file.name }));
-                        } else {
-                          setEditGroup((f) => ({ ...f, logo: undefined }));
-                        }
+                        setEditGroup((f) => {
+                          if (f.logo?.startsWith("blob:")) {
+                            URL.revokeObjectURL(f.logo);
+                          }
+                          return { ...f, logo: file ? URL.createObjectURL(file) : undefined };
+                        });
                       }}
                       placeholder="Uploader une image de logo"
                       accept="image/*"
@@ -3688,11 +3695,12 @@ export default function StructurePage() {
                       value={editCompany.logo}
                       onChange={(file) => {
                         setEditCompanyLogoFile(file);
-                        if (file) {
-                          setEditCompany((f) => ({ ...f, logo: file.name }));
-                        } else {
-                          setEditCompany((f) => ({ ...f, logo: undefined }));
-                        }
+                        setEditCompany((f) => {
+                          if (f.logo?.startsWith("blob:")) {
+                            URL.revokeObjectURL(f.logo);
+                          }
+                          return { ...f, logo: file ? URL.createObjectURL(file) : undefined };
+                        });
                       }}
                       placeholder="Uploader une image de logo"
                       accept="image/*"
@@ -3892,11 +3900,12 @@ export default function StructurePage() {
                       value={editBU.logo}
                       onChange={(file) => {
                         setEditBULogoFile(file);
-                        if (file) {
-                          setEditBU((f) => ({ ...f, logo: file.name }));
-                        } else {
-                          setEditBU((f) => ({ ...f, logo: undefined }));
-                        }
+                        setEditBU((f) => {
+                          if (f.logo?.startsWith("blob:")) {
+                            URL.revokeObjectURL(f.logo);
+                          }
+                          return { ...f, logo: file ? URL.createObjectURL(file) : undefined };
+                        });
                       }}
                       placeholder="Uploader une image de logo"
                       accept="image/*"

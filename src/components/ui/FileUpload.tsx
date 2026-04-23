@@ -21,6 +21,29 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const acceptedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
+
+  const resolveLogoSrc = (rawValue: string): string => {
+    if (/^(https?:\/\/|blob:|data:)/i.test(rawValue)) {
+      return rawValue;
+    }
+
+    const normalized = rawValue.replace(/\\/g, '/').trim();
+    if (normalized.startsWith('/uploads/')) {
+      return apiBaseUrl ? `${apiBaseUrl}${normalized}` : normalized;
+    }
+    if (normalized.startsWith('uploads/')) {
+      return apiBaseUrl ? `${apiBaseUrl}/${normalized}` : `/${normalized}`;
+    }
+
+    const uploadsIndex = normalized.indexOf('/uploads/');
+    if (uploadsIndex >= 0) {
+      const uploadPath = normalized.slice(uploadsIndex);
+      return apiBaseUrl ? `${apiBaseUrl}${uploadPath}` : uploadPath;
+    }
+
+    return apiBaseUrl ? `${apiBaseUrl}/uploads/${normalized}` : `/uploads/${normalized}`;
+  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -66,23 +89,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       
       {value ? (
         <div className="relative group">
-          {value.startsWith('http') ? (
-            <Image
-              src={value}
-              alt="Logo"
-              width={80}
-              height={80}
-              className="object-cover rounded-lg border border-slate-200"
-            />
-          ) : (
-            <Image
-              src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${value}`}
-              alt="Logo"
-              width={80}
-              height={80}
-              className="object-cover rounded-lg border border-slate-200"
-            />
-          )}
+          <Image
+            src={resolveLogoSrc(value)}
+            alt="Logo"
+            width={80}
+            height={80}
+            className="object-cover rounded-lg border border-slate-200"
+            unoptimized
+          />
           <div className="absolute -top-2 -right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               type="button"
