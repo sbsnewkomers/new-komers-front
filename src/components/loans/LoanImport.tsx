@@ -214,13 +214,8 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                     entitiesList = await entitiesApi.getCompanies();
                     break;
                 case EntityType.BUSINESSUNIT:
-                    const companies = await entitiesApi.getCompanies();
-                    const allBusinessUnits: Array<{ id: string; name: string }> = [];
-                    for (const company of companies) {
-                        const businessUnits = await entitiesApi.getBusinessUnits(company.id);
-                        allBusinessUnits.push(...businessUnits);
-                    }
-                    entitiesList = allBusinessUnits;
+                    // Utiliser la nouvelle API directe pour les BU accessibles par l'utilisateur
+                    entitiesList = await entitiesApi.getBusinessUnitsForUser();
                     break;
                 default:
                     entitiesList = [];
@@ -414,7 +409,7 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                 <h3 className="text-lg font-semibold mb-4">Informations sur l&rsquo;emprunt</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <Label htmlFor="loanName">Nom de l&rsquo;emprunt</Label>
+                                        <Label htmlFor="loanName">Nom de l&rsquo;emprunt<span className="text-red-500">*</span></Label>
                                         <Input
                                             id="loanName"
                                             placeholder="ex: Prêt BNP Agence X"
@@ -423,7 +418,7 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="entityType">Type d&rsquo;entité</Label>
+                                        <Label htmlFor="entityType">Type d&rsquo;entité<span className="text-red-500">*</span></Label>
                                         <Select
                                             value={selectedEntityType}
                                             onValueChange={handleEntityTypeChange}
@@ -434,7 +429,7 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                         </Select>
                                     </div>
                                     <div>
-                                        <Label htmlFor="entityId">Entité</Label>
+                                        <Label htmlFor="entityId">Entité<span className="text-red-500">*</span></Label>
                                         <Select
                                             id="entityId"
                                             value={selectedEntityId || ''}
@@ -450,7 +445,7 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                         </Select>
                                     </div>
                                     <div>
-                                        <Label htmlFor="fileInput">Fichier Excel/CSV</Label>
+                                        <Label htmlFor="fileInput">Fichier Excel/CSV<span className="text-red-500">*</span></Label>
                                         <Input
                                             id="fileInput"
                                             type="file"
