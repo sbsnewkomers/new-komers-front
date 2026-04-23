@@ -283,14 +283,8 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                     entitiesList = await entitiesApi.getCompanies();
                     break;
                 case EntityType.BUSINESSUNIT:
-                    // For business units, we need to get companies first, then their business units
-                    const companies = await entitiesApi.getCompanies();
-                    const allBusinessUnits: BusinessUnit[] = [];
-                    for (const company of companies) {
-                        const businessUnits = await entitiesApi.getBusinessUnits(company.id);
-                        allBusinessUnits.push(...businessUnits);
-                    }
-                    entitiesList = allBusinessUnits;
+                    // Utiliser la nouvelle API directe pour les BU accessibles par l'utilisateur
+                    entitiesList = await entitiesApi.getBusinessUnitsForUser();
                     break;
                 default:
                     entitiesList = [];
