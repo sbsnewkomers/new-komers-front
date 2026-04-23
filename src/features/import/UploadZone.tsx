@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Upload, FileUp } from "lucide-react";
+import { useRef } from "react";
 
 interface UploadZoneProps {
   type: "excel";
@@ -29,6 +30,12 @@ export function UploadZone({
   onDragLeave,
   onFileInput,
 }: UploadZoneProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleBrowseClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <Card
       className={`relative overflow-hidden transition-all duration-300 cursor-pointer group ${
@@ -61,22 +68,22 @@ export function UploadZone({
           Formats supportés : <span className="font-medium">{formats}</span>
         </p>
         <input
+          ref={fileInputRef}
           type="file"
           accept={accept}
           className="hidden"
           id={inputId}
           onChange={(e) => onFileInput(e, type)}
         />
-        <label htmlFor={inputId}>
-          <Button
-            type="button"
-            variant="outline"
-            className="cursor-pointer gap-2 bg-slate-100! text-slate-600 hover:bg-slate-200! hover:text-slate-600"
-          >
-            <FileUp className="h-4 w-4" />
-            Parcourir les fichiers
-          </Button>
-        </label>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleBrowseClick}
+          className="cursor-pointer gap-2 bg-slate-100! text-slate-600 hover:bg-slate-200! hover:text-slate-600"
+        >
+          <FileUp className="h-4 w-4" />
+          Parcourir les fichiers
+        </Button>
       </CardContent>
     </Card>
   );
