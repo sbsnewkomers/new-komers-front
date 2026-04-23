@@ -57,35 +57,12 @@ class EntitiesApi {
                     const company = await this.getCompany(entityId);
                     return company?.name || `${entityType} #${entityId.slice(0, 8)}...`;
                 case 'business unit':
-                    // Pour les business units, l'ID est probablement au format "companyId:buId"
-                    const [companyId, buId] = entityId.split(':');
-                    if (companyId && buId) {
-                        try {
-                            const businessUnit = await this.getBusinessUnit(companyId, buId);
-                            return businessUnit?.name || `Business Unit #${buId}`;
-                        } catch (error) {
-                            console.error('Erreur lors de la récupération de la business unit:', error);
-                            return `Business Unit #${buId}`;
-                        }
-                    } else {
-                        // Fallback: essayer avec l'ID direct si le format est différent
-                        try {
-                            // Tenter de récupérer toutes les business units et chercher celle qui correspond
-                            const companies = await this.getCompanies();
-                            for (const company of companies) {
-                                try {
-                                    const businessUnits = await this.getBusinessUnits(company.id);
-                                    const foundBu = businessUnits.find(bu => bu.id === entityId);
-                                    if (foundBu) {
-                                        return foundBu.name || `Business Unit #${foundBu.id}`;
-                                    }
-                                } catch (e) {
-                                    continue; // Ignorer les erreurs pour cette entreprise
-                                }
-                            }
-                        } catch (error) {
-                            console.error('Erreur lors de la recherche de business unit:', error);
-                        }
+                    try {
+                        // Utiliser le nouvel endpoint direct pour récupérer la business unit par son ID
+                        const businessUnit = await apiFetch<BusinessUnit>(`/business-units/${entityId}`);
+                        return businessUnit?.name || `Business Unit #${entityId.slice(0, 8)}...`;
+                    } catch (error) {
+                        console.error('Erreur lors de la récupération de la business unit:', error);
                         return `Business Unit #${entityId.slice(0, 8)}...`;
                     }
                 default:
