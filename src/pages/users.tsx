@@ -82,6 +82,9 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/DropdownMenu";
 import { useRouter } from "next/navigation";
+import { useImpersonation } from "@/hooks/useImpersonation";
+import { UserCheck } from "lucide-react";
+
 
 // Validation d'email
 const isValidEmail = (email: string): boolean => {
@@ -170,6 +173,20 @@ export default function UsersPage() {
   const [perimNodeId, setPerimNodeId] = useState("");
   const [perimCompanyId, setPerimCompanyId] = useState("");
   const perimBusHook = useBusinessUnits(perimCompanyId || null);
+  const { canImpersonateUser, isImpersonating, impersonate } = useImpersonation();
+  const [impersonateLoadingId, setImpersonateLoadingId] = useState<string | null>(null);
+  const handleImpersonate = async (targetUser: UserItem) => {
+  setImpersonateLoadingId(targetUser.id);
+  try {
+    await impersonate(targetUser.id);
+    // Les tokens et user dans le contexte sont maintenant ceux de la cible
+    router.push("/dashboard");
+  } catch {
+    // apiFetch gère déjà l'erreur via snackbar
+  } finally {
+    setImpersonateLoadingId(null);
+  }
+  };
 
   // ── Data loading ──
   const loadUsers = useCallback(async () => {
@@ -651,6 +668,7 @@ export default function UsersPage() {
                                           >
                                             <Trash2 className="mr-2 h-4 w-4" /> Supprimer
                                           </DropdownMenuItem>
+                                          
                                         )}
                                       </>
                                     )}
@@ -658,6 +676,22 @@ export default function UsersPage() {
                                       <DropdownMenuItem disabled>
                                         <Shield className="mr-2 h-4 w-4" />
                                         Super-admin g&eacute;r&eacute; uniquement par un super-admin
+                                      </DropdownMenuItem>
+                                    )}
+                                    {/* Impersonation — visible seulement si j'ai le droit sur ce user */}
+                                    {canImpersonateUser(u.role, u.status) && u.id !== currentUser?.id && (
+                                      <DropdownMenuItem
+                                        onClick={() => handleImpersonate(u)}
+                                        disabled={impersonateLoadingId === u.id}
+                                        className="text-indigo-600 focus:text-indigo-600 focus:bg-indigo-50"
+                                      >
+                                        {impersonateLoadingId === u.id ? (
+                                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 
+                                                          border-indigo-300 border-t-indigo-600" />
+                                        ) : (
+                                          <UserCheck className="mr-2 h-4 w-4" />
+                                        )}
+                                        Se connecter en tant que
                                       </DropdownMenuItem>
                                     )}
                                   </DropdownMenuContent>
