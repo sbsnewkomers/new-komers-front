@@ -3,13 +3,14 @@ export interface ImportHistoryRow {
   id: string;
   file: string;
   date: string;
-  status: "Terminé" | "En cours" | "Échoué" | "Annulé";
+  status: 'active' | 'archived' | 'restored' | 'deleted'; 
   entityType: string;
   entityName: string;
+  entityId: string; 
   user: string;
-  details?: string;  
-  linesCount?: number;  
-  errorsCount?: number;  
+  details?: string;
+  linesCount?: number;
+  errorsCount?: number;
 }
 
 export type EntryMovementFilter = "all" | "debit" | "credit";
