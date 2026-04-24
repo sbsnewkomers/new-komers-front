@@ -108,18 +108,6 @@ export function EntitySelector({
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => onEntityChange('', 'Company')}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all cursor-pointer ${
-                selectedEntityType === 'Company'
-                  ? 'bg-primary/10 border-primary text-primary font-medium ring-2 ring-primary/20'
-                  : 'bg-white border-slate-300 text-slate-600 hover:border-slate-300! hover:bg-slate-100'
-              }`}
-            >
-              <Building className="h-4 w-4" />
-              Entreprise
-            </button>
-            <button
-              type="button"
               onClick={() => onEntityChange('', 'Group')}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all cursor-pointer ${
                 selectedEntityType === 'Group'
@@ -129,6 +117,18 @@ export function EntitySelector({
             >
               <Users className="h-4 w-4" />
               Groupe
+            </button>
+            <button
+              type="button"
+              onClick={() => onEntityChange('', 'Company')}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all cursor-pointer ${
+                selectedEntityType === 'Company'
+                  ? 'bg-primary/10 border-primary text-primary font-medium ring-2 ring-primary/20'
+                  : 'bg-white border-slate-300 text-slate-600 hover:border-slate-300! hover:bg-slate-100'
+              }`}
+            >
+              <Building className="h-4 w-4" />
+              Entreprise
             </button>
           </div>
         </div>
