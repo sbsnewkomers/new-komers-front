@@ -111,33 +111,37 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback, onVi
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                          <div className="inline-flex flex-wrap items-center justify-end gap-1">
-                          {row.status === "Terminé" && (
-                            <>
-                              {/* {onViewEntries && ( */}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="w-full gap-1.5 rounded-md border border-sky-100 bg-sky-50/60 text-sky-700 shadow-sm hover:bg-sky-100/70 hover:text-sky-800 sm:w-auto"
-                                  onClick={() => onViewEntries(row)}
-                                >
-                                  <Eye className="h-3.5 w-3.5" />
-                                  Voir écritures
-                                </Button>
-                              {/* )} */}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="w-full gap-1.5 rounded-md border border-amber-100 bg-amber-50/60 text-amber-700 shadow-sm hover:bg-amber-100/70 hover:text-amber-800 sm:w-auto"
-                                onClick={() => onRollback(row)}
-                              >
-                                <RotateCcw className="h-3.5 w-3.5" />
-                                Restaurer
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
+                      <div className="inline-flex flex-wrap items-center justify-end gap-1">
+                        
+                        {/* Voir écritures → uniquement si actif */}
+                        {(row.status === "active") && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full gap-1.5 rounded-md border border-sky-100 bg-sky-50/60 text-sky-700 shadow-sm hover:bg-sky-100/70 hover:text-sky-800 sm:w-auto"
+                            onClick={() => onViewEntries(row)}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            Voir écritures
+                          </Button>
+                        )}
+
+                        {/* Restaurer → uniquement si archivé */}
+                        {row.status === "archived" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full gap-1.5 rounded-md border border-amber-100 bg-amber-50/60 text-amber-700 shadow-sm hover:bg-amber-100/70 hover:text-amber-800 sm:w-auto"
+                            onClick={() => onRollback(row)}
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            Restaurer
+                          </Button>
+                        )}
+
+                      </div>
+                    </TableCell>
+                            
                     </TableRow>
                   ))}
                 </TableBody>

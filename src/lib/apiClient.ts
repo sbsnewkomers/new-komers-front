@@ -163,31 +163,38 @@ export async function apiFetch<T>(
   }
 
   // Handle empty or no-content responses safely
-  if (res.status === 204) {
-    return undefined as T;
-  }
+  
+    if (res.status === 204) {
+      return undefined as T;
+    }
 
-  const text = await res.text().catch(() => "");
-  if (!text) {
-    return undefined as T;
-  }
+    const contentType = res.headers.get("content-type") || "";
 
-  // Check if response is JSON
-  const contentType = res.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
+    // ✅ Ne pas lire les binaires comme texte
+    if (
+      contentType.includes("application/vnd.openxmlformats") ||
+      contentType.includes("application/vnd.ms-excel") ||
+      contentType.includes("application/octet-stream") ||
+      contentType.includes("application/zip")
+    ) {
+      const buffer = await res.arrayBuffer();
+      return buffer as unknown as T;
+    }
+
+    const text = await res.text().catch(() => "");
+    if (!text) return undefined as T;
+
+    if (contentType.includes("application/json")) {
+      try {
+        return JSON.parse(text) as T;
+      } catch {
+        throw new ApiError("Invalid JSON response from server", 500, { originalResponse: text });
+      }
+    }
+
     try {
       return JSON.parse(text) as T;
     } catch {
-      // If it's supposed to be JSON but can't parse, throw error
-      throw new ApiError("Invalid JSON response from server", 500, { originalResponse: text });
+      return text as unknown as T;
     }
-  }
-
-  // For non-JSON responses, try to parse as JSON first (for multipart responses that contain JSON)
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    // If it's not JSON, return raw text
-    return text as unknown as T;
-  }
 }

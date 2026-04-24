@@ -67,29 +67,30 @@ export default function ImportPage() {
 
   // Ref pour éviter les appels multiples
   const isImportingRef = useRef(false);
-  const fetchHistory = useCallback( async () => {
-    try {
-      const data = await apiFetch<any[]>("/generic-import/history", {
-        method: "GET",
-        snackbar: { showError: false, showSuccess: false },
-      });
+  const fetchHistory = useCallback(async () => {
+  try {
+    const data = await apiFetch<any[]>("/generic-import/history", {
+      method: "GET",
+      snackbar: { showError: false, showSuccess: false },
+    });
 
-      const mapped: ImportHistoryRow[] = data.map((item) => ({
-        id: item.id,
-        file: item.file,
-        date: item.date,
-        status: item.status ?? "Terminé",
-        entityType: item.entityType ?? "—",
-        entityName: item.entityName ?? "—",
-        user: item.user,
-        linesCount: item.linesCount,
-      }));
+    const mapped: ImportHistoryRow[] = data.map((item) => ({
+      id: item.id,
+      file: item.file,
+      date: item.date,
+      status: item.status,  
+      entityType: item.entityType ?? "—",
+      entityName: item.entityName ?? "—",
+      entityId: item.entityId,
+      user: item.user,
+      linesCount: item.linesCount,
+    }));
 
-      setHistory(mapped);
-    } catch (err) {
-      console.error("Erreur load history:", err);
-    }
-  }, []);
+    setHistory(mapped);
+  } catch (err) {
+    console.error("Erreur load history:", err);
+  }
+}, []);
 
   useEffect(() => {
     companies.fetchList();
@@ -889,13 +890,25 @@ export default function ImportPage() {
         open={rollbackConfirmOpen}
         onOpenChange={setRollbackConfirmOpen}
         target={rollbackTarget}
-        onConfirm={() => {
-          if (rollbackTarget) {
-            setHistory((h) => h.filter((r) => r.id !== rollbackTarget.id));
-          }
-          setRollbackConfirmOpen(false);
-          setRollbackTarget(null);
-        }}
+        onConfirm={async () => {
+        if (!rollbackTarget) return;
+        try {
+          await apiFetch("/generic-import/restore", {
+            method: "POST",
+            body: JSON.stringify({
+              dataImportId: rollbackTarget.id,
+              entityId: rollbackTarget.entityId,
+              entityType: rollbackTarget.entityType,
+            }),
+            snackbar: { showSuccess: true, showError: true, successMessage: "✅ Import restauré avec succès !" },
+          });
+          await fetchHistory();
+        } catch (err) {
+          console.error("Erreur restauration:", err);
+        }
+        setRollbackConfirmOpen(false);
+        setRollbackTarget(null);
+      }}
       />
     </AppLayout>
   );

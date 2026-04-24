@@ -1,8 +1,16 @@
-// MappingSelectorModal.tsx
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
-import { SavedMapping } from "./types";
-import { Database, Plus } from "lucide-react";
+import type { SavedMapping } from "./types";
+import { BookMarked, Plus } from "lucide-react";
+import { MappingTemplateList } from "./mapping/MappingTemplateList";
 
 interface Props {
   open: boolean;
@@ -12,41 +20,58 @@ interface Props {
   onNewMapping: () => void;
 }
 
-export function MappingSelectorModal({ open, onOpenChange, mappings, onSelect, onNewMapping }: Props) {
+export function MappingSelectorModal({
+  open,
+  onOpenChange,
+  mappings,
+  onSelect,
+  onNewMapping,
+}: Props) {
+  const showSearch = mappings.length > 6;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent size="2xl">
         <DialogHeader>
-          <DialogTitle>Choisir un modèle de mapping</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-3 py-4">
-          {mappings.map((m) => (
-            <Button
-              key={m.id}
-              variant="outline"
-              className="flex justify-between items-center h-auto py-4 px-4 hover:border-primary"
-              onClick={() => onSelect(m)}
-            >
-              <div className="flex flex-col items-start text-left">
-                <span className="font-semibold">{m.name}</span>
-                <span className="text-xs text-slate-500">{Object.keys(m.rules).length} colonnes configurées</span>
-              </div>
-              <Database className="h-4 w-4 text-slate-400" />
-            </Button>
-          ))}
-          
-          <div className="relative my-2">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-            <div className="relative flex justify-center text-xs uppercase text-slate-500">
-              <span className="bg-white px-2">Ou</span>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <BookMarked className="h-4 w-4" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <DialogTitle>Choisir un modèle de mapping</DialogTitle>
+              <DialogDescription>
+                Sélectionnez un modèle pour l&apos;appliquer à votre fichier, ou
+                créez-en un nouveau.
+              </DialogDescription>
             </div>
           </div>
+        </DialogHeader>
 
-          <Button variant="ghost" className="gap-2 border-dashed border-2 h-12" onClick={onNewMapping}>
-            <Plus className="h-4 w-4" />
+        <DialogBody className="bg-slate-50/40">
+          <MappingTemplateList
+            mappings={mappings}
+            onSelect={(m) => {
+              onSelect(m);
+              onOpenChange(false);
+            }}
+            showSearch={showSearch}
+            showScopeFilter={mappings.length > 0}
+            emptyMessage="Aucun modèle enregistré pour l’instant."
+          />
+        </DialogBody>
+
+        <DialogFooter className="flex-wrap sm:justify-between">
+          <Button
+            variant="ghost"
+            onClick={onNewMapping}
+            className="text-slate-600 hover:text-primary"
+          >
+            <Plus className="mr-2 h-4 w-4" aria-hidden />
             Créer un nouveau mapping
           </Button>
-        </div>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Fermer
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

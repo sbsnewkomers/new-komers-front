@@ -32,19 +32,25 @@ export type ImportExecuteResult = {
   };
 };
 
+
 export async function downloadStructureTemplate(accessToken: string | null): Promise<void> {
-  const res = await apiFetch(`/structure/import/template`, {
+  // apiFetch détecte application/vnd.openxmlformats et retourne un ArrayBuffer propre
+  const buffer = await apiFetch<ArrayBuffer>(`/structure/import/template`, {
     method: "GET",
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
   });
 
-  // Convert response to blob for download
-  const blob = new Blob([res as ArrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = "template_import.xlsx";
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
@@ -59,11 +65,12 @@ export async function validateStructureFile(
     formData.append("workspaceId", workspaceId);
   }
 
+  // Ne pas passer de headers du tout — apiFetch gère le token via accessTokenGetter
+  // et détecte FormData pour ne pas ajouter Content-Type
   return apiFetch<ImportReport>(`/structure/import/validate`, {
     method: "POST",
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
     body: formData,
-    snackbar: { showError: true }
+    snackbar: { showError: true },
   });
 }
 
@@ -78,11 +85,13 @@ export async function executeStructureImport(
     formData.append("workspaceId", workspaceId);
   }
 
+  // Plus de headers manuels
   return apiFetch<ImportExecuteResult>(`/structure/import/execute`, {
     method: "POST",
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
     body: formData,
-    snackbar: { showError: true }
+    snackbar: { showError: true },
   });
 }
+
+
 

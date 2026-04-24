@@ -146,32 +146,47 @@ export default function StructureImportUploadPage() {
     }
   };
 
-  const handleExecute = async () => {
-    if (!file) return;
+const handleExecute = async () => {
+  if (!file) return;
+  
+  if (canSelectWorkspace && !selectedWorkspaceId) {
+    setError("Veuillez sélectionner un workspace avant de lancer l'import.");
+    return;
+  }
+  
+  try {
+    setIsExecuting(true);
+    setError(null);
+    const workspaceId = canSelectWorkspace ? selectedWorkspaceId : undefined;
+    const rep = await executeStructureImport(file, accessToken, workspaceId);
     
-    // Validate workspace selection for super admin and admin
-    if (canSelectWorkspace && !selectedWorkspaceId) {
-      setError("Veuillez sélectionner un workspace avant de lancer l'import.");
-      return;
+    // La réponse est { success, message, data: { created: { ... } } }
+    const result = (rep as any)?.data ?? rep;
+    if (result && result.created) {
+      setExecuteResult(result);
+    } else {
+      setError("Réponse inattendue du serveur.");
     }
+  } catch (err: any) {
+    const details = err?.details?.originalResponse;
     
-    try {
-      setIsExecuting(true);
-      setError(null);
-      const workspaceId = canSelectWorkspace ? selectedWorkspaceId : undefined;
-      const rep = await executeStructureImport(file, accessToken, workspaceId);
-      setExecuteResult(rep);
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Erreur lors de l'import.";
+    if (details?.errors && details?.summary) {
+      setReport({
+        summary: details.summary,
+        errors: details.errors,
+      });
+      setError("L'import a échoué : des erreurs de validation ont été détectées.");
+    } else {
+      const msg = err?.details?.message || err?.message || "Erreur lors de l'import.";
       setError(msg);
-      setExecuteResult(null);
-      setReport(null);
-      setFile(null);
-    } finally {
-      setIsExecuting(false);
     }
-  };
+    
+    setExecuteResult(null);
+  } finally {
+    setIsExecuting(false);
+  }
+};
+    
 
   const hasNoErrors = report && report.errors.length === 0;
 
@@ -307,17 +322,17 @@ export default function StructureImportUploadPage() {
           </Button>
         </div>
 
-        {executeResult && (
-          <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
-            <p className="font-semibold mb-1">Import terminé avec succès.</p>
-            <p>
-              Groupes créés : <strong>{executeResult.created.groups}</strong>,{" "}
-              Entreprises créées :{" "}
-              <strong>{executeResult.created.companies}</strong>, Business units
-              créées : <strong>{executeResult.created.businessUnits}</strong>.
-            </p>
-          </div>
-        )}
+        {executeResult && executeResult.created && (
+        <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
+          <p className="font-semibold mb-1">Import terminé avec succès.</p>
+          <p>
+            Groupes créés : <strong>{executeResult.created.groups}</strong>,{" "}
+            Entreprises créées :{" "}
+            <strong>{executeResult.created.companies}</strong>, Business units
+            créées : <strong>{executeResult.created.businessUnits}</strong>.
+          </p>
+        </div>
+      )}
 
         {report && (
           <div className="space-y-4">
