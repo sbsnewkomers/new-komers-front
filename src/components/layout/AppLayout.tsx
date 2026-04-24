@@ -132,7 +132,7 @@ export function AppLayout({
     <>
     {/* Bannière impersonation — visible uniquement en mode impersonation */}
     {isImpersonating && (
-      <div className="fixed top-0 left-0 right-0 z-[100] flex items-center 
+      <div className="fixed top-0 left-0 right-0 z-100 flex items-center 
                       justify-between bg-amber-500 px-6 py-2 shadow-lg">
         <div className="flex items-center gap-2 text-sm font-medium text-white">
           <Shield className="h-4 w-4 shrink-0" />
@@ -159,7 +159,7 @@ export function AppLayout({
         </button>
       </div>
     )}
-    <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr]">
+    <div className="min-h-screen w-full overflow-x-hidden">
       {/* Sidebar */}
 
       <div className="fixed inset-y-0 left-0 z-20 hidden w-[240px] border-r border-slate-100 bg-white shadow-[1px_0px_3px_-1px_rgba(0,0,0,0.1)] md:block lg:w-[260px]">
