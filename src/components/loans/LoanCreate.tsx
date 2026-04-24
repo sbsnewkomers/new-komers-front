@@ -1,110 +1,143 @@
 import React from 'react';
-import { Calculator, FileSpreadsheet, Database, PenTool } from 'lucide-react';
+import { Calculator, FileSpreadsheet, PenTool, Info, ArrowRight } from 'lucide-react';
 
 interface LoanCreateProps {
     onMethodSelect: (method: 'calculator' | 'import' | 'manual') => void;
 }
 
+type Method = {
+    key: 'calculator' | 'import' | 'manual';
+    title: string;
+    subtitle: string;
+    description: string;
+    icon: typeof Calculator;
+    badge: string;
+    accent: string;
+    ring: string;
+    iconBg: string;
+    iconColor: string;
+};
+
+const methods: Method[] = [
+    {
+        key: 'calculator',
+        title: 'Calculatrice intégrée',
+        subtitle: 'La méthode la plus rapide',
+        description:
+            "Génère automatiquement un échéancier à partir des caractéristiques du prêt (capital, taux, durée).",
+        icon: Calculator,
+        badge: 'Recommandé',
+        accent: 'bg-blue-50 text-blue-700 border-blue-200',
+        ring: 'hover:border-blue-300 hover:shadow-md hover:shadow-blue-100/50',
+        iconBg: 'bg-blue-50',
+        iconColor: 'text-blue-600',
+    },
+    {
+        key: 'import',
+        title: 'Import Excel / CSV',
+        subtitle: 'Importez vos données existantes',
+        description:
+            'Importe un échéancier depuis un fichier Excel ou CSV déjà préparé dans votre tableur.',
+        icon: FileSpreadsheet,
+        badge: 'Format standard',
+        accent: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        ring: 'hover:border-emerald-300 hover:shadow-md hover:shadow-emerald-100/50',
+        iconBg: 'bg-emerald-50',
+        iconColor: 'text-emerald-600',
+    },
+    {
+        key: 'manual',
+        title: 'Saisie manuelle',
+        subtitle: 'Contrôle total',
+        description:
+            'Saisit manuellement chaque échéance ou ajuste un échéancier existant ligne par ligne.',
+        icon: PenTool,
+        badge: 'Personnalisé',
+        accent: 'bg-purple-50 text-purple-700 border-purple-200',
+        ring: 'hover:border-purple-300 hover:shadow-md hover:shadow-purple-100/50',
+        iconBg: 'bg-purple-50',
+        iconColor: 'text-purple-600',
+    },
+];
+
 export function LoanCreate({ onMethodSelect }: LoanCreateProps) {
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="text-center">
-                <p className="text-gray-600">
-                    Choisissez la méthode qui vous convient le mieux pour créer votre échéancier de prêt
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-900">
+                    Choisissez une méthode de création
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                    Sélectionnez la méthode qui correspond le mieux à votre besoin pour créer
+                    votre échéancier d&apos;emprunt.
                 </p>
-            </div>
 
-            {/* Method Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div
-                    className="group cursor-pointer transition-all duration-300 hover:scale-105"
-                    onClick={() => onMethodSelect('calculator')}
-                >
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-6 h-full hover:shadow-lg hover:border-blue-400 transition-all duration-300">
-                        <div className="text-center">
-                            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
-                                <Calculator className="h-8 w-8 text-blue-600" />
-                            </div>
-                            <h3 className="font-bold text-lg text-blue-900 mb-2">Calculatrice Intégrée</h3>
-                            <div className="space-y-2 text-sm text-blue-700">
-                                <p>La méthode la plus rapide</p>
-                                <p className="text-blue-600">
-                                    Générer automatiquement un échéancier à partir des caractéristiques du prêt (capital, taux, durée)
-                                </p>
-                            </div>
-                            <div className="mt-4 pt-4 border-t border-blue-200">
-                                <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                                    Recommandé
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    {methods.map((m) => {
+                        const Icon = m.icon;
+                        return (
+                            <button
+                                key={m.key}
+                                type="button"
+                                onClick={() => onMethodSelect(m.key)}
+                                className={`group flex h-full flex-col rounded-xl border border-slate-200 bg-white p-5 text-left transition-all ${m.ring}`}
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div
+                                        className={`flex h-11 w-11 items-center justify-center rounded-lg ${m.iconBg}`}
+                                    >
+                                        <Icon className={`h-5 w-5 ${m.iconColor}`} />
+                                    </div>
+                                    <span
+                                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${m.accent}`}
+                                    >
+                                        {m.badge}
+                                    </span>
+                                </div>
 
-                <div
-                    className="group cursor-pointer transition-all duration-300 hover:scale-105"
-                    onClick={() => onMethodSelect('import')}
-                >
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-xl p-6 h-full hover:shadow-lg hover:border-green-400 transition-all duration-300">
-                        <div className="text-center">
-                            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
-                                <FileSpreadsheet className="h-8 w-8 text-green-600" />
-                            </div>
-                            <h3 className="font-bold text-lg text-green-900 mb-2">Import Excel/CSV</h3>
-                            <div className="space-y-2 text-sm text-green-700">
-                                <p>Importez vos données existantes</p>
-                                <p className="text-green-600">
-                                    Importer un échéancier depuis un fichier Excel ou CSV déjà préparé
-                                </p>
-                            </div>
-                            <div className="mt-4 pt-4 border-t border-green-200">
-                                <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                                    Format standard
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                <div className="mt-4 flex-1">
+                                    <h4 className="text-sm font-semibold text-slate-900">
+                                        {m.title}
+                                    </h4>
+                                    <p className="mt-0.5 text-xs font-medium text-slate-500">
+                                        {m.subtitle}
+                                    </p>
+                                    <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                                        {m.description}
+                                    </p>
+                                </div>
 
-                <div
-                    className="group cursor-pointer transition-all duration-300 hover:scale-105"
-                    onClick={() => onMethodSelect('manual')}
-                >
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-xl p-6 h-full hover:shadow-lg hover:border-purple-400 transition-all duration-300">
-                        <div className="text-center">
-                            <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
-                                <PenTool className="h-8 w-8 text-purple-600" />
-                            </div>
-                            <h3 className="font-bold text-lg text-purple-900 mb-2">Saisie Manuelle</h3>
-                            <div className="space-y-2 text-sm text-purple-700">
-                                <p>Contrôle total</p>
-                                <p className="text-purple-600">
-                                    Saisir manuellement chaque échéance ou ajuster un échéancier existant
-                                </p>
-                            </div>
-                            <div className="mt-4 pt-4 border-t border-purple-200">
-                                <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
-                                    Personnalisé
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                                <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-slate-700 transition-colors group-hover:text-primary">
+                                    Choisir cette méthode
+                                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                                </div>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* Help Section */}
-            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                <div className="flex items-start gap-4">
-                    <div className="bg-blue-100 rounded-full p-2">
-                        <Database className="h-5 w-5 text-blue-600" />
+            {/* Help */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5">
+                <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white ring-1 ring-slate-200">
+                        <Info className="h-4 w-4 text-slate-500" />
                     </div>
                     <div>
-                        <h4 className="font-semibold text-gray-900 mb-2">Conseil de choix</h4>
-                        <ul className="space-y-1 text-sm text-gray-600">
-                            <li>· <strong>Calculatrice</strong> : Idéal pour les nouveaux prêts avec paramètres standards</li>
-                            <li>· <strong>Import</strong> : Parfait si vous avez déjà un échéancier dans un tableur</li>
-                            <li>· <strong>Manuel</strong> : Pour les cas complexes ou ajustements précis</li>
+                        <h4 className="text-sm font-semibold text-slate-900">Conseil de choix</h4>
+                        <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                            <li>
+                                <strong className="text-slate-800">Calculatrice</strong> &middot;
+                                Idéal pour les nouveaux prêts avec des paramètres standards.
+                            </li>
+                            <li>
+                                <strong className="text-slate-800">Import</strong> &middot; Parfait
+                                si vous avez déjà un échéancier dans un tableur.
+                            </li>
+                            <li>
+                                <strong className="text-slate-800">Manuel</strong> &middot; Pour les
+                                cas complexes ou des ajustements précis.
+                            </li>
                         </ul>
                     </div>
                 </div>

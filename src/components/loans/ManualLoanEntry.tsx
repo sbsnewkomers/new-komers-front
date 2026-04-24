@@ -1,19 +1,25 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Select } from '@/components/ui/Select';
-import { Edit, Plus, Trash2, Save } from 'lucide-react';
+import {
+    Edit,
+    Plus,
+    Trash2,
+    Save,
+    Wallet,
+    Percent,
+    Shield,
+    TrendingUp,
+    Calculator,
+} from 'lucide-react';
 import { loansApi } from '@/lib/loansApi';
 import { entitiesApi } from '@/lib/entitiesApi';
 import { emitSnackbar } from '@/ui/snackbarBus';
-import {
-    EntityType,
-    LoanInputMethod
-} from '@/types/loans';
+import { EntityType, LoanInputMethod } from '@/types/loans';
 
 interface ManualLoanEntryProps {
     onLoanCreated?: (loanId: string) => void;
@@ -34,27 +40,28 @@ interface EditableInstallment {
     isNew?: boolean;
 }
 
-export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualLoanEntryProps) {
+export function ManualLoanEntry({
+    onLoanCreated,
+    entityType,
+    entityId,
+}: ManualLoanEntryProps) {
     const [isLoading, setIsLoading] = useState(false);
 
-    // Loan information
     const [loanName, setLoanName] = useState('');
-    const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(entityType || EntityType.GROUP);
+    const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(
+        entityType || EntityType.GROUP,
+    );
     const [selectedEntityId, setSelectedEntityId] = useState(entityId || '');
     const [entities, setEntities] = useState<Array<{ id: string; name: string }>>([]);
 
-    // Installments
     const [installments, setInstallments] = useState<EditableInstallment[]>([]);
     const isInitialized = useRef(false);
 
     const addNewInstallment = useCallback(() => {
-        // Simple sequential numbering based on current length
         const newNumber = installments.length + 1;
 
-        // Calculate default due date
         let defaultDueDate = new Date().toISOString().split('T')[0];
 
-        // If this is the second installment, set date to first installment date + 1 month
         if (installments.length === 1 && installments[0].dueDate) {
             const firstDate = new Date(installments[0].dueDate);
             const secondDate = new Date(firstDate);
@@ -62,7 +69,6 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
             defaultDueDate = secondDate.toISOString().split('T')[0];
         }
 
-        // Set remaining balance to 0 for new installments (will be calculated when user enters values)
         const newInstallment: EditableInstallment = {
             installmentNumber: newNumber,
             dueDate: defaultDueDate,
@@ -75,7 +81,7 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
             isNew: true,
         };
 
-        setInstallments(prev => [...prev, newInstallment]);
+        setInstallments((prev) => [...prev, newInstallment]);
     }, [installments]);
 
     const loadEntities = async (entityType: EntityType) => {
@@ -90,7 +96,6 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
                     entitiesList = await entitiesApi.getCompanies();
                     break;
                 case EntityType.BUSINESSUNIT:
-                    // Utiliser la nouvelle API directe pour les BU accessibles par l'utilisateur
                     entitiesList = await entitiesApi.getBusinessUnitsForUser();
                     break;
                 default:
@@ -104,14 +109,12 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
         }
     };
 
-    // Load entities by default on component mount
     useEffect(() => {
         if (selectedEntityType === EntityType.GROUP) {
             setTimeout(() => loadEntities(EntityType.GROUP), 0);
         }
     }, [selectedEntityType]);
 
-    // Initialize with one empty row
     useEffect(() => {
         if (!isInitialized.current && installments.length === 0) {
             isInitialized.current = true;
@@ -120,16 +123,14 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const removeInstallment = (index: number) => {
-        setInstallments(prev => {
+        setInstallments((prev) => {
             let updated = prev.filter((_, i) => i !== index);
 
-            // Recalculate installment numbers
             updated = updated.map((installment, i) => ({
                 ...installment,
                 installmentNumber: i + 1,
             }));
 
-            // Recalculate all remaining balances
             if (updated.length > 0) {
                 const totalCapital = updated.reduce((sum, i) => sum + i.principalPayment, 0);
                 let cumulativePaid = 0;
@@ -150,28 +151,37 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
         loadEntities(entityType);
     };
 
-    const updateInstallment = (index: number, field: keyof EditableInstallment, value: string | number) => {
-        setInstallments(prev => {
+    const updateInstallment = (
+        index: number,
+        field: keyof EditableInstallment,
+        value: string | number,
+    ) => {
+        setInstallments((prev) => {
             const updated = [...prev];
             const installment = { ...updated[index] };
 
             if (field === 'dueDate') {
                 installment[field] = value as string;
-            } else if (field === 'principalPayment' || field === 'interestPayment' || field === 'insurancePayment') {
+            } else if (
+                field === 'principalPayment' ||
+                field === 'interestPayment' ||
+                field === 'insurancePayment'
+            ) {
                 const numValue = Number(value) || 0;
                 installment[field] = numValue;
-                // Recalculate total payment
-                installment.totalPayment = installment.principalPayment + installment.interestPayment + installment.insurancePayment;
+                installment.totalPayment =
+                    installment.principalPayment +
+                    installment.interestPayment +
+                    installment.insurancePayment;
 
-                // Update the installment in the array first
                 updated[index] = installment;
 
-                // Recalculate all remaining balances when principal payment changes
                 if (field === 'principalPayment') {
-                    // Calculate total capital (sum of all principal payments)
-                    const totalCapital = updated.reduce((sum, i) => sum + i.principalPayment, 0);
+                    const totalCapital = updated.reduce(
+                        (sum, i) => sum + i.principalPayment,
+                        0,
+                    );
 
-                    // Recalculate remaining balance for all installments
                     let cumulativePaid = 0;
                     for (let i = 0; i < updated.length; i++) {
                         cumulativePaid += updated[i].principalPayment;
@@ -198,18 +208,22 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
             totalInterest,
             totalInsurance,
             totalPayment,
-            averageMonthlyPayment: installments.length > 0 ? totalPayment / installments.length : 0,
+            averageMonthlyPayment:
+                installments.length > 0 ? totalPayment / installments.length : 0,
         };
     };
 
     const validateInstallments = () => {
         if (!loanName.trim()) {
-            emitSnackbar({ message: 'Le nom de l\'emprunt est requis', variant: 'error' });
+            emitSnackbar({ message: "Le nom de l'emprunt est requis", variant: 'error' });
             return false;
         }
 
         if (!selectedEntityType || !selectedEntityId) {
-            emitSnackbar({ message: 'Le type d\'entité et l\'ID sont requis', variant: 'error' });
+            emitSnackbar({
+                message: "Le type d'entité et l'ID sont requis",
+                variant: 'error',
+            });
             return false;
         }
 
@@ -218,27 +232,38 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
             return false;
         }
 
-        // Check for required fields
         for (let i = 0; i < installments.length; i++) {
             const installment = installments[i];
             if (!installment.dueDate) {
-                emitSnackbar({ message: `La date est requise pour l'échéance ${i + 1}`, variant: 'error' });
+                emitSnackbar({
+                    message: `La date est requise pour l'échéance ${i + 1}`,
+                    variant: 'error',
+                });
                 return false;
             }
 
-            if (installment.principalPayment < 0 || installment.interestPayment < 0 || installment.insurancePayment < 0) {
-                emitSnackbar({ message: `Les montants doivent être positifs pour l'échéance ${i + 1}`, variant: 'error' });
+            if (
+                installment.principalPayment < 0 ||
+                installment.interestPayment < 0 ||
+                installment.insurancePayment < 0
+            ) {
+                emitSnackbar({
+                    message: `Les montants doivent être positifs pour l'échéance ${i + 1}`,
+                    variant: 'error',
+                });
                 return false;
             }
         }
 
-        // Check sequential dates
         for (let i = 1; i < installments.length; i++) {
             const currentDate = new Date(installments[i].dueDate);
             const previousDate = new Date(installments[i - 1].dueDate);
 
             if (currentDate <= previousDate) {
-                emitSnackbar({ message: `Les dates doivent être séquentielles. La date de l'échéance ${i + 1} est antérieure à la précédente`, variant: 'error' });
+                emitSnackbar({
+                    message: `Les dates doivent être séquentielles. La date de l'échéance ${i + 1} est antérieure à la précédente`,
+                    variant: 'error',
+                });
                 return false;
             }
         }
@@ -261,10 +286,8 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
         setIsLoading(true);
 
         try {
-            // Normalize installment numbers before saving
             const normalizedInstallments = normalizeInstallmentNumbers(installments);
 
-            // Create manual loan with installments
             const manualLoanData = {
                 name: loanName,
                 entityType: selectedEntityType,
@@ -285,8 +308,8 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
             const loan = await loansApi.createManualLoan(manualLoanData, {
                 snackbar: {
                     showSuccess: true,
-                    successMessage: 'Emprunt créé avec succès'
-                }
+                    successMessage: 'Emprunt créé avec succès',
+                },
             });
 
             emitSnackbar({ message: 'Emprunt créé avec succès', variant: 'success' });
@@ -294,232 +317,365 @@ export function ManualLoanEntry({ onLoanCreated, entityType, entityId }: ManualL
         } catch (err) {
             emitSnackbar({
                 message: err instanceof Error ? err.message : 'Failed to save loan',
-                variant: 'error'
+                variant: 'error',
             });
         } finally {
             setIsLoading(false);
         }
     };
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('fr-FR', {
+    const formatCurrency = (amount: number) =>
+        new Intl.NumberFormat('fr-FR', {
             style: 'currency',
-            currency: 'EUR'
+            currency: 'EUR',
+            maximumFractionDigits: 0,
         }).format(amount);
-    };
 
     const totals = calculateTotals();
 
     return (
-        <div className="max-w-6xl mx-auto space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Edit className="h-5 w-5" />
-                        Saisie Manuelle ou Ajustement
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                        Pour les prêts complexes ou pour ajuster une échéance spécifique
-                    </p>
-                </CardHeader>
-                <CardContent>
-
-                    {/* Loan Information */}
-                    <div className="space-y-6 mb-8">
-                        <h3 className="text-lg font-semibold">Informations sur l&rsquo;emprunt</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <Label htmlFor="loanName">Nom de l&rsquo;emprunt<span className="text-red-500">*</span></Label>
-                                <Input
-                                    id="loanName"
-                                    placeholder="ex: Prêt BNP Agence X"
-                                    value={loanName}
-                                    onChange={(e) => setLoanName(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="entityType">Type d&rsquo;entité<span className="text-red-500">*</span></Label>
-                                <Select
-                                    value={selectedEntityType}
-                                    onValueChange={handleEntityTypeChange}
-                                >
-                                    <option value={EntityType.GROUP}>Groupe</option>
-                                    <option value={EntityType.COMPANY}>Entreprise</option>
-                                    <option value={EntityType.BUSINESSUNIT}>Unité de business</option>
-                                </Select>
-                            </div>
-                            <div>
-                                <Label htmlFor="entityId">Entité<span className="text-red-500">*</span></Label>
-                                <Select
-                                    id="entityId"
-                                    value={selectedEntityId || ''}
-                                    onValueChange={(value) => setSelectedEntityId(value)}
-                                    disabled={!selectedEntityType}
-                                >
-                                    <option value="">Sélectionner une entité...</option>
-                                    {entities.map((entity) => (
-                                        <option key={entity.id} value={entity.id}>
-                                            {entity.name}
-                                        </option>
-                                    ))}
-                                </Select>
-                            </div>
-                        </div>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
+                        <Edit className="h-5 w-5 text-purple-600" />
                     </div>
+                    <div>
+                        <h3 className="text-base font-semibold text-slate-900">
+                            Saisie manuelle ou ajustement
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                            Pour les prêts complexes ou pour ajuster une échéance spécifique.
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-                    {/* Installments Table */}
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-lg font-semibold">Échéancier</h3>
-                            <Button onClick={addNewInstallment} variant="outline" size="sm">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Ajouter une ligne
-                            </Button>
-                        </div>
+            {/* Loan Information */}
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 className="mb-1 text-sm font-semibold text-slate-900">
+                    Informations sur l&apos;emprunt
+                </h3>
+                <p className="mb-5 text-xs text-slate-500">
+                    Renseignez les informations de base de votre emprunt.
+                </p>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                        <Label
+                            htmlFor="loanName"
+                            className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        >
+                            Nom de l&apos;emprunt <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                            id="loanName"
+                            placeholder="ex: Prêt BNP Agence X"
+                            value={loanName}
+                            onChange={(e) => setLoanName(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <Label
+                            htmlFor="entityType"
+                            className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        >
+                            Type d&apos;entité <span className="text-red-500">*</span>
+                        </Label>
+                        <Select
+                            value={selectedEntityType}
+                            onValueChange={handleEntityTypeChange}
+                        >
+                            <option value={EntityType.GROUP}>Groupe</option>
+                            <option value={EntityType.COMPANY}>Entreprise</option>
+                            <option value={EntityType.BUSINESSUNIT}>
+                                Unité d&apos;affaires
+                            </option>
+                        </Select>
+                    </div>
+                    <div>
+                        <Label
+                            htmlFor="entityId"
+                            className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        >
+                            Entité <span className="text-red-500">*</span>
+                        </Label>
+                        <Select
+                            id="entityId"
+                            value={selectedEntityId || ''}
+                            onValueChange={(value) => setSelectedEntityId(value)}
+                            disabled={!selectedEntityType}
+                        >
+                            <option value="">Sélectionner une entité…</option>
+                            {entities.map((entity) => (
+                                <option key={entity.id} value={entity.id}>
+                                    {entity.name}
+                                </option>
+                            ))}
+                        </Select>
+                    </div>
+                </div>
+            </div>
 
-                        <div className="border rounded-lg overflow-hidden">
-                            <div className="max-h-96 overflow-y-auto">
-                                <table className="w-full">
-                                    <thead className="bg-muted sticky top-0">
-                                        <tr>
-                                            <th className="px-4 py-2 text-left">N°</th>
-                                            <th className="px-4 py-2 text-left">Date</th>
-                                            <th className="px-4 py-2 text-right">Capital</th>
-                                            <th className="px-4 py-2 text-right">Intérêts</th>
-                                            <th className="px-4 py-2 text-right">Assurance</th>
-                                            <th className="px-4 py-2 text-right">Total</th>
-                                            <th className="px-4 py-2 text-right">Restant dû</th>
-                                            <th className="px-4 py-2 text-right">Commentaire</th>
-                                            <th className="px-4 py-2 text-center">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {installments.map((installment, index) => (
-                                            <tr key={index} className="border-b">
-                                                <td className="px-4 py-2">{index + 1}</td>
-                                                <td className="px-4 py-2">
-                                                    <Input
-                                                        type="date"
-                                                        value={installment.dueDate}
-                                                        onChange={(e) => updateInstallment(index, 'dueDate', e.target.value)}
-                                                        className="w-32"
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-2">
-                                                    <Input
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        value={installment.principalPayment}
-                                                        onChange={(e) => updateInstallment(index, 'principalPayment', e.target.value)}
-                                                        className="w-24 text-right"
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-2">
-                                                    <Input
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        value={installment.interestPayment}
-                                                        onChange={(e) => updateInstallment(index, 'interestPayment', e.target.value)}
-                                                        className="w-24 text-right"
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-2">
-                                                    <Input
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        value={installment.insurancePayment}
-                                                        onChange={(e) => updateInstallment(index, 'insurancePayment', e.target.value)}
-                                                        className="w-24 text-right"
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-2 text-right font-medium">
-                                                    {formatCurrency(installment.totalPayment)}
-                                                </td>
-                                                <td className="px-4 py-2 text-right">
-                                                    {formatCurrency(installment.remainingBalance)}
-                                                </td>
-                                                <td className="px-4 py-2">
-                                                    <Input
-                                                        type="text"
-                                                        placeholder="Commentaires..."
-                                                        value={installment.comments || ''}
-                                                        onChange={(e) => updateInstallment(index, 'comments', e.target.value)}
-                                                        className="w-32"
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-2 text-center">
-                                                    <Button
-                                                        onClick={() => removeInstallment(index)}
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="text-red-600 hover:text-red-800"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+            {/* Summary stats */}
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+                {(
+                    [
+                        {
+                            label: 'Capital total',
+                            value: formatCurrency(totals.totalPrincipal),
+                            color: 'text-slate-900',
+                            bg: 'bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100',
+                            icon: Wallet,
+                        },
+                        {
+                            label: 'Intérêts',
+                            value: formatCurrency(totals.totalInterest),
+                            color: 'text-amber-700',
+                            bg: 'bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100',
+                            icon: Percent,
+                        },
+                        {
+                            label: 'Assurance',
+                            value: formatCurrency(totals.totalInsurance),
+                            color: 'text-blue-700',
+                            bg: 'bg-linear-to-l from-blue-200 to-white ring-1 ring-blue-100',
+                            icon: Shield,
+                        },
+                        {
+                            label: 'Total dû',
+                            value: formatCurrency(totals.totalPayment),
+                            color: 'text-emerald-700',
+                            bg: 'bg-linear-to-l from-green-200 to-white ring-1 ring-green-100',
+                            icon: TrendingUp,
+                        },
+                        {
+                            label: 'Moyenne / mois',
+                            value: formatCurrency(totals.averageMonthlyPayment),
+                            color: 'text-purple-700',
+                            bg: 'bg-linear-to-l from-purple-200 to-white ring-1 ring-purple-100',
+                            icon: Calculator,
+                        },
+                    ] as const
+                ).map((s) => {
+                    const Icon = s.icon;
+                    return (
+                        <div
+                            key={s.label}
+                            className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}
+                        >
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <p
+                                        className={`text-xs font-bold uppercase tracking-wider ${s.color}`}
+                                    >
+                                        {s.label}
+                                    </p>
+                                    <p className={`mt-1 text-lg font-bold ${s.color}`}>
+                                        {s.value}
+                                    </p>
+                                </div>
+                                <Icon className={`h-4 w-4 ${s.color} opacity-60`} />
                             </div>
                         </div>
+                    );
+                })}
+            </div>
 
-                        {/* Summary */}
-                        <Card className="bg-blue-50 border-blue-200">
-                            <CardContent className="pt-6">
-                                <h4 className="font-semibold text-blue-900 mb-3">Résumé de l&rsquo;emprunt</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                                    <div>
-                                        <div className="text-sm text-blue-700">Capital total</div>
-                                        <div className="text-lg font-bold text-blue-900">
-                                            {formatCurrency(totals.totalPrincipal)}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-blue-700">Total des intérêts</div>
-                                        <div className="text-lg font-bold text-blue-900">
-                                            {formatCurrency(totals.totalInterest)}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-blue-700">Total assurance</div>
-                                        <div className="text-lg font-bold text-blue-900">
-                                            {formatCurrency(totals.totalInsurance)}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-blue-700">Total à rembourser</div>
-                                        <div className="text-lg font-bold text-blue-900">
-                                            {formatCurrency(totals.totalPayment)}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-blue-700">Moyenne mensuelle</div>
-                                        <div className="text-lg font-bold text-blue-900">
-                                            {formatCurrency(totals.averageMonthlyPayment)}
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+            {/* Installments Table */}
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2">
+                        <Calculator className="h-4 w-4 text-slate-500" />
+                        <h3 className="text-sm font-semibold text-slate-900">Échéancier</h3>
+                        <span className="text-xs text-slate-400">
+                            ({installments.length} échéance{installments.length > 1 ? 's' : ''})
+                        </span>
+                    </div>
+                    <Button onClick={addNewInstallment} variant="outline" size="sm">
+                        <Plus className="h-4 w-4" />
+                        Ajouter une ligne
+                    </Button>
+                </div>
+                <div className="max-h-[480px] overflow-auto">
+                    <table className="min-w-full">
+                        <thead>
+                            <tr className="border-b border-slate-100 bg-slate-50/50">
+                                <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
+                                    N°
+                                </th>
+                                <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
+                                    Date
+                                </th>
+                                <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
+                                    Capital
+                                </th>
+                                <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
+                                    Intérêts
+                                </th>
+                                <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
+                                    Assurance
+                                </th>
+                                <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
+                                    Total
+                                </th>
+                                <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
+                                    Restant dû
+                                </th>
+                                <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
+                                    Commentaire
+                                </th>
+                                <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {installments.map((installment, index) => (
+                                <tr
+                                    key={index}
+                                    className="transition-colors hover:bg-slate-50/50"
+                                >
+                                    <td className="px-4 py-2 text-sm font-medium text-slate-900">
+                                        {index + 1}
+                                    </td>
+                                    <td className="px-2 py-2">
+                                        <Input
+                                            type="date"
+                                            value={installment.dueDate}
+                                            onChange={(e) =>
+                                                updateInstallment(
+                                                    index,
+                                                    'dueDate',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="w-36"
+                                        />
+                                    </td>
+                                    <td className="px-2 py-2">
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={installment.principalPayment}
+                                            onChange={(e) =>
+                                                updateInstallment(
+                                                    index,
+                                                    'principalPayment',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="w-28 text-right"
+                                        />
+                                    </td>
+                                    <td className="px-2 py-2">
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={installment.interestPayment}
+                                            onChange={(e) =>
+                                                updateInstallment(
+                                                    index,
+                                                    'interestPayment',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="w-28 text-right"
+                                        />
+                                    </td>
+                                    <td className="px-2 py-2">
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={installment.insurancePayment}
+                                            onChange={(e) =>
+                                                updateInstallment(
+                                                    index,
+                                                    'insurancePayment',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="w-28 text-right"
+                                        />
+                                    </td>
+                                    <td className="px-4 py-2 text-right text-sm font-semibold text-slate-900">
+                                        {formatCurrency(installment.totalPayment)}
+                                    </td>
+                                    <td className="px-4 py-2 text-right text-sm text-slate-600">
+                                        {formatCurrency(installment.remainingBalance)}
+                                    </td>
+                                    <td className="px-2 py-2">
+                                        <Input
+                                            type="text"
+                                            placeholder="Commentaires…"
+                                            value={installment.comments || ''}
+                                            onChange={(e) =>
+                                                updateInstallment(
+                                                    index,
+                                                    'comments',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="w-40"
+                                        />
+                                    </td>
+                                    <td className="px-4 py-2 text-center">
+                                        <button
+                                            type="button"
+                                            onClick={() => removeInstallment(index)}
+                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                                            aria-label="Supprimer"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {installments.length === 0 && (
+                                <tr>
+                                    <td colSpan={9} className="px-6 py-12 text-center">
+                                        <p className="text-sm text-slate-500">
+                                            Aucune échéance pour l&apos;instant.
+                                        </p>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="mt-3"
+                                            onClick={addNewInstallment}
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                            Ajouter une ligne
+                                        </Button>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-                        {/* Actions */}
-                        <div className="flex justify-between">
-                            <Button variant="outline" onClick={() => setInstallments([])}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Tout effacer
-                            </Button>
-                            <Button onClick={saveLoan} disabled={isLoading}>
-                                {isLoading ? 'Sauvegarde...' : 'Sauvegarder l\'emprunt'}
-                                <Save className="ml-2 h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div >
-                </CardContent >
-            </Card >
-        </div >
+            {/* Actions */}
+            <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <Button
+                    variant="outline"
+                    onClick={() => setInstallments([])}
+                    disabled={installments.length === 0}
+                >
+                    <Trash2 className="h-4 w-4" />
+                    Tout effacer
+                </Button>
+                <Button
+                    onClick={saveLoan}
+                    disabled={isLoading}
+                    className="bg-primary text-white hover:bg-slate-800"
+                >
+                    {isLoading ? 'Sauvegarde…' : "Sauvegarder l'emprunt"}
+                    <Save className="h-4 w-4" />
+                </Button>
+            </div>
+        </div>
     );
 }

@@ -1,10 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Select } from '@/components/ui/Select';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/AlertDialog';
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogFooter,
+} from '@/components/ui/AlertDialog';
+import {
+    ArrowLeft,
+    AlertTriangle,
+    Save,
+    Pencil,
+    Loader2,
+} from 'lucide-react';
 import { Loan, LoanStatus } from '@/types/loans';
 import { loansApi } from '@/lib/loansApi';
 
@@ -58,13 +71,22 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
     }, [loanId, onError]);
 
     const handleInputChange = (field: string, value: string) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [field]: value
+            [field]: value,
         }));
 
-        // Détecter les modifications critiques qui nécessitent une régénération d'échéancier
-        if (loan && ['principalAmount', 'annualInterestRate', 'durationMonths', 'firstInstallmentDate', 'monthlyInsuranceCost', 'deferralPeriodMonths'].includes(field)) {
+        if (
+            loan &&
+            [
+                'principalAmount',
+                'annualInterestRate',
+                'durationMonths',
+                'firstInstallmentDate',
+                'monthlyInsuranceCost',
+                'deferralPeriodMonths',
+            ].includes(field)
+        ) {
             const originalValue = loan[field as keyof Loan]?.toString() || '';
             const newValue = value;
 
@@ -78,7 +100,6 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
         e.preventDefault();
         if (!loan) return;
 
-        // Vérifier si le prêt a des échéances existantes et s'il y a des modifications critiques
         if (hasCriticalChanges && loan.installments && loan.installments.length > 0) {
             setShowConfirmDialog(true);
             return;
@@ -90,10 +111,8 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
     const saveLoan = async (confirmRegeneration: boolean = false) => {
         setIsSaving(true);
         try {
-            // Ne envoyer que les champs qui ont été modifiés
             const updateData: Record<string, string | number | boolean> = {};
 
-            // Toujours envoyer le nom et le statut s'ils sont différents
             if (loan && formData.name !== loan.name) {
                 updateData.name = formData.name;
             }
@@ -102,19 +121,36 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
                 updateData.status = formData.status;
             }
 
-            // Vérifier les champs critiques
-            const criticalFields = ['principalAmount', 'annualInterestRate', 'durationMonths', 'firstInstallmentDate', 'monthlyInsuranceCost', 'deferralPeriodMonths'];
+            const criticalFields = [
+                'principalAmount',
+                'annualInterestRate',
+                'durationMonths',
+                'firstInstallmentDate',
+                'monthlyInsuranceCost',
+                'deferralPeriodMonths',
+            ];
             let hasCriticalFieldChanges = false;
 
             if (loan) {
-                criticalFields.forEach(field => {
+                criticalFields.forEach((field) => {
                     const formValue = formData[field as keyof typeof formData];
                     const loanValue = loan[field as keyof Loan];
 
-                    if (formValue !== undefined && formValue !== '' && formValue !== loanValue?.toString()) {
-                        if (field === 'principalAmount' || field === 'annualInterestRate' || field === 'monthlyInsuranceCost') {
+                    if (
+                        formValue !== undefined &&
+                        formValue !== '' &&
+                        formValue !== loanValue?.toString()
+                    ) {
+                        if (
+                            field === 'principalAmount' ||
+                            field === 'annualInterestRate' ||
+                            field === 'monthlyInsuranceCost'
+                        ) {
                             updateData[field] = parseFloat(formValue as string);
-                        } else if (field === 'durationMonths' || field === 'deferralPeriodMonths') {
+                        } else if (
+                            field === 'durationMonths' ||
+                            field === 'deferralPeriodMonths'
+                        ) {
                             updateData[field] = parseInt(formValue as string);
                         } else {
                             updateData[field] = formValue;
@@ -124,7 +160,6 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
                 });
             }
 
-            // Ajouter la confirmation de régénération si nécessaire
             if (confirmRegeneration || hasCriticalFieldChanges) {
                 updateData.confirmScheduleRegeneration = true;
             }
@@ -150,47 +185,81 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
 
     if (isLoading) {
         return (
-            <Card>
-                <CardContent className="pt-6">
-                    <div className="text-center py-8">
-                        <p>Chargement des données de l&apos;emprunt...</p>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-12 shadow-sm">
+                <div className="flex items-center gap-3 text-slate-500">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-sm">Chargement des données de l&apos;emprunt…</span>
+                </div>
+            </div>
         );
     }
 
     if (!loan) {
         return (
-            <Card>
-                <CardContent className="pt-6">
-                    <div className="text-center py-8">
-                        <p className="text-red-600">Emprunt non trouvé</p>
-                        <Button onClick={onBack} className="mt-4">
-                            Retour
-                        </Button>
+            <div className="rounded-xl border border-slate-200 bg-white p-12 shadow-sm">
+                <div className="mx-auto max-w-md text-center">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+                        <AlertTriangle className="h-6 w-6 text-red-600" />
                     </div>
-                </CardContent>
-            </Card>
+                    <p className="text-sm font-semibold text-slate-900">Emprunt non trouvé</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                        L&apos;emprunt demandé n&apos;existe pas ou a été supprimé.
+                    </p>
+                    <Button onClick={onBack} variant="outline" className="mt-4">
+                        <ArrowLeft className="h-4 w-4" />
+                        Retour
+                    </Button>
+                </div>
+            </div>
         );
     }
 
     return (
         <>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                        Modifier l&apos;emprunt
-                        <Button variant="outline" onClick={onBack}>
-                            Retour
-                        </Button>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
+                {/* Header */}
+                <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={onBack}
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                            aria-label="Retour"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                        </button>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
+                                <Pencil className="h-5 w-5 text-blue-600" />
+                            </div>
                             <div>
-                                <Label htmlFor="name">Nom de l&apos;emprunt</Label>
+                                <h3 className="text-base font-semibold text-slate-900">
+                                    Modifier l&apos;emprunt
+                                </h3>
+                                <p className="text-xs text-slate-500">{loan.name}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <h3 className="mb-1 text-sm font-semibold text-slate-900">
+                            Caractéristiques de l&apos;emprunt
+                        </h3>
+                        <p className="mb-5 text-xs text-slate-500">
+                            Modifier les paramètres critiques régénèrera l&apos;échéancier.
+                        </p>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div>
+                                <Label
+                                    htmlFor="name"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                >
+                                    Nom de l&apos;emprunt
+                                </Label>
                                 <Input
                                     id="name"
                                     value={formData.name}
@@ -200,76 +269,132 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
                             </div>
 
                             <div>
-                                <Label htmlFor="principalAmount">Capital emprunté </Label>
+                                <Label
+                                    htmlFor="principalAmount"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                >
+                                    Capital emprunté (EUR)
+                                </Label>
                                 <Input
                                     id="principalAmount"
                                     type="number"
                                     step="0.01"
                                     value={formData.principalAmount}
-                                    onChange={(e) => handleInputChange('principalAmount', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange('principalAmount', e.target.value)
+                                    }
                                     required
                                 />
                             </div>
 
                             <div>
-                                <Label htmlFor="annualInterestRate">Taux d&apos;intérêt annuel (%)</Label>
+                                <Label
+                                    htmlFor="annualInterestRate"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                >
+                                    Taux d&apos;intérêt annuel (%)
+                                </Label>
                                 <Input
                                     id="annualInterestRate"
                                     type="number"
                                     step="0.01"
                                     value={formData.annualInterestRate}
-                                    onChange={(e) => handleInputChange('annualInterestRate', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange('annualInterestRate', e.target.value)
+                                    }
                                     required
                                 />
                             </div>
 
                             <div>
-                                <Label htmlFor="durationMonths">Durée (mois)</Label>
+                                <Label
+                                    htmlFor="durationMonths"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                >
+                                    Durée (mois)
+                                </Label>
                                 <Input
                                     id="durationMonths"
                                     type="number"
                                     value={formData.durationMonths}
-                                    onChange={(e) => handleInputChange('durationMonths', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange('durationMonths', e.target.value)
+                                    }
                                     required
                                 />
                             </div>
 
                             <div>
-                                <Label htmlFor="firstInstallmentDate">Date de première échéance</Label>
+                                <Label
+                                    htmlFor="firstInstallmentDate"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                >
+                                    Date de première échéance
+                                </Label>
                                 <Input
                                     id="firstInstallmentDate"
                                     type="date"
                                     value={formData.firstInstallmentDate}
-                                    onChange={(e) => handleInputChange('firstInstallmentDate', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'firstInstallmentDate',
+                                            e.target.value,
+                                        )
+                                    }
                                     required
                                 />
                             </div>
 
                             <div>
-                                <Label htmlFor="monthlyInsuranceCost">Coût mensuel assurance </Label>
+                                <Label
+                                    htmlFor="monthlyInsuranceCost"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                >
+                                    Coût mensuel assurance
+                                </Label>
                                 <Input
                                     id="monthlyInsuranceCost"
                                     type="number"
                                     step="0.01"
                                     value={formData.monthlyInsuranceCost}
-                                    onChange={(e) => handleInputChange('monthlyInsuranceCost', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'monthlyInsuranceCost',
+                                            e.target.value,
+                                        )
+                                    }
                                     required
                                 />
                             </div>
 
                             <div>
-                                <Label htmlFor="deferralPeriodMonths">Période de différé (mois)</Label>
+                                <Label
+                                    htmlFor="deferralPeriodMonths"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                >
+                                    Période de différé (mois)
+                                </Label>
                                 <Input
                                     id="deferralPeriodMonths"
                                     type="number"
                                     value={formData.deferralPeriodMonths}
-                                    onChange={(e) => handleInputChange('deferralPeriodMonths', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'deferralPeriodMonths',
+                                            e.target.value,
+                                        )
+                                    }
                                     required
                                 />
                             </div>
 
                             <div>
-                                <Label htmlFor="status">Statut</Label>
+                                <Label
+                                    htmlFor="status"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                >
+                                    Statut
+                                </Label>
                                 <Select
                                     value={formData.status}
                                     onValueChange={(value) => handleInputChange('status', value)}
@@ -280,71 +405,90 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
                                 </Select>
                             </div>
                         </div>
+                    </div>
 
-                        {hasCriticalChanges && loan.installments && loan.installments.length > 0 && (
-                            <div className="p-4 mb-4 rounded-lg border bg-yellow-50 border-yellow-200">
-                                <div className="text-sm text-yellow-800">
-                                    <strong>Attention:</strong> Vous avez modifié des paramètres qui affectent l&#39;échéancier de remboursement.
-                                    La régénération supprimera les échéances existantes et en créera de nouvelles.
-                                </div>
+                    {hasCriticalChanges && loan.installments && loan.installments.length > 0 && (
+                        <div className="flex items-start gap-3 rounded-xl border border-yellow-200 bg-yellow-50/80 p-4">
+                            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-yellow-600" />
+                            <div className="text-sm text-yellow-900">
+                                <p className="font-semibold">Attention</p>
+                                <p className="mt-0.5 text-xs text-yellow-800">
+                                    Vous avez modifié des paramètres qui affectent
+                                    l&apos;échéancier de remboursement. La régénération
+                                    supprimera les échéances existantes et en créera de
+                                    nouvelles.
+                                </p>
                             </div>
-                        )}
-
-                        <div className="flex gap-4">
-                            <Button type="submit" disabled={isSaving}>
-                                {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
-                            </Button>
-                            <Button type="button" variant="outline" onClick={onBack}>
-                                Annuler
-                            </Button>
                         </div>
-                    </form>
-                </CardContent>
-            </Card>
+                    )}
 
-            {/* Boîte de dialogue de confirmation */}
+                    {/* Actions */}
+                    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                        <Button type="button" variant="outline" onClick={onBack}>
+                            Annuler
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={isSaving}
+                            className="bg-primary text-white hover:bg-slate-800"
+                        >
+                            {isSaving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+                            <Save className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </form>
+            </div>
+
+            {/* Regeneration confirm dialog */}
             <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="text-red-600">Confirmation requise</AlertDialogTitle>
+                        <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                            <AlertTriangle className="h-5 w-5" />
+                            Régénérer l&apos;échéancier ?
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                            <div className="space-y-4">
-                                <p>
-                                    <strong>Attention:</strong> Ce prêt contient déjà {loan.installments?.length || 0} échéance(s).
-                                </p>
-                                <p>
-                                    Les modifications que vous avez apportées aux paramètres du prêt vont régénérer complètement l&apos;échéancier.
-                                </p>
-                                <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-                                    <p className="text-sm text-yellow-800">
-                                        <strong>Conséquences:</strong>
-                                    </p>
-                                    <ul className="text-sm text-yellow-800 list-disc list-inside mt-1">
-                                        <li>Suppression de toutes les échéances existantes</li>
-                                        <li>Création d&apos;un nouvel échéancier avec les nouveaux paramètres</li>
-                                        <li>Perte de l&apos;historique des paiements enregistrés</li>
-                                    </ul>
-                                </div>
-                                <p className="text-sm text-gray-600">
-                                    Voulez-vous continuer et régénérer l&apos;échéancier ?
-                                </p>
-                            </div>
+                            Ce prêt contient déjà{' '}
+                            <strong>{loan.installments?.length || 0}</strong> échéance(s). Vos
+                            modifications vont régénérer complètement l&apos;échéancier.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
+
+                    <div className="space-y-3 pt-2">
+                        <div className="rounded-lg border border-yellow-200 bg-yellow-50/80 p-3">
+                            <p className="text-xs font-semibold text-yellow-900">
+                                Conséquences :
+                            </p>
+                            <ul className="mt-1 list-inside list-disc text-xs text-yellow-800">
+                                <li>Suppression de toutes les échéances existantes</li>
+                                <li>
+                                    Création d&apos;un nouvel échéancier avec les nouveaux
+                                    paramètres
+                                </li>
+                                <li>
+                                    Perte de l&apos;historique des paiements enregistrés
+                                </li>
+                            </ul>
+                        </div>
+
+                        <p className="text-xs text-slate-500">
+                            Voulez-vous continuer et régénérer l&apos;échéancier ?
+                        </p>
+                    </div>
                     <AlertDialogFooter>
-                        <Button
-                            onClick={handleConfirmRegeneration}
-                            className="bg-red-600 hover:bg-red-700"
-                            disabled={isSaving}
-                        >
-                            {isSaving ? 'Régénération...' : 'Régénérer l\'échéancier'}
-                        </Button>
                         <Button
                             variant="outline"
                             onClick={handleCancelRegeneration}
                             disabled={isSaving}
                         >
                             Annuler
+                        </Button>
+                        <Button
+                            onClick={handleConfirmRegeneration}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                            disabled={isSaving}
+                        >
+                            {isSaving ? 'Régénération…' : "Régénérer l'échéancier"}
                         </Button>
                     </AlertDialogFooter>
                 </AlertDialogContent>
