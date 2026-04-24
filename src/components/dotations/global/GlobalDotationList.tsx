@@ -291,10 +291,10 @@ export function GlobalDotationList({
                                 )}
                               </TableCell>
                               <TableCell className="font-medium">
-                                {formatCurrency(dotation.totalAmount || 0)}
+                                {formatCurrency(dotation.totalAnnualAmortization || 0)}
                               </TableCell>
                               <TableCell>
-                                {formatCurrency(dotation.monthlyAmount || (dotation.totalAmount || 0) / 12)}
+                                {formatCurrency(dotation.monthlyAmortization || (dotation.totalAnnualAmortization || 0) / 12)}
                                 <div className="text-xs text-gray-500">
                                   Réparti sur 12 mois
                                 </div>
@@ -355,7 +355,7 @@ export function GlobalDotationList({
                     <div className="bg-white p-3 rounded-lg">
                       <p className="text-xs text-gray-600">Total entité</p>
                       <p className="text-lg font-bold text-green-600">
-                        {formatCurrency(entityGroup.dotations.reduce((sum, d) => sum + (Number(d.totalAmount) || 0), 0))}
+                        {formatCurrency(entityGroup.dotations.reduce((sum, d) => sum + (Number(d.totalAnnualAmortization) || 0), 0))}
                       </p>
                     </div>
                     <div className="bg-white p-3 rounded-lg">
@@ -364,7 +364,7 @@ export function GlobalDotationList({
                         {formatCurrency(
                           entityGroup.dotations
                             .filter(d => d.year === currentYear)
-                            .reduce((sum, d) => sum + (Number(d.totalAmount) || 0), 0)
+                            .reduce((sum, d) => sum + (Number(d.totalAnnualAmortization) || 0), 0)
                         )}
                       </p>
                     </div>
@@ -385,12 +385,12 @@ export function GlobalDotationList({
 
               {/* Debug des statistiques */}
               {(() => {
-                const totalAmount = dotations.reduce((sum, d) => sum + (Number(d.totalAmount) || 0), 0);
+                const totalAmount = dotations.reduce((sum, d) => sum + (Number(d.totalAnnualAmortization) || 0), 0);
                 const currentYearAmount = dotations
                   .filter(d => d.year === currentYear)
-                  .reduce((sum, d) => sum + (Number(d.totalAmount) || 0), 0);
+                  .reduce((sum, d) => sum + (Number(d.totalAnnualAmortization) || 0), 0);
                 const avgMonthly = dotations.length > 0
-                  ? dotations.reduce((sum, d) => sum + (Number(d.monthlyAmount) || (Number(d.totalAmount) || 0) / 12), 0) / dotations.length
+                  ? dotations.reduce((sum, d) => sum + (Number(d.monthlyAmortization) || (Number(d.totalAnnualAmortization) || 0) / 12), 0) / dotations.length
                   : 0;
 
                 console.log('Debug statistiques:', {
@@ -400,10 +400,10 @@ export function GlobalDotationList({
                   avgMonthly,
                   dotations: dotations.map(d => ({
                     year: d.year,
-                    totalAmount: d.totalAmount,
-                    monthlyAmount: d.monthlyAmount,
-                    totalAmountType: typeof d.totalAmount,
-                    monthlyAmountType: typeof d.monthlyAmount
+                    totalAnnualAmortization: d.totalAnnualAmortization,
+                    monthlyAmortization: d.monthlyAmortization,
+                    totalAnnualAmortizationType: typeof d.totalAnnualAmortization,
+                    monthlyAmortizationType: typeof d.monthlyAmortization
                   }))
                 });
 
@@ -414,7 +414,7 @@ export function GlobalDotationList({
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-600">Total toutes entités</p>
                   <p className="text-xl font-bold text-green-600">
-                    {formatCurrency(dotations.reduce((sum, d) => sum + (Number(d.totalAmount) || 0), 0))}
+                    {formatCurrency(dotations.reduce((sum, d) => sum + (Number(d.totalAnnualAmortization) || 0), 0))}
                   </p>
                 </div>
                 <div className="bg-blue-50 p-4 rounded-lg">
@@ -423,7 +423,7 @@ export function GlobalDotationList({
                     {formatCurrency(
                       dotations
                         .filter(d => d.year === currentYear)
-                        .reduce((sum, d) => sum + (Number(d.totalAmount) || 0), 0)
+                        .reduce((sum, d) => sum + (Number(d.totalAnnualAmortization) || 0), 0)
                     )}
                   </p>
                 </div>
@@ -432,7 +432,7 @@ export function GlobalDotationList({
                   <p className="text-xl font-bold text-purple-600">
                     {formatCurrency(
                       dotations.length > 0
-                        ? dotations.reduce((sum, d) => sum + (Number(d.monthlyAmount) || (Number(d.totalAmount) || 0) / 12), 0) / dotations.length
+                        ? dotations.reduce((sum, d) => sum + (Number(d.monthlyAmortization) || (Number(d.totalAnnualAmortization) || 0) / 12), 0) / dotations.length
                         : 0
                     )}
                   </p>

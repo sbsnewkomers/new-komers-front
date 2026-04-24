@@ -106,8 +106,8 @@ export interface TotalAmortizationsResponse {
 export interface GlobalDotation {
   id: string;
   year: number;
-  totalAmount: number;
-  monthlyAmount: number;
+  totalAnnualAmortization: number;
+  monthlyAmortization: number;
   entityType: EntityType;
   entityId: string;
   description?: string;

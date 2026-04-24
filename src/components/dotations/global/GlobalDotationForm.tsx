@@ -95,7 +95,7 @@ export function GlobalDotationForm({
 
     year: dotation?.year || new Date().getFullYear(),
 
-    totalAmount: dotation?.totalAmount || 0,
+    totalAmount: dotation?.totalAnnualAmortization || 0,
 
     entityType: (dotation?.entityType || entityType || EntityType.COMPANY) as EntityType,
 

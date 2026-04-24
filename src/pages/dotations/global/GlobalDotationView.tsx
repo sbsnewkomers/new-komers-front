@@ -26,11 +26,11 @@ export function GlobalDotationView({ dotation, entityName, onCancel }: GlobalDot
           </div>
           <div>
             <Label>Montant total annuel</Label>
-            <p className="font-semibold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(dotation.totalAmount) || 0)}</p>
+            <p className="font-semibold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(dotation.totalAnnualAmortization) || 0)}</p>
           </div>
           <div>
             <Label>Montant mensuel</Label>
-            <p className="font-semibold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(dotation.monthlyAmount) || (Number(dotation.totalAmount) || 0) / 12)}</p>
+            <p className="font-semibold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(dotation.monthlyAmortization) || (Number(dotation.totalAnnualAmortization) || 0) / 12)}</p>
           </div>
           <div>
             <Label>Type d&apos;entité</Label>
