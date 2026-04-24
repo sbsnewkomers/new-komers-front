@@ -5,9 +5,9 @@ import { useRouter } from 'next/router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { GlobalDotationList } from '@/components/dotations/global/GlobalDotationList';
 import { GlobalDotationForm } from '@/components/dotations/global/GlobalDotationForm';
-import { GlobalDotationView } from './GlobalDotationView';
-import { GlobalDotationHeader } from './GlobalDotationHeader';
-import { useEntityName } from './useEntityName';
+import { GlobalDotationView } from '@/components/dotations/global/GlobalDotationView';
+import { GlobalDotationHeader } from '@/components/dotations/global/GlobalDotationHeader';
+import { useEntityName } from '@/components/dotations/global/useEntityName';
 import { GlobalDotation, EntityType } from '@/types/asset.types';
 import { useWorkspaceContext } from '@/providers/WorkspaceProvider';
 
