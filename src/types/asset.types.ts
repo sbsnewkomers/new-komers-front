@@ -106,10 +106,15 @@ export interface TotalAmortizationsResponse {
 export interface GlobalDotation {
   id: string;
   year: number;
-  totalAmount: number;
-  monthlyAmount: number;
+  totalAnnualAmortization: number;
+  monthlyAmortization: number;
   entityType: EntityType;
   entityId: string;
+  description?: string;
+  dataSource?: string;
+  isValidated?: boolean;
+  validatedById?: string;
+  validatedAt?: string;
   createdById: string;
   createdAt: string;
   updatedAt: string;
@@ -120,8 +125,16 @@ export interface CreateGlobalDotationDto {
   totalAmount: number;
   entityType: EntityType;
   entityId: string;
+  description?: string;
+  dataSource?: string;
+  isValidated?: boolean;
+  validatedById?: string;
 }
 
 export interface UpdateGlobalDotationDto {
   totalAmount: number;
+  description?: string;
+  dataSource?: string;
+  isValidated?: boolean;
+  validatedById?: string;
 }

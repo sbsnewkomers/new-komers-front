@@ -8,7 +8,7 @@ interface DeleteConfirmDialogProps {
     onOpenChange: (open: boolean) => void;
     onConfirm: () => void;
     onCancel: () => void;
-    itemType?: 'emprunt' | 'actif';
+    itemType?: 'emprunt' | 'actif' | 'dotation';
 }
 
 export function DeleteConfirmDialog({ open, onOpenChange, onConfirm, onCancel, itemType = 'emprunt' }: DeleteConfirmDialogProps) {
@@ -16,6 +16,8 @@ export function DeleteConfirmDialog({ open, onOpenChange, onConfirm, onCancel, i
         switch (itemType) {
             case 'actif':
                 return 'cet actif';
+            case 'dotation':
+                return 'cette dotation globale';
             case 'emprunt':
             default:
                 return 'cet emprunt';
