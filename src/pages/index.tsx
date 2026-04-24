@@ -13,7 +13,7 @@ export default function LandingPage() {
       </Head>
 
       <header className="fixed top-0 w-full z-50 glass-panel border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-(--accent) rounded-xl flex items-center justify-center">
               <span className="material-symbols-outlined text-primary font-bold">query_stats</span>
@@ -51,7 +51,7 @@ export default function LandingPage() {
       </header>
 
       <main className="relative overflow-hidden">
-        <section className="relative pt-44 pb-32 px-6 gradient-bg">
+        <section className="relative px-4 pt-44 pb-32 gradient-bg sm:px-6">
           <div className="max-w-7xl mx-auto text-center">
             <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full glass-panel border-border mb-10">
               <span className="flex h-2 w-2 rounded-full bg-(--accent)"></span>
@@ -143,7 +143,7 @@ export default function LandingPage() {
         </section>
 
         <section className="py-24 border-y border-border bg-primary-light/30" id="social">
-          <div className="max-w-7xl mx-auto px-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="flex flex-col items-center gap-12">
               <div className="flex items-center gap-4">
                 <div className="h-px w-12 bg-border"></div>
@@ -173,7 +173,7 @@ export default function LandingPage() {
         </section>
 
         <section className="py-32" id="features">
-          <div className="max-w-7xl mx-auto px-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="text-center mb-24">
               <h2 className="serif-heading text-4xl md:text-5xl font-bold text-white mb-6">Précision chirurgicale pour votre groupe</h2>
               <p className="text-(--text-muted) text-lg max-w-2xl mx-auto">
@@ -270,7 +270,7 @@ export default function LandingPage() {
         </section>
 
         <section className="py-32 bg-primary-light/20" id="pricing">
-          <div className="max-w-7xl mx-auto px-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="text-center mb-24">
               <span className="text-(--accent) font-bold tracking-[0.2em] text-xs uppercase mb-4 block">Tarification Transparente</span>
               <h2 className="serif-heading text-4xl md:text-5xl font-bold text-white">Évoluez à votre rythme</h2>
@@ -369,7 +369,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="py-32 max-w-7xl mx-auto px-6" id="contact">
+        <section className="mx-auto max-w-7xl px-4 py-32 sm:px-6" id="contact">
           <div className="relative bg-linear-to-br from-indigo-900 to-primary rounded-[40px] p-12 md:p-24 text-center overflow-hidden border border-white/10 shadow-2xl">
             <div className="absolute -top-24 -right-24 w-96 h-96 bg-(--accent)/10 blur-[100px] rounded-full"></div>
             <div className="relative z-10">
@@ -400,7 +400,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="bg-primary border-t border-border pt-24 pb-12">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-16 mb-24">
             <div className="col-span-2">
               <div className="flex items-center gap-3 mb-8">

@@ -33,14 +33,12 @@ function ToggleRow({
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-          checked ? "bg-slate-900" : "bg-slate-200"
-        }`}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? "bg-slate-900" : "bg-slate-200"
+          }`}
       >
         <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-            checked ? "translate-x-5" : "translate-x-0.5"
-          }`}
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${checked ? "translate-x-5" : "translate-x-0.5"
+            }`}
         />
       </button>
     </div>
@@ -75,24 +73,43 @@ export default function SettingsPage() {
   };
 
   return (
-    <AppLayout title="Settings" companies={[]} selectedCompanyId="" onCompanyChange={() => {}}>
+    <AppLayout title="Settings" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
       <Head>
         <title>Settings</title>
       </Head>
 
       <div className="mx-auto w-full space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-slate-900">Paramètres</h2>
-            <p className="text-sm text-slate-500">
-              (mock)
-            </p>
+        {/* Header */}
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="rounded-xl bg-primary/10 p-2.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cog h-5 w-5 text-primary" aria-hidden="true">
+                <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"></path>
+                <path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                <path d="M12 2v2"></path>
+                <path d="M12 22v-2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M22 12h-2"></path>
+                <path d="m4.93 19.07 1.41-1.41"></path>
+                <path d="m17.66 6.34 1.41-1.41"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-primary">Paramètres</h2>
+              <p className="text-sm text-slate-500">Configurez les préférences de l&apos;application et de sécurité.</p>
+            </div>
           </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3">
           <Button
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-800"
+            className="bg-primary text-white hover:bg-slate-800"
           >
             <Save className="h-4 w-4" />
             {saving ? "Enregistrement..." : "Enregistrer"}

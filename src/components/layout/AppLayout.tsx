@@ -11,23 +11,28 @@ import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { useWorkspaceContext } from "@/providers/WorkspaceProvider";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
+import { useImpersonation } from "@/hooks/useImpersonation";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import {
   LayoutDashboard,
   BarChart3,
-  Settings,
   BookOpen,
   Network,
   Bell,
   HelpCircle,
   ChevronRight,
+  ChevronDown,
   Upload,
   Users,
   ScrollText,
   Menu,
   X,
   Building,
+  DollarSign,
+  Database,
+  Shield,
 } from "lucide-react";
 
 type AppLayoutProps = {
@@ -61,8 +66,11 @@ export function AppLayout({
 
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [extracomptablesMenuOpen, setExtracomptablesMenuOpen] = React.useState(false);
 
   const menuRef = React.useRef<HTMLDivElement>(null);
+  const { isImpersonating, exitImpersonation } = useImpersonation();
+  const [exitLoading, setExitLoading] = useState(false);
 
   // Récupérer le nom de l'workspace pour les rôles non-admin
 
@@ -94,6 +102,19 @@ export function AppLayout({
   }, [userMenuOpen]);
 
   const pathname = router.pathname;
+  const handleExitImpersonation = async () => {
+  setExitLoading(true);
+  try {
+    await exitImpersonation();
+
+    // petit délai pour laisser React re-render
+    await new Promise((r) => setTimeout(r, 50));
+
+    router.push("/users");
+  } finally {
+    setExitLoading(false);
+  }
+};
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -104,14 +125,44 @@ export function AppLayout({
   const navLinkClass = (href: string) =>
     "group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-sm font-medium " +
     (isActive(href)
-      ? "bg-slate-100 text-primary"
+      ? "bg-primary text-white"
       : "text-slate-500 hover:bg-slate-50 hover:text-primary");
 
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr]">
+    <>
+    {/* Bannière impersonation — visible uniquement en mode impersonation */}
+    {isImpersonating && (
+      <div className="fixed top-0 left-0 right-0 z-100 flex items-center 
+                      justify-between bg-amber-500 px-6 py-2 shadow-lg">
+        <div className="flex items-center gap-2 text-sm font-medium text-white">
+          <Shield className="h-4 w-4 shrink-0" />
+          <span>
+            Mode impersonation — vous naviguez en tant que{" "}
+            <strong>
+              {user?.firstName && user?.lastName
+                ? `${user.firstName} ${user.lastName}`
+                : user?.email}
+            </strong>
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleExitImpersonation}
+          disabled={exitLoading}
+          className="flex items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1 
+                     text-xs font-semibold text-white hover:bg-white/30 
+                     disabled:opacity-50 transition-colors"
+        >
+          {exitLoading
+            ? "Retour en cours..."
+            : "← Reprendre ma session"}
+        </button>
+      </div>
+    )}
+    <div className="min-h-screen w-full overflow-x-hidden">
       {/* Sidebar */}
 
-      <div className="hidden border-r border-slate-100 bg-white md:block">
+      <div className="fixed inset-y-0 left-0 z-20 hidden w-[240px] border-r border-slate-100 bg-white shadow-[1px_0px_3px_-1px_rgba(0,0,0,0.1)] md:block lg:w-[260px]">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-20 items-center px-6">
             <Link href="/" className="flex items-center gap-3">
@@ -156,13 +207,55 @@ export function AppLayout({
             {(user?.role === "SUPER_ADMIN" ||
               user?.role === "ADMIN" ||
               user?.role === "MANAGER") && (
-              <Link
-                href="/shareholders"
-                className={navLinkClass("/shareholders")}
-              >
-                <Users className="h-5 w-5" />
-                Shareholders
-              </Link>
+                <Link
+                  href="/shareholders"
+                  className={navLinkClass("/shareholders")}
+                >
+                  <Users className="h-5 w-5" />
+                  Shareholders
+                </Link>
+              )}
+            {user && (
+              <div>
+                <button
+                  onClick={() => setExtracomptablesMenuOpen(!extracomptablesMenuOpen)}
+                  className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-sm font-medium w-full text-left ${isActive("/loans") || isActive("/dotations")
+                    ? "bg-slate-100 text-primary"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                    }`}
+                >
+                  <Database className="h-5 w-5" />
+                  Données extracomptables
+                  <ChevronDown
+                    className={`ml-auto h-4 w-4 transition-transform ${extracomptablesMenuOpen ? "rotate-180" : ""
+                      }`}
+                  />
+                </button>
+                {extracomptablesMenuOpen && (
+                  <div className="ml-8 mt-1 space-y-1">
+                    <Link
+                      href="/loans"
+                      className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm font-medium ${isActive("/loans")
+                        ? "bg-primary/10 text-primary"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                        }`}
+                    >
+                      <DollarSign className="h-4 w-4" />
+                      Emprunts
+                    </Link>
+                    <Link
+                      href="/dotations"
+                      className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm font-medium ${isActive("/dotations")
+                        ? "bg-primary/10 text-primary"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                        }`}
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      Dotations
+                    </Link>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* <Link href="/budget" className={navLinkClass("/budget")}>
@@ -172,7 +265,7 @@ export function AppLayout({
 
             <Link href="/import" className={navLinkClass("/import")}>
               <Upload className="h-5 w-5" />
-              Mapping
+              Import des données comptables
             </Link>
 
             <Link href="/reporting" className={navLinkClass("/reporting")}>
@@ -196,16 +289,16 @@ export function AppLayout({
               user?.role === "ADMIN" ||
               user?.role === "MANAGER" ||
               user?.role === "HEAD_MANAGER") && (
-              <Link href="/users" className={navLinkClass("/users")}>
-                <Users className="h-5 w-5" />
-                Users
-              </Link>
-            )}
+                <Link href="/users" className={navLinkClass("/users")}>
+                  <Users className="h-5 w-5" />
+                  Users
+                </Link>
+              )}
 
-            <Link href="/settings" className={navLinkClass("/settings")}>
+            {/* <Link href="/settings" className={navLinkClass("/settings")}>
               <Settings className="h-5 w-5" />
               Settings
-            </Link>
+            </Link> */}
 
             <div className="relative">
               <button
@@ -268,11 +361,11 @@ export function AppLayout({
 
       {/* Main */}
 
-      <div className="flex flex-col bg-background">
-        <header className="flex h-16 items-center justify-between border-b border-slate-100 bg-white px-4 md:px-6">
+      <div className="flex h-screen min-w-0 flex-col bg-background md:pl-[240px] lg:pl-[260px]">
+        <header className="flex h-16 items-center justify-between border-b border-slate-100 bg-white px-4 md:px-6 shadow-sm z-10">
           {/* Left: mobile menu button + breadcrumbs */}
 
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 md:hidden"
@@ -282,7 +375,7 @@ export function AppLayout({
               <Menu className="h-5 w-5" />
             </button>
 
-            <div className="flex items-center gap-1 text-sm text-slate-500">
+            <div className="flex min-w-0 items-center gap-1 text-sm text-slate-500">
               {/* <span
                 className="cursor-pointer hover:text-primary transition-colors"
                 onClick={() => void router.push("/")}
@@ -298,12 +391,12 @@ export function AppLayout({
                   <span className="font-semibold text-blue-600 drop-shadow-sm">
                     {workspaceName}
                   </span>
-                  
+
                   <ChevronRight className="h-4 w-4 text-slate-300" />
                 </>
               )}
 
-              <span className="font-medium text-primary line-clamp-1">
+              <span className="line-clamp-1 font-medium text-primary">
                 {title}
               </span>
 
@@ -312,7 +405,7 @@ export function AppLayout({
 
           {/* Right Actions */}
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-1 border-l border-slate-100 pl-4">
               <Button
                 variant="ghost"
@@ -335,7 +428,7 @@ export function AppLayout({
           </div>
         </header>
 
-        <main className="flex flex-1 flex-col gap-6 p-6 bg-slate-50 max-h-[calc(100vh-64px)] overflow-y-auto">
+        <main className="safe-area-pb flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-blue-100/60 p-4 sm:gap-6 sm:p-6">
           {children}
         </main>
       </div>
@@ -349,7 +442,7 @@ export function AppLayout({
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          <div className="relative z-10 flex h-full w-[260px] flex-col bg-white border-r border-slate-100 shadow-xl">
+          <div className="relative z-10 flex h-full w-[min(85vw,260px)] flex-col border-r border-slate-100 bg-white shadow-xl">
             <div className="flex items-center justify-between px-4 py-4 border-b border-slate-100">
               <Link
                 href="/"
@@ -397,15 +490,63 @@ export function AppLayout({
               {(user?.role === "SUPER_ADMIN" ||
                 user?.role === "ADMIN" ||
                 user?.role === "MANAGER") && (
-                <Link
-                  href="/shareholders"
-                  className={navLinkClass("/shareholders")}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Users className="h-5 w-5" />
-                  Shareholders
-                </Link>
-              )}
+                  <Link
+                    href="/shareholders"
+                    className={navLinkClass("/shareholders")}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Users className="h-5 w-5" />
+                    Shareholders
+                  </Link>
+                )}
+
+              {(user?.role === "SUPER_ADMIN" ||
+                user?.role === "ADMIN" ||
+                user?.role === "HEAD_MANAGER" ||
+                user?.role === "MANAGER") && (
+                  <div>
+                    <button
+                      onClick={() => setExtracomptablesMenuOpen(!extracomptablesMenuOpen)}
+                      className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-sm font-medium w-full text-left ${isActive("/loans") || isActive("/dotations")
+                        ? "bg-slate-100 text-primary"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                        }`}
+                    >
+                      <Database className="h-5 w-5" />
+                      Données extracomptables
+                      <ChevronDown
+                        className={`ml-auto h-4 w-4 transition-transform ${extracomptablesMenuOpen ? "rotate-180" : ""
+                          }`}
+                      />
+                    </button>
+                    {extracomptablesMenuOpen && (
+                      <div className="ml-8 mt-1 space-y-1">
+                        <Link
+                          href="/loans"
+                          className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm font-medium ${isActive("/loans")
+                            ? "bg-primary/10 text-primary"
+                            : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                            }`}
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <DollarSign className="h-4 w-4" />
+                          Emprunts
+                        </Link>
+                        <Link
+                          href="/dotations"
+                          className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm font-medium ${isActive("/dotations")
+                            ? "bg-primary/10 text-primary"
+                            : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                            }`}
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <BookOpen className="h-4 w-4" />
+                          Dotations
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
 
               <Link
                 href="/budget"
@@ -449,24 +590,24 @@ export function AppLayout({
                 user?.role === "ADMIN" ||
                 user?.role === "MANAGER" ||
                 user?.role === "HEAD_MANAGER") && (
-                <Link
-                  href="/users"
-                  className={navLinkClass("/users")}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Users className="h-5 w-5" />
-                  Users
-                </Link>
-              )}
+                  <Link
+                    href="/users"
+                    className={navLinkClass("/users")}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Users className="h-5 w-5" />
+                    Users
+                  </Link>
+                )}
 
-              <Link
+              {/* <Link
                 href="/settings"
                 className={navLinkClass("/settings")}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Settings className="h-5 w-5" />
                 Settings
-              </Link>
+              </Link> */}
             </nav>
 
             <div className="border-t border-slate-100 p-4">
@@ -488,5 +629,6 @@ export function AppLayout({
         </div>
       )}
     </div>
+    </>
   );
 }

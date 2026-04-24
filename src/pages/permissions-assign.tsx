@@ -147,13 +147,13 @@ export default function PermissionsAssignPage() {
       <Head>
         <title>Attribution des permissions</title>
       </Head>
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto w-full max-w-4xl space-y-6">
           {/* User selector */}
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+          <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6 dark:border-zinc-700 dark:bg-zinc-800">
             <h2 className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-50">
               Utilisateur
             </h2>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <button
                 type="button"
                 onClick={loadUsers}
@@ -165,7 +165,7 @@ export default function PermissionsAssignPage() {
               <select
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
-                className="min-w-[220px] rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                className="w-full rounded border border-zinc-300 px-3 py-2 text-sm sm:min-w-[220px] sm:w-auto dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
               >
                 <option value="">— Choisir un utilisateur —</option>
                 {users.map((u) => (
@@ -186,7 +186,7 @@ export default function PermissionsAssignPage() {
           {selectedUserId && detail && !loadingDetail && (
             <>
               {/* Entity-level permissions */}
-              <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+              <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6 dark:border-zinc-700 dark:bg-zinc-800">
                 <h2 className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-50">
                   Permissions par entité (tous les éléments)
                 </h2>
@@ -240,7 +240,7 @@ export default function PermissionsAssignPage() {
               </section>
 
               {/* Node-level accesses */}
-              <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+              <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6 dark:border-zinc-700 dark:bg-zinc-800">
                 <h2 className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-50">
                   Accès par nœud (élément précis)
                 </h2>
@@ -364,7 +364,7 @@ function NodeAccessList({
         {accesses.map((na) => (
           <li
             key={na.id}
-            className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 py-2 px-3 dark:border-zinc-600"
+            className="flex flex-col gap-2 rounded-lg border border-zinc-200 py-2 px-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between dark:border-zinc-600"
           >
             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
               {nodeTypeLabel(na.nodeType)}: {nodeLabel(na)}
@@ -397,7 +397,7 @@ function NodeAccessList({
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">
                   {na.actions.map(actionLabel).join(", ")}
                 </span>
@@ -430,7 +430,7 @@ function NodeAccessList({
         <h3 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Ajouter un accès nœud
         </h3>
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <div>
             <label className="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
               Type
@@ -458,7 +458,7 @@ function NodeAccessList({
                   setCompanyIdForBU(e.target.value);
                   setAddNodeId("");
                 }}
-                className="min-w-[180px] rounded border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm sm:min-w-[180px] sm:w-auto dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
               >
                 <option value="">— Choisir une entreprise —</option>
                 {companies.map((c) => (
@@ -477,7 +477,7 @@ function NodeAccessList({
               value={addNodeId}
               onChange={(e) => setAddNodeId(e.target.value)}
               disabled={addNodeType === "BUSINESS_UNIT" && !companyIdForBU}
-              className="min-w-[180px] rounded border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 disabled:opacity-50"
+              className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm sm:min-w-[180px] sm:w-auto dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 disabled:opacity-50"
             >
               <option value="">
                 {addNodeType === "BUSINESS_UNIT" && !companyIdForBU

@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/Dialog";
 import { Select } from "@/components/ui/Select";
@@ -68,6 +69,56 @@ const DEMO_CHART_DATA = [
   { name: "Juin", value: 700 },
 ];
 
+const MONTH_DAY_REGEX = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])$/;
+const LEGACY_MONTH_DAY_REGEX = /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
+
+const parseMonthDay = (value: string): { month: number; day: number } | null => {
+  const normalized = LEGACY_MONTH_DAY_REGEX.test(value)
+    ? `${value.split("-")[1]}-${value.split("-")[0]}`
+    : value;
+
+  if (!MONTH_DAY_REGEX.test(normalized)) return null;
+  const [dayPart, monthPart] = normalized.split("-");
+  const day = Number(dayPart);
+  const month = Number(monthPart);
+  const probe = new Date(Date.UTC(2000, month - 1, day));
+  if (probe.getUTCMonth() + 1 !== month || probe.getUTCDate() !== day) return null;
+  return { month, day };
+};
+
+const getFiscalBoundsForYear = (
+  fiscalYearStart: string,
+  year: number,
+): { start: Date; end: Date } | null => {
+  const parsed = parseMonthDay(fiscalYearStart);
+  if (!parsed) return null;
+
+  const start = new Date(year, parsed.month - 1, parsed.day);
+  const end = new Date(start);
+  end.setFullYear(end.getFullYear() + 1);
+  end.setDate(end.getDate() - 1);
+  return { start, end };
+};
+
+const isFiscalYearActiveToday = (fiscalYearStart: string, today: Date): boolean => {
+  const currentYearBounds = getFiscalBoundsForYear(fiscalYearStart, today.getFullYear());
+  if (!currentYearBounds) return false;
+
+  const activeBounds =
+    today < currentYearBounds.start
+      ? getFiscalBoundsForYear(fiscalYearStart, today.getFullYear() - 1)
+      : currentYearBounds;
+
+  if (!activeBounds) return false;
+  return today >= activeBounds.start && today <= activeBounds.end;
+};
+
+const formatMonthDay = (fiscalYearStart: string): string => {
+  const parsed = parseMonthDay(fiscalYearStart);
+  if (!parsed) return fiscalYearStart;
+  return `${String(parsed.day).padStart(2, "0")}/${String(parsed.month).padStart(2, "0")}`;
+};
+
 export default function DashboardPage() {
   const { user, isAuthReady } = usePermissionsContext();
   const companies = useCompanies();
@@ -101,12 +152,9 @@ export default function DashboardPage() {
     if (widgets.length > 0 || chartWidgets.length > 0) return;
 
     const today = new Date();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const activeFiscalYears = list.filter((c: any) => {
-      if (!c.fiscal_year_start || !c.fiscal_year_end) return false;
-      const start = new Date(c.fiscal_year_start);
-      const end = new Date(c.fiscal_year_end);
-      return start <= today && end >= today;
+    const activeFiscalYears = list.filter((c) => {
+      if (!c.fiscal_year_start) return false;
+      return isFiscalYearActiveToday(c.fiscal_year_start, today);
     }).length;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -120,12 +168,12 @@ export default function DashboardPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     list.forEach((c: any) => {
       if (!c.fiscal_year_start) return;
-      const year = new Date(c.fiscal_year_start).getFullYear().toString();
-      byYearMap.set(year, (byYearMap.get(year) ?? 0) + 1);
+      const label = formatMonthDay(c.fiscal_year_start);
+      byYearMap.set(label, (byYearMap.get(label) ?? 0) + 1);
     });
     const byYearData = Array.from(byYearMap.entries())
-      .sort(([a], [b]) => Number(a) - Number(b))
-      .map(([year, count]) => ({ name: year, value: count }));
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([label, count]) => ({ name: label, value: count }));
 
     setWidgets(
       [
@@ -177,7 +225,7 @@ export default function DashboardPage() {
         {
           id: "c-companies-by-year",
           type: "chart",
-          title: "Entreprises par année d'exercice",
+          title: "Entreprises par début d'exercice",
           chartType: "bar",
           data: byYearData,
         },
@@ -234,10 +282,28 @@ export default function DashboardPage() {
       title="Dashboard"
       companies={companyList}
       selectedCompanyId={selectedCompanyId}
-      onCompanyChange={() => {}}
+      onCompanyChange={() => { }}
     >
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-primary">Vue d&apos;ensemble</h2>
+      {/* Header */}
+      <div>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="rounded-xl bg-primary/10 p-2.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-layout-dashboard h-5 w-5 text-primary" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-primary">Vue d&apos;ensemble</h2>
+            <p className="text-sm text-slate-500">Tableau de bord avec indicateurs clés et widgets personnalisables.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-3">
         <Button
           onClick={() => setAddModalOpen(true)}
           className="bg-primary text-white hover:bg-slate-800"
@@ -336,7 +402,7 @@ export default function DashboardPage() {
                       <ResponsiveContainer width="100%" height="100%">
                         {w.chartType === "line" ? (
                           <LineChart
-                            data={w.data?.map((d, i) => ({ ...d, value: i !== 2 ? d.value : d.value - (25 * i)  })) ?? []}
+                            data={w.data?.map((d, i) => ({ ...d, value: i !== 2 ? d.value : d.value - (25 * i) })) ?? []}
                             margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
                           >
                             <CartesianGrid
@@ -379,7 +445,7 @@ export default function DashboardPage() {
                           </LineChart>
                         ) : (
                           <BarChart
-                            data={w.data?.map((d, i) => ({ ...d, value: i === 2 ? d.value : d.value - ((25 * (i+1)) * d.value/100) })) ?? []}
+                            data={w.data?.map((d, i) => ({ ...d, value: i === 2 ? d.value : d.value - ((25 * (i + 1)) * d.value / 100) })) ?? []}
                             margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
                           >
                             <CartesianGrid
@@ -680,10 +746,11 @@ function DrillDownDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl" onClose={() => onOpenChange(false)}>
+      <DialogContent size="2xl" onClose={() => onOpenChange(false)}>
         <DialogHeader>
           <DialogTitle>Détail des données</DialogTitle>
         </DialogHeader>
+        <DialogBody>
         <div className="overflow-auto rounded-lg border border-slate-200">
           <table className="w-full border-collapse text-sm">
             <thead>
@@ -710,6 +777,7 @@ function DrillDownDialog({
             </tbody>
           </table>
         </div>
+        </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
         </DialogFooter>

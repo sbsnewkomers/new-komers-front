@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -11,6 +12,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/Dialog";
 import {
@@ -79,6 +81,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/DropdownMenu";
+import { useRouter } from "next/navigation";
+import { useImpersonation } from "@/hooks/useImpersonation";
+import { UserCheck } from "lucide-react";
+
 
 // Validation d'email
 const isValidEmail = (email: string): boolean => {
@@ -103,7 +109,15 @@ const statusBadgeColor: Record<UserStatus, string> = {
 type ActiveTab = "users" | "invitations";
 
 export default function UsersPage() {
+  const router = useRouter();
   const { user: currentUser } = usePermissionsContext();
+  // check user role
+  const isAdmin = currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "ADMIN" || currentUser?.role === "HEAD_MANAGER" || currentUser?.role === "MANAGER";
+  if (!isAdmin) {
+    router.replace("/403");
+    // return null
+    return null;
+  }
   const [activeTab, setActiveTab] = useState<ActiveTab>("users");
 
   // ── Users state ──
@@ -159,6 +173,20 @@ export default function UsersPage() {
   const [perimNodeId, setPerimNodeId] = useState("");
   const [perimCompanyId, setPerimCompanyId] = useState("");
   const perimBusHook = useBusinessUnits(perimCompanyId || null);
+  const { canImpersonateUser, isImpersonating, impersonate } = useImpersonation();
+  const [impersonateLoadingId, setImpersonateLoadingId] = useState<string | null>(null);
+  const handleImpersonate = async (targetUser: UserItem) => {
+  setImpersonateLoadingId(targetUser.id);
+  try {
+    await impersonate(targetUser.id);
+    // Les tokens et user dans le contexte sont maintenant ceux de la cible
+    router.push("/dashboard");
+  } catch {
+    // apiFetch gère déjà l'erreur via snackbar
+  } finally {
+    setImpersonateLoadingId(null);
+  }
+  };
 
   // ── Data loading ──
   const loadUsers = useCallback(async () => {
@@ -178,24 +206,28 @@ export default function UsersPage() {
   useEffect(() => { if (activeTab === "invitations") loadInvitations(); }, [activeTab, loadInvitations]);
   useEffect(() => { if (companyIdForBU && permOpen) busHook.fetchList(); }, [companyIdForBU, permOpen, busHook]);
   useEffect(() => { if (perimCompanyId && inviteOpen) perimBusHook.fetchList(); }, [perimCompanyId, inviteOpen, perimBusHook]);
-  useEffect(() => { if (inviteOpen) {
-    // Load structure tree for workspaces and standalone companies
-    fetchStructureTree().then(data => {
-      console.log("Complete structure tree:", data);
-      console.log("Structure tree workspaces:", data?.workspaces);
-      console.log("Structure tree standalone companies:", data?.standaloneCompanies);
-      console.log("Structure tree groups:", data?.groups);
-      setStructureTree(data);
-    });
-  } }, [inviteOpen]);
-  useEffect(() => { if (permOpen) {
-    // Load structure tree for permissions modal
-    fetchStructureTree().then(data => {
-      console.log("Permissions structure tree:", data);
-      console.log("Permissions workspaces:", data?.workspaces);
-      setStructureTree(data);
-    });
-  } }, [permOpen]);
+  useEffect(() => {
+    if (inviteOpen) {
+      // Load structure tree for workspaces and standalone companies
+      fetchStructureTree().then(data => {
+        console.log("Complete structure tree:", data);
+        console.log("Structure tree workspaces:", data?.workspaces);
+        console.log("Structure tree standalone companies:", data?.standaloneCompanies);
+        console.log("Structure tree groups:", data?.groups);
+        setStructureTree(data);
+      });
+    }
+  }, [inviteOpen]);
+  useEffect(() => {
+    if (permOpen) {
+      // Load structure tree for permissions modal
+      fetchStructureTree().then(data => {
+        console.log("Permissions structure tree:", data);
+        console.log("Permissions workspaces:", data?.workspaces);
+        setStructureTree(data);
+      });
+    }
+  }, [permOpen]);
 
   // Reset perimeter type when role changes
   useEffect(() => {
@@ -253,12 +285,12 @@ export default function UsersPage() {
       const orgStandaloneCompanies = structureTree?.workspaces?.flatMap(org => org.standaloneCompanies) ?? [];
       const groupCompanies = structureTree?.groups?.flatMap(g => g.companies) ?? [];
       const completelyStandaloneCompanies = structureTree?.standaloneCompanies ?? [];
-      
+
       console.log("Hook companies:", hookCompanies);
       console.log("Org standalone companies:", orgStandaloneCompanies);
       console.log("Group companies:", groupCompanies);
       console.log("Completely standalone companies:", completelyStandaloneCompanies);
-      
+
       options = [...hookCompanies, ...orgStandaloneCompanies, ...groupCompanies, ...completelyStandaloneCompanies];
     }
     else if (perimNodeType === "WORKSPACE") {
@@ -270,7 +302,7 @@ export default function UsersPage() {
       options = hookOrgs.length > 0 ? hookOrgs : treeOrgs;
     }
     else options = perimBusHook.list ?? [];
-    
+
     console.log(`perimNodeType: ${perimNodeType}, final options:`, options);
     return options;
   }, [perimNodeType, groupsHook.list, companiesHook.list, structureTree, perimBusHook.list, workspacesHook.list]);
@@ -407,12 +439,12 @@ export default function UsersPage() {
     if (permUser?.role === "HEAD_MANAGER") {
       return structureTree?.workspaces ?? [];
     }
-    
+
     // Pour les autres rôles, afficher toutes les options
-    return addNodeType === "GROUP" ? (groupsHook.list ?? []) : 
-           addNodeType === "COMPANY" ? (companiesHook.list ?? []) : 
-           addNodeType === "WORKSPACE" ? (structureTree?.workspaces ?? []) : 
-           (busHook.list ?? []);
+    return addNodeType === "GROUP" ? (groupsHook.list ?? []) :
+      addNodeType === "COMPANY" ? (companiesHook.list ?? []) :
+        addNodeType === "WORKSPACE" ? (structureTree?.workspaces ?? []) :
+          (busHook.list ?? []);
   }, [addNodeType, groupsHook.list, companiesHook.list, structureTree, busHook.list, permUser?.role]);
 
   // ── Filtered data ──
@@ -448,25 +480,39 @@ export default function UsersPage() {
   const isExpired = (inv: InvitationItem) => new Date(inv.expiresAt) < new Date();
 
   return (
-    <AppLayout title="User Management" companies={[]} selectedCompanyId="" onCompanyChange={() => {}}>
+    <AppLayout title="User Management" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
       <Head><title>Gestion des utilisateurs</title></Head>
-      <div className="space-y-6">
+      <div className="space-y-3 md:space-y-6">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Utilisateurs &amp; Invitations</h2>
-            <p className="text-sm text-slate-500">G&eacute;rez les utilisateurs, invitations et permissions.</p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="mb-1 flex items-center gap-3">
+            <div className="rounded-xl bg-primary/10 p-2.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users h-5 w-5 text-primary" aria-hidden="true">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-primary">Utilisateurs &amp; Invitations</h2>
+              <p className="text-sm text-slate-500">G&eacute;rez les utilisateurs, invitations et permissions.</p>
+            </div>
           </div>
-          {invitableRoles.length > 0 && (
-            <Button onClick={openInviteModal} className="h-9 gap-2 bg-slate-900 text-white hover:bg-slate-800">
-              <Send className="h-4 w-4" />
-              Inviter un utilisateur
-            </Button>
-          )}
-        </div>
+        
 
+          {/* Actions */}
+          <div className="flex w-full items-center gap-3 sm:w-auto">
+            {invitableRoles.length > 0 && (
+              <Button onClick={openInviteModal} className="w-full bg-primary text-white hover:bg-slate-800 sm:w-auto">
+                <Send className="h-4 w-4" />
+                Inviter un utilisateur
+              </Button>
+            )}
+          </div>
+        </div>
         {/* Tabs */}
-        <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+        <div className="grid grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
           {([
             { key: "users" as ActiveTab, label: "Utilisateurs", count: stats.total },
             { key: "invitations" as ActiveTab, label: "Invitations", count: invStats.total },
@@ -475,16 +521,14 @@ export default function UsersPage() {
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all ${
-                activeTab === tab.key
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
+              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all ${activeTab === tab.key
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+                }`}
             >
               {tab.label}
-              <span className={`ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
-                activeTab === tab.key ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-600"
-              }`}>
+              <span className={`ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${activeTab === tab.key ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-600"
+                }`}>
                 {tab.count}
               </span>
             </button>
@@ -497,29 +541,29 @@ export default function UsersPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {([
-                { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-slate-50" },
-                { label: "Actifs", value: stats.active, color: "text-emerald-700", bg: "bg-emerald-50" },
-                { label: "En attente", value: stats.pending, color: "text-amber-700", bg: "bg-amber-50" },
-                { label: "Suspendus", value: stats.suspended, color: "text-red-600", bg: "bg-red-50" },
+                { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" },
+                { label: "Actifs", value: stats.active, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
+                { label: "En attente", value: stats.pending, color: "text-amber-700", bg: "bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100" },
+                { label: "Suspendus", value: stats.suspended, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
               ]).map((s) => (
                 <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{s.label}</p>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>{s.label}</p>
                   <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
                 </div>
               ))}
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[200px] max-w-xs">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="relative min-w-0 flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input placeholder="Rechercher un utilisateur..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
               </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-fit! border-slate-200 bg-white text-sm">
+              <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
                 <option value="">Tous les r&ocirc;les</option>
                 {ALL_ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
               </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-fit! border-slate-200 bg-white text-sm">
+              <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
                 <option value="">Tous les statuts</option>
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
               </Select>
@@ -538,7 +582,7 @@ export default function UsersPage() {
                   <p className="mt-1 text-sm text-slate-500">{search || roleFilter || statusFilter ? "Essayez de modifier vos filtres." : "Invitez votre premier utilisateur."}</p>
                 </div>
               ) : (
-                <div className="overflow-x-visible">
+                <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50/50">
@@ -554,91 +598,109 @@ export default function UsersPage() {
                         const isProtectedSuperAdmin =
                           u.role === "SUPER_ADMIN" && currentUser?.role === "ADMIN";
                         return (
-                        <tr key={u.id} className="group transition-colors hover:bg-slate-50/50">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
-                                {(u.firstName?.[0] || u.email[0]).toUpperCase()}
+                          <tr key={u.id} className="group transition-colors hover:bg-slate-50/50">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
+                                  {(u.firstName?.[0] || u.email[0]).toUpperCase()}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-slate-900">{u.firstName || u.lastName ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "\u2014"}</p>
+                                  <p className="text-xs text-slate-500">{u.email}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-sm font-medium text-slate-900">{u.firstName || u.lastName ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "\u2014"}</p>
-                                <p className="text-xs text-slate-500">{u.email}</p>
+                            </td>
+                            <td className="px-2 py-4">
+                              <span className={`inline-flex items-center gap-1 rounded-full border w-fit px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide ${roleBadgeColor[u.role]}`}>
+                                <Shield className="h-3 w-3 hidden md:block" />{roleLabel(u.role)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${statusBadgeColor[u.status]}`}>
+                                {statusLabel(u.status)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-500">{u.createdAt ? new Date(u.createdAt).toLocaleDateString("fr-FR") : "\u2014"}</td>
+                            <td className="px-6 py-4">
+                              <div className="flex justify-end">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 opacity-100 transition-all hover:bg-white hover:text-slate-900 hover:shadow-sm sm:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-52">
+                                    {!isProtectedSuperAdmin && (
+                                      <>
+                                        <DropdownMenuItem onClick={() => openEdit(u)}>
+                                          <Pencil className="mr-2 h-4 w-4" /> Modifier
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => openPermissions(u)}>
+                                          <KeyRound className="mr-2 h-4 w-4" /> Permissions
+                                        </DropdownMenuItem>
+                                        {u.status === "ACTIVE" && (
+                                          <DropdownMenuItem
+                                            onClick={async () => {
+                                              await updateUser(u.id, { status: "SUSPENDED" });
+                                              loadUsers();
+                                            }}
+                                          >
+                                            <UserX className="mr-2 h-4 w-4" /> Suspendre
+                                          </DropdownMenuItem>
+                                        )}
+                                        {u.status === "SUSPENDED" && (
+                                          <DropdownMenuItem
+                                            onClick={async () => {
+                                              await updateUser(u.id, { status: "ACTIVE" });
+                                              loadUsers();
+                                            }}
+                                          >
+                                            <Mail className="mr-2 h-4 w-4" /> R&eacute;activer
+                                          </DropdownMenuItem>
+                                        )}
+                                        {u.id !== currentUser?.id && (
+                                          <DropdownMenuItem
+                                            onClick={() => {
+                                              setDeleteTarget(u);
+                                              setDeleteOpen(true);
+                                            }}
+                                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                          >
+                                            <Trash2 className="mr-2 h-4 w-4" /> Supprimer
+                                          </DropdownMenuItem>
+                                          
+                                        )}
+                                      </>
+                                    )}
+                                    {isProtectedSuperAdmin && (
+                                      <DropdownMenuItem disabled>
+                                        <Shield className="mr-2 h-4 w-4" />
+                                        Super-admin g&eacute;r&eacute; uniquement par un super-admin
+                                      </DropdownMenuItem>
+                                    )}
+                                    {/* Impersonation — visible seulement si j'ai le droit sur ce user */}
+                                    {canImpersonateUser(u.role, u.status) && u.id !== currentUser?.id && (
+                                      <DropdownMenuItem
+                                        onClick={() => handleImpersonate(u)}
+                                        disabled={impersonateLoadingId === u.id}
+                                        className="text-indigo-600 focus:text-indigo-600 focus:bg-indigo-50"
+                                      >
+                                        {impersonateLoadingId === u.id ? (
+                                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 
+                                                          border-indigo-300 border-t-indigo-600" />
+                                        ) : (
+                                          <UserCheck className="mr-2 h-4 w-4" />
+                                        )}
+                                        Se connecter en tant que
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${roleBadgeColor[u.role]}`}>
-                              <Shield className="h-3 w-3" />{roleLabel(u.role)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${statusBadgeColor[u.status]}`}>
-                              {statusLabel(u.status)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{u.createdAt ? new Date(u.createdAt).toLocaleDateString("fr-FR") : "\u2014"}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex justify-end">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-slate-900 hover:shadow-sm group-hover:opacity-100">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-52">
-                                  {!isProtectedSuperAdmin && (
-                                    <>
-                                      <DropdownMenuItem onClick={() => openEdit(u)}>
-                                        <Pencil className="mr-2 h-4 w-4" /> Modifier
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => openPermissions(u)}>
-                                        <KeyRound className="mr-2 h-4 w-4" /> Permissions
-                                      </DropdownMenuItem>
-                                      {u.status === "ACTIVE" && (
-                                        <DropdownMenuItem
-                                          onClick={async () => {
-                                            await updateUser(u.id, { status: "SUSPENDED" });
-                                            loadUsers();
-                                          }}
-                                        >
-                                          <UserX className="mr-2 h-4 w-4" /> Suspendre
-                                        </DropdownMenuItem>
-                                      )}
-                                      {u.status === "SUSPENDED" && (
-                                        <DropdownMenuItem
-                                          onClick={async () => {
-                                            await updateUser(u.id, { status: "ACTIVE" });
-                                            loadUsers();
-                                          }}
-                                        >
-                                          <Mail className="mr-2 h-4 w-4" /> R&eacute;activer
-                                        </DropdownMenuItem>
-                                      )}
-                                      {u.id !== currentUser?.id && (
-                                        <DropdownMenuItem
-                                          onClick={() => {
-                                            setDeleteTarget(u);
-                                            setDeleteOpen(true);
-                                          }}
-                                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                                        >
-                                          <Trash2 className="mr-2 h-4 w-4" /> Supprimer
-                                        </DropdownMenuItem>
-                                      )}
-                                    </>
-                                  )}
-                                  {isProtectedSuperAdmin && (
-                                    <DropdownMenuItem disabled>
-                                      <Shield className="mr-2 h-4 w-4" />
-                                      Super-admin g&eacute;r&eacute; uniquement par un super-admin
-                                    </DropdownMenuItem>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </td>
-                        </tr>
-                      );})}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -653,25 +715,25 @@ export default function UsersPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {([
-                { label: "Total", value: invStats.total, color: "text-slate-900", bg: "bg-slate-50" },
-                { label: "En attente", value: invStats.pending, color: "text-yellow-700", bg: "bg-yellow-50" },
-                { label: "Accept\u00e9es", value: invStats.accepted, color: "text-emerald-700", bg: "bg-emerald-50" },
-                { label: "Rejet\u00e9es", value: invStats.rejected, color: "text-red-600", bg: "bg-red-50" },
+                { label: "Total", value: invStats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" }, 
+                { label: "En attente", value: invStats.pending, color: "text-yellow-700", bg: "bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100" },
+                { label: "Accept\u00e9es", value: invStats.accepted, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
+                { label: "Rejet\u00e9es", value: invStats.rejected, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
               ]).map((s) => (
                 <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{s.label}</p>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>{s.label}</p>
                   <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
                 </div>
               ))}
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[200px] max-w-xs">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="relative min-w-0 flex-1 sm:min-w-[200px] sm:max-w-xs">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input placeholder="Rechercher par email..." value={invSearch} onChange={(e) => setInvSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
               </div>
-              <Select value={invStatusFilter} onValueChange={(v) => setInvStatusFilter(v as InvitationStatus | "")} className="h-9 w-fit! border-slate-200 bg-white text-sm">
+              <Select value={invStatusFilter} onValueChange={(v) => setInvStatusFilter(v as InvitationStatus | "")} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
                 <option value="">Tous les statuts</option>
                 {INVITATION_STATUSES.map((s) => <option key={s} value={s}>{invitationStatusLabel(s)}</option>)}
               </Select>
@@ -711,75 +773,76 @@ export default function UsersPage() {
                           invitedUser && invitedUser.status === "PENDING";
 
                         return (
-                        <tr key={inv.id} className="group transition-colors hover:bg-slate-50/50">
-                          <td className="px-6 py-4">
-                            <p className="text-sm font-medium text-slate-900">{inv.email}</p>
-                            <p className="text-xs text-slate-400">Envoy&eacute; le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
-                          </td>
-                          <td className="px-6 py-4">
-                            {inv.role && (
-                              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${roleBadgeColor[inv.role]}`}>
-                                <Shield className="h-3 w-3" />{roleLabel(inv.role)}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${invitationStatusColor(inv.status)}`}>
-                              {inv.status === "PENDING" && <Clock className="h-3 w-3" />}
-                              {inv.status === "ACCEPTED" && <Check className="h-3 w-3" />}
-                              {inv.status === "REJECTED" && <XCircle className="h-3 w-3" />}
-                              {invitationStatusLabel(inv.status)}
-                            </span>
-                            {inv.status === "PENDING" && isExpired(inv) && (
-                              <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-600">Expir&eacute;e</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            {inv.dataPerimeter && inv.dataPerimeter.length > 0 ? (
-                              <div className="flex flex-wrap gap-1">
-                                {inv.dataPerimeter.map((dp, i) => (
-                                  <span key={i} className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
-                                    {nodeTypeLabelFr(dp.nodeType)}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-slate-400">&mdash;</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-slate-500">
-                            {new Date(inv.expiresAt).toLocaleDateString("fr-FR")}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center justify-end gap-2">
-                              {canModerate && !isExpired(inv) ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleAccept(inv)}
-                                    className="flex h-8 items-center gap-1 rounded-lg bg-emerald-50 px-3 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
-                                  >
-                                    <Check className="h-3.5 w-3.5" /> Accepter
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleReject(inv)}
-                                    className="flex h-8 items-center gap-1 rounded-lg bg-red-50 px-3 text-xs font-medium text-red-600 transition hover:bg-red-100"
-                                  >
-                                    <XCircle className="h-3.5 w-3.5" /> Rejeter
-                                  </button>
-                                </>
-                              ) : (
-                                <span className="text-xs text-slate-400">
-                                  {invitedUser
-                                    ? `Utilisateur déjà ${statusLabel(invitedUser.status)}`
-                                    : "L'utilisateur n'a pas encore utilis\u00e9 l'invitation"}
+                          <tr key={inv.id} className="group transition-colors hover:bg-slate-50/50">
+                            <td className="px-6 py-4">
+                              <p className="text-sm font-medium text-slate-900">{inv.email}</p>
+                              <p className="text-xs text-slate-400">Envoy&eacute; le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
+                            </td>
+                            <td className="px-6 py-4">
+                              {inv.role && (
+                                <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${roleBadgeColor[inv.role]}`}>
+                                  <Shield className="h-3 w-3" />{roleLabel(inv.role)}
                                 </span>
                               )}
-                            </div>
-                          </td>
-                        </tr>
-                      )})}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${invitationStatusColor(inv.status)}`}>
+                                {inv.status === "PENDING" && <Clock className="h-3 w-3" />}
+                                {inv.status === "ACCEPTED" && <Check className="h-3 w-3" />}
+                                {inv.status === "REJECTED" && <XCircle className="h-3 w-3" />}
+                                {invitationStatusLabel(inv.status)}
+                              </span>
+                              {inv.status === "PENDING" && isExpired(inv) && (
+                                <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-600">Expir&eacute;e</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              {inv.dataPerimeter && inv.dataPerimeter.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {inv.dataPerimeter.map((dp, i) => (
+                                    <span key={i} className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                                      {nodeTypeLabelFr(dp.nodeType)}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-slate-400">&mdash;</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-500">
+                              {new Date(inv.expiresAt).toLocaleDateString("fr-FR")}
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center justify-end gap-2">
+                                {canModerate && !isExpired(inv) ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAccept(inv)}
+                                      className="flex h-8 items-center gap-1 rounded-lg bg-emerald-50 px-3 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
+                                    >
+                                      <Check className="h-3.5 w-3.5" /> Accepter
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleReject(inv)}
+                                      className="flex h-8 items-center gap-1 rounded-lg bg-red-50 px-3 text-xs font-medium text-red-600 transition hover:bg-red-100"
+                                    >
+                                      <XCircle className="h-3.5 w-3.5" /> Rejeter
+                                    </button>
+                                  </>
+                                ) : (
+                                  <span className="text-xs text-slate-400">
+                                    {invitedUser
+                                      ? `Utilisateur déjà ${statusLabel(invitedUser.status)}`
+                                      : "L'utilisateur n'a pas encore utilis\u00e9 l'invitation"}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -837,11 +900,11 @@ export default function UsersPage() {
 
       {/* ═══════════════ INVITE MODAL ═══════════════ */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Send className="h-5 w-5 text-slate-700" /> Inviter un utilisateur</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <DialogBody className="space-y-4">
             {/* <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Pr&eacute;nom</label>
@@ -880,7 +943,7 @@ export default function UsersPage() {
               <div>
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">P&eacute;rim&egrave;tre d&rsquo;acc&egrave;s <span className="text-red-500">*</span></label>
                 <p className="mb-3 text-xs text-slate-400">
-                  {inviteForm.role === "HEAD_MANAGER" 
+                  {inviteForm.role === "HEAD_MANAGER"
                     ? "Définir l'workspace accessible (obligatoire). L'héritage hiérarchique s'applique automatiquement."
                     : "Définir les groupes, entreprises ou BU accessibles. L'héritage hiérarchique s'applique automatiquement."
                   }
@@ -929,7 +992,7 @@ export default function UsersPage() {
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-3">
-                    <div className="flex flex-wrap items-end gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
                       <div>
                         <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Type</label>
                         <select
@@ -951,7 +1014,7 @@ export default function UsersPage() {
                           <select
                             value={perimCompanyId}
                             onChange={(e) => { setPerimCompanyId(e.target.value); setPerimNodeId(""); }}
-                            className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
+                            className="h-8 w-full rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 sm:min-w-[140px] sm:w-auto"
                           >
                             <option value="">Choisir&hellip;</option>
                             {(companiesHook.list ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -964,7 +1027,7 @@ export default function UsersPage() {
                           value={perimNodeId}
                           onChange={(e) => setPerimNodeId(e.target.value)}
                           disabled={perimNodeType === "BUSINESS_UNIT" && !perimCompanyId}
-                          className="h-8 min-w-[140px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 disabled:opacity-50"
+                          className="h-8 w-full rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 disabled:opacity-50 sm:min-w-[140px] sm:w-auto"
                         >
                           <option value="">Choisir&hellip;</option>
                           {perimNodeOptions.map((n: { id: string; name: string }) => <option key={n.id} value={n.id}>{n.name}</option>)}
@@ -978,7 +1041,7 @@ export default function UsersPage() {
                 )}
               </div>
             )}
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Annuler</Button>
             <Button
@@ -1000,11 +1063,11 @@ export default function UsersPage() {
 
       {/* Existing user confirmation dialog */}
       <Dialog open={inviteConfirmOpen} onOpenChange={setInviteConfirmOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent size="md">
           <DialogHeader>
             <DialogTitle>Utilisateur déjà existant</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-2 text-sm text-slate-700">
+          <DialogBody className="space-y-3 text-sm text-slate-700">
             <p>Un utilisateur avec cet email existe déjà dans l’application :</p>
             {inviteExistingUser && (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
@@ -1018,7 +1081,7 @@ export default function UsersPage() {
               Confirmez-vous vouloir lui attribuer ce nouveau périmètre d’accès
               et lui envoyer l’email d’information&nbsp;?
             </p>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button
               variant="outline"
@@ -1044,9 +1107,9 @@ export default function UsersPage() {
 
       {/* ═══════════════ EDIT MODAL ═══════════════ */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent size="md">
           <DialogHeader><DialogTitle>Modifier l&apos;utilisateur</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
+          <DialogBody className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Pr&eacute;nom</label>
@@ -1069,7 +1132,7 @@ export default function UsersPage() {
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
               </Select>
             </div>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Annuler</Button>
             <Button onClick={handleEdit} disabled={editLoading}>{editLoading ? "Enregistrement\u2026" : "Enregistrer"}</Button>
@@ -1079,9 +1142,9 @@ export default function UsersPage() {
 
       {/* ═══════════════ DELETE MODAL ═══════════════ */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent size="sm">
           <DialogHeader><DialogTitle>Confirmer la suppression</DialogTitle></DialogHeader>
-          <p className="py-2 text-sm text-slate-600">Supprimer <strong>{deleteTarget?.email}</strong> ? Cette action est irr&eacute;versible.</p>
+          <DialogBody><p className="text-sm text-slate-600">Supprimer <strong>{deleteTarget?.email}</strong> ? Cette action est irr&eacute;versible.</p></DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteOpen(false)}>Annuler</Button>
             <Button className="bg-red-600 text-white hover:bg-red-700" onClick={handleDelete} disabled={deleteLoading}>{deleteLoading ? "Suppression\u2026" : "Supprimer"}</Button>
@@ -1091,16 +1154,16 @@ export default function UsersPage() {
 
       {/* ═══════════════ PERMISSIONS MODAL ═══════════════ */}
       <Dialog open={permOpen} onOpenChange={setPermOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent size="2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5 text-slate-700" /> Permissions &mdash; {permUser?.email}</DialogTitle>
           </DialogHeader>
           {permLoading ? (
-            <div className="flex items-center justify-center py-8"><div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" /></div>
+            <DialogBody className="flex items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" /></DialogBody>
           ) : !permDetail ? (
-            <p className="py-6 text-center text-sm text-slate-400">Impossible de charger les permissions.</p>
+            <DialogBody><p className="text-center text-sm text-slate-400">Impossible de charger les permissions.</p></DialogBody>
           ) : (
-            <div className="space-y-6 py-2">
+            <DialogBody className="space-y-6">
               {/* Entity-level */}
               <div>
                 <h3 className="mb-3 text-sm font-semibold text-slate-900">Permissions par entit&eacute;</h3>
@@ -1152,7 +1215,7 @@ export default function UsersPage() {
                 )}
                 <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-4">
                   <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Ajouter un acc&egrave;s</p>
-                  <div className="flex flex-wrap items-end gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                     <div>
                       <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Type</label>
                       {permUser?.role === "HEAD_MANAGER" ? (
@@ -1168,7 +1231,7 @@ export default function UsersPage() {
                     {addNodeType === "BUSINESS_UNIT" && (
                       <div>
                         <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Entreprise</label>
-                        <select value={companyIdForBU} onChange={(e) => { setCompanyIdForBU(e.target.value); setAddNodeId(""); }} className="h-9 min-w-[160px] rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700">
+                        <select value={companyIdForBU} onChange={(e) => { setCompanyIdForBU(e.target.value); setAddNodeId(""); }} className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 sm:min-w-[160px] sm:w-auto">
                           <option value="">Choisir&hellip;</option>
                           {(companiesHook.list ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
@@ -1176,7 +1239,7 @@ export default function UsersPage() {
                     )}
                     <div>
                       <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">&Eacute;l&eacute;ment</label>
-                      <select value={addNodeId} onChange={(e) => setAddNodeId(e.target.value)} disabled={addNodeType === "BUSINESS_UNIT" && !companyIdForBU} className="h-9 min-w-[160px] rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:opacity-50">
+                      <select value={addNodeId} onChange={(e) => setAddNodeId(e.target.value)} disabled={addNodeType === "BUSINESS_UNIT" && !companyIdForBU} className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:opacity-50 sm:min-w-[160px] sm:w-auto">
                         <option value="">Choisir&hellip;</option>
                         {permNodeOptions.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
                       </select>
@@ -1196,7 +1259,7 @@ export default function UsersPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </DialogBody>
           )}
           <DialogFooter><Button variant="outline" onClick={() => setPermOpen(false)}>Fermer</Button></DialogFooter>
         </DialogContent>

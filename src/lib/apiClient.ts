@@ -21,6 +21,25 @@ export function setAccessTokenGetter(getter: () => string | null) {
   accessTokenGetter = getter;
 }
 
+// ✅ Classe d'erreur personnalisée
+export class ApiError extends Error {
+  status: number;
+  details: {
+    status: number;
+    statusText: string;
+    message: string;
+    code: string | null;
+    originalResponse: any;
+  };
+
+  constructor(message: string, status: number, details: any) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.details = details;
+  }
+}
+
 export async function apiFetch<T>(
   path: string,
   init?: RequestInit & {
@@ -58,7 +77,11 @@ export async function apiFetch<T>(
       if (authRedirect === false) {
         // Let callers know it's specifically a 401 without forcing navigation.
         // We encode the status so higher-level code can distinguish it.
-        throw new Error(JSON.stringify({ status: 401, body: text401 || null }));
+        throw new ApiError(
+          "Unauthorized",
+          401,
+          { status: 401, body: text401 || null }
+        );
       }
 
       if (typeof window !== "undefined") {
@@ -74,7 +97,7 @@ export async function apiFetch<T>(
         }
       }
 
-      throw new Error(text401 || "Unauthorized");
+      throw new ApiError(text401 || "Unauthorized", 401, { status: 401, body: text401 || null });
     }
 
     const text = await res.text().catch(() => "");
@@ -83,7 +106,7 @@ export async function apiFetch<T>(
     // Try to parse backend JSON and extract a human message
     let parsed: unknown;
     let backendMessage: string | undefined;
-    
+
     try {
       parsed = text ? JSON.parse(text) : undefined;
       // Add safety check for parsed object
@@ -120,7 +143,18 @@ export async function apiFetch<T>(
       finalMessage = defaultMessage;
     }
     
-    const err = new Error(finalMessage);
+    // ✅ Créer et lancer une ApiError avec tous les détails
+    throw new ApiError(
+      finalMessage,
+      res.status,
+      {
+        status: res.status,
+        statusText: res.statusText,
+        message: backendMessage || text,
+        code: parsed && typeof parsed === 'object' && 'code' in parsed ? (parsed as any).code : null,
+        originalResponse: parsed || text
+      }
+    );
   }
 
   if (snackbar?.showSuccess) {
@@ -129,31 +163,38 @@ export async function apiFetch<T>(
   }
 
   // Handle empty or no-content responses safely
-  if (res.status === 204) {
-    return undefined as T;
-  }
+  
+    if (res.status === 204) {
+      return undefined as T;
+    }
 
-  const text = await res.text().catch(() => "");
-  if (!text) {
-    return undefined as T;
-  }
+    const contentType = res.headers.get("content-type") || "";
 
-  // Check if response is JSON
-  const contentType = res.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
+    // ✅ Ne pas lire les binaires comme texte
+    if (
+      contentType.includes("application/vnd.openxmlformats") ||
+      contentType.includes("application/vnd.ms-excel") ||
+      contentType.includes("application/octet-stream") ||
+      contentType.includes("application/zip")
+    ) {
+      const buffer = await res.arrayBuffer();
+      return buffer as unknown as T;
+    }
+
+    const text = await res.text().catch(() => "");
+    if (!text) return undefined as T;
+
+    if (contentType.includes("application/json")) {
+      try {
+        return JSON.parse(text) as T;
+      } catch {
+        throw new ApiError("Invalid JSON response from server", 500, { originalResponse: text });
+      }
+    }
+
     try {
       return JSON.parse(text) as T;
     } catch {
-      // If it's supposed to be JSON but can't parse, throw error
-      throw new Error("Invalid JSON response from server");
+      return text as unknown as T;
     }
-  }
-
-  // For non-JSON responses, try to parse as JSON first (for multipart responses that contain JSON)
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    // If it's not JSON, return raw text
-    return text as unknown as T;
-  }
 }

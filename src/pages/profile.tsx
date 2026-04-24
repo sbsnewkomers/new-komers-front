@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
+import Head from "next/head";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -42,7 +42,7 @@ export default function ProfilePage() {
         firstName: formData.firstName || undefined,
         lastName: formData.lastName || undefined,
       });
-      
+
       // Rafraîchir les données utilisateur après la mise à jour
       await refreshMe({ silent: false });
       setIsEditing(false);
@@ -98,19 +98,19 @@ export default function ProfilePage() {
 
   const handleSavePassword = React.useCallback(async () => {
     setPasswordError(null);
-    
+
     // Validation
     if (!passwordData.currentPassword) {
       setPasswordError("Veuillez entrer votre mot de passe actuel");
       return;
     }
-    
+
     const passwordValidationError = validatePassword(passwordData.newPassword);
     if (passwordValidationError) {
       setPasswordError(passwordValidationError);
       return;
     }
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setPasswordError("Les mots de passe ne correspondent pas");
       return;
@@ -122,7 +122,7 @@ export default function ProfilePage() {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
-      
+
       // Reset password form
       setPasswordData({
         currentPassword: "",
@@ -163,23 +163,13 @@ export default function ProfilePage() {
     if (!role) return "USER";
     const roleMap: Record<string, string> = {
       "SUPER_ADMIN": "Super Admin",
-      "ADMIN": "Administrateur", 
+      "ADMIN": "Administrateur",
       "MANAGER": "Manager",
       "END_USER": "Utilisateur"
     };
     return roleMap[role] || role;
   }, []);
 
-  const formatStatus = React.useCallback((status?: string) => {
-    if (!status) return "Actif";
-    const statusMap: Record<string, string> = {
-      "ACTIVE": "Actif",
-      "INACTIVE": "Inactif", 
-      "PENDING": "En attente",
-      "SUSPENDED": "Suspendu"
-    };
-    return statusMap[status] || status;
-  }, []);
 
   // Loading state
   if (!user) {
@@ -195,270 +185,258 @@ export default function ProfilePage() {
   }
 
   return (
-    <AppLayout title="Mon Profil">
-      <div className="h-screen flex items-center justify-center p-16">
-        <div className="w-full max-w-5xl space-y-6">
+    <AppLayout title="Mon Profil" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
+      <Head>
+        <title>Mon Profil</title>
+      </Head>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="rounded-xl bg-primary/10 p-2.5">
+              <UserCircle className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-primary">Profil</h2>
+              <p className="text-sm text-slate-500">Gérez vos informations personnelles et votre mot de passe.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           {/* Profile Card - Header + Personal Information */}
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-8">
-              <div className="flex flex-col lg:flex-row gap-8 w-full">
-                {/* Profile Header Section */}
-                <div className="flex flex-col items-center lg:items-start gap-4 lg:gap-6 flex-shrink-0">
-                  <div className="relative">
-                    <div className="w-24 h-24 bg-gradient-to-br from-primary/10 to-primary/20 rounded-full flex items-center justify-center text-primary border-2 border-primary/20">
-                      <UserCircle className="w-14 h-14" />
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-background"></div>
+          <div className="border-b border-slate-100 bg-slate-50/60 p-6">
+            <div className="flex flex-col lg:flex-row gap-8 w-full">
+              {/* Profile Header Section */}
+              <div className="flex flex-col items-center lg:items-start gap-4 lg:gap-6 flex-shrink-0">
+                <div className="relative">
+                  <div className="w-24 h-24 bg-gradient-to-br from-primary/10 to-primary/20 rounded-full flex items-center justify-center text-primary border-2 border-primary/20">
+                    <UserCircle className="w-14 h-14" />
                   </div>
-                  <div className="text-center lg:text-left space-y-3">
-                    <h1 className="text-2xl font-bold text-foreground">
-                      {user.firstName && user.lastName 
-                        ? `${user.firstName} ${user.lastName}`
-                        : user.email?.split('@')[0] || "Utilisateur"
-                      }
-                    </h1>
-                    <p className="text-lg text-muted-foreground">
-                      {user.email}
-                    </p>
-                    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6 justify-center lg:justify-start">
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
-                        <Shield className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium text-primary">{formatRole(user.role)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <User className="w-4 h-4" />
-                        <span className="text-sm">@{user.email?.split('@')[0] || "user"}</span>
-                      </div>
-                    </div>
-                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-background"></div>
                 </div>
-
-                {/* Personal Information Section */}
-                <div className="flex-1 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-semibold text-foreground">Informations personnelles</h3>
-                    {!isEditing && (
-                      <Button onClick={handleEdit} size="sm">
-                        <Edit2 className="w-4 h-4 mr-2" />
-                        Modifier
-                      </Button>
-                    )}
+                <div className="text-center lg:text-left space-y-3">
+                  <h1 className="text-2xl font-bold text-foreground">
+                    {user.firstName && user.lastName
+                      ? `${user.firstName} ${user.lastName}`
+                      : user.email?.split('@')[0] || "Utilisateur"
+                    }
+                  </h1>
+                  <p className="text-lg text-muted-foreground">
+                    {user.email}
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6 justify-center lg:justify-start">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
+                      <Shield className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium text-primary">{formatRole(user.role)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <User className="w-4 h-4" />
+                      <span className="text-sm">@{user.email?.split('@')[0] || "user"}</span>
+                    </div>
                   </div>
-
-                  {isEditing ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Adresse email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            id="email"
-                            type="email"
-                            value={user.email}
-                            disabled
-                            className="pl-10 bg-muted"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName">Prénom</Label>
-                        <Input
-                          id="firstName"
-                          value={formData.firstName}
-                          onChange={(e) => handleInputChange("firstName", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName">Nom</Label>
-                        <Input
-                          id="lastName"
-                          value={formData.lastName}
-                          onChange={(e) => handleInputChange("lastName", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Rôle</Label>
-                        <div className="px-3 py-2 bg-muted rounded-md text-sm font-medium">
-                          {formatRole(user.role)}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Statut</Label>
-                        <div className="px-3 py-2 bg-muted rounded-md text-sm">
-                          {formatStatus(user.status)}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label>Adresse email</Label>
-                        <div className="px-3 py-2 bg-muted rounded-md text-sm">
-                          {user.email}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Prénom</Label>
-                        <div className="px-3 py-2 bg-muted rounded-md text-sm">
-                          {user.firstName || "Non renseigné"}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Nom</Label>
-                        <div className="px-3 py-2 bg-muted rounded-md text-sm">
-                          {user.lastName || "Non renseigné"}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Rôle</Label>
-                        <div className="px-3 py-2 bg-muted rounded-md text-sm font-medium">
-                          {formatRole(user.role)}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Statut</Label>
-                        <div className="px-3 py-2 bg-muted rounded-md text-sm">
-                          {formatStatus(user.status)}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  {isEditing && (
-                    <div className="flex gap-3 pt-4 border-t">
-                      <Button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2">
-                        <Save className="w-4 h-4" />
-                        {isSaving ? 'Enregistrement...' : 'Enregistrer'}
-                      </Button>
-                      <Button variant="outline" onClick={handleCancel} className="flex items-center gap-2">
-                        <X className="w-4 h-4" />
-                        Annuler
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Password Card */}
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-8">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                    <Lock className="w-5 h-5" />
-                    Mot de passe
-                  </h3>
-                  {!isChangingPassword && (
-                    <Button onClick={() => setIsChangingPassword(true)} size="sm" variant="outline">
-                      <Lock className="w-4 h-4 mr-2" />
-                      Modifier le mot de passe
+              {/* Personal Information Section */}
+              <div className="flex-1 space-y-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="text-xl font-semibold text-foreground">Informations personnelles</h3>
+                  {!isEditing && (
+                    <Button onClick={handleEdit} size="sm">
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      Modifier
                     </Button>
                   )}
                 </div>
 
-                {!isChangingPassword ? (
-                  <div className="text-sm text-muted-foreground">
-                    Votre mot de passe a été défini. Vous pouvez le modifier en cliquant sur le bouton ci-dessus.
+                {isEditing ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Adresse email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="email"
+                          type="email"
+                          value={user.email}
+                          disabled
+                          className="pl-10 bg-muted"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">Prénom</Label>
+                      <Input
+                        id="firstName"
+                        value={formData.firstName}
+                        onChange={(e) => handleInputChange("firstName", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Nom</Label>
+                      <Input
+                        id="lastName"
+                        value={formData.lastName}
+                        onChange={(e) => handleInputChange("lastName", e.target.value)}
+                      />
+                    </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {passwordError && (
-                      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
-                        {passwordError}
-                      </div>
-                    )}
-
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="currentPassword">Mot de passe actuel</Label>
-                      <div className="relative">
-                        <Input
-                          id="currentPassword"
-                          type={showCurrentPassword ? "text" : "password"}
-                          value={passwordData.currentPassword}
-                          onChange={(e) => handlePasswordInputChange("currentPassword", e.target.value)}
-                          placeholder="Entrez votre mot de passe actuel"
-                          className="pr-10"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                          className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                        >
-                          {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
+                      <Label>Adresse email</Label>
+                      <div className="px-3 py-2 bg-muted rounded-md text-sm">
+                        {user.email}
                       </div>
                     </div>
-
                     <div className="space-y-2">
-                      <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-                      <div className="relative">
-                        <Input
-                          id="newPassword"
-                          type={showNewPassword ? "text" : "password"}
-                          value={passwordData.newPassword}
-                          onChange={(e) => handlePasswordInputChange("newPassword", e.target.value)}
-                          placeholder="Entrez le nouveau mot de passe"
-                          className="pr-10"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                        >
-                          {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Le mot de passe doit contenir :
-                        <ul className="mt-1 ml-4 list-disc space-y-1">
-                          <li>Au moins 12 caractères</li>
-                          <li>Au moins une lettre majuscule</li>
-                          <li>Au moins une lettre minuscule</li>
-                          <li>Au moins un chiffre</li>
-                          <li>Au moins un caractère spécial</li>
-                        </ul>
+                      <Label>Prénom</Label>
+                      <div className="px-3 py-2 bg-muted rounded-md text-sm">
+                        {user.firstName || "Non renseigné"}
                       </div>
                     </div>
-
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirmer le nouveau mot de passe</Label>
-                      <div className="relative">
-                        <Input
-                          id="confirmPassword"
-                          type={showConfirmPassword ? "text" : "password"}
-                          value={passwordData.confirmPassword}
-                          onChange={(e) => handlePasswordInputChange("confirmPassword", e.target.value)}
-                          placeholder="Confirmez le nouveau mot de passe"
-                          className="pr-10"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                        >
-                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
+                      <Label>Nom</Label>
+                      <div className="px-3 py-2 bg-muted rounded-md text-sm">
+                        {user.lastName || "Non renseigné"}
                       </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-4 border-t">
-                      <Button onClick={handleSavePassword} disabled={isSavingPassword} className="flex items-center gap-2">
-                        <Save className="w-4 h-4" />
-                        {isSavingPassword ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
-                      </Button>
-                      <Button variant="outline" onClick={handleCancelPassword} className="flex items-center gap-2">
-                        <X className="w-4 h-4" />
-                        Annuler
-                      </Button>
                     </div>
                   </div>
                 )}
+
+                {/* Action Buttons */}
+                {isEditing && (
+                  <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row">
+                    <Button onClick={handleSave} disabled={isSaving} className="flex w-full items-center gap-2 sm:w-auto">
+                      <Save className="w-4 h-4" />
+                      {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+                    </Button>
+                    <Button variant="outline" onClick={handleCancel} className="flex w-full items-center gap-2 sm:w-auto">
+                      <X className="w-4 h-4" />
+                      Annuler
+                    </Button>
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+
+          {/* Password Section */}
+          <div className="p-6">
+            <div className="space-y-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                  <Lock className="w-5 h-5" />
+                  Mot de passe
+                </h3>
+                {!isChangingPassword && (
+                  <Button onClick={() => setIsChangingPassword(true)} size="sm" variant="outline">
+                    <Lock className="w-4 h-4 mr-2" />
+                    Modifier le mot de passe
+                  </Button>
+                )}
+              </div>
+
+              {!isChangingPassword ? (
+                <div className="text-sm text-muted-foreground">
+                  Votre mot de passe a été défini. Vous pouvez le modifier en cliquant sur le bouton ci-dessus.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {passwordError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
+                      {passwordError}
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+                    <div className="relative">
+                      <Input
+                        id="currentPassword"
+                        type={showCurrentPassword ? "text" : "password"}
+                        value={passwordData.currentPassword}
+                        onChange={(e) => handlePasswordInputChange("currentPassword", e.target.value)}
+                        placeholder="Entrez votre mot de passe actuel"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                    <div className="relative">
+                      <Input
+                        id="newPassword"
+                        type={showNewPassword ? "text" : "password"}
+                        value={passwordData.newPassword}
+                        onChange={(e) => handlePasswordInputChange("newPassword", e.target.value)}
+                        placeholder="Entrez le nouveau mot de passe"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Le mot de passe doit contenir :
+                      <ul className="mt-1 ml-4 list-disc space-y-1">
+                        <li>Au moins 12 caractères</li>
+                        <li>Au moins une lettre majuscule</li>
+                        <li>Au moins une lettre minuscule</li>
+                        <li>Au moins un chiffre</li>
+                        <li>Au moins un caractère spécial</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirmer le nouveau mot de passe</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => handlePasswordInputChange("confirmPassword", e.target.value)}
+                        placeholder="Confirmez le nouveau mot de passe"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row">
+                    <Button onClick={handleSavePassword} disabled={isSavingPassword} className="flex w-full items-center gap-2 sm:w-auto">
+                      <Save className="w-4 h-4" />
+                      {isSavingPassword ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
+                    </Button>
+                    <Button variant="outline" onClick={handleCancelPassword} className="flex w-full items-center gap-2 sm:w-auto">
+                      <X className="w-4 h-4" />
+                      Annuler
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </AppLayout>

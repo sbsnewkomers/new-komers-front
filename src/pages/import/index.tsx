@@ -1,207 +1,37 @@
 "use client";
-
-import { useEffect, useState, useCallback } from "react";
+import * as XLSX from 'xlsx';
+import { useEffect, useState, useCallback, useRef } from "react";
 import Head from "next/head";
-import Link from "next/link";
 import { useCompanies } from "@/hooks";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
-import { Progress } from "@/components/ui/Progress";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/Table";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/Dialog";
-import { Select } from "@/components/ui/Select";
-import { Input } from "@/components/ui/Input";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
-import {
-  FileText,
-  Sheet,
-  Plug,
-  Upload,
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  ArrowRight,
-  ArrowDown,
-  FileUp,
-  History,
-  AlertTriangle,
-  User,
-  Sparkles,
-  RotateCcw,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
-
-const REQUIRED_FIELDS = ["Compte", "Débit", "Crédit"];
-
-type ImportHistoryRow = {
-  id: string;
-  file: string;
-  date: string;
-  status: "En cours" | "Terminé" | "Erreur";
-  user: string;
-};
-
-type ValidationError = { line: number; message: string };
-
-/* ─── Status badge ─── */
-function StatusBadge({ status }: { status: ImportHistoryRow["status"] }) {
-  const map = {
-    Terminé: {
-      bg: "bg-emerald-50",
-      text: "text-emerald-700",
-      icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-      ring: "ring-emerald-200",
-    },
-    "En cours": {
-      bg: "bg-amber-50",
-      text: "text-amber-700",
-      icon: <Clock className="h-3.5 w-3.5" />,
-      ring: "ring-amber-200",
-    },
-    Erreur: {
-      bg: "bg-red-50",
-      text: "text-red-700",
-      icon: <XCircle className="h-3.5 w-3.5" />,
-      ring: "ring-red-200",
-    },
-  };
-  const s = map[status];
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${s.bg} ${s.text} ${s.ring}`}
-    >
-      {s.icon}
-      {status}
-    </span>
-  );
-}
-
-/* ─── Upload drop zone ─── */
-function UploadZone({
-  type,
-  accept,
-  inputId,
-  title,
-  subtitle,
-  formats,
-  dragOver,
-  onDrop,
-  onDragOver,
-  onDragLeave,
-  onFileInput,
-}: {
-  type: "fec" | "excel";
-  accept: string;
-  inputId: string;
-  title: string;
-  subtitle: string;
-  formats: string;
-  dragOver: boolean;
-  onDrop: (e: React.DragEvent, type: "fec" | "excel") => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragLeave: (e: React.DragEvent) => void;
-  onFileInput: (e: React.ChangeEvent<HTMLInputElement>, type: "fec" | "excel") => void;
-}) {
-  return (
-    <Card
-      className={`relative overflow-hidden transition-all duration-300 cursor-pointer group ${
-        dragOver
-          ? "ring-2 ring-primary shadow-lg shadow-primary/10 scale-[1.01] bg-primary/2"
-          : "hover:shadow-md hover:border-slate-200"
-      }`}
-      onDrop={(e) => onDrop(e, type)}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-    >
-      <div className="absolute inset-0 bg-linear-to-br from-primary/2 to-transparent pointer-events-none" />
-      <CardContent className="p-8! flex flex-col items-center justify-center min-h-[260px] relative">
-        <div
-          className={`mb-5 rounded-2xl p-4 transition-all duration-300 ${
-            dragOver
-              ? "bg-primary/10 scale-110"
-              : "bg-slate-50 group-hover:bg-primary/5 group-hover:scale-105"
-          }`}
-        >
-          <Upload
-            className={`h-8 w-8 transition-colors duration-300 ${
-              dragOver ? "text-primary" : "text-slate-400 group-hover:text-primary/70"
-            }`}
-          />
-        </div>
-        <h3 className="text-base font-semibold text-slate-700 mb-1">{title}</h3>
-        <p className="text-sm text-slate-500 mb-1">{subtitle}</p>
-        <p className="text-xs text-slate-400 mb-5">
-          Formats supportés : <span className="font-medium">{formats}</span>
-        </p>
-        <input
-          type="file"
-          accept={accept}
-          className="hidden"
-          id={inputId}
-          onChange={(e) => onFileInput(e, type)}
-        />
-        <label htmlFor={inputId}>
-          <Button
-            type="button"
-            variant="outline"
-            className="pointer-events-none gap-2"
-          >
-            <FileUp className="h-4 w-4" />
-            Parcourir les fichiers
-          </Button>
-        </label>
-      </CardContent>
-    </Card>
-  );
-}
+import { Sheet, Plug, ArrowRight, FileUp, Settings } from "lucide-react";
+import { apiFetch, ApiError } from "@/lib/apiClient";
+import { usePermissionsContext } from "@/permissions/PermissionsProvider";
+import { Toast } from "@/components/ui/Toast";
+import { EntitySelector } from "@/features/import/EntitySelector";
+import { cleanMapping } from "@/features/import/MappingUtils";
+import { SavedMappingModal } from "@/features/import/SavedMappingModal";
+import { UploadZone } from "@/features/import/UploadZone";
+import { ImportInProgress } from "@/features/import/ImportInProgress";
+import { ImportHistory } from "@/features/import/ImportHistory";
+import { MappingModal } from "@/features/import/MappingModal";
+import { ValidationErrorsModal } from "@/features/import/ValidationErrorsModal";
+import { ConfirmReplaceDialog } from "@/features/import/ConfirmReplaceDialog";
+import { RollbackConfirmDialog } from "@/features/import/RollbackConfirmDialog";
+import { ApiTabContent } from "@/features/import/ApiTabContent";
+import { Basic_COLUMNS } from "@/features/import/constants";
+import { ImportHistoryRow, ImportProgress, ValidationError, SavedMapping, MappingPayload } from "@/features/import/types";
+import { useRouter } from 'next/navigation';
 
 export default function ImportPage() {
   const companies = useCompanies();
+  const router = useRouter();
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
-  const [activeTab, setActiveTab] = useState("fec");
-  const [importsInProgress, setImportsInProgress] = useState<
-    { id: string; name: string; progress: number }[]
-  >([]);
-  const [history, setHistory] = useState<ImportHistoryRow[]>([
-    {
-      id: "1",
-      file: "export_fec_2024.csv",
-      date: "2025-02-18",
-      status: "Terminé",
-      user: "admin@example.com",
-    },
-    {
-      id: "2",
-      file: "compta.xlsx",
-      date: "2025-02-17",
-      status: "Terminé",
-      user: "admin@example.com",
-    },
-  ]);
+  const [activeTab, setActiveTab] = useState("excel");
+  const [importsInProgress, setImportsInProgress] = useState<ImportProgress[]>([]);
+  const [history, setHistory] = useState<ImportHistoryRow[]>([]);
 
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -215,48 +45,463 @@ export default function ImportPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [rollbackTarget, setRollbackTarget] = useState<ImportHistoryRow | null>(null);
   const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
+  const [selectedEntityType, setSelectedEntityType] = useState<'Group' | 'Company' | null>(null);
+  
+  const [selectedSavedMapping, setSelectedSavedMapping] = useState<SavedMapping | null>(null);
+  const [savedMappingModalOpen, setSavedMappingModalOpen] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingMappingId, setPendingMappingId] = useState<string | null>(null);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successDetails, setSuccessDetails] = useState<{
+    linesCount?: number;
+    fileName?: string;
+    entityName?: string;
+  } | null>(null);
 
+  // Récupération du rôle utilisateur courant
+  const { user: currentUser } = usePermissionsContext();
+  const isAdmin = currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN';
+
+  // Ref pour éviter les appels multiples
+  const isImportingRef = useRef(false);
+  const fetchHistory = useCallback(async () => {
+  try {
+    const data = await apiFetch<any[]>("/generic-import/history", {
+      method: "GET",
+      snackbar: { showError: false, showSuccess: false },
+    });
+
+    const mapped: ImportHistoryRow[] = data.map((item) => ({
+      id: item.id,
+      file: item.file,
+      date: item.date,
+      status: item.status,  
+      entityType: item.entityType ?? "—",
+      entityName: item.entityName ?? "—",
+      entityId: item.entityId,
+      user: item.user,
+      linesCount: item.linesCount,
+    }));
+
+    setHistory(mapped);
+  } catch (err) {
+    console.error("Erreur load history:", err);
+  }
+}, []);
 
   useEffect(() => {
     companies.fetchList();
+    fetchHistory();
   }, []);
+
+  
 
   const companyList = companies.list ?? [];
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent, type: "fec" | "excel") => {
-      e.preventDefault();
-      setDragOver(false);
-      const f = e.dataTransfer.files[0];
-      if (!f) return;
-      const isCsv = f.name.endsWith(".csv");
-      const isExcel = f.name.endsWith(".xlsx") || f.name.endsWith(".xls");
-      if (type === "fec" && !isCsv) return;
-      if (type === "excel" && !isCsv && !isExcel) return;
-      if (type === "excel" && isExcel) {
-        window.alert("Veuillez exporter ce fichier en CSV pour l'import.");
-        return;
+  const applySavedMapping = (savedMapping: SavedMapping) => {
+    setSelectedSavedMapping(savedMapping);
+    
+    if (csvFile && csvHeaders.length > 0) {
+      const newMapping: Record<string, string> = {};
+      csvHeaders.forEach(header => {
+        if (savedMapping.rules[header]) {
+          newMapping[header] = savedMapping.rules[header];
+        } else {
+          const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === header.toLowerCase());
+          newMapping[header] = match ? match.name : "";
+        }
+      });
+      setMapping(newMapping);
+      setMappingOpen(true);
+    }
+  };
+
+  const handleFileUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target?.result as ArrayBuffer);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      if (json.length > 0) {
+        const headers = json[0] as string[];
+        setCsvHeaders(headers);
+        const initialMapping: Record<string, string> = {};
+        headers.forEach((h) => {
+          const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+          initialMapping[h] = match ? match.name : "";
+        });
+        setMapping(initialMapping);
       }
-      if (type === "excel" || type === "fec") {
-        setCsvFile(f);
-        const reader = new FileReader();
-        reader.onload = () => {
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent, type: "excel") => {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files[0];
+    if (!f) return;
+    
+    setCsvFile(null);
+    setCsvHeaders([]);
+    setMapping({});
+
+    const isCsv = f.name.endsWith(".csv");
+    const isExcel = f.name.endsWith(".xlsx") || f.name.endsWith(".xls");
+    const isTxt = f.name.endsWith(".txt");
+
+    if (type === "excel" && !isCsv && !isExcel && !isTxt) return;
+
+    if (type === "excel") {
+      setCsvFile(f);
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        let headers: string[] = [];
+
+        if (isExcel) {
+          const data = new Uint8Array(event.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: "array" });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
+        } else {
           const text = reader.result as string;
           const firstLine = text.split("\n")[0];
-          const headers = firstLine.split(/[,\t]/).map((h) => h.trim());
-          setCsvHeaders(headers);
-          const initial: Record<string, string> = {};
+          headers = firstLine.split(/[,\t;]/).map((h) => h.trim().replace(/^"|"$/g, ''));
+        }
+
+        setCsvHeaders(headers);
+        
+        let initialMapping: Record<string, string> = {};
+        
+        if (selectedSavedMapping) {
           headers.forEach((h) => {
-            initial[h] = REQUIRED_FIELDS.includes(h) ? h : "";
+            if (selectedSavedMapping.rules[h]) {
+              initialMapping[h] = selectedSavedMapping.rules[h];
+            } else {
+              const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+              initialMapping[h] = match ? match.name : "";
+            }
           });
-          setMapping(initial);
-          setMappingOpen(true);
-        };
+          setSelectedSavedMapping(null);
+        } else {
+          headers.forEach((h) => {
+            const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+            initialMapping[h] = match ? match.name : "";
+          });
+        }
+        
+        setMapping(initialMapping);
+        setMappingOpen(true);
+      };
+
+      if (isExcel) {
+        reader.readAsArrayBuffer(f);
+      } else {
         reader.readAsText(f, "UTF-8");
       }
-    },
-    []
-  );
+    }
+  }, [selectedSavedMapping]);
+
+  const parseHeaders = (file: File): Promise<string[]> => {
+    return new Promise((resolve) => {
+      const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (isExcel) {
+          const data = new Uint8Array(event.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          resolve((json[0] as string[]) || []);
+        } else {
+          const text = event.target?.result as string;
+          resolve(text.split("\n")[0].split(/[,\t;]/).map((h) => h.trim().replace(/^"|"$/g, "")));
+        }
+      };
+      isExcel ? reader.readAsArrayBuffer(file) : reader.readAsText(file, "UTF-8");
+    });
+  };
+
+  const checkEntityHasData = async (entityId: string, entityType: 'Group' | 'Company'): Promise<boolean> => {
+    try {
+      const response = await apiFetch<{ hasData: boolean }>(
+        `/generic-import/entityType/${entityId}/has-data?entityType=${entityType}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      return response.hasData;
+    } catch (error) {
+      console.error("Erreur:", error);
+      return false;
+    }
+  };
+
+  const handleEntityChange = async (entityId: string, entityType: 'Group' | 'Company') => {
+    setSelectedEntityId(entityId);
+    setSelectedEntityType(entityType);
+    setWorkspaceId(null);
+    try {
+      if (entityType === 'Company') {
+        const company = await apiFetch<{ workspace_id: string }>(
+          `/companies/${entityId}`,
+          { snackbar: { showSuccess: false, showError: false } }
+        );
+        setWorkspaceId(company.workspace_id ?? null);
+      } else {
+        const group = await apiFetch<{ workspace_id: string }>(
+          `/groups/${entityId}`,
+          { snackbar: { showSuccess: false, showError: false } }
+        );
+        setWorkspaceId(group.workspace_id ?? null);
+      }
+    } catch {
+      setWorkspaceId(null);
+    }
+  };
+
+  const performImport = async (
+    existingMappingId?: string,
+    fileOverride?: File,
+    entityIdOverride?: string,
+    entityTypeOverride?: 'Group' | 'Company'
+  ) => {
+    if (isImportingRef.current) {
+      console.log("Import déjà en cours, ignore");
+      return;
+    }
+    
+    const fileToUse = fileOverride ?? csvFile;
+    const entityId = entityIdOverride ?? selectedEntityId;
+    const entityType = entityTypeOverride ?? selectedEntityType;
+
+    if (!fileToUse || !entityId || !entityType) {
+      console.error("Paramètres manquants :", { fileToUse, entityId, entityType });
+      return;
+    }
+
+    // ── Vérification workspaceId pour les non-admins ───────────────────────
+    // Les HEAD_MANAGER et MANAGER ne peuvent créer que des mappings locaux.
+    // Sans workspaceId résolu, on bloque l'import plutôt que d'envoyer GLOBAL.
+    if (!workspaceId && !isAdmin) {
+      setValidationErrors([{
+        line: 0,
+        column: 'N/A',
+        value: '',
+        reason: "Impossible de déterminer le workspace de l'entité sélectionnée. Veuillez resélectionner l'entité.",
+        message: "Workspace manquant pour l'import local."
+      }]);
+      setValidationModalOpen(true);
+      return;
+    }
+
+    isImportingRef.current = true;
+    setIsSubmitting(true);
+
+    try {
+      let mappingId: string;
+
+      if (existingMappingId) {
+        mappingId = existingMappingId;
+      } else {
+        const cleanedRules = cleanMapping(mapping);
+
+        // ── Calcul du scope pour le mapping auto-créé ──────────────────────
+        // - workspaceId présent → LOCAL pour tout le monde
+        // - workspaceId absent + admin → GLOBAL (cas légal)
+        // - workspaceId absent + non-admin → déjà bloqué ci-dessus
+        const effectiveScope = workspaceId ? 'LOCAL' : 'GLOBAL';
+
+        const templatePayload: any = {
+          name: `Mapping_${fileToUse.name}_${new Date().toLocaleDateString()}`,
+          rules: cleanedRules,
+          entityId,
+          entityType,
+          workspaceId: workspaceId ?? null,
+          scope: effectiveScope,
+        };
+
+        const templateData = await apiFetch<any>("/mapping-templates", {
+          method: 'POST',
+          body: JSON.stringify(templatePayload),
+          snackbar: { showSuccess: false, showError: false },
+        });
+
+        if (!templateData?.id) throw new Error("L'API n'a pas retourné d'ID de mapping.");
+        mappingId = templateData.id;
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileToUse);
+      formData.append('mappingId', mappingId);
+      formData.append('entityId', entityId);
+      formData.append('entityType', entityType);
+
+      console.log("Envoi de la requête avec:", {
+        fileName: fileToUse.name,
+        fileSize: fileToUse.size,
+        fileType: fileToUse.type,
+        mappingId,
+        entityId,
+        entityType
+      });
+
+      let importResult;
+      try {
+        importResult = await apiFetch<any>("/generic-import", {
+          method: 'POST',
+          body: formData,
+          snackbar: { showSuccess: false, showError: false },
+        });
+      } catch (apiError: unknown) {
+        console.error("Erreur API capturée:", apiError);
+        
+        let mappedErrors: ValidationError[] = [];
+        
+        if (apiError instanceof ApiError) {
+          if (apiError.details?.code === 'MAPPING_MISMATCH') {
+            mappedErrors = [{
+              line: 0,
+              column: 'N/A',
+              value: '',
+              reason: "Le fichier ne correspond pas au mapping sélectionné. Les colonnes de votre fichier ne correspondent pas aux colonnes attendues par le mapping.",
+              message: "Le fichier ne correspond pas au mapping sélectionné."
+            }];
+          } else {
+            mappedErrors = [{
+              line: 0,
+              column: 'N/A',
+              value: '',
+              reason: apiError.details?.message || apiError.message,
+              message: apiError.details?.message || apiError.message
+            }];
+          }
+        } else if (apiError instanceof Error) {
+          mappedErrors = [{
+            line: 0,
+            column: 'N/A',
+            value: '',
+            reason: apiError.message,
+            message: apiError.message
+          }];
+        }
+        
+        if (mappedErrors.length > 0) {
+          setValidationErrors(mappedErrors);
+          setValidationModalOpen(true);
+        }
+        
+        return;
+      }
+
+      console.log("Résultat de l'import:", importResult);
+
+      if (importResult && importResult.success === false) {
+        if (importResult.errors && Array.isArray(importResult.errors) && importResult.errors.length > 0) {
+          const mappedErrors: ValidationError[] = importResult.errors.map((err: any) => ({
+            line: err.line || 0,
+            column: err.column || 'N/A',
+            value: err.value || '',
+            reason: err.reason || err.message || 'Erreur inconnue',
+            message: err.reason || err.message
+          }));
+          
+          setValidationErrors(mappedErrors);
+          setValidationModalOpen(true);
+        } else if (importResult.message) {
+          setValidationErrors([{
+            line: 0,
+            column: 'N/A',
+            value: '',
+            reason: importResult.message,
+            message: importResult.message
+          }]);
+          setValidationModalOpen(true);
+        }
+        
+        return;
+      }
+
+      if (importResult && importResult.success === true) {
+  // Récupérer le nom de l'entité pour le message de succès
+  let entityName = '';
+  try {
+    if (entityType === 'Company') {
+      const company = await apiFetch<{ name: string }>(
+        `/companies/${entityId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      entityName = company.name;
+    } else {
+      const group = await apiFetch<{ name: string }>(
+        `/groups/${entityId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      entityName = group.name;
+    }
+  } catch {
+    entityName = entityId;
+  }
+
+  // Afficher le message de succès
+  const linesCount = importResult.linesCount || importResult.count || 0;
+  setSuccessMessage(`✅ Import réussi pour ${entityName}`);
+  setSuccessDetails({
+    linesCount: linesCount,
+    fileName: fileToUse.name,
+    entityName: entityName,
+  });
+
+  // Masquer automatiquement après 6 secondes
+  setTimeout(() => {
+    setSuccessMessage(null);
+    setSuccessDetails(null);
+  }, 6000);
+
+  setConfirmReplaceOpen(false);
+  setConfirmReplaceInput("");
+  setPendingMappingId(null);
+  setCsvFile(null);
+  setCsvHeaders([]);
+  setValidationErrors([]);
+  setValidationModalOpen(false);
+  await new Promise(resolve => setTimeout(resolve, 500));
+  await fetchHistory();
+  setHistoryOpen(true);
+}
+
+    } catch (error: any) {
+      console.error("Erreur inattendue:", error);
+      setValidationErrors([{
+        line: 0,
+        column: 'N/A',
+        value: '',
+        reason: error.message || 'Erreur inconnue',
+        message: error.message || 'Erreur inconnue'
+      }]);
+      setValidationModalOpen(true);
+    } finally {
+      setIsSubmitting(false);
+      isImportingRef.current = false;
+    }
+  };
+
+  const handleForceReplace = async () => {
+    if (confirmReplaceInput !== "REMPLACER") return;
+    await performImport(
+      pendingMappingId ?? undefined,
+      pendingFile ?? undefined,
+      selectedEntityId ?? undefined,
+      selectedEntityType ?? undefined
+    );
+    setPendingMappingId(null);
+  };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -268,74 +513,235 @@ export default function ImportPage() {
     setDragOver(false);
   }, []);
 
-  const handleFileInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>, type: "fec" | "excel") => {
-      const f = e.target.files?.[0];
-      if (!f) return;
-      const isExcel = f.name.endsWith(".xlsx") || f.name.endsWith(".xls");
-      if (type === "excel" && isExcel) {
-        window.alert("Veuillez exporter ce fichier en CSV pour l'import.");
-        return;
-      }
-      setCsvFile(f);
-      const reader = new FileReader();
-      reader.onload = () => {
-        const text = reader.result as string;
-        const firstLine = text.split("\n")[0];
-        const headers = firstLine.split(/[,\t]/).map((h) => h.trim());
-        setCsvHeaders(headers);
-        const initial: Record<string, string> = {};
-        headers.forEach((h) => {
-          initial[h] = REQUIRED_FIELDS.includes(h) ? h : "";
-        });
-        setMapping(initial);
-        setMappingOpen(true);
-      };
-      reader.readAsText(f, "UTF-8");
-    },
-    []
-  );
+  const handleFileInput = useCallback(async (e: React.ChangeEvent<HTMLInputElement>, type: "excel" | "api") => {
+    const f = e.target.files?.[0];
+    if (!f) return;
 
-  const runValidation = () => {
+    const isValid = f.name.endsWith(".xlsx") || f.name.endsWith(".xls") || f.name.endsWith(".csv") || f.name.endsWith(".txt");
+    if (type !== "excel" || !isValid) return;
+
+    e.target.value = "";
+
+    setCsvFile(f);
+    setPendingFile(f);
+    const headers = await parseHeaders(f);
+    setCsvHeaders(headers);
+    const initialMapping: Record<string, string> = {};
+    //  Créer le mapping automatique (mais ne pas ouvrir le modal tout de suite)
+    headers.forEach((h) => {
+      const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+      initialMapping[h] = match ? match.name : "";
+    });
+    setMapping(initialMapping);
+
+    // Ouvrir le modal pour choisir entre mapping existant ou nouveau
+    setSavedMappingModalOpen(true);
+  }, []);
+
+  const validateAndSaveMapping = async (incomingMapping?: Record<string, string>) => {
+    const finalMapping = incomingMapping ?? mapping;
+
     const errors: ValidationError[] = [];
-    if (!mapping["Compte"] || !mapping["Débit"] || !mapping["Crédit"]) {
-      errors.push({
-        line: 0,
-        message: "Mapping incomplet : Compte, Débit et Crédit sont requis.",
-      });
-    }
+
+    const mappedFields = Object.values(finalMapping).filter(
+      (v): v is string => typeof v === "string" && v.trim() !== ""
+    );
+
+    Basic_COLUMNS.filter(col => col.required).forEach(col => {
+      if (!mappedFields.includes(col.name)) {
+        errors.push({
+          line: 0,
+          column: col.name,
+          value: '',
+          reason: `Le champ "${col.name}" est obligatoire pour l'import.`,
+          message: `Le champ "${col.name}" est obligatoire pour l'import.`
+        });
+      }
+    });
+
     setValidationErrors(errors);
-    setMappingOpen(false);
+
     if (errors.length > 0) {
+      setMappingOpen(false);
       setValidationModalOpen(true);
-    } else {
-      setConfirmReplaceOpen(true);
+      return;
+    }
+
+    setMapping(finalMapping);
+    setIsSubmitting(true);
+
+    try {
+      const templatePayload: MappingPayload = {
+        name: `Mapping_${new Date().toISOString()}`,
+        rules: finalMapping,
+      };
+      if (selectedEntityId && selectedEntityType) {
+        templatePayload.entityId = selectedEntityId;
+        templatePayload.entityType = selectedEntityType;
+      }
+      await apiFetch("/mapping-templates", {
+        method: "POST",
+        body: JSON.stringify(templatePayload),
+        snackbar: {
+          showSuccess: true,
+          showError: true,
+          successMessage: "✅ Mapping validé et sauvegardé avec succès !",
+        },
+      });
+
+      setMappingOpen(false);
+    } catch (error) {
+      console.error("Erreur:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleConfirmReplace = () => {
-    if (confirmReplaceInput !== "REMPLACER") return;
-    setConfirmReplaceOpen(false);
-    setConfirmReplaceInput("");
-    setImportsInProgress((prev) => [
-      ...prev,
-      { id: String(Date.now()), name: csvFile?.name ?? "fichier", progress: 0 },
-    ]);
-    setTimeout(() => {
-      setImportsInProgress((p) =>
-        p.map((i) => (i.progress < 100 ? { ...i, progress: 100 } : i))
-      );
-      setHistory((h) => [
-        {
-          id: String(Date.now()),
-          file: csvFile?.name ?? "fichier",
-          date: new Date().toISOString().slice(0, 10),
-          status: "Terminé",
-          user: "utilisateur",
-        },
-        ...h,
-      ]);
-    }, 1500);
+  const handleSelectSavedMapping = async (savedMapping: SavedMapping) => {
+    try {
+      const fileToUse = pendingFile;
+      const entityId = selectedEntityId;
+      const entityType = selectedEntityType;
+
+      if (!fileToUse || !entityId || !entityType) {
+        setValidationErrors([{
+          line: 0,
+          column: 'N/A',
+          value: '',
+          reason: "Veuillez sélectionner une entité et un fichier avant d'importer.",
+          message: "Veuillez sélectionner une entité et un fichier avant d'importer."
+        }]);
+        setValidationModalOpen(true);
+        return;
+      }
+
+      const newMapping: Record<string, string> = {};
+      csvHeaders.forEach((h) => {
+        newMapping[h] = savedMapping.rules[h] ??
+          (Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase())?.name ?? "");
+      });
+      setMapping(newMapping);
+
+      const hasData = await checkEntityHasData(entityId, entityType);
+      if (hasData) {
+        setPendingMappingId(savedMapping.id);
+        setConfirmReplaceOpen(true);
+        return;
+      }
+
+      await performImport(savedMapping.id, fileToUse, entityId, entityType);
+    } catch (error) {
+      console.error("Erreur dans handleSelectSavedMapping:", error);
+      
+      let mappedErrors: ValidationError[] = [];
+      
+      if (error instanceof ApiError) {
+        if (error.details?.code === 'MAPPING_MISMATCH') {
+          mappedErrors = [{
+            line: 0,
+            column: 'N/A',
+            value: '',
+            reason: "Le fichier ne correspond pas au mapping sélectionné. Les colonnes de votre fichier ne correspondent pas aux colonnes attendues par le mapping.",
+            message: "Le fichier ne correspond pas au mapping sélectionné."
+          }];
+        } else {
+          mappedErrors = [{
+            line: 0,
+            column: 'N/A',
+            value: '',
+            reason: error.details?.message || error.message,
+            message: error.details?.message || error.message
+          }];
+        }
+      } else if (error instanceof Error) {
+        mappedErrors = [{
+          line: 0,
+          column: 'N/A',
+          value: '',
+          reason: error.message,
+          message: error.message
+        }];
+      }
+      
+      if (mappedErrors.length > 0) {
+        setValidationErrors(mappedErrors);
+        setValidationModalOpen(true);
+      }
+    }
+  };
+
+  const handleConfirmReplace = async () => {
+    if (!csvFile) {
+      setValidationErrors([{
+        line: 0,
+        column: 'N/A',
+        value: '',
+        reason: "Veuillez d'abord sélectionner un fichier.",
+        message: "Veuillez d'abord sélectionner un fichier."
+      }]);
+      setValidationModalOpen(true);
+      return;
+    }
+
+    if (!selectedEntityId || !selectedEntityType) {
+      setValidationErrors([{
+        line: 0,
+        column: 'N/A',
+        value: '',
+        reason: "Veuillez sélectionner une entité (Groupe ou Entreprise) avant d'importer.",
+        message: "Veuillez sélectionner une entité (Groupe ou Entreprise) avant d'importer."
+      }]);
+      setValidationModalOpen(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const hasData = await checkEntityHasData(selectedEntityId, selectedEntityType);
+      
+      if (hasData) {
+        setConfirmReplaceOpen(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      await performImport();
+    } catch (error) {
+      console.error("Erreur dans handleConfirmReplace:", error);
+      
+      let mappedErrors: ValidationError[] = [];
+      
+      if (error instanceof ApiError) {
+        mappedErrors = [{
+          line: 0,
+          column: 'N/A',
+          value: '',
+          reason: error.details?.message || error.message,
+          message: error.details?.message || error.message
+        }];
+      } else if (error instanceof Error) {
+        mappedErrors = [{
+          line: 0,
+          column: 'N/A',
+          value: '',
+          reason: error.message,
+          message: error.message
+        }];
+      }
+      
+      if (mappedErrors.length > 0) {
+        setValidationErrors(mappedErrors);
+        setValidationModalOpen(true);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleImport = () => {
+    setMappingOpen(false);
+    handleConfirmReplace();
   };
 
   return (
@@ -348,9 +754,19 @@ export default function ImportPage() {
       <Head>
         <title>Import</title>
       </Head>
+      {successMessage && (
+      <Toast
+        message={successMessage}
+        type="success"
+        details={successDetails || undefined}
+        onClose={() => {
+          setSuccessMessage(null);
+          setSuccessDetails(null);
+        }}
+      />
+    )}
 
       <div className="space-y-8">
-        {/* ─── Page header ─── */}
         <div>
           <div className="flex items-center gap-3 mb-1">
             <div className="rounded-xl bg-primary/10 p-2.5">
@@ -364,508 +780,136 @@ export default function ImportPage() {
             </div>
           </div>
         </div>
+        
+        <EntitySelector
+          selectedEntityId={selectedEntityId}
+          selectedEntityType={selectedEntityType}
+          onEntityChange={handleEntityChange}
+        />
 
-        {/* ─── Step indicator ─── */}
-        {/* <Card className="bg-white">
-          <CardContent className="py-6! px-6!">
-            <StepIndicator steps={STEPS} current={currentStep} />
-          </CardContent>
-        </Card> */}
-
-        {/* ─── Source tabs ─── */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="h-12 p-1.5 bg-slate-100 rounded-xl gap-1">
-            <TabsTrigger
-              value="fec"
-              className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md"
-            >
-              <FileText className="h-4 w-4" />
-              FEC
-            </TabsTrigger>
-            <TabsTrigger
-              value="excel"
-              className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md"
-            >
-              <Sheet className="h-4 w-4" />
-              Excel / CSV
-            </TabsTrigger>
-            <TabsTrigger
-              value="api"
-              className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-md"
-            >
-              <Plug className="h-4 w-4" />
-              API
-            </TabsTrigger>
-          </TabsList>
-
-          {/* FEC tab */}
-          <TabsContent value="fec" className="mt-6">
-            <UploadZone
-              type="fec"
-              accept=".csv,.txt"
-              inputId="fec-upload"
-              title="Import FEC"
-              subtitle="Glissez-déposez votre fichier FEC ici"
-              formats=".csv, .txt"
-              dragOver={dragOver}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onFileInput={handleFileInput}
-            />
-          </TabsContent>
-
-          {/* Excel/CSV tab */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <TabsList className="h-auto w-full gap-1 rounded-xl bg-slate-100 p-1.5 sm:h-12 sm:w-auto">
+              <TabsTrigger value="excel" className="gap-2 flex-1 rounded-lg px-4 py-2 data-[state=active]:shadow-md">
+                <Sheet className="h-4 w-4" />
+                Excel / CSV
+              </TabsTrigger>
+              <TabsTrigger value="api" className="gap-2 flex-1 rounded-lg px-4 py-2 data-[state=active]:shadow-md">
+                <Plug className="h-4 w-4" />
+                API
+              </TabsTrigger>
+            </TabsList>
+            <div className="flex items-center justify-end">
+              <Button
+                variant="outline"
+                className="w-full gap-2 sm:w-auto"
+                onClick={() => setMappingOpen(true)}
+              >
+                <Settings className="h-4 w-4" />
+                Mappings
+              </Button>
+            </div>
+          </div>
           <TabsContent value="excel" className="mt-6 space-y-4">
             <UploadZone
               type="excel"
-              accept=".csv,.xlsx,.xls"
+              accept=".csv,.xlsx,.xls,.txt"
               inputId="excel-upload"
-              title="Import Excel / CSV"
+              title="Import Excel / CSV / TXT"
               subtitle="Glissez-déposez votre fichier ici"
-              formats=".csv, .xlsx, .xls"
+              formats=".csv, .xlsx, .xls, .txt"
               dragOver={dragOver}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onFileInput={handleFileInput}
             />
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                className="gap-2"
-                onClick={() => setMappingOpen(true)}
-              >
-                <ArrowRight className="h-4 w-4" />
-                Configurer le mapping
-              </Button>
-            </div>
           </TabsContent>
 
-          {/* API tab */}
           <TabsContent value="api" className="mt-6">
-            <Card className="bg-white">
-              <CardContent className="py-16! flex flex-col items-center justify-center">
-                <div className="mb-6 flex items-center justify-center gap-4">
-                  <div className="flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 shadow-sm">
-                    <span className="font-bold text-slate-800">Sage</span>
-                  </div>
-                  <div className="flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 shadow-sm">
-                    <span className="font-bold text-emerald-600">Pennylane</span>
-                  </div>
-                  <div className="flex z-10 h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 shadow-md ring-4 ring-white">
-                    <Plug className="h-8 w-8 text-primary" />
-                  </div>
-                  <div className="flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 shadow-sm">
-                    <span className="font-bold text-blue-600">Cegid</span>
-                  </div>
-                  <div className="flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 shadow-sm">
-                    <span className="font-bold text-green-600">QuickBooks</span>
-                  </div>
-                </div>
-                <h3 className="text-base font-semibold text-slate-700 mb-1">
-                  Connecteurs API
-                </h3>
-                <p className="text-sm text-slate-500 mb-6 text-center max-w-sm">
-                  Configurez vos connecteurs pour synchroniser automatiquement vos données comptables depuis vos logiciels.
-                </p>
-                <Link href="/import/connectors">
-                  <Button className="gap-2 bg-primary text-white hover:bg-primary/90">
-                    <Sparkles className="h-4 w-4" />
-                    Configurer les connecteurs
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+            <ApiTabContent />
           </TabsContent>
         </Tabs>
 
-        {/* ─── Imports in progress ─── */}
-        {importsInProgress.length > 0 && (
-          <Card className="bg-white overflow-hidden">
-            <div className="border-b border-slate-100 px-6 py-4 flex items-center gap-3">
-              <div className="rounded-lg bg-amber-50 p-2">
-                <Loader2 className="h-4 w-4 text-amber-600 animate-spin" />
-              </div>
-              <h3 className="font-semibold text-primary">Imports en cours</h3>
-              <span className="ml-auto rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
-                {importsInProgress.length}
-              </span>
-            </div>
-            <CardContent className="p-6!">
-              <div className="space-y-4">
-                {importsInProgress.map((imp) => (
-                  <div key={imp.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-slate-400" />
-                        <span className="text-sm font-medium text-slate-700">
-                          {imp.name}
-                        </span>
-                      </div>
-                      <span className="text-xs font-medium text-slate-500">
-                        {imp.progress}%
-                      </span>
-                    </div>
-                    <Progress value={imp.progress} max={100} className="h-2" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <ImportInProgress imports={importsInProgress} />
 
-        {/* ─── Import history ─── */}
-        <Card className="bg-white overflow-hidden w-full">
-          <button
-            type="button"
-            onClick={() => setHistoryOpen((o) => !o)}
-            className="w-full border-b border-slate-100 px-6 py-4 flex items-center gap-3 hover:bg-slate-50/50 transition-colors cursor-pointer"
-          >
-            <div className="rounded-lg bg-slate-50 p-2">
-              <History className="h-4 w-4 text-slate-600" />
-            </div>
-            <h3 className="font-semibold text-primary">Historique des imports</h3>
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-              {history.length} import{history.length > 1 ? "s" : ""}
-            </span>
-            <span className="ml-auto">
-              {historyOpen ? (
-                <ChevronUp className="h-5 w-5 text-slate-400" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-slate-400" />
-              )}
-            </span>
-          </button>
-          {historyOpen && (
-            <>
-              {history.length === 0 ? (
-                <CardContent className="py-16! flex flex-col items-center justify-center">
-                  <div className="mb-4 rounded-2xl bg-slate-50 p-4">
-                    <History className="h-8 w-8 text-slate-300" />
-                  </div>
-                  <p className="text-sm text-slate-500">Aucun import réalisé pour le moment</p>
-                </CardContent>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-slate-50/50">
-                        <TableHead className="font-semibold text-slate-600">Fichier</TableHead>
-                        <TableHead className="font-semibold text-slate-600">Date</TableHead>
-                        <TableHead className="font-semibold text-slate-600">Statut</TableHead>
-                        <TableHead className="font-semibold text-slate-600">Utilisateur</TableHead>
-                        <TableHead className="font-semibold text-slate-600 text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {history.map((row) => (
-                        <TableRow
-                          key={row.id}
-                          className="hover:bg-slate-50/50 transition-colors"
-                        >
-                          <TableCell>
-                            <div className="flex items-center gap-2.5">
-                              <div className="rounded-lg bg-primary/5 p-1.5">
-                                <FileText className="h-4 w-4 text-primary/60" />
-                              </div>
-                              <span className="font-medium text-slate-700">
-                                {row.file}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-slate-600">{row.date}</TableCell>
-                          <TableCell>
-                            <StatusBadge status={row.status} />
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100">
-                                <User className="h-3.5 w-3.5 text-slate-500" />
-                              </div>
-                              <span className="text-sm text-slate-600">{row.user}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {row.status === "Terminé" && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="gap-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                                onClick={() => {
-                                  setRollbackTarget(row);
-                                  setRollbackConfirmOpen(true);
-                                }}
-                              >
-                                <RotateCcw className="h-3.5 w-3.5" />
-                                Restaurer
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </>
-          )}
-        </Card>
+        <ImportHistory
+          history={history}
+          historyOpen={historyOpen}
+          onToggle={() => setHistoryOpen(!historyOpen)}
+          onRollback={(row) => {
+            setRollbackTarget(row);
+            setRollbackConfirmOpen(true);
+          }}
+          onViewEntries={(row) => {
+            void router.push(`/import/entries?file=${encodeURIComponent(row.file)}`);
+          }}
+        />
       </div>
 
-      {/* ════════════════ Rollback confirmation ════════════════ */}
-      <AlertDialog open={rollbackConfirmOpen} onOpenChange={setRollbackConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-amber-700">
-              <div className="rounded-lg bg-amber-50 p-1.5">
-                <RotateCcw className="h-5 w-5 text-amber-600" />
-              </div>
-              Confirmer le rollback
-            </AlertDialogTitle>
-            <AlertDialogDescription className="mt-3 text-slate-600">
-              Vous êtes sur le point d&apos;annuler l&apos;import du fichier{" "}
-              <span className="font-semibold text-slate-700">
-                {rollbackTarget?.file}
-              </span>{" "}
-              du {rollbackTarget?.date}. Cette action restaurera les données précédentes.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => {
-                setRollbackConfirmOpen(false);
-                setRollbackTarget(null);
-              }}
-            >
-              Annuler
-            </Button>
-            <Button
-              type="button"
-              className="gap-1.5 bg-amber-600 text-white hover:bg-amber-700"
-              onClick={() => {
-                if (rollbackTarget) {
-                  setHistory((h) => h.filter((r) => r.id !== rollbackTarget.id));
-                }
-                setRollbackConfirmOpen(false);
-                setRollbackTarget(null);
-              }}
-            >
-              <RotateCcw className="h-4 w-4" />
-              Confirmer le rollback
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <MappingModal
+        open={mappingOpen}
+        onOpenChange={setMappingOpen}
+        csvHeaders={csvHeaders}
+        mapping={mapping}
+        onMappingChange={setMapping}
+        onValidateMapping={validateAndSaveMapping}
+        onImport={handleImport}
+        isSubmitting={isSubmitting}
+        entityId={selectedEntityId}
+        entityType={selectedEntityType}
+        showImportButton={!!csvFile}
+        onFileUpload={handleFileUpload}
+        workspaceId={workspaceId}
+      />
+      
+      <SavedMappingModal
+        open={savedMappingModalOpen}
+        onOpenChange={setSavedMappingModalOpen}
+        fileName={csvFile?.name ?? ""}
+        onSelectMapping={handleSelectSavedMapping}
+        onCreateNew={() => setMappingOpen(true)}
+        workspaceId={workspaceId}
+      />
 
-      {/* ════════════════ Mapping modal ════════════════ */}
-      <Dialog open={mappingOpen} onOpenChange={setMappingOpen}>
-        <DialogContent className="max-w-2xl" onClose={() => setMappingOpen(false)}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="rounded-lg bg-primary/10 p-1.5">
-                <Sparkles className="h-4 w-4 text-primary" />
-              </div>
-              Mapping des champs
-            </DialogTitle>
-          </DialogHeader>
+      <ValidationErrorsModal
+        open={validationModalOpen}
+        onOpenChange={setValidationModalOpen}
+        errors={validationErrors}
+      />
 
-          <div className="grid grid-cols-2 gap-6 py-4">
-            {/* Left – detected columns */}
-            <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Colonnes détectées
-              </p>
-              <div className="space-y-1.5 rounded-xl border border-slate-200 bg-slate-50/50 p-3">
-                {csvHeaders.map((h) => {
-                  const isMapped = Object.values(mapping).includes(h) || mapping[h];
-                  return (
-                    <div
-                      key={h}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                        isMapped
-                          ? "bg-emerald-50 text-emerald-700 font-medium"
-                          : "text-slate-600"
-                      }`}
-                    >
-                      {isMapped ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                      ) : (
-                        <div className="h-3.5 w-3.5 rounded-full border-2 border-slate-300" />
-                      )}
-                      {h}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+      <ConfirmReplaceDialog
+        open={confirmReplaceOpen}
+        onOpenChange={setConfirmReplaceOpen}
+        confirmInput={confirmReplaceInput}
+        onConfirmInputChange={setConfirmReplaceInput}
+        onConfirm={handleForceReplace}
+      />
 
-            {/* Right – required field mapping */}
-            <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Champs requis
-              </p>
-              <div className="space-y-3">
-                {REQUIRED_FIELDS.map((field) => (
-                  <div
-                    key={field}
-                    className="rounded-xl border border-slate-200 bg-white p-3"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                        Requis
-                      </span>
-                      <span className="text-sm font-medium text-slate-700">
-                        {field}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <ArrowRight className="h-4 w-4 text-slate-400 shrink-0" />
-                      <Select
-                        value={
-                          Object.entries(mapping).find(([, v]) => v === field)?.[0] ??
-                          ""
-                        }
-                        onValueChange={(v) =>
-                          setMapping((prev) => {
-                            const next = { ...prev };
-                            Object.keys(next).forEach((k) => {
-                              if (next[k] === field) next[k] = "";
-                            });
-                            if (v) next[v] = field;
-                            return next;
-                          })
-                        }
-                        placeholder="Sélectionner une colonne"
-                        className="flex-1"
-                      >
-                        <option value="">—</option>
-                        {csvHeaders.map((h) => (
-                          <option key={h} value={h}>
-                            {h}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button variant="outline" type="button" className="gap-1.5">
-              <FileUp className="h-4 w-4" />
-              Charger un modèle
-            </Button>
-            <Button variant="outline" type="button" className="gap-1.5">
-              <ArrowDown className="h-4 w-4" />
-              Sauvegarder le modèle
-            </Button>
-            <Button
-              type="button"
-              onClick={runValidation}
-              className="gap-1.5 bg-primary text-white hover:bg-primary/90"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              Valider
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ════════════════ Validation errors modal ════════════════ */}
-      <Dialog open={validationModalOpen} onOpenChange={setValidationModalOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <div className="rounded-lg bg-red-50 p-1.5">
-                <AlertTriangle className="h-4 w-4 text-red-500" />
-              </div>
-              Erreurs de validation
-            </DialogTitle>
-          </DialogHeader>
-          <div className="overflow-auto max-h-64 rounded-xl border border-red-100">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-red-50/50">
-                  <TableHead className="font-semibold text-red-700">Ligne</TableHead>
-                  <TableHead className="font-semibold text-red-700">Message</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {validationErrors.map((e, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-mono text-red-600">{e.line}</TableCell>
-                    <TableCell className="text-red-600">{e.message}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setValidationModalOpen(false)}
-            >
-              Fermer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ════════════════ Confirm replace dialog ════════════════ */}
-      <AlertDialog open={confirmReplaceOpen} onOpenChange={setConfirmReplaceOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-amber-700">
-              <div className="rounded-lg bg-amber-50 p-1.5">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
-              </div>
-              ATTENTION
-            </AlertDialogTitle>
-            <AlertDialogDescription className="mt-3 text-slate-600">
-              Cette action est irréversible. Les données existantes pour cette période
-              seront remplacées par le contenu du fichier importé. Pour confirmer,
-              saisissez{" "}
-              <span className="rounded bg-amber-50 px-1.5 py-0.5 font-mono font-bold text-amber-700">
-                REMPLACER
-              </span>{" "}
-              ci-dessous.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <Input
-            placeholder="Saisir REMPLACER"
-            value={confirmReplaceInput}
-            onChange={(e) => setConfirmReplaceInput(e.target.value)}
-            className="mt-4"
-          />
-          <AlertDialogFooter>
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => {
-                setConfirmReplaceOpen(false);
-                setConfirmReplaceInput("");
-              }}
-            >
-              Annuler
-            </Button>
-            <Button
-              type="button"
-              disabled={confirmReplaceInput !== "REMPLACER"}
-              onClick={handleConfirmReplace}
-              className="bg-amber-600 text-white hover:bg-amber-700"
-            >
-              Confirmer l&apos;import
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <RollbackConfirmDialog
+        open={rollbackConfirmOpen}
+        onOpenChange={setRollbackConfirmOpen}
+        target={rollbackTarget}
+        onConfirm={async () => {
+        if (!rollbackTarget) return;
+        try {
+          await apiFetch("/generic-import/restore", {
+            method: "POST",
+            body: JSON.stringify({
+              dataImportId: rollbackTarget.id,
+              entityId: rollbackTarget.entityId,
+              entityType: rollbackTarget.entityType,
+            }),
+            snackbar: { showSuccess: true, showError: true, successMessage: "✅ Import restauré avec succès !" },
+          });
+          await fetchHistory();
+        } catch (err) {
+          console.error("Erreur restauration:", err);
+        }
+        setRollbackConfirmOpen(false);
+        setRollbackTarget(null);
+      }}
+      />
     </AppLayout>
   );
 }

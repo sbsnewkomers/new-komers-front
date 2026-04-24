@@ -2,7 +2,7 @@ import * as React from "react";
 
 export function Table({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="w-full overflow-auto">
+    <div className="w-full overflow-x-auto overscroll-x-contain">
       <table
         className={`w-full caption-bottom text-sm ${className ?? ""}`}
         {...props}
@@ -28,7 +28,7 @@ export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTable
   );
 }
 
-export function TableHead({ className, ...props }: React.HTMLAttributes<HTMLTableCellElement>) {
+export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
       className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground ${className ?? ""}`}
@@ -37,6 +37,6 @@ export function TableHead({ className, ...props }: React.HTMLAttributes<HTMLTabl
   );
 }
 
-export function TableCell({ className, ...props }: React.HTMLAttributes<HTMLTableCellElement>) {
+export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return <td className={`p-4 align-middle ${className ?? ""}`} {...props} />;
 }

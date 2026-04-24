@@ -9,6 +9,21 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
 
+const MONTH_DAY_REGEX = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])$/;
+const LEGACY_MONTH_DAY_REGEX = /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
+
+const formatFiscalMonthDay = (value: string | null | undefined): string => {
+  if (!value) return "—";
+  let normalized = /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value.slice(8)}-${value.slice(5, 7)}` : value;
+  if (LEGACY_MONTH_DAY_REGEX.test(normalized)) {
+    const [legacyMonth, legacyDay] = normalized.split("-");
+    normalized = `${legacyDay}-${legacyMonth}`;
+  }
+  if (!MONTH_DAY_REGEX.test(normalized)) return value;
+  const [day, month] = normalized.split("-");
+  return `${day}/${month}`;
+};
+
 export default function StructureCompanyPage() {
   const router = useRouter();
   const id = typeof router.query.id === "string" ? router.query.id : null;
@@ -75,9 +90,7 @@ export default function StructureCompanyPage() {
                     <dt className="text-muted-foreground">SIRET</dt>
                     <dd>{company.siret}</dd>
                     <dt className="text-muted-foreground">Début d'exercice</dt>
-                    <dd>{company.fiscal_year_start}</dd>
-                    <dt className="text-muted-foreground">Fin d'exercice</dt>
-                    <dd>{company.fiscal_year_end}</dd>
+                    <dd>{formatFiscalMonthDay(company.fiscal_year_start)}</dd>
                     {company.address && (
                       <>
                         <dt className="text-muted-foreground">Adresse</dt>

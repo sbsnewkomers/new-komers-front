@@ -1,8 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, setAccessTokenGetter } from "@/lib/apiClient";
-import { logout as authLogout, refreshTokens, type TokenPair } from "@/lib/authApi";
+import { logout as authLogout, refreshTokens, impersonateUser, exitImpersonation as exitImpersonationApi,type TokenPair } from "@/lib/authApi";
 import type { PermissionGrant, PermissionsUser } from "@/permissions/types";
 import { useAuthRevalidator } from "@/hooks/useAuthRevalidator";
+import { loansApi } from "@/lib/loansApi";
 
 type PermissionsContextValue = {
   user: PermissionsUser | null;
@@ -16,6 +17,8 @@ type PermissionsContextValue = {
   setGrants: (next: PermissionGrant[]) => void;
   refreshMe: (options?: { silent?: boolean }) => Promise<PermissionsUser | null>;
   logout: () => Promise<void>;
+  impersonate: (targetUserId: string) => Promise<void>;
+  exitImpersonation: () => Promise<PermissionsUser | null>;
 };
 
 const PermissionsContext = createContext<PermissionsContextValue | null>(null);
@@ -28,11 +31,14 @@ export function PermissionsProvider(props: {
   const [grants, setGrants] = useState<PermissionGrant[]>(props.bootstrap?.grants ?? []);
   const [isLoading, setIsLoading] = useState(false);
 
+
   // Indicates that we've finished the initial token load + /auth/me attempt.
   const [isAuthReady, setIsAuthReady] = useState(false);
 
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
+  const [sessionKey, setSessionKey] = useState(0);
+
 
   // Ref updated synchronously so apiFetch sees the new token before the next React render/effect.
   // Fixes /me being called without Authorization right after login (setState is async).
@@ -72,7 +78,9 @@ export function PermissionsProvider(props: {
 
   // Single getter that reads from ref so it always sees the latest token (including right after setTokens).
   useEffect(() => {
-    setAccessTokenGetter(() => tokensRef.current?.accessToken ?? null);
+    const tokenGetter = () => tokensRef.current?.accessToken ?? null;
+    setAccessTokenGetter(tokenGetter);
+    loansApi.setAccessTokenGetter(tokenGetter);
   }, []);
 
   const refreshMe = useCallback(
@@ -162,24 +170,61 @@ export function PermissionsProvider(props: {
 
   // Activate session revalidation
   useAuthRevalidator(refreshMe, isAuthReady, !!accessToken);
+  const impersonate = useCallback(async (targetUserId: string) => {
+  const res = await impersonateUser(targetUserId);
+  // On remplace les tokens par ceux de la session impersonifiée
+  setTokens(res.tokens);
+  // refreshMe va appeler /auth/me avec le nouveau token
+  // → user dans le contexte devient la cible
+  await refreshMe({ silent: true });
+  }, [setTokens, refreshMe]);
+
+  const exitImpersonation = useCallback(async () => {
+  const res = await exitImpersonationApi();
+  setTokens(res.tokens);
+  try {
+    const me = await apiFetch<PermissionsUser>("/auth/me", {
+      snackbar: { showError: false },
+      authRedirect: false,
+    });
+    setUser(me);
+    setGrants(me.permissions ?? []);
+    setSessionKey(k => k + 1);
+    return me;
+  } catch {
+    setUser(null);
+    setGrants([]);
+    setSessionKey(k => k + 1);
+    return null;
+  }
+}, [setTokens]);
 
   const value = useMemo<PermissionsContextValue>(
-    () => ({
-      user,
-      grants,
-      isLoading,
-      isAuthReady,
-      accessToken,
-      refreshToken,
-      setTokens,
-      setGrants,
-      refreshMe,
-      logout,
-    }),
-    [user, grants, isLoading, isAuthReady, accessToken, refreshToken, setTokens, refreshMe, logout],
+  () => ({
+    user,
+    grants,
+    isLoading,
+    isAuthReady,
+    accessToken,
+    refreshToken,
+    setTokens,
+    setGrants,
+    refreshMe,
+    logout,
+    impersonate,        
+    exitImpersonation,  
+  }),
+  [user, grants, isLoading, isAuthReady, accessToken, refreshToken,
+   setTokens, refreshMe, logout, impersonate, exitImpersonation],
   );
 
-  return <PermissionsContext.Provider value={value}>{props.children}</PermissionsContext.Provider>;
+  return (
+    <PermissionsContext.Provider value={value}>
+      <React.Fragment key={sessionKey}>
+        {props.children}
+      </React.Fragment>
+    </PermissionsContext.Provider>
+  );
 }
 
 export function usePermissionsContext() {

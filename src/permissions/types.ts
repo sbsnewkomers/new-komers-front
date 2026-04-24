@@ -31,5 +31,6 @@ export type PermissionsUser = {
   lastName?: string | null;
   status?: string;
   permissions?: PermissionGrant[];
+  impersonatorId?: string;
 };
 

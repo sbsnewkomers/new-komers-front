@@ -87,8 +87,12 @@ export default function LoginPage() {
         setStatusMessage("SUSPENDED");
         return;
       }
+      if (msg && (msg.includes("Identifiants invalides"))){
+        setErrorMessage("Identifiants invalides");
+        return;
+      }
 
-      setErrorMessage("Identifiants invalides");
+      setErrorMessage("Erreur de système lors de la connexion");
     } finally {
       setLoading(false);
     }
