@@ -65,7 +65,7 @@ export function MappingCard({
                 </>
               ) : (
                 <>
-                  <Building2 className="h-3 w-3" aria-hidden /> Local
+                  <Building2 className="h-3 w-3" aria-hidden /> Workspace
                 </>
               )}
             </span>

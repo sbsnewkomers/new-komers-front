@@ -463,7 +463,7 @@ export function MappingModal({
             setDetailFeedback({
               tone: "error",
               message:
-                "Un workspace est requis pour un mapping local.",
+                "Un workspace est requis pour un mapping de workspace.",
             });
             return;
           }
@@ -805,7 +805,7 @@ export function MappingModal({
                       htmlFor="mapping-workspace-select"
                       className="mb-1.5 block text-xs font-medium text-slate-600"
                     >
-                      Workspace pour les mappings locaux
+                      Workspace pour les mappings de workspace
                     </label>
                     <select
                       id="mapping-workspace-select"

@@ -23,7 +23,7 @@ export interface MappingTemplateListProps {
 
 const CHIPS: { id: ScopeFilter; label: string }[] = [
   { id: "all", label: "Tous" },
-  { id: "local", label: "Locaux" },
+  { id: "local", label: "Workspaces" },
   { id: "global", label: "Globaux" },
 ];
 
@@ -128,7 +128,7 @@ export function MappingTemplateList({
           Chargement…
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex min-h-[8rem] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center">
+        <div className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center">
           <Inbox className="h-6 w-6 text-slate-400" aria-hidden />
           <p className="text-sm text-slate-600">
             {query.trim()
