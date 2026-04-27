@@ -1,16 +1,28 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Select } from '@/components/ui/Select';
-import { AlertDialog, AlertDialogContent, AlertDialogDescription } from '@/components/ui/AlertDialog';
-import { FileSpreadsheet, Download, CheckCircle, ArrowRight } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogDescription,
+} from '@/components/ui/AlertDialog';
+import {
+    FileSpreadsheet,
+    Download,
+    CheckCircle,
+    ArrowRight,
+    ArrowLeft,
+    UploadCloud,
+    FileText,
+    Info,
+    Check,
+} from 'lucide-react';
 import { loansApi } from '@/lib/loansApi';
 import { entitiesApi } from '@/lib/entitiesApi';
-import { apiFetch } from '@/lib/apiClient';
 import {
     type LoanImport,
     EntityType,
@@ -25,65 +37,121 @@ interface LoanImportProps {
     entityId?: string;
 }
 
-// Utility functions
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
+const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('fr-FR', {
         style: 'currency',
-        currency: 'EUR'
+        currency: 'EUR',
     }).format(amount);
-};
+
+function StepIndicator({ currentStep }: { currentStep: number }) {
+    const steps = [
+        { n: 1, label: 'Fichier' },
+        { n: 2, label: 'Mapping' },
+        { n: 3, label: 'Résultat' },
+    ];
+    return (
+        <div className="flex items-center">
+            {steps.map((s, i) => {
+                const isActive = currentStep === s.n;
+                const isDone = currentStep > s.n;
+                return (
+                    <React.Fragment key={s.n}>
+                        <div className="flex items-center gap-2">
+                            <div
+                                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                                    isDone
+                                        ? 'bg-emerald-500 text-white'
+                                        : isActive
+                                          ? 'bg-primary text-white'
+                                          : 'bg-slate-100 text-slate-400'
+                                }`}
+                            >
+                                {isDone ? <Check className="h-4 w-4" /> : s.n}
+                            </div>
+                            <span
+                                className={`hidden text-xs font-medium sm:inline ${
+                                    isActive
+                                        ? 'text-slate-900'
+                                        : isDone
+                                          ? 'text-slate-700'
+                                          : 'text-slate-400'
+                                }`}
+                            >
+                                {s.label}
+                            </span>
+                        </div>
+                        {i < steps.length - 1 && (
+                            <div
+                                className={`mx-3 h-0.5 flex-1 rounded-full transition-colors ${
+                                    currentStep > s.n ? 'bg-emerald-500' : 'bg-slate-200'
+                                }`}
+                            />
+                        )}
+                    </React.Fragment>
+                );
+            })}
+        </div>
+    );
+}
 
 export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportProps) {
     const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // File upload state
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<ImportPreviewDto | null>(null);
     const [columnMapping, setColumnMapping] = useState<ColumnMappingDto[]>([]);
     const [importResult, setImportResult] = useState<LoanImport | null>(null);
     const [importId, setImportId] = useState<string | null>(null);
 
-    // Form data
     const [loanName, setLoanName] = useState('');
-    const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(entityType || EntityType.GROUP);
+    const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(
+        entityType || EntityType.GROUP,
+    );
     const [selectedEntityId, setSelectedEntityId] = useState(entityId || '');
     const [entities, setEntities] = useState<Array<{ id: string; name: string }>>([]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Load groups by default on component mount
     useEffect(() => {
         if (selectedEntityType === EntityType.GROUP) {
             loadEntities(EntityType.GROUP);
         }
     }, [selectedEntityType]);
 
-    // Auto-fill mapping when preview data is available
     useEffect(() => {
-        console.log('useEffect triggered with preview:', preview);
         if (preview && preview.detectedColumns && preview.detectedColumns.length > 0) {
-            console.log('Detected columns:', preview.detectedColumns);
-            // Create automatic mapping based on detected columns
             const autoMapping: ColumnMappingDto[] = [];
-            const requiredFields = ['dueDate', 'principalPayment', 'interestPayment', 'insurancePayment'];
+            const requiredFields = [
+                'dueDate',
+                'principalPayment',
+                'interestPayment',
+                'insurancePayment',
+            ];
 
-            requiredFields.forEach(field => {
-                const matchedColumn = preview.detectedColumns.find(col =>
-                    col.toLowerCase().includes(field) ||
-                    (field === 'dueDate' && col.toLowerCase().includes('date')) ||
-                    (field === 'principalPayment' && col.toLowerCase().includes('capital')) ||
-                    (field === 'interestPayment' && col.toLowerCase().includes('intérêt')) ||
-                    (field === 'insurancePayment' && col.toLowerCase().includes('assurance'))
+            requiredFields.forEach((field) => {
+                const matchedColumn = preview.detectedColumns.find(
+                    (col) =>
+                        col.toLowerCase().includes(field) ||
+                        (field === 'dueDate' && col.toLowerCase().includes('date')) ||
+                        (field === 'principalPayment' &&
+                            col.toLowerCase().includes('capital')) ||
+                        (field === 'interestPayment' &&
+                            col.toLowerCase().includes('intérêt')) ||
+                        (field === 'insurancePayment' &&
+                            col.toLowerCase().includes('assurance')),
                 );
 
-                if (matchedColumn && !autoMapping.some(m => m.targetField === field)) {
+                if (matchedColumn && !autoMapping.some((m) => m.targetField === field)) {
                     autoMapping.push({
                         sourceColumn: matchedColumn,
-                        targetField: field as 'dueDate' | 'principalPayment' | 'interestPayment' | 'insurancePayment'
+                        targetField: field as
+                            | 'dueDate'
+                            | 'principalPayment'
+                            | 'interestPayment'
+                            | 'insurancePayment',
                     });
-                    console.log(`Auto-mapped: ${field} -> ${matchedColumn}`);
                 }
             });
 
@@ -92,7 +160,6 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
             }
         }
     }, [preview]);
-
 
     const goToNextStep = async () => {
         if (!selectedFile || !loanName || !selectedEntityType || !selectedEntityId) {
@@ -114,13 +181,7 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
             const result = await loansApi.uploadImportFile(uploadDto);
 
             if (!result) {
-                apiFetch('/dummy', {
-                    method: 'POST',
-                    snackbar: {
-                        showError: true,
-                        errorMessage: 'Erreur lors du téléchargement du fichier. Veuillez réessayer.'
-                    }
-                });
+                setError('Erreur lors du téléchargement du fichier. Veuillez réessayer.');
                 return;
             }
 
@@ -136,9 +197,11 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                     if (selectedFile) {
                         try {
                             const text = await selectedFile.text();
-                            const lines = text.split('\n').filter(line => line.trim());
+                            const lines = text.split('\n').filter((line) => line.trim());
                             if (lines.length > 0) {
-                                const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, '').trim());
+                                const headers = lines[0]
+                                    .split(',')
+                                    .map((h) => h.trim().replace(/^["']|["']$/g, '').trim());
                                 setPreview({
                                     previewRows: [],
                                     detectedColumns: headers,
@@ -184,7 +247,7 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                     showSuccess: true,
                     successMessage: `Modèle ${format} téléchargé avec succès`,
                     showError: true,
-                }
+                },
             });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -214,7 +277,6 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                     entitiesList = await entitiesApi.getCompanies();
                     break;
                 case EntityType.BUSINESSUNIT:
-                    // Utiliser la nouvelle API directe pour les BU accessibles par l'utilisateur
                     entitiesList = await entitiesApi.getBusinessUnitsForUser();
                     break;
                 default:
@@ -235,9 +297,12 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         loadEntities(entityType);
     };
 
-    const handleColumnMapping = (sourceColumn: string, targetField: 'dueDate' | 'principalPayment' | 'interestPayment' | 'insurancePayment') => {
-        setColumnMapping(prev => {
-            const filtered = prev.filter(m => m.sourceColumn !== sourceColumn);
+    const handleColumnMapping = (
+        sourceColumn: string,
+        targetField: 'dueDate' | 'principalPayment' | 'interestPayment' | 'insurancePayment',
+    ) => {
+        setColumnMapping((prev) => {
+            const filtered = prev.filter((m) => m.sourceColumn !== sourceColumn);
             if (targetField) {
                 return [...filtered, { sourceColumn, targetField }];
             }
@@ -256,7 +321,7 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
 
         try {
             if (!importId) {
-                setError('ID d\'import manquant');
+                setError("ID d'import manquant");
                 return;
             }
 
@@ -295,290 +360,399 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         }
     };
 
-    const getRequiredColumns = () => ['dueDate', 'principalPayment', 'interestPayment', 'insurancePayment'];
+    const getRequiredColumns = () => [
+        'dueDate',
+        'principalPayment',
+        'interestPayment',
+        'insurancePayment',
+    ];
 
     const isImportReady = () => {
         const required = getRequiredColumns();
-        return required.every(field =>
-            columnMapping.some(mapping => mapping.targetField === field)
+        return required.every((field) =>
+            columnMapping.some((mapping) => mapping.targetField === field),
         );
     };
 
+    const fieldLabel = (field: string) =>
+        field === 'dueDate'
+            ? 'Date'
+            : field === 'principalPayment'
+              ? 'Capital'
+              : field === 'interestPayment'
+                ? 'Intérêts'
+                : field === 'insurancePayment'
+                  ? 'Assurance'
+                  : field;
+
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <FileSpreadsheet className="h-5 w-5" />
-                        Import d&rsquo;Échéancier Excel/CSV
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                        Importez un échéancier existant depuis un fichier Excel ou CSV
-                    </p>
-                </CardHeader>
-                <CardContent>
-                    {/* Progress Steps */}
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="flex items-center gap-2">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                                }`}>
-                                1
-                            </div>
-                            <span className={`text-sm font-medium ${currentStep >= 1 ? 'text-foreground' : 'text-muted-foreground'}`}>
-                                Fichier
-                            </span>
-                        </div>
-                        <div className="flex-1 h-0.5 bg-border mx-4" />
-                        <div className="flex items-center gap-2">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                                }`}>
-                                2
-                            </div>
-                            <span className={`text-sm font-medium ${currentStep >= 2 ? 'text-foreground' : 'text-muted-foreground'}`}>
-                                Mapping
-                            </span>
-                        </div>
-                        <div className="flex-1 h-0.5 bg-border mx-4" />
-                        <div className="flex items-center gap-2">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${currentStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                                }`}>
-                                3
-                            </div>
-                            <span className={`text-sm font-medium ${currentStep >= 3 ? 'text-foreground' : 'text-muted-foreground'}`}>
-                                Résultat
-                            </span>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
+                        <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                        <h3 className="text-base font-semibold text-slate-900">
+                            Import d&apos;échéancier Excel / CSV
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                            Importez un échéancier existant depuis un fichier Excel ou CSV.
+                        </p>
+                    </div>
+                </div>
+                <div className="mt-6">
+                    <StepIndicator currentStep={currentStep} />
+                </div>
+            </div>
+
+            {error && (
+                <AlertDialog open={true} onOpenChange={() => setError(null)}>
+                    <AlertDialogContent>
+                        <AlertDialogDescription className="text-red-800">
+                            {error}
+                        </AlertDialogDescription>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+
+            {/* Step 1: File Upload */}
+            {currentStep === 1 && (
+                <div className="space-y-6">
+                    {/* Templates */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <h3 className="mb-1 text-sm font-semibold text-slate-900">
+                            Télécharger un modèle
+                        </h3>
+                        <p className="mb-5 text-xs text-slate-500">
+                            Utilisez un modèle pré-configuré pour préparer votre fichier.
+                        </p>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            {(
+                                [
+                                    {
+                                        format: ImportFileFormat.EXCEL,
+                                        label: 'Modèle Excel',
+                                        ext: '.xlsx',
+                                        desc: 'Format avec colonnes pré-configurées',
+                                        color: 'text-emerald-600',
+                                        bg: 'bg-emerald-50',
+                                    },
+                                    {
+                                        format: ImportFileFormat.CSV,
+                                        label: 'Modèle CSV',
+                                        ext: '.csv',
+                                        desc: 'Compatible avec tous les tableurs',
+                                        color: 'text-blue-600',
+                                        bg: 'bg-blue-50',
+                                    },
+                                ] as const
+                            ).map((t) => (
+                                <div
+                                    key={t.format}
+                                    className="rounded-xl border border-slate-200 bg-slate-50/40 p-4"
+                                >
+                                    <div className="mb-3 flex items-center gap-3">
+                                        <div
+                                            className={`flex h-10 w-10 items-center justify-center rounded-lg ${t.bg}`}
+                                        >
+                                            <FileText className={`h-5 w-5 ${t.color}`} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-slate-900">
+                                                {t.label}
+                                            </p>
+                                            <p className="text-xs text-slate-500">{t.desc}</p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => downloadTemplate(t.format)}
+                                        disabled={isLoading}
+                                        className="w-full"
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        Télécharger {t.ext}
+                                    </Button>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    {error && (
-                        <AlertDialog open={true}>
-                            <AlertDialogContent>
-                                <AlertDialogDescription className="text-red-800">
-                                    {error}
-                                </AlertDialogDescription>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
+                    {/* Loan info + upload */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <h3 className="mb-1 text-sm font-semibold text-slate-900">
+                            Informations sur l&apos;emprunt
+                        </h3>
+                        <p className="mb-5 text-xs text-slate-500">
+                            Renseignez les informations de base et importez votre fichier.
+                        </p>
 
-                    {/* Step 1: File Upload */}
-                    {currentStep === 1 && (
-                        <div className="space-y-6">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
-                                <h3 className="text-lg font-semibold mb-4">Télécharger le modèle et préparer votre fichier</h3>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                    <Card className="border-dashed">
-                                        <CardContent className="pt-6">
-                                            <h4 className="font-medium mb-2">Modèle Excel</h4>
-                                            <p className="text-sm text-muted-foreground mb-4">
-                                                Format .xlsx avec colonnes pré-configurées
-                                            </p>
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => downloadTemplate(ImportFileFormat.EXCEL)}
-                                                disabled={isLoading}
-                                                className="w-full"
-                                            >
-                                                <Download className="mr-2 h-4 w-4" />
-                                                Télécharger .xlsx
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-
-                                    <Card className="border-dashed">
-                                        <CardContent className="pt-6">
-                                            <h4 className="font-medium mb-2">Modèle CSV</h4>
-                                            <p className="text-sm text-muted-foreground mb-4">
-                                                Format .csv compatible avec tous les tableurs
-                                            </p>
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => downloadTemplate(ImportFileFormat.CSV)}
-                                                disabled={isLoading}
-                                                className="w-full"
-                                            >
-                                                <Download className="mr-2 h-4 w-4" />
-                                                Télécharger .csv
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-                                </div>
+                                <Label
+                                    htmlFor="loanName"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                >
+                                    Nom de l&apos;emprunt <span className="text-red-500">*</span>
+                                </Label>
+                                <Input
+                                    id="loanName"
+                                    placeholder="ex: Prêt BNP Agence X"
+                                    value={loanName}
+                                    onChange={(e) => setLoanName(e.target.value)}
+                                />
                             </div>
-
                             <div>
-                                <h3 className="text-lg font-semibold mb-4">Informations sur l&rsquo;emprunt</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="loanName">Nom de l&rsquo;emprunt<span className="text-red-500">*</span></Label>
-                                        <Input
-                                            id="loanName"
-                                            placeholder="ex: Prêt BNP Agence X"
-                                            value={loanName}
-                                            onChange={(e) => setLoanName(e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="entityType">Type d&rsquo;entité<span className="text-red-500">*</span></Label>
-                                        <Select
-                                            value={selectedEntityType}
-                                            onValueChange={handleEntityTypeChange}
-                                        >
-                                            <option value={EntityType.GROUP}>Groupe</option>
-                                            <option value={EntityType.COMPANY}>Entreprise</option>
-                                            <option value={EntityType.BUSINESSUNIT}>Unité de business</option>
-                                        </Select>
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="entityId">Entité<span className="text-red-500">*</span></Label>
-                                        <Select
-                                            id="entityId"
-                                            value={selectedEntityId || ''}
-                                            onValueChange={(value) => setSelectedEntityId(value)}
-                                            disabled={!selectedEntityType}
-                                        >
-                                            <option value="">Sélectionner une entité...</option>
-                                            {entities.map((entity) => (
-                                                <option key={entity.id} value={entity.id}>
-                                                    {entity.name}
-                                                </option>
-                                            ))}
-                                        </Select>
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="fileInput">Fichier Excel/CSV<span className="text-red-500">*</span></Label>
-                                        <Input
-                                            id="fileInput"
-                                            type="file"
-                                            accept=".xlsx,.xls,.csv"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                    setSelectedFile(file);
-                                                }
-                                            }}
-                                            disabled={isLoading}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex justify-end">
-                                    <Button
-                                        onClick={goToNextStep}
-                                        disabled={isLoading || !selectedFile || !loanName || !selectedEntityType || !selectedEntityId}
-                                    >
-                                        {isLoading ? 'Chargement...' : 'suivant'}
-                                        <ArrowRight className="ml-2 h-4 w-4" />
-                                    </Button>
-                                </div>
+                                <Label
+                                    htmlFor="entityType"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                >
+                                    Type d&apos;entité <span className="text-red-500">*</span>
+                                </Label>
+                                <Select
+                                    value={selectedEntityType}
+                                    onValueChange={handleEntityTypeChange}
+                                >
+                                    <option value={EntityType.GROUP}>Groupe</option>
+                                    <option value={EntityType.COMPANY}>Entreprise</option>
+                                    <option value={EntityType.BUSINESSUNIT}>
+                                        Unité d&apos;affaires
+                                    </option>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label
+                                    htmlFor="entityId"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                >
+                                    Entité <span className="text-red-500">*</span>
+                                </Label>
+                                <Select
+                                    id="entityId"
+                                    value={selectedEntityId || ''}
+                                    onValueChange={(value) => setSelectedEntityId(value)}
+                                    disabled={!selectedEntityType}
+                                >
+                                    <option value="">Sélectionner une entité…</option>
+                                    {entities.map((entity) => (
+                                        <option key={entity.id} value={entity.id}>
+                                            {entity.name}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </div>
+                            <div>
+                                <Label
+                                    htmlFor="fileInput"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                >
+                                    Fichier Excel / CSV <span className="text-red-500">*</span>
+                                </Label>
+                                <label
+                                    htmlFor="fileInput"
+                                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50/60 px-3 py-2 text-sm text-slate-600 transition hover:border-slate-400 hover:bg-slate-50"
+                                >
+                                    <UploadCloud className="h-4 w-4 text-slate-500" />
+                                    <span className="truncate">
+                                        {selectedFile
+                                            ? selectedFile.name
+                                            : 'Choisir un fichier .xlsx, .xls ou .csv'}
+                                    </span>
+                                    <input
+                                        id="fileInput"
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept=".xlsx,.xls,.csv"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                setSelectedFile(file);
+                                            }
+                                        }}
+                                        disabled={isLoading}
+                                    />
+                                </label>
                             </div>
                         </div>
-                    )}
 
-                    {/* Step 2: Column Mapping */}
-                    {currentStep === 2 && (
-                        <div className="space-y-6">
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4">Mapping des colonnes</h3>
-                                <p className="text-sm text-muted-foreground mb-6">
-                                    Associez chaque colonne de votre fichier au champ correspondant dans le système
-                                </p>
+                        <div className="mt-6 flex justify-end border-t border-slate-100 pt-5">
+                            <Button
+                                onClick={goToNextStep}
+                                disabled={
+                                    isLoading ||
+                                    !selectedFile ||
+                                    !loanName ||
+                                    !selectedEntityType ||
+                                    !selectedEntityId
+                                }
+                                className="bg-primary text-white hover:bg-slate-800"
+                            >
+                                {isLoading ? 'Chargement…' : 'Suivant'}
+                                <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-                                <div className="space-y-4">
-                                    {getRequiredColumns().map(field => (
-                                        <div key={field} className="flex items-center gap-4">
-                                            <Label className="w-32 font-medium">
-                                                {field === 'dueDate' ? 'Date' :
-                                                    field === 'principalPayment' ? 'Capital' :
-                                                        field === 'interestPayment' ? 'Intérêts' :
-                                                            field === 'insurancePayment' ? 'Assurance' : field}
-                                                <span className="text-red-500 ml-1">*</span>
-                                            </Label>
-                                            <Select
-                                                value={columnMapping.find(m => m.targetField === field)?.sourceColumn || ''}
-                                                onValueChange={(value) => handleColumnMapping(value, field as 'dueDate' | 'principalPayment' | 'interestPayment' | 'insurancePayment')}
-                                            >
-                                                <option value="">-- Sélectionner une colonne --</option>
-                                                {preview?.detectedColumns.map(column => (
-                                                    <option key={column} value={column}>{column}</option>
-                                                ))}
-                                            </Select>
-                                        </div>
-                                    ))}
+            {/* Step 2: Column Mapping */}
+            {currentStep === 2 && (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h3 className="mb-1 text-sm font-semibold text-slate-900">
+                        Mapping des colonnes
+                    </h3>
+                    <p className="mb-5 text-xs text-slate-500">
+                        Associez chaque colonne de votre fichier au champ correspondant.
+                    </p>
+
+                    <div className="space-y-3">
+                        {getRequiredColumns().map((field) => (
+                            <div
+                                key={field}
+                                className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50/40 p-3 sm:flex-row sm:items-center"
+                            >
+                                <Label className="w-32 shrink-0 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                    {fieldLabel(field)}{' '}
+                                    <span className="text-red-500">*</span>
+                                </Label>
+                                <div className="flex-1">
+                                    <Select
+                                        value={
+                                            columnMapping.find((m) => m.targetField === field)
+                                                ?.sourceColumn || ''
+                                        }
+                                        onValueChange={(value) =>
+                                            handleColumnMapping(
+                                                value,
+                                                field as
+                                                    | 'dueDate'
+                                                    | 'principalPayment'
+                                                    | 'interestPayment'
+                                                    | 'insurancePayment',
+                                            )
+                                        }
+                                    >
+                                        <option value="">-- Sélectionner une colonne --</option>
+                                        {preview?.detectedColumns.map((column) => (
+                                            <option key={column} value={column}>
+                                                {column}
+                                            </option>
+                                        ))}
+                                    </Select>
                                 </div>
+                            </div>
+                        ))}
+                    </div>
 
-                                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                                    <p className="text-sm text-blue-800">
-                                        <strong>Conseil:</strong> Utilisez des noms de colonnes standards comme &ldquo;Date&rdquo;, &ldquo;Capital&rdquo;, &ldquo;Intérêts&rdquo;, &ldquo;Assurance&rdquo;
-                                        pour un mapping automatique.
+                    <div className="mt-5 flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50/60 p-4">
+                        <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+                        <p className="text-xs text-blue-800">
+                            <strong>Conseil :</strong> Utilisez des noms de colonnes standards
+                            comme «&nbsp;Date&nbsp;», «&nbsp;Capital&nbsp;»,
+                            «&nbsp;Intérêts&nbsp;», «&nbsp;Assurance&nbsp;» pour un mapping
+                            automatique.
+                        </p>
+                    </div>
+
+                    <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
+                        <Button variant="outline" onClick={() => setCurrentStep(1)}>
+                            <ArrowLeft className="h-4 w-4" />
+                            Précédent
+                        </Button>
+                        <Button
+                            onClick={processImport}
+                            disabled={!isImportReady() || isLoading}
+                            className="bg-primary text-white hover:bg-slate-800"
+                        >
+                            {isLoading ? 'Import…' : "Finaliser l'import"}
+                            <CheckCircle className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {/* Step 3: Results */}
+            {currentStep === 3 && importResult && (
+                <div className="space-y-6">
+                    <div className="rounded-xl border border-emerald-200 bg-linear-to-br from-emerald-50 to-white p-6 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
+                                <CheckCircle className="h-5 w-5 text-emerald-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-semibold text-emerald-900">
+                                    Import réussi
+                                </h3>
+                                <p className="text-xs text-emerald-700">
+                                    L&apos;échéancier a été importé avec succès.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {(
+                                [
+                                    {
+                                        label: 'Emprunt',
+                                        value: importResult.loan?.name || 'Prêt importé',
+                                    },
+                                    {
+                                        label: 'Capital',
+                                        value: importResult.loan
+                                            ? formatCurrency(importResult.loan.principalAmount)
+                                            : 'N/A',
+                                    },
+                                    {
+                                        label: 'Durée',
+                                        value: importResult.loan
+                                            ? `${importResult.loan.durationMonths} mois`
+                                            : 'N/A',
+                                    },
+                                    {
+                                        label: 'Fichier source',
+                                        value: importResult.originalFileName,
+                                    },
+                                    {
+                                        label: 'Lignes importées',
+                                        value: `${importResult.importedRows} / ${importResult.totalRows}`,
+                                    },
+                                ] as const
+                            ).map((stat) => (
+                                <div
+                                    key={stat.label}
+                                    className="rounded-lg border border-emerald-100 bg-white p-3"
+                                >
+                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">
+                                        {stat.label}
+                                    </p>
+                                    <p className="mt-0.5 text-sm font-medium text-slate-900 wrap-break-word">
+                                        {stat.value}
                                     </p>
                                 </div>
-                            </div>
-
-                            <div className="flex justify-between">
-                                <Button variant="outline" onClick={() => setCurrentStep(1)}>
-                                    Précédent
-                                </Button>
-                                <Button
-                                    onClick={processImport}
-                                    disabled={!isImportReady() || isLoading}
-                                >
-                                    {isLoading ? 'Import...' : 'Finaliser l\'import'}
-                                    <CheckCircle className="ml-2 h-4 w-4" />
-                                </Button>
-                            </div>
+                            ))}
                         </div>
-                    )}
+                    </div>
 
-                    {/* Step 3: Results */}
-                    {currentStep === 3 && importResult && (
-                        <div className="space-y-6">
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4">Résultat de l&rsquo;import</h3>
-
-                                {importResult && (
-                                    <Card className="bg-green-50 border-green-200">
-                                        <CardContent className="pt-6">
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <div className="rounded-lg bg-green-50 p-1.5">
-                                                    <CheckCircle className="h-4 w-4 text-green-600" />
-                                                </div>
-                                                <h4 className="font-semibold text-green-900">Import réussi</h4>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <p className="text-sm text-green-800">
-                                                    <strong>Emprunt créé:</strong> {importResult.loan?.name || 'Prêt importé'}
-                                                </p>
-                                                <p className="text-sm text-green-800">
-                                                    <strong>Capital:</strong> {importResult.loan ? formatCurrency(importResult.loan.principalAmount) : 'N/A'}
-                                                </p>
-                                                <p className="text-sm text-green-800">
-                                                    <strong>Durée:</strong> {importResult.loan ? `${importResult.loan.durationMonths} mois` : 'N/A'}
-                                                </p>
-                                                <p className="text-sm text-green-800">
-                                                    <strong>Fichier:</strong> {importResult.originalFileName}
-                                                </p>
-                                                <p className="text-sm text-green-800">
-                                                    <strong>Lignes importées:</strong> {importResult.importedRows} / {importResult.totalRows}
-                                                </p>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )}
-                            </div>
-
-                            <div className="flex justify-between">
-                                <Button variant="outline" onClick={resetImport}>
-                                    Nouvel import
-                                </Button>
-                                {importResult && importResult.loanId && (
-                                    <Button onClick={() => onLoanImported?.(importResult.loanId!)}>
-                                        Voir l&rsquo;emprunt
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                        <Button variant="outline" onClick={resetImport}>
+                            Nouvel import
+                        </Button>
+                        {importResult && importResult.loanId && (
+                            <Button
+                                onClick={() => onLoanImported?.(importResult.loanId!)}
+                                className="bg-primary text-white hover:bg-slate-800"
+                            >
+                                Voir l&apos;emprunt
+                                <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

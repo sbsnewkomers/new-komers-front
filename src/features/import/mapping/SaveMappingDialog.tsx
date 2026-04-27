@@ -144,8 +144,8 @@ export function SaveMappingDialog({
                   checked={scope === "LOCAL"}
                   onChange={() => setScope("LOCAL")}
                   icon={<Building2 className="h-4 w-4" aria-hidden />}
-                  label="Local"
-                  description="Disponible dans un seul espace de travail."
+                  label="Workspace"
+                  description="Disponible dans un seul workspace."
                 />
                 <ScopeRadio
                   checked={scope === "GLOBAL"}
@@ -188,7 +188,7 @@ export function SaveMappingDialog({
               )}
               {!workspaceId ? (
                 <p className="mt-1 text-xs text-amber-600">
-                  Un workspace est requis pour un mapping local.
+                  Un workspace est requis pour un mapping de workspace.
                 </p>
               ) : null}
             </div>
