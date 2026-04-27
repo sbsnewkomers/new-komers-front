@@ -87,6 +87,7 @@ export default function ImportPage() {
       entityId: item.entityId,
       user: item.user,
       linesCount: item.linesCount,
+      errorMessage: item.errorMessage ?? null,
     }));
 
     setHistory(mapped);
@@ -399,7 +400,8 @@ export default function ImportPage() {
           setValidationErrors(mappedErrors);
           setValidationModalOpen(true);
         }
-        
+        await fetchHistory();
+        setHistoryOpen(true); 
         return;
       }
 
@@ -427,7 +429,8 @@ export default function ImportPage() {
           }]);
           setValidationModalOpen(true);
         }
-        
+         await fetchHistory();
+        setHistoryOpen(true);
         return;
       }
 

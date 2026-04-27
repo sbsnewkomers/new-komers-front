@@ -70,13 +70,21 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback, onVi
                   {history.map((row) => (
                     <TableRow key={row.id} className="transition-colors hover:bg-slate-50/60">
                       <TableCell>
-                        <div className="flex items-center gap-2.5">
-                          <div className="rounded-lg bg-primary/5 p-1.5">
+                        <div className="flex items-start gap-2.5">
+                          <div className="rounded-lg bg-primary/5 p-1.5 mt-0.5 shrink-0">
                             <FileText className="h-4 w-4 text-primary/60" />
                           </div>
-                          <span className="font-medium text-slate-700">
-                            {row.file}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-slate-700">
+                              {row.file}
+                            </span>
+                            {row.status === "failed" && row.errorMessage && (
+                              <span className="mt-0.5 flex items-start gap-1 text-xs text-orange-600">
+                                <span className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-orange-400" />
+                                {row.errorMessage}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
 
