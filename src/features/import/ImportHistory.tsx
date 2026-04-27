@@ -11,9 +11,12 @@ interface ImportHistoryProps {
   onToggle: () => void;
   onRollback: (row: ImportHistoryRow) => void;
   onViewEntries: (row: ImportHistoryRow) => void;
+  disabled?: boolean;
+  currentUserEmail?: string;     
+  isManager?: boolean; 
 }
 
-export function ImportHistory({ history, historyOpen, onToggle, onRollback, onViewEntries }: ImportHistoryProps) {
+export function ImportHistory({ history, historyOpen, onToggle, onRollback, onViewEntries,disabled = false ,currentUserEmail, isManager = false,   }: ImportHistoryProps) {
   return (
     <Card className="w-full overflow-hidden bg-white shadow-sm ring-1 ring-slate-100">
       <button
@@ -127,7 +130,9 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback, onVi
                         )}
 
                         {/* Restaurer → uniquement si archivé */}
-                        {row.status === "archived" && (
+                        {row.status === "archived" && !disabled && (
+                            !isManager || row.user === currentUserEmail  
+                          ) &&(
                           <Button
                             variant="ghost"
                             size="sm"

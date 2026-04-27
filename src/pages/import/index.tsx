@@ -64,6 +64,9 @@ export default function ImportPage() {
   // Récupération du rôle utilisateur courant
   const { user: currentUser } = usePermissionsContext();
   const isAdmin = currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN';
+  const isEndUser = currentUser?.role === 'END_USER'; 
+  const isManager = currentUser?.role === 'MANAGER';
+
 
   // Ref pour éviter les appels multiples
   const isImportingRef = useRef(false);
@@ -785,6 +788,7 @@ export default function ImportPage() {
           selectedEntityId={selectedEntityId}
           selectedEntityType={selectedEntityType}
           onEntityChange={handleEntityChange}
+          disabled={isEndUser}
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -804,6 +808,8 @@ export default function ImportPage() {
                 variant="outline"
                 className="w-full gap-2 sm:w-auto"
                 onClick={() => setMappingOpen(true)}
+                disabled={isEndUser}        // ← ajoute
+                title={isEndUser ? "Accès restreint" : undefined}
               >
                 <Settings className="h-4 w-4" />
                 Mappings
@@ -823,6 +829,7 @@ export default function ImportPage() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onFileInput={handleFileInput}
+              disabled={isEndUser}
             />
           </TabsContent>
 
@@ -844,6 +851,9 @@ export default function ImportPage() {
           onViewEntries={(row) => {
             void router.push(`/import/entries?file=${encodeURIComponent(row.file)}`);
           }}
+          disabled={isEndUser}
+          currentUserEmail={currentUser?.email}   
+          isManager={isManager}  
         />
       </div>
 

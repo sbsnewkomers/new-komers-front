@@ -1,7 +1,7 @@
 // pages/import/EntitySelector.tsx
 import { Building, Users, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { fetchStructureTree } from "@/lib/structureApi"; // adaptez le chemin
+import { fetchStructureTree } from "@/lib/structureApi";
 
 interface Entity {
   id: string;
@@ -17,12 +17,14 @@ interface EntitySelectorProps {
     entityType: 'Group' | 'Company',
     entity?: Entity,
   ) => void;
+  disabled?: boolean;
 }
 
 export function EntitySelector({
   selectedEntityId,
   selectedEntityType,
   onEntityChange,
+  disabled = false,
 }: EntitySelectorProps) {
   const [groups, setGroups] = useState<Entity[]>([]);
   const [companies, setCompanies] = useState<Entity[]>([]);
@@ -37,7 +39,6 @@ export function EntitySelector({
         const allGroups: Entity[] = [];
         const allCompanies: Entity[] = [];
 
-        // ── Cas SUPER_ADMIN / ADMIN : tree.workspaces ──
         if (tree.workspaces?.length) {
           for (const ws of tree.workspaces) {
             for (const group of ws.groups ?? []) {
@@ -52,7 +53,6 @@ export function EntitySelector({
           }
         }
 
-        // ── Cas HEAD_MANAGER / MANAGER : tree.groups + tree.standaloneCompanies ──
         if (tree.groups?.length) {
           for (const group of tree.groups) {
             allGroups.push({ id: group.id, name: group.name });
@@ -68,7 +68,6 @@ export function EntitySelector({
           }
         }
 
-        // Dédoublonnage par id
         setGroups(Array.from(new Map(allGroups.map(g => [g.id, g])).values()));
         setCompanies(Array.from(new Map(allCompanies.map(c => [c.id, c])).values()));
       } catch (error) {
@@ -97,6 +96,11 @@ export function EntitySelector({
             Obligatoire
           </span>
         )}
+        {disabled && (
+          <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+            Lecture seule
+          </span>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -108,11 +112,14 @@ export function EntitySelector({
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => onEntityChange('', 'Company')}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all cursor-pointer ${
-                selectedEntityType === 'Company'
-                  ? 'bg-primary/10 border-primary text-primary font-medium ring-2 ring-primary/20'
-                  : 'bg-white border-slate-300 text-slate-600 hover:border-slate-300! hover:bg-slate-100'
+              onClick={() => !disabled && onEntityChange('', 'Company')}
+              disabled={disabled}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all ${
+                disabled
+                  ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400'
+                  : selectedEntityType === 'Company'
+                    ? 'bg-primary/10 border-primary text-primary font-medium ring-2 ring-primary/20 cursor-pointer'
+                    : 'bg-white border-slate-300 text-slate-600 hover:border-slate-300! hover:bg-slate-100 cursor-pointer'
               }`}
             >
               <Building className="h-4 w-4" />
@@ -120,11 +127,14 @@ export function EntitySelector({
             </button>
             <button
               type="button"
-              onClick={() => onEntityChange('', 'Group')}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all cursor-pointer ${
-                selectedEntityType === 'Group'
-                  ? 'bg-primary/10 border-primary text-primary font-medium ring-2 ring-primary/20'
-                  : 'bg-white border-slate-300 text-slate-600 hover:border-slate-300! hover:bg-slate-100'
+              onClick={() => !disabled && onEntityChange('', 'Group')}
+              disabled={disabled}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all ${
+                disabled
+                  ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400'
+                  : selectedEntityType === 'Group'
+                    ? 'bg-primary/10 border-primary text-primary font-medium ring-2 ring-primary/20 cursor-pointer'
+                    : 'bg-white border-slate-300 text-slate-600 hover:border-slate-300! hover:bg-slate-100 cursor-pointer'
               }`}
             >
               <Users className="h-4 w-4" />
@@ -146,7 +156,7 @@ export function EntitySelector({
             value={selectedEntityId || ''}
             onChange={(e) => {
               const value = e.target.value;
-              if (value && selectedEntityType) {
+              if (value && selectedEntityType && !disabled) {
                 const selectedEntity =
                   selectedEntityType === 'Company'
                     ? companies.find((company) => company.id === value)
@@ -154,9 +164,9 @@ export function EntitySelector({
                 onEntityChange(value, selectedEntityType, selectedEntity);
               }
             }}
-            disabled={!selectedEntityType || isLoading}
+            disabled={disabled || !selectedEntityType || isLoading}
             className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${
-              !selectedEntityType || isLoading
+              disabled || !selectedEntityType || isLoading
                 ? 'bg-slate-50 text-slate-400 cursor-not-allowed'
                 : 'bg-white text-slate-700'
             }`}
@@ -213,6 +223,14 @@ export function EntitySelector({
         <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2 rounded-lg">
           <AlertCircle className="h-3 w-3" />
           <span>Aucune entité accessible dans votre périmètre.</span>
+        </div>
+      )}
+
+      {/* Message lecture seule pour END_USER */}
+      {disabled && (
+        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2 rounded-lg">
+          <AlertCircle className="h-3 w-3" />
+          <span>Vous n&apos;avez pas les droits pour modifier la sélection.</span>
         </div>
       )}
     </div>
