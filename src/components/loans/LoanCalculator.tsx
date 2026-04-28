@@ -55,33 +55,30 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
                     <React.Fragment key={s.n}>
                         <div className="flex items-center gap-2">
                             <div
-                                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
-                                    isDone
-                                        ? 'bg-emerald-500 text-white'
-                                        : isActive
-                                          ? 'bg-primary text-white'
-                                          : 'bg-slate-100 text-slate-400'
-                                }`}
+                                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors ${isDone
+                                    ? 'bg-emerald-500 text-white'
+                                    : isActive
+                                        ? 'bg-primary text-white'
+                                        : 'bg-slate-100 text-slate-400'
+                                    }`}
                             >
                                 {isDone ? <Check className="h-4 w-4" /> : s.n}
                             </div>
                             <span
-                                className={`hidden text-xs font-medium sm:inline ${
-                                    isActive
-                                        ? 'text-slate-900'
-                                        : isDone
-                                          ? 'text-slate-700'
-                                          : 'text-slate-400'
-                                }`}
+                                className={`hidden text-xs font-medium sm:inline ${isActive
+                                    ? 'text-slate-900'
+                                    : isDone
+                                        ? 'text-slate-700'
+                                        : 'text-slate-400'
+                                    }`}
                             >
                                 {s.label}
                             </span>
                         </div>
                         {i < steps.length - 1 && (
                             <div
-                                className={`mx-3 h-0.5 flex-1 rounded-full transition-colors ${
-                                    currentStep > s.n ? 'bg-emerald-500' : 'bg-slate-200'
-                                }`}
+                                className={`mx-3 h-0.5 flex-1 rounded-full transition-colors ${currentStep > s.n ? 'bg-emerald-500' : 'bg-slate-200'
+                                    }`}
                             />
                         )}
                     </React.Fragment>
@@ -114,6 +111,57 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
     });
 
     const handleInputChange = (field: keyof LoanCalculatorDto, value: string | number) => {
+        const numericValue = Number(value);
+
+        // Validate that durationMonths is not null or empty
+        if (field === 'durationMonths' && (numericValue === 0)) {
+            apiFetch('/dummy', {
+                method: 'POST',
+                snackbar: {
+                    showError: true,
+                    errorMessage: 'La durée totale ne peut pas être null',
+                },
+            });
+            return;
+        }
+
+        // Validate that principalAmount is not null or empty
+        if (field === 'principalAmount' && (numericValue === 0)) {
+            apiFetch('/dummy', {
+                method: 'POST',
+                snackbar: {
+                    showError: true,
+                    errorMessage: 'Le capital emprunté ne peut pas être null',
+                },
+            });
+            return;
+        }
+
+        // Validate that annualInterestRate does not exceed 100%
+        if (field === 'annualInterestRate' && numericValue > 100) {
+            apiFetch('/dummy', {
+                method: 'POST',
+                snackbar: {
+                    showError: true,
+                    errorMessage: 'Le taux d\'intérêt annuel ne peut pas dépasser 100%',
+                },
+            });
+            return;
+        }
+
+        // Validate positive values for required fields
+        const positiveFields = ['principalAmount', 'annualInterestRate', 'durationMonths', 'monthlyInsuranceCost', 'deferralPeriodMonths'];
+        if (positiveFields.includes(field) && numericValue < 0) {
+            apiFetch('/dummy', {
+                method: 'POST',
+                snackbar: {
+                    showError: true,
+                    errorMessage: 'La valeur doit être positive',
+                },
+            });
+            return;
+        }
+
         if (field === 'deferralPeriodMonths') {
             const deferralValue = Number(value);
             const totalDuration =
@@ -174,7 +222,7 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
             return (
                 !value ||
                 (typeof value === 'string' && value.trim() === '') ||
-                (typeof value === 'number' && (value === 0 || isNaN(value)))
+                (typeof value === 'number' && (value <= 0 || isNaN(value)))
             );
         });
 
@@ -185,6 +233,30 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                 snackbar: {
                     showError: true,
                     errorMessage: `Veuillez remplir tous les champs obligatoires: ${missingLabels}`,
+                },
+            });
+            setIsLoading(false);
+            return;
+        }
+
+        // Validate optional fields must be positive when provided
+        const positiveFields = [
+            { field: 'monthlyInsuranceCost', label: 'Coût de l\'assurance mensuelle' },
+            { field: 'deferralPeriodMonths', label: 'Période de différé' },
+        ];
+
+        const invalidPositiveFields = positiveFields.filter(({ field }) => {
+            const value = formData[field as keyof LoanCalculatorDto];
+            return typeof value === 'number' && value < 0;
+        });
+
+        if (invalidPositiveFields.length > 0) {
+            const invalidLabels = invalidPositiveFields.map(({ label }) => label).join(', ');
+            apiFetch('/dummy', {
+                method: 'POST',
+                snackbar: {
+                    showError: true,
+                    errorMessage: `Les champs suivants doivent être positifs: ${invalidLabels}`,
                 },
             });
             setIsLoading(false);
