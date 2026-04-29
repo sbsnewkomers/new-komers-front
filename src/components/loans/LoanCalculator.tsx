@@ -25,6 +25,7 @@ import {
 import { loansApi } from '@/lib/loansApi';
 import { entitiesApi, Group, Company, BusinessUnit } from '@/lib/entitiesApi';
 import { apiFetch } from '@/lib/apiClient';
+import { emitSnackbar } from '@/ui/snackbarBus';
 import {
     LoanCalculatorDto,
     CalculatorValidationResponse,
@@ -55,33 +56,30 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
                     <React.Fragment key={s.n}>
                         <div className="flex items-center gap-2">
                             <div
-                                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
-                                    isDone
-                                        ? 'bg-emerald-500 text-white'
-                                        : isActive
-                                          ? 'bg-primary text-white'
-                                          : 'bg-slate-100 text-slate-400'
-                                }`}
+                                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors ${isDone
+                                    ? 'bg-emerald-500 text-white'
+                                    : isActive
+                                        ? 'bg-primary text-white'
+                                        : 'bg-slate-100 text-slate-400'
+                                    }`}
                             >
                                 {isDone ? <Check className="h-4 w-4" /> : s.n}
                             </div>
                             <span
-                                className={`hidden text-xs font-medium sm:inline ${
-                                    isActive
-                                        ? 'text-slate-900'
-                                        : isDone
-                                          ? 'text-slate-700'
-                                          : 'text-slate-400'
-                                }`}
+                                className={`hidden text-xs font-medium sm:inline ${isActive
+                                    ? 'text-slate-900'
+                                    : isDone
+                                        ? 'text-slate-700'
+                                        : 'text-slate-400'
+                                    }`}
                             >
                                 {s.label}
                             </span>
                         </div>
                         {i < steps.length - 1 && (
                             <div
-                                className={`mx-3 h-0.5 flex-1 rounded-full transition-colors ${
-                                    currentStep > s.n ? 'bg-emerald-500' : 'bg-slate-200'
-                                }`}
+                                className={`mx-3 h-0.5 flex-1 rounded-full transition-colors ${currentStep > s.n ? 'bg-emerald-500' : 'bg-slate-200'
+                                    }`}
                             />
                         )}
                     </React.Fragment>
@@ -114,19 +112,54 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
     });
 
     const handleInputChange = (field: keyof LoanCalculatorDto, value: string | number) => {
+        const numericValue = Number(value);
+
+        // Validate that durationMonths is not null or empty
+        if (field === 'durationMonths' && (numericValue === 0)) {
+            emitSnackbar({
+                message: 'La durée totale ne peut pas être null',
+                variant: 'error'
+            });
+            return;
+        }
+
+        // Validate that principalAmount is not null or empty
+        if (field === 'principalAmount' && (numericValue === 0)) {
+            emitSnackbar({
+                message: 'Le capital emprunté ne peut pas être null',
+                variant: 'error'
+            });
+            return;
+        }
+
+        // Validate that annualInterestRate does not exceed 100%
+        if (field === 'annualInterestRate' && numericValue > 100) {
+            emitSnackbar({
+                message: 'Le taux d\'intérêt annuel ne peut pas dépasser 100%',
+                variant: 'error'
+            });
+            return;
+        }
+
+        // Validate positive values for required fields
+        const positiveFields = ['principalAmount', 'annualInterestRate', 'durationMonths', 'monthlyInsuranceCost', 'deferralPeriodMonths'];
+        if (positiveFields.includes(field) && numericValue < 0) {
+            emitSnackbar({
+                message: 'La valeur doit être positive',
+                variant: 'error'
+            });
+            return;
+        }
+
         if (field === 'deferralPeriodMonths') {
             const deferralValue = Number(value);
             const totalDuration =
                 Number(formData.durationMonths) || Number(formData.durationYears) * 12;
 
             if (deferralValue > totalDuration && totalDuration > 0) {
-                apiFetch('/dummy', {
-                    method: 'POST',
-                    snackbar: {
-                        showError: true,
-                        errorMessage:
-                            'La période de différé doit être inférieure à la durée totale du prêt',
-                    },
+                emitSnackbar({
+                    message: 'La période de différé doit être inférieure à la durée totale du prêt',
+                    variant: 'error'
                 });
                 return;
             }
@@ -138,13 +171,9 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
             const deferralValue = Number(formData.deferralPeriodMonths);
 
             if (deferralValue > newDurationMonths && newDurationMonths > 0) {
-                apiFetch('/dummy', {
-                    method: 'POST',
-                    snackbar: {
-                        showError: true,
-                        errorMessage:
-                            'La période de différé doit être inférieure à la durée totale du prêt',
-                    },
+                emitSnackbar({
+                    message: 'La période de différé doit être inférieure à la durée totale du prêt',
+                    variant: 'error'
                 });
                 return;
             }
@@ -174,18 +203,36 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
             return (
                 !value ||
                 (typeof value === 'string' && value.trim() === '') ||
-                (typeof value === 'number' && (value === 0 || isNaN(value)))
+                (typeof value === 'number' && (value <= 0 || isNaN(value)))
             );
         });
 
         if (missingFields.length > 0) {
             const missingLabels = missingFields.map(({ label }) => label).join(', ');
-            apiFetch('/dummy', {
-                method: 'POST',
-                snackbar: {
-                    showError: true,
-                    errorMessage: `Veuillez remplir tous les champs obligatoires: ${missingLabels}`,
-                },
+            emitSnackbar({
+                message: `Veuillez remplir tous les champs obligatoires: ${missingLabels}`,
+                variant: 'error'
+            });
+            setIsLoading(false);
+            return;
+        }
+
+        // Validate optional fields must be positive when provided
+        const positiveFields = [
+            { field: 'monthlyInsuranceCost', label: 'Coût de l\'assurance mensuelle' },
+            { field: 'deferralPeriodMonths', label: 'Période de différé' },
+        ];
+
+        const invalidPositiveFields = positiveFields.filter(({ field }) => {
+            const value = formData[field as keyof LoanCalculatorDto];
+            return typeof value === 'number' && value < 0;
+        });
+
+        if (invalidPositiveFields.length > 0) {
+            const invalidLabels = invalidPositiveFields.map(({ label }) => label).join(', ');
+            emitSnackbar({
+                message: `Les champs suivants doivent être positifs: ${invalidLabels}`,
+                variant: 'error'
             });
             setIsLoading(false);
             return;
@@ -209,12 +256,9 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
             if (response.valid) {
                 setCurrentStep(2);
             } else {
-                apiFetch('/dummy', {
-                    method: 'POST',
-                    snackbar: {
-                        showError: true,
-                        errorMessage: response.error || 'Validation failed',
-                    },
+                emitSnackbar({
+                    message: response.error || 'Validation failed',
+                    variant: 'error'
                 });
             }
         } catch (err) {
@@ -330,14 +374,29 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
         setError(null);
     };
 
-    const formatCurrency = (amount: number) =>
-        new Intl.NumberFormat('fr-FR', {
+    const formatCurrency = (amount: number | null | undefined) => {
+        if (amount === null || amount === undefined || isNaN(amount)) {
+            return new Intl.NumberFormat('fr-FR', {
+                style: 'currency',
+                currency: 'EUR',
+            }).format(0);
+        }
+        return new Intl.NumberFormat('fr-FR', {
             style: 'currency',
             currency: 'EUR',
         }).format(amount);
+    };
 
-    const formatDate = (dateString: string) =>
-        new Date(dateString).toLocaleDateString('fr-FR');
+    const formatDate = (dateString: string | null | undefined) => {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+            return date.toLocaleDateString('fr-FR');
+        } catch {
+            return '';
+        }
+    };
 
     const loadEntities = async (entityType: EntityType) => {
         try {
@@ -616,25 +675,25 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                             [
                                 {
                                     label: 'Mensualité',
-                                    value: formatCurrency(generation.summary.monthlyPayment),
+                                    value: formatCurrency(generation.summary?.monthlyPayment),
                                     color: 'text-slate-900',
                                     bg: 'bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100',
                                 },
                                 {
                                     label: 'Intérêts',
-                                    value: formatCurrency(generation.summary.totalInterest),
+                                    value: formatCurrency(generation.summary?.totalInterest),
                                     color: 'text-amber-700',
                                     bg: 'bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100',
                                 },
                                 {
                                     label: 'Assurance',
-                                    value: formatCurrency(generation.summary.totalInsurance),
+                                    value: formatCurrency(generation.summary?.totalInsurance),
                                     color: 'text-blue-700',
                                     bg: 'bg-linear-to-l from-blue-200 to-white ring-1 ring-blue-100',
                                 },
                                 {
                                     label: 'Total dû',
-                                    value: formatCurrency(generation.summary.totalPayment),
+                                    value: formatCurrency(generation.summary?.totalPayment),
                                     color: 'text-emerald-700',
                                     bg: 'bg-linear-to-l from-green-200 to-white ring-1 ring-green-100',
                                 },
@@ -663,7 +722,7 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                                     Tableau d&apos;amortissement
                                 </h3>
                                 <span className="text-xs text-slate-400">
-                                    ({generation.amortizationTable.length} échéances)
+                                    ({generation.amortizationTable?.length || 0} échéances)
                                 </span>
                             </div>
                         </div>
@@ -695,14 +754,14 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {generation.amortizationTable.map(
-                                        (inst: LoanInstallmentCalculation) => (
+                                    {generation.amortizationTable?.map(
+                                        (inst: LoanInstallmentCalculation, index: number) => (
                                             <tr
-                                                key={inst.installmentNumber}
+                                                key={inst.installmentNumber || `installment-${index}`}
                                                 className="transition-colors hover:bg-slate-50/50"
                                             >
                                                 <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                                                    {inst.installmentNumber}
+                                                    {inst.installmentNumber || ''}
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-slate-600">
                                                     {formatDate(inst.dueDate)}
