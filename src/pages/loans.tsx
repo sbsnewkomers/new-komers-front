@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { loansApi } from '@/lib/loansApi';
 import { LoanCalculator } from '@/components/loans/LoanCalculator';
-import { LoanImport } from '@/components/loans/LoanImport';
+import LoanImport from '@/components/loans/LoanImport';
 import { ManualLoanEntry } from '@/components/loans/ManualLoanEntry';
 import { LoanOverview } from '@/components/loans/LoanOverview';
 import { LoanList } from '@/components/loans/LoanList';
@@ -75,9 +75,9 @@ export default function LoansPageOptimized() {
             averageRate:
                 validLoans.length > 0
                     ? validLoans.reduce(
-                          (sum, loan) => sum + (Number(loan.annualInterestRate) || 0),
-                          0,
-                      ) / validLoans.length
+                        (sum, loan) => sum + (Number(loan.annualInterestRate) || 0),
+                        0,
+                    ) / validLoans.length
                     : 0,
         };
     }, [loans]);
@@ -248,9 +248,8 @@ export default function LoansPageOptimized() {
                     {/* Tabs */}
                     {!isSubView && (
                         <div
-                            className={`grid gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 ${
-                                canCreate ? 'grid-cols-3' : 'grid-cols-2'
-                            }`}
+                            className={`grid gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 ${canCreate ? 'grid-cols-3' : 'grid-cols-2'
+                                }`}
                         >
                             {tabs.map((tab) => {
                                 const isActive = activeTab === tab.key;
@@ -259,20 +258,18 @@ export default function LoansPageOptimized() {
                                         key={tab.key}
                                         type="button"
                                         onClick={() => setActiveTab(tab.key)}
-                                        className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all ${
-                                            isActive
+                                        className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all ${isActive
                                                 ? 'bg-white text-slate-900 shadow-sm'
                                                 : 'text-slate-500 hover:text-slate-700'
-                                        }`}
+                                            }`}
                                     >
                                         {tab.label}
                                         {typeof tab.count === 'number' && (
                                             <span
-                                                className={`ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
-                                                    isActive
+                                                className={`ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${isActive
                                                         ? 'bg-slate-900 text-white'
                                                         : 'bg-slate-200 text-slate-600'
-                                                }`}
+                                                    }`}
                                             >
                                                 {tab.count}
                                             </span>
