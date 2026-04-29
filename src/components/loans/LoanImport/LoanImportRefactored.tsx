@@ -97,6 +97,11 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         }
     };
 
+    // Load entities on component mount
+    useEffect(() => {
+        loadEntities(selectedEntityType);
+    }, []);
+
     const validateLoanName = async (name: string, entityType: EntityType, entityId: string) => {
         if (!name.trim() || !entityType || !entityId) {
             setNameValidationError(null);
@@ -122,6 +127,32 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         setSelectedEntityType(entityType);
         setSelectedEntityId('');
         loadEntities(entityType);
+        // Validate loan name when entity type changes
+        if (loanName.trim() && entityType && selectedEntityId) {
+            validateLoanName(loanName, entityType, selectedEntityId);
+        } else {
+            setNameValidationError(null);
+        }
+    };
+
+    const handleEntityIdChange = (entityId: string) => {
+        setSelectedEntityId(entityId);
+        // Validate loan name when entity ID changes
+        if (loanName.trim() && selectedEntityType && entityId) {
+            validateLoanName(loanName, selectedEntityType, entityId);
+        } else {
+            setNameValidationError(null);
+        }
+    };
+
+    const handleLoanNameChange = (name: string) => {
+        setLoanName(name);
+        // Validate loan name when loan name changes
+        if (name.trim() && selectedEntityType && selectedEntityId) {
+            validateLoanName(name, selectedEntityType, selectedEntityId);
+        } else {
+            setNameValidationError(null);
+        }
     };
 
     const handleColumnMapping = (
@@ -198,6 +229,10 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                 try {
                     const previewData = await loansApi.getImportPreview(result.id);
                     setPreview(previewData);
+                    const autoMapping = generateAutoMapping(previewData);
+                    if (autoMapping.length > 0) {
+                        setColumnMapping(autoMapping);
+                    }
                     setCurrentStep(2);
                     return;
                 } catch {
@@ -209,11 +244,16 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                 const headers = lines[0]
                                     .split(',')
                                     .map((h) => h.trim().replace(/^["']|["']$/g, '').trim());
-                                setPreview({
+                                const previewData = {
                                     previewRows: [],
                                     detectedColumns: headers,
                                     totalRows: lines.length - 1,
-                                });
+                                };
+                                setPreview(previewData);
+                                const autoMapping = generateAutoMapping(previewData);
+                                if (autoMapping.length > 0) {
+                                    setColumnMapping(autoMapping);
+                                }
                                 setCurrentStep(2);
                                 return;
                             }
@@ -222,11 +262,16 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                         }
                     }
 
-                    setPreview({
+                    const previewData = {
                         previewRows: [],
                         detectedColumns: ['Veuillez sélectionner un fichier valide'],
                         totalRows: 0,
-                    });
+                    };
+                    setPreview(previewData);
+                    const autoMapping = generateAutoMapping(previewData);
+                    if (autoMapping.length > 0) {
+                        setColumnMapping(autoMapping);
+                    }
                     setCurrentStep(2);
                     return;
                 }
@@ -289,61 +334,49 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         );
     };
 
-    // Effects
-    useEffect(() => {
-        if (selectedEntityType === EntityType.GROUP) {
-            loadEntities(EntityType.GROUP);
+
+    // Auto-mapping function
+    const generateAutoMapping = (previewData: ImportPreviewDto) => {
+        if (!previewData.detectedColumns || previewData.detectedColumns.length === 0) {
+            return [];
         }
-    }, [selectedEntityType]);
 
-    useEffect(() => {
-        if (preview && preview.detectedColumns && preview.detectedColumns.length > 0) {
-            const autoMapping: ColumnMappingDto[] = [];
-            const requiredFields = [
-                'dueDate',
-                'principalPayment',
-                'interestPayment',
-                'insurancePayment',
-            ];
+        const autoMapping: ColumnMappingDto[] = [];
+        const requiredFields = [
+            'dueDate',
+            'principalPayment',
+            'interestPayment',
+            'insurancePayment',
+        ];
 
-            requiredFields.forEach((field) => {
-                const matchedColumn = preview.detectedColumns.find(
-                    (col) =>
-                        col.toLowerCase().includes(field) ||
-                        (field === 'dueDate' && col.toLowerCase().includes('date')) ||
-                        (field === 'principalPayment' &&
-                            col.toLowerCase().includes('capital')) ||
-                        (field === 'interestPayment' &&
-                            col.toLowerCase().includes('intérêt')) ||
-                        (field === 'insurancePayment' &&
-                            col.toLowerCase().includes('assurance')),
-                );
+        requiredFields.forEach((field) => {
+            const matchedColumn = previewData.detectedColumns.find(
+                (col) =>
+                    col.toLowerCase().includes(field) ||
+                    (field === 'dueDate' && col.toLowerCase().includes('date')) ||
+                    (field === 'principalPayment' &&
+                        col.toLowerCase().includes('capital')) ||
+                    (field === 'interestPayment' &&
+                        col.toLowerCase().includes('intérêt')) ||
+                    (field === 'insurancePayment' &&
+                        col.toLowerCase().includes('assurance')),
+            );
 
-                if (matchedColumn && !autoMapping.some((m) => m.targetField === field)) {
-                    autoMapping.push({
-                        sourceColumn: matchedColumn,
-                        targetField: field as
-                            | 'dueDate'
-                            | 'principalPayment'
-                            | 'interestPayment'
-                            | 'insurancePayment',
-                    });
-                }
-            });
-
-            if (autoMapping.length > 0) {
-                setColumnMapping(autoMapping);
+            if (matchedColumn && !autoMapping.some((m) => m.targetField === field)) {
+                autoMapping.push({
+                    sourceColumn: matchedColumn,
+                    targetField: field as
+                        | 'dueDate'
+                        | 'principalPayment'
+                        | 'interestPayment'
+                        | 'insurancePayment',
+                });
             }
-        }
-    }, [preview]);
+        });
 
-    useEffect(() => {
-        if (loanName.trim() && selectedEntityType && selectedEntityId) {
-            validateLoanName(loanName, selectedEntityType, selectedEntityId);
-        } else {
-            setNameValidationError(null);
-        }
-    }, [loanName, selectedEntityType, selectedEntityId]);
+        return autoMapping;
+    };
+
 
     return (
         <div className="space-y-6">
@@ -377,11 +410,11 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
             {currentStep === 1 && (
                 <FileUploadStep
                     loanName={loanName}
-                    setLoanName={setLoanName}
+                    setLoanName={handleLoanNameChange}
                     selectedEntityType={selectedEntityType}
                     setSelectedEntityType={handleEntityTypeChange}
                     selectedEntityId={selectedEntityId}
-                    setSelectedEntityId={setSelectedEntityId}
+                    setSelectedEntityId={handleEntityIdChange}
                     entities={entities}
                     selectedFile={selectedFile}
                     setSelectedFile={setSelectedFile}
@@ -423,7 +456,7 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                     onModifyMapping={() => setCurrentStep(2)}
                     onSaveImport={processImport}
                     onNewImport={resetImport}
-                    onViewLoan={onLoanImported || (() => {})}
+                    onViewLoan={onLoanImported || (() => { })}
                 />
             )}
 

@@ -1,7 +1,10 @@
 import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { FileText, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
-import { LoanImport, ColumnMappingDto, ImportPreviewDto } from '@/types/loans';
+import { LoanImport, ColumnMappingDto, ImportPreviewDto, ImportErrorDto } from '@/types/loans';
+import { getValidationErrors } from './ValidationUtils';
+import { ErrorReport } from './ErrorReport';
+import { PreviewTable } from './PreviewTable';
 
 interface PreviewStepProps {
     loanName: string;
@@ -16,6 +19,7 @@ interface PreviewStepProps {
     onSaveImport: () => void;
     onNewImport: () => void;
     onViewLoan: (loanId: string) => void;
+    validationErrors?: ImportErrorDto[];
 }
 
 const requiredFields = [
@@ -24,17 +28,6 @@ const requiredFields = [
     'interestPayment',
     'insurancePayment',
 ] as const;
-
-const fieldLabel = (field: string) =>
-    field === 'dueDate'
-        ? 'Date'
-        : field === 'principalPayment'
-            ? 'Capital'
-            : field === 'interestPayment'
-                ? 'Intérêts'
-                : field === 'insurancePayment'
-                    ? 'Assurance'
-                    : field;
 
 export function PreviewStep({
     loanName,
@@ -49,7 +42,24 @@ export function PreviewStep({
     onSaveImport,
     onNewImport,
     onViewLoan,
+    validationErrors,
 }: PreviewStepProps) {
+    // Calculate validation errors for preview
+    const previewValidationErrors = React.useMemo(() => {
+        return getValidationErrors(preview, columnMapping);
+    }, [preview, columnMapping]);
+
+    // Combine provided errors with preview validation errors
+    const allErrors = React.useMemo(() => {
+        const errors = [...(validationErrors || [])];
+        if (!importResult) {
+            errors.push(...previewValidationErrors);
+        }
+        return errors;
+    }, [validationErrors, previewValidationErrors, importResult]);
+
+    const hasErrors = allErrors.length > 0;
+
     if (!importResult) {
         // Preview before import
         return (
@@ -60,10 +70,10 @@ export function PreviewStep({
                     </div>
                     <div>
                         <h3 className="text-base font-semibold text-slate-900">
-                            Prévisualisation de l'import
+                            Prévisualisation de l&apos;import
                         </h3>
                         <p className="text-xs text-slate-500">
-                            Vérifiez les informations avant de finaliser l'import.
+                            Vérifiez les informations avant de finaliser l&apos;import.
                         </p>
                     </div>
                 </div>
@@ -92,7 +102,7 @@ export function PreviewStep({
                         },
                         {
                             label: 'Statut',
-                            value: 'Prêt à importer',
+                            value: hasErrors ? 'Erreurs détectées' : 'Prêt à importer',
                         },
                     ].map((stat) => (
                         <div
@@ -109,77 +119,19 @@ export function PreviewStep({
                     ))}
                 </div>
 
-                {/* Preview Table */}
-                <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-                    <h4 className="mb-3 text-sm font-semibold text-slate-900">
-                        Aperçu des données (avec mapping appliqué)
-                    </h4>
-                    <p className="mb-4 text-xs text-slate-500">
-                        Les 5 premières lignes de votre fichier avec les colonnes mappées.
-                    </p>
-                    <div className="overflow-x-auto">
-                        <table className="w-full border-collapse border border-slate-300 text-sm">
-                            <thead>
-                                <tr className="bg-slate-50">
-                                    <th className="border border-slate-300 p-2 text-left font-semibold text-xs">
-                                        Ligne
-                                    </th>
-                                    {columnMapping.map((mapping) => (
-                                        <th
-                                            key={mapping.targetField}
-                                            className="border border-slate-300 p-2 text-left font-semibold text-xs"
-                                        >
-                                            {fieldLabel(mapping.targetField)}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {preview?.previewRows?.slice(0, 5).map((row, index) => (
-                                    <tr key={index} className="hover:bg-slate-50">
-                                        <td className="border border-slate-300 p-2 text-xs font-medium">
-                                            {index + 1}
-                                        </td>
-                                        {columnMapping.map((mapping) => (
-                                            <td
-                                                key={mapping.targetField}
-                                                className="border border-slate-300 p-2 text-xs font-mono"
-                                            >
-                                                {row[mapping.sourceColumn] || '-'}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
-                                {(!preview?.previewRows || preview.previewRows.length === 0) && (
-                                    <tr>
-                                        <td
-                                            colSpan={columnMapping.length + 1}
-                                            className="border border-slate-300 p-4 text-center text-xs text-slate-500"
-                                        >
-                                            Aucune donnée de prévisualisation disponible. 
-                                            Les données seront traitées lors de l'import.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                    {preview?.totalRows && preview.totalRows > 5 && (
-                        <p className="mt-3 text-xs text-slate-500 text-center">
-                            ... et {preview.totalRows - 5} lignes supplémentaires
-                        </p>
-                    )}
-                </div>
+                <ErrorReport errors={allErrors} totalRows={preview?.totalRows} />
+
+                <PreviewTable preview={preview} columnMapping={columnMapping} errors={allErrors} />
 
                 <div className="mt-6 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                     <Button variant="outline" onClick={onModifyMapping}>
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Modifier le mapping
+                        Retourner au mapping
                     </Button>
                     <Button
                         onClick={onSaveImport}
-                        disabled={columnMapping.length < requiredFields.length || isLoading}
-                        className="bg-primary text-white hover:bg-slate-800"
+                        disabled={columnMapping.length < requiredFields.length || isLoading || hasErrors}
+                        className={`${hasErrors ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary text-white hover:bg-slate-800'}`}
                     >
                         {isLoading ? 'Import…' : 'Sauvegarder l\'import'}
                         <CheckCircle className="h-4 w-4 ml-2" />

@@ -27,7 +27,7 @@ export function ModelPreviewDialog({
                     </AlertDialogTitle>
                 </AlertDialogHeader>
                 <AlertDialogDescription className="text-slate-600">
-                    Voici la structure attendue pour votre fichier d'import.
+                    Voici la structure attendue pour votre fichier d&apos;import.
                 </AlertDialogDescription>
 
                 <div className="mt-4 space-y-4">

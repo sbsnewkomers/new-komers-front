@@ -24,7 +24,7 @@ interface FileUploadStepProps {
     isLoading: boolean;
     onDownloadTemplate: (format: ImportFileFormat) => void;
     onGoToNextStep: () => void;
-    fileInputRef: React.RefObject<HTMLInputElement>;
+    fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 export function FileUploadStep({
