@@ -295,10 +295,9 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
     };
 
     const saveLoan = async () => {
-        if (!formData.entityType || !formData.entityId) {
-            setShowConfirmDialog(true);
-            return;
-        }
+        // Always show confirmation dialog to allow user to choose/confirm entity
+        setShowConfirmDialog(true);
+        return;
 
         setIsLoading(true);
         setError(null);
@@ -317,10 +316,17 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
                 entityId: formData.entityId,
             };
 
-            const loan = await loansApi.createLoanFromCalculator(loanData);
+            const loan = await loansApi.createLoanFromCalculator(loanData, {
+                snackbar: { showError: false }
+            });
             onLoanCreated?.(loan.id);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save loan');
+            // Display error manually to avoid "runtime error" prefix
+            const errorMessage = err instanceof Error ? err.message : 'Failed to save loan';
+            emitSnackbar({
+                message: errorMessage,
+                variant: 'error'
+            });
         } finally {
             setIsLoading(false);
         }
@@ -346,11 +352,16 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
             };
 
             const loan = await loansApi.createLoanFromCalculator(loanData, {
-                snackbar: { showSuccess: true, successMessage: 'Emprunt créé avec succès !' },
+                snackbar: { showError: false, showSuccess: true, successMessage: 'Emprunt créé avec succès !' },
             });
             onLoanCreated?.(loan.id);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save loan');
+            // Display error manually to avoid "runtime error" prefix
+            const errorMessage = err instanceof Error ? err.message : 'Failed to save loan';
+            emitSnackbar({
+                message: errorMessage,
+                variant: 'error'
+            });
         } finally {
             setIsLoading(false);
         }
