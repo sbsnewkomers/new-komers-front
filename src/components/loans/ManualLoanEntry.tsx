@@ -53,6 +53,7 @@ export function ManualLoanEntry({
     );
     const [selectedEntityId, setSelectedEntityId] = useState(entityId || '');
     const [entities, setEntities] = useState<Array<{ id: string; name: string }>>([]);
+    const [nameValidationError, setNameValidationError] = useState<string | null>(null);
 
     const [installments, setInstallments] = useState<EditableInstallment[]>([]);
     const isInitialized = useRef(false);
@@ -109,11 +110,39 @@ export function ManualLoanEntry({
         }
     };
 
+    const validateLoanName = async (name: string, entityType: EntityType, entityId: string) => {
+        if (!name.trim() || !entityType || !entityId) {
+            setNameValidationError(null);
+            return;
+        }
+
+        try {
+            const response = await loansApi.validateManualLoanName(name, entityType, entityId);
+            if (!response.isUnique) {
+                setNameValidationError(`Un prêt avec le nom "${name}" existe déjà pour cette entité`);
+            } else {
+                setNameValidationError(null);
+            }
+        } catch (error) {
+            console.error('Error validating loan name:', error);
+            setNameValidationError(null);
+        }
+    };
+
     useEffect(() => {
         if (selectedEntityType === EntityType.GROUP) {
             setTimeout(() => loadEntities(EntityType.GROUP), 0);
         }
     }, [selectedEntityType]);
+
+    // Validate loan name when it changes or when entity changes
+    useEffect(() => {
+        if (loanName.trim() && selectedEntityType && selectedEntityId) {
+            validateLoanName(loanName, selectedEntityType, selectedEntityId);
+        } else {
+            setNameValidationError(null);
+        }
+    }, [loanName, selectedEntityType, selectedEntityId]);
 
     useEffect(() => {
         if (!isInitialized.current && installments.length === 0) {
@@ -216,6 +245,12 @@ export function ManualLoanEntry({
     const validateInstallments = () => {
         if (!loanName.trim()) {
             emitSnackbar({ message: "Le nom de l'emprunt est requis", variant: 'error' });
+            return false;
+        }
+
+        // Check for loan name validation error
+        if (nameValidationError) {
+            emitSnackbar({ message: nameValidationError, variant: 'error' });
             return false;
         }
 
@@ -373,7 +408,13 @@ export function ManualLoanEntry({
                             placeholder="ex: Prêt BNP Agence X"
                             value={loanName}
                             onChange={(e) => setLoanName(e.target.value)}
+                            className={nameValidationError ? 'border-red-500' : ''}
                         />
+                        {nameValidationError && (
+                            <p className="mt-1 text-xs text-red-600">
+                                {nameValidationError}
+                            </p>
+                        )}
                     </div>
                     <div>
                         <Label

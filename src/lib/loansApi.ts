@@ -98,6 +98,14 @@ class LoansApi {
         });
     }
 
+    async validateCalculatorLoanName(name: string, entityType: EntityType, entityId: string): Promise<{ isUnique: boolean }> {
+        return this.checkLoanNameUniqueness(name, entityType, entityId);
+    }
+
+    async validateManualLoanName(name: string, entityType: EntityType, entityId: string): Promise<{ isUnique: boolean }> {
+        return this.checkLoanNameUniqueness(name, entityType, entityId);
+    }
+
     async createManualLoan(manualLoanData: CreateManualLoanDto, options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<Loan> {
         return apiFetch<Loan>('/loans/manual', {
             method: 'POST',
@@ -109,6 +117,21 @@ class LoansApi {
     // Statistics
     async getLoanStatistics(loanId: string): Promise<LoanStatistics> {
         return apiFetch<LoanStatistics>(`/loans/${loanId}/statistics`);
+    }
+
+    // Validation operations
+    async checkLoanNameUniqueness(name: string, entityType: EntityType, entityId: string, excludeLoanId?: string): Promise<{ isUnique: boolean }> {
+        const params = new URLSearchParams({
+            name,
+            entityType,
+            entityId,
+        });
+
+        if (excludeLoanId) {
+            params.append('excludeLoanId', excludeLoanId);
+        }
+
+        return apiFetch<{ isUnique: boolean }>(`/loans/validate/name?${params.toString()}`);
     }
 
     async getEntityStatistics(entityType: EntityType, entityId: string): Promise<EntityLoanStatistics> {

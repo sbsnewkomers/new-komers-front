@@ -58,33 +58,30 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
                     <React.Fragment key={s.n}>
                         <div className="flex items-center gap-2">
                             <div
-                                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
-                                    isDone
-                                        ? 'bg-emerald-500 text-white'
-                                        : isActive
-                                          ? 'bg-primary text-white'
-                                          : 'bg-slate-100 text-slate-400'
-                                }`}
+                                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors ${isDone
+                                    ? 'bg-emerald-500 text-white'
+                                    : isActive
+                                        ? 'bg-primary text-white'
+                                        : 'bg-slate-100 text-slate-400'
+                                    }`}
                             >
                                 {isDone ? <Check className="h-4 w-4" /> : s.n}
                             </div>
                             <span
-                                className={`hidden text-xs font-medium sm:inline ${
-                                    isActive
-                                        ? 'text-slate-900'
-                                        : isDone
-                                          ? 'text-slate-700'
-                                          : 'text-slate-400'
-                                }`}
+                                className={`hidden text-xs font-medium sm:inline ${isActive
+                                    ? 'text-slate-900'
+                                    : isDone
+                                        ? 'text-slate-700'
+                                        : 'text-slate-400'
+                                    }`}
                             >
                                 {s.label}
                             </span>
                         </div>
                         {i < steps.length - 1 && (
                             <div
-                                className={`mx-3 h-0.5 flex-1 rounded-full transition-colors ${
-                                    currentStep > s.n ? 'bg-emerald-500' : 'bg-slate-200'
-                                }`}
+                                className={`mx-3 h-0.5 flex-1 rounded-full transition-colors ${currentStep > s.n ? 'bg-emerald-500' : 'bg-slate-200'
+                                    }`}
                             />
                         )}
                     </React.Fragment>
@@ -111,8 +108,53 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
     );
     const [selectedEntityId, setSelectedEntityId] = useState(entityId || '');
     const [entities, setEntities] = useState<Array<{ id: string; name: string }>>([]);
+    const [nameValidationError, setNameValidationError] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const loadEntities = async (entityType: EntityType) => {
+        try {
+            let entitiesList: Array<{ id: string; name: string }> = [];
+
+            switch (entityType) {
+                case EntityType.GROUP:
+                    entitiesList = await entitiesApi.getGroups();
+                    break;
+                case EntityType.COMPANY:
+                    entitiesList = await entitiesApi.getCompanies();
+                    break;
+                case EntityType.BUSINESSUNIT:
+                    entitiesList = await entitiesApi.getBusinessUnitsForUser();
+                    break;
+                default:
+                    entitiesList = [];
+            }
+
+            setEntities(entitiesList);
+        } catch (error) {
+            console.error('Error loading entities:', error);
+            setEntities([]);
+        }
+    };
+
+    const validateLoanName = async (name: string, entityType: EntityType, entityId: string) => {
+        if (!name.trim() || !entityType || !entityId) {
+            setNameValidationError(null);
+            return;
+        }
+
+        try {
+            const response = await loansApi.checkLoanNameUniqueness(name, entityType, entityId);
+            if (!response.isUnique) {
+                setNameValidationError(`Un prêt avec le nom "${name}" existe déjà pour cette entité`);
+            } else {
+                setNameValidationError(null);
+            }
+        } catch (error) {
+            console.error('Error validating loan name:', error);
+            setNameValidationError(null);
+        }
+    };
 
     useEffect(() => {
         if (selectedEntityType === EntityType.GROUP) {
@@ -161,9 +203,23 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         }
     }, [preview]);
 
+    // Validate loan name when it changes or when entity changes
+    useEffect(() => {
+        if (loanName.trim() && selectedEntityType && selectedEntityId) {
+            validateLoanName(loanName, selectedEntityType, selectedEntityId);
+        } else {
+            setNameValidationError(null);
+        }
+    }, [loanName, selectedEntityType, selectedEntityId]);
+
     const goToNextStep = async () => {
         if (!selectedFile || !loanName || !selectedEntityType || !selectedEntityId) {
             setError('Veuillez remplir tous les champs obligatoires');
+            return;
+        }
+
+        if (nameValidationError) {
+            setError(nameValidationError);
             return;
         }
 
@@ -265,31 +321,6 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         }
     };
 
-    const loadEntities = async (entityType: EntityType) => {
-        try {
-            let entitiesList: Array<{ id: string; name: string }> = [];
-
-            switch (entityType) {
-                case EntityType.GROUP:
-                    entitiesList = await entitiesApi.getGroups();
-                    break;
-                case EntityType.COMPANY:
-                    entitiesList = await entitiesApi.getCompanies();
-                    break;
-                case EntityType.BUSINESSUNIT:
-                    entitiesList = await entitiesApi.getBusinessUnitsForUser();
-                    break;
-                default:
-                    entitiesList = [];
-            }
-
-            setEntities(entitiesList);
-        } catch (error) {
-            console.error('Error loading entities:', error);
-            setEntities([]);
-        }
-    };
-
     const handleEntityTypeChange = (value: string) => {
         const entityType = value as EntityType;
         setSelectedEntityType(entityType);
@@ -378,12 +409,12 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         field === 'dueDate'
             ? 'Date'
             : field === 'principalPayment'
-              ? 'Capital'
-              : field === 'interestPayment'
-                ? 'Intérêts'
-                : field === 'insurancePayment'
-                  ? 'Assurance'
-                  : field;
+                ? 'Capital'
+                : field === 'interestPayment'
+                    ? 'Intérêts'
+                    : field === 'insurancePayment'
+                        ? 'Assurance'
+                        : field;
 
     return (
         <div className="space-y-6">
@@ -503,7 +534,13 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                     placeholder="ex: Prêt BNP Agence X"
                                     value={loanName}
                                     onChange={(e) => setLoanName(e.target.value)}
+                                    className={nameValidationError ? 'border-red-500' : ''}
                                 />
+                                {nameValidationError && (
+                                    <p className="mt-1 text-xs text-red-600">
+                                        {nameValidationError}
+                                    </p>
+                                )}
                             </div>
                             <div>
                                 <Label
@@ -629,10 +666,10 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                                             handleColumnMapping(
                                                 value,
                                                 field as
-                                                    | 'dueDate'
-                                                    | 'principalPayment'
-                                                    | 'interestPayment'
-                                                    | 'insurancePayment',
+                                                | 'dueDate'
+                                                | 'principalPayment'
+                                                | 'interestPayment'
+                                                | 'insurancePayment',
                                             )
                                         }
                                     >
