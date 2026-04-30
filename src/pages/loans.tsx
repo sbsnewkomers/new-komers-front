@@ -1,25 +1,22 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { loansApi } from '@/lib/loansApi';
 import { LoanCalculator } from '@/components/loans/LoanCalculator';
 import LoanImport from '@/components/loans/LoanImport';
 import { ManualLoanEntry } from '@/components/loans/ManualLoanEntry';
-import { LoanOverview } from '@/components/loans/LoanOverview';
+import { LoanStats } from '@/components/loans/LoanStats';
 import { LoanList } from '@/components/loans/LoanList';
 import { LoanDetails } from '@/components/loans/LoanDetails';
 import { LoanCreate } from '@/components/loans/LoanCreate';
 import { LoanEdit } from '@/components/loans/LoanEdit';
 import { ErrorDialog } from '@/components/ui/ErrorDialog';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
-import { Button } from '@/components/ui/Button';
 import { useLoans, useLoanDetails } from '@/hooks/useLoans';
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
 import { usePermissionsContext } from '@/permissions/PermissionsProvider';
-import { Plus } from 'lucide-react';
 import {
     Loan,
     EntityType,
@@ -36,31 +33,18 @@ type LoanTabKey =
     | 'import'
     | 'manual';
 
-export default function LoansPageOptimized() {
-    const router = useRouter();
+export default function LoansPage() {
     const [activeTab, setActiveTab] = useState<LoanTabKey>('overview');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<LoanStatus | 'all'>('all');
     const [filterEntityType, setFilterEntityType] = useState<EntityType | 'all'>('all');
+    const [filterInputMethod, setFilterInputMethod] = useState<string | 'all'>('all');
     const [editingLoanId, setEditingLoanId] = useState<string | null>(null);
 
     const { loans, isLoading, error, setError, setLoans, loadLoans } = useLoans();
-    const { selectedLoan, loanStats, loadLoanDetails, clearLoanDetails, setSelectedLoan } = useLoanDetails();
+    const { selectedLoan, loanStats, loadLoanDetails, setSelectedLoan } = useLoanDetails();
     const { deleteConfirmOpen, loanToDelete, confirmDelete, cancelDelete, closeDialog } = useDeleteConfirm();
     const { user } = usePermissionsContext();
-
-    useEffect(() => {
-        if (router.isReady) {
-            const { tab, loanId } = router.query;
-
-            if (tab === 'details' && loanId && typeof loanId === 'string') {
-                loadLoanDetails(loanId);
-                setTimeout(() => setActiveTab('details'), 0);
-            } else if (tab && typeof tab === 'string') {
-                setTimeout(() => setActiveTab(tab as LoanTabKey), 0);
-            }
-        }
-    }, [router.isReady, router.query]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const overviewStats = useMemo(() => {
         const validLoans = loans.filter((loan) => loan != null);
@@ -91,9 +75,11 @@ export default function LoansPageOptimized() {
                 const matchesStatus = filterStatus === 'all' || loan.status === filterStatus;
                 const matchesEntityType =
                     filterEntityType === 'all' || loan.entityType === filterEntityType;
-                return matchesSearch && matchesStatus && matchesEntityType;
+                const matchesInputMethod =
+                    filterInputMethod === 'all' || loan.inputMethod === filterInputMethod;
+                return matchesSearch && matchesStatus && matchesEntityType && matchesInputMethod;
             }),
-        [loans, searchTerm, filterStatus, filterEntityType],
+        [loans, searchTerm, filterStatus, filterEntityType, filterInputMethod],
     );
 
     const handleLoanSelect = async (loanId: string) => {
@@ -105,26 +91,9 @@ export default function LoansPageOptimized() {
         confirmDelete(loanId);
     };
 
-    const confirmDeleteLoan = async () => {
-        if (!loanToDelete) return;
-
-        try {
-            await loansApi.deleteLoan(loanToDelete);
-            setError(null);
-
-            setLoans((prevLoans: Loan[]) =>
-                prevLoans.filter((loan: Loan) => loan.id !== loanToDelete),
-            );
-
-            if (selectedLoan?.id === loanToDelete) {
-                clearLoanDetails();
-                setActiveTab('overview');
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to delete loan');
-        } finally {
-            closeDialog();
-        }
+    const handleLoanEdit = (loanId: string) => {
+        setEditingLoanId(loanId);
+        setActiveTab('edit');
     };
 
     const handleLoanCreated = async (loanId: string) => {
@@ -138,12 +107,7 @@ export default function LoansPageOptimized() {
     };
 
     const handleBack = () => {
-        setActiveTab('overview');
-    };
-
-    const handleLoanEdit = (loanId: string) => {
-        setEditingLoanId(loanId);
-        setActiveTab('edit');
+        setActiveTab('list');
     };
 
     const handleLoanUpdated = (updatedLoan: Loan) => {
@@ -178,18 +142,22 @@ export default function LoansPageOptimized() {
 
     const canCreate = user?.role !== 'END_USER';
 
-    const tabs: { key: LoanTabKey; label: string; count?: number }[] = [
-        { key: 'overview', label: 'Aperçu' },
-        { key: 'list', label: 'Liste', count: overviewStats.totalLoans },
-        ...(canCreate ? [{ key: 'create' as LoanTabKey, label: 'Créer' }] : []),
-    ];
+    const confirmDeleteLoan = async () => {
+        if (!loanToDelete) return;
 
-    const isSubView =
-        activeTab === 'details' ||
-        activeTab === 'edit' ||
-        activeTab === 'calculator' ||
-        activeTab === 'import' ||
-        activeTab === 'manual';
+        try {
+            await loansApi.deleteLoan(loanToDelete);
+            setError(null);
+            setLoans((prevLoans: Loan[]) =>
+                prevLoans.filter((loan: Loan) => loan.id !== loanToDelete),
+            );
+            await loadLoans();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete loan');
+        } finally {
+            closeDialog();
+        }
+    };
 
     return (
         <>
@@ -229,84 +197,37 @@ export default function LoansPageOptimized() {
                                 </p>
                             </div>
                         </div>
-
-                        {canCreate && !isSubView && (
-                            <div className="flex w-full items-center gap-3 sm:w-auto">
-                                <Button
-                                    onClick={() => setActiveTab('create')}
-                                    className="w-full bg-primary text-white hover:bg-slate-800 sm:w-auto"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    Nouvel emprunt
-                                </Button>
-                            </div>
-                        )}
                     </div>
 
                     <ErrorDialog error={error} />
 
-                    {/* Tabs */}
-                    {!isSubView && (
-                        <div
-                            className={`grid gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 ${canCreate ? 'grid-cols-3' : 'grid-cols-2'
-                                }`}
-                        >
-                            {tabs.map((tab) => {
-                                const isActive = activeTab === tab.key;
-                                return (
-                                    <button
-                                        key={tab.key}
-                                        type="button"
-                                        onClick={() => setActiveTab(tab.key)}
-                                        className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all ${isActive
-                                                ? 'bg-white text-slate-900 shadow-sm'
-                                                : 'text-slate-500 hover:text-slate-700'
-                                            }`}
-                                    >
-                                        {tab.label}
-                                        {typeof tab.count === 'number' && (
-                                            <span
-                                                className={`ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${isActive
-                                                        ? 'bg-slate-900 text-white'
-                                                        : 'bg-slate-200 text-slate-600'
-                                                    }`}
-                                            >
-                                                {tab.count}
-                                            </span>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
+                    {/* Content based on active tab */}
+                    {(activeTab === 'overview' || activeTab === 'list') && (
+                        <>
+                            {/* Stats */}
+                            <LoanStats overviewStats={overviewStats} />
 
-                    {/* Tab content */}
-                    {activeTab === 'overview' && (
-                        <LoanOverview
-                            loans={filteredLoans}
-                            overviewStats={overviewStats}
-                            onLoanSelect={handleLoanSelect}
-                        />
-                    )}
-
-                    {activeTab === 'list' && (
-                        <LoanList
-                            loans={filteredLoans}
-                            isLoading={isLoading}
-                            searchTerm={searchTerm}
-                            onSearchChange={setSearchTerm}
-                            filterStatus={filterStatus}
-                            onFilterStatusChange={setFilterStatus}
-                            filterEntityType={filterEntityType}
-                            onFilterEntityTypeChange={setFilterEntityType}
-                            onLoanView={handleLoanSelect}
-                            onLoanEdit={handleLoanEdit}
-                            onLoanDelete={handleLoanDelete}
-                        />
+                            <LoanList
+                                loans={filteredLoans}
+                                isLoading={isLoading}
+                                searchTerm={searchTerm}
+                                onSearchChange={setSearchTerm}
+                                filterStatus={filterStatus}
+                                onFilterStatusChange={setFilterStatus}
+                                filterEntityType={filterEntityType}
+                                onFilterEntityTypeChange={setFilterEntityType}
+                                filterInputMethod={filterInputMethod}
+                                onFilterInputMethodChange={setFilterInputMethod}
+                                onLoanView={handleLoanSelect}
+                                onLoanEdit={handleLoanEdit}
+                                onLoanDelete={handleLoanDelete}
+                                onCreateNew={() => setActiveTab('create')}
+                            />
+                        </>
                     )}
 
                     {activeTab === 'create' && canCreate && (
-                        <LoanCreate onMethodSelect={handleMethodSelect} />
+                        <LoanCreate onMethodSelect={handleMethodSelect} onBack={handleBack} />
                     )}
 
                     {activeTab === 'details' && selectedLoan && (
@@ -330,15 +251,15 @@ export default function LoansPageOptimized() {
                     )}
 
                     {activeTab === 'calculator' && (
-                        <LoanCalculator onLoanCreated={handleLoanCreated} />
+                        <LoanCalculator onLoanCreated={handleLoanCreated} onBack={handleBack} />
                     )}
 
                     {activeTab === 'import' && (
-                        <LoanImport onLoanImported={handleLoanCreated} />
+                        <LoanImport onLoanImported={handleLoanCreated} onBack={handleBack} />
                     )}
 
                     {activeTab === 'manual' && (
-                        <ManualLoanEntry onLoanCreated={handleLoanCreated} />
+                        <ManualLoanEntry onLoanCreated={handleLoanCreated} onBack={handleBack} />
                     )}
 
                     <DeleteConfirmDialog

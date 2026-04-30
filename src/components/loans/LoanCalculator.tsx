@@ -37,6 +37,7 @@ import {
 
 interface LoanCalculatorProps {
     onLoanCreated?: (loanId: string) => void;
+    onBack?: () => void;
     entityType?: EntityType;
     entityId?: string;
 }
@@ -89,7 +90,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
     );
 }
 
-export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalculatorProps) {
+export function LoanCalculator({ onLoanCreated, onBack, entityType, entityId }: LoanCalculatorProps) {
     const [currentStep, setCurrentStep] = useState<number>(1);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [entities, setEntities] = useState<Group[] | Company[] | BusinessUnit[]>([]);
@@ -456,6 +457,15 @@ export function LoanCalculator({ onLoanCreated, entityType, entityId }: LoanCalc
         <div className="space-y-6">
             {/* Header */}
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                {onBack && (
+                    <Button
+                        variant="outline"
+                        onClick={onBack}
+                        className="flex items-center gap-2 mb-4"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                )}
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
                         <Calculator className="h-5 w-5 text-blue-600" />

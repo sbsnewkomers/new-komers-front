@@ -15,6 +15,7 @@ import {
     Shield,
     TrendingUp,
     Calculator,
+    ArrowLeft,
 } from 'lucide-react';
 import { loansApi } from '@/lib/loansApi';
 import { entitiesApi } from '@/lib/entitiesApi';
@@ -23,6 +24,7 @@ import { EntityType, LoanInputMethod } from '@/types/loans';
 
 interface ManualLoanEntryProps {
     onLoanCreated?: (loanId: string) => void;
+    onBack?: () => void;
     entityType?: EntityType;
     entityId?: string;
 }
@@ -42,6 +44,7 @@ interface EditableInstallment {
 
 export function ManualLoanEntry({
     onLoanCreated,
+    onBack,
     entityType,
     entityId,
 }: ManualLoanEntryProps) {
@@ -372,6 +375,15 @@ export function ManualLoanEntry({
         <div className="space-y-6">
             {/* Header */}
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                {onBack && (
+                    <Button
+                        variant="outline"
+                        onClick={onBack}
+                        className="flex items-center gap-2 mb-4"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                )}
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
                         <Edit className="h-5 w-5 text-purple-600" />
