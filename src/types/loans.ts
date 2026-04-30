@@ -48,6 +48,7 @@ export interface Loan {
     status: LoanStatus;
     entityType: EntityType;
     entityId: string;
+    entityName?: string;
     createdById: string;
     createdAt: string;
     updatedAt: string;

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { Button } from '@/components/ui/Button';
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -17,6 +18,12 @@ import {
     Building2,
     Briefcase,
     FileText,
+    Plus,
+    ChevronLeft,
+    ChevronRight,
+    Calculator,
+    FileSpreadsheet,
+    PenTool,
 } from 'lucide-react';
 import { Loan, LoanStatus, EntityType } from '@/types/loans';
 import { usePermissionsContext } from '@/permissions/PermissionsProvider';
@@ -30,9 +37,12 @@ interface LoanListProps {
     onFilterStatusChange: (status: LoanStatus | 'all') => void;
     filterEntityType: EntityType | 'all';
     onFilterEntityTypeChange: (type: EntityType | 'all') => void;
+    filterInputMethod: string | 'all';
+    onFilterInputMethodChange: (method: string | 'all') => void;
     onLoanView: (loanId: string) => void;
     onLoanEdit: (loanId: string) => void;
     onLoanDelete: (loanId: string) => void;
+    onCreateNew?: () => void;
 }
 
 const formatCurrency = (amount: number) =>
@@ -65,6 +75,18 @@ const entityTypeLabel: Record<string, string> = {
     'business unit': "Unité d'affaires",
 };
 
+const methodBadgeColor: Record<string, string> = {
+    CALCULATOR: 'bg-purple-50 text-purple-700 border-purple-200',
+    IMPORT: 'bg-orange-50 text-orange-700 border-orange-200',
+    MANUAL: 'bg-slate-50 text-slate-600 border-slate-200',
+};
+
+const methodLabel: Record<string, string> = {
+    CALCULATOR: 'Calculatrice',
+    IMPORT: 'Import',
+    MANUAL: 'Manuel',
+};
+
 function EntityTypeIcon({ entityType }: { entityType: string }) {
     switch (entityType) {
         case 'group':
@@ -87,12 +109,24 @@ export function LoanList({
     onFilterStatusChange,
     filterEntityType,
     onFilterEntityTypeChange,
+    filterInputMethod,
+    onFilterInputMethodChange,
     onLoanView,
     onLoanEdit,
     onLoanDelete,
+    onCreateNew,
 }: LoanListProps) {
     const { user } = usePermissionsContext();
     const canManage = user?.role !== 'END_USER';
+
+    console.log('LoanList Debug - canManage:', canManage, 'user:', user, 'onCreateNew:', !!onCreateNew);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    const totalPages = Math.ceil(loans.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentLoans = loans.slice(startIndex, endIndex);
 
     const calculateProgress = (loan: Loan) => {
         if (!loan.createdAt) return 0;
@@ -114,6 +148,19 @@ export function LoanList({
 
     return (
         <div className="space-y-4">
+            {/* Header with create button */}
+            {canManage && onCreateNew && (
+                <div className="flex justify-end">
+                    <Button
+                        onClick={onCreateNew}
+                        className="bg-primary text-white hover:bg-slate-800"
+                    >
+                        <Plus className="h-4 w-4" />
+                        Nouvel emprunt
+                    </Button>
+                </div>
+            )}
+
             {/* Filters */}
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <div className="relative min-w-0 flex-1">
@@ -145,6 +192,16 @@ export function LoanList({
                     <option value="company">Entreprise</option>
                     <option value="business unit">Unité d&apos;affaires</option>
                 </Select>
+                <Select
+                    value={filterInputMethod}
+                    onValueChange={onFilterInputMethodChange}
+                    className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!"
+                >
+                    <option value="all">Toutes les méthodes</option>
+                    <option value="CALCULATOR">Calculatrice</option>
+                    <option value="IMPORT">Import</option>
+                    <option value="MANUAL">Manuel</option>
+                </Select>
             </div>
 
             {/* Table */}
@@ -168,149 +225,258 @@ export function LoanList({
                         </p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full">
-                            <thead>
-                                <tr className="border-b border-slate-100 bg-slate-50/50">
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        Emprunt
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        Entité
-                                    </th>
-                                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        Capital
-                                    </th>
-                                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        Taux
-                                    </th>
-                                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        Durée
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        Statut
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        Progression
-                                    </th>
-                                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {loans.map((loan) => {
-                                    const progress = calculateProgress(loan);
-                                    return (
-                                        <tr
-                                            key={loan.id}
-                                            className="group transition-colors hover:bg-slate-50/50"
-                                        >
-                                            <td className="px-6 py-4">
-                                                <p className="text-sm font-medium text-slate-900">
-                                                    {loan.name}
-                                                </p>
-                                                <p className="text-xs text-slate-500">
-                                                    Début {formatDate(loan.firstInstallmentDate)}
-                                                </p>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <EntityTypeIcon entityType={loan.entityType} />
-                                                    <span className="text-sm text-slate-600">
-                                                        {entityTypeLabel[loan.entityType] ??
-                                                            loan.entityType}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-right text-sm font-medium text-slate-900">
-                                                {formatCurrency(loan.principalAmount)}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-blue-700">
-                                                    {loan.annualInterestRate}%
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-right text-sm text-slate-600">
-                                                {loan.durationMonths} mois
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span
-                                                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
-                                                        statusBadgeColor[loan.status] ??
-                                                        'bg-slate-50 text-slate-600 border-slate-200'
-                                                    }`}
-                                                >
-                                                    {statusLabel[loan.status] ?? loan.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="w-32">
-                                                    <div className="mb-1 flex items-center justify-between text-[10px] text-slate-400">
-                                                        <span>{progress}%</span>
-                                                    </div>
-                                                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                                                        <div
-                                                            className={`h-1.5 rounded-full transition-all duration-300 ${getProgressColor(
-                                                                progress,
-                                                            )}`}
-                                                            style={{ width: `${progress}%` }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex justify-end">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <button
-                                                                type="button"
-                                                                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-all hover:bg-white hover:text-slate-900 hover:shadow-sm sm:opacity-100 md:opacity-0 md:group-hover:opacity-100"
-                                                            >
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent
-                                                            align="end"
-                                                            className="w-48"
+                    <>
+                        {/* Pagination info */}
+                        <div className="flex items-center justify-between px-6 py-3 border-b border-slate-100">
+                            <p className="text-sm text-slate-600">
+                                Affichage de {startIndex + 1}-{Math.min(endIndex, loans.length)} sur {loans.length} emprunt{loans.length > 1 ? 's' : ''}
+                            </p>
+                            {totalPages > 1 && (
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1}
+                                        className="flex items-center justify-center w-8 h-8 rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </button>
+                                    <span className="px-3 py-1 text-sm text-slate-600">
+                                        Page {currentPage} sur {totalPages}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="flex items-center justify-center w-8 h-8 rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Table */}
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full">
+                                <thead>
+                                    <tr className="border-b border-slate-100 bg-slate-50/50">
+                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            Emprunt
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            Méthode
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            Capital
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            Taux
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            Durée
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            Statut
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            Progression
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {currentLoans.map((loan) => {
+                                        const progress = calculateProgress(loan);
+                                        return (
+                                            <tr
+                                                key={loan.id}
+                                                onClick={() => onLoanView(loan.id)}
+                                                className="group transition-colors hover:bg-slate-50/50 cursor-pointer"
+                                            >
+                                                <td className="px-6 py-4">
+                                                    <p className="text-sm font-medium text-slate-900 group-hover:text-primary transition-colors">
+                                                        {loan.name}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                        Début {formatDate(loan.firstInstallmentDate)}
+                                                    </p>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <span
+                                                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${methodBadgeColor[loan.inputMethod] ??
+                                                                'bg-slate-50 text-slate-600 border-slate-200'
+                                                                }`}
                                                         >
-                                                            <DropdownMenuItem
-                                                                onClick={() => onLoanView(loan.id)}
+                                                            {methodLabel[loan.inputMethod] ?? loan.inputMethod}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-right text-sm font-medium text-slate-900">
+                                                    {formatCurrency(loan.principalAmount)}
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-blue-700">
+                                                        {loan.annualInterestRate}%
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right text-sm text-slate-600">
+                                                    {loan.durationMonths} mois
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span
+                                                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${statusBadgeColor[loan.status] ??
+                                                            'bg-slate-50 text-slate-600 border-slate-200'
+                                                            }`}
+                                                    >
+                                                        {statusLabel[loan.status] ?? loan.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="w-32">
+                                                        <div className="mb-1 flex items-center justify-between text-[10px] text-slate-400">
+                                                            <span>{progress}%</span>
+                                                        </div>
+                                                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                                                            <div
+                                                                className={`h-1.5 rounded-full transition-all duration-300 ${getProgressColor(
+                                                                    progress,
+                                                                )}`}
+                                                                style={{ width: `${progress}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex justify-end">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <button
+                                                                    type="button"
+                                                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-all hover:bg-white hover:text-slate-900 hover:shadow-sm sm:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                                                                >
+                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                </button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent
+                                                                align="end"
+                                                                className="w-48"
                                                             >
-                                                                <Eye className="mr-2 h-4 w-4" />{' '}
-                                                                Voir
-                                                            </DropdownMenuItem>
-                                                            {canManage && (
-                                                                <>
-                                                                    <DropdownMenuItem
-                                                                        onClick={() =>
-                                                                            onLoanEdit(loan.id)
-                                                                        }
-                                                                    >
-                                                                        <Pencil className="mr-2 h-4 w-4" />{' '}
-                                                                        Modifier
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem
-                                                                        onClick={() =>
-                                                                            onLoanDelete(loan.id)
-                                                                        }
-                                                                        className="text-red-600 focus:bg-red-50 focus:text-red-600"
-                                                                    >
-                                                                        <Trash2 className="mr-2 h-4 w-4" />{' '}
-                                                                        Supprimer
-                                                                    </DropdownMenuItem>
-                                                                </>
-                                                            )}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                                                                <DropdownMenuItem
+                                                                    onClick={() => onLoanView(loan.id)}
+                                                                >
+                                                                    <Eye className="mr-2 h-4 w-4" />{' '}
+                                                                    Voir
+                                                                </DropdownMenuItem>
+                                                                {canManage && (
+                                                                    <>
+                                                                        <DropdownMenuItem
+                                                                            onClick={() =>
+                                                                                onLoanEdit(loan.id)
+                                                                            }
+                                                                        >
+                                                                            <Pencil className="mr-2 h-4 w-4" />{' '}
+                                                                            Modifier
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem
+                                                                            onClick={() =>
+                                                                                onLoanDelete(loan.id)
+                                                                            }
+                                                                            className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                                                                        >
+                                                                            <Trash2 className="mr-2 h-4 w-4" />{' '}
+                                                                            Supprimer
+                                                                        </DropdownMenuItem>
+                                                                    </>
+                                                                )}
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Pagination controls at bottom */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-between px-6 py-3 border-t border-slate-100">
+                                <p className="text-sm text-slate-600">
+                                    {loans.length} emprunt{loans.length > 1 ? 's' : ''} au total
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setCurrentPage(1)}
+                                        disabled={currentPage === 1}
+                                        className="px-3 py-1 text-sm border border-slate-200 rounded-md bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Première
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1}
+                                        className="flex items-center justify-center w-8 h-8 rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </button>
+
+                                    {/* Page numbers */}
+                                    <div className="flex items-center gap-1">
+                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                            let pageNum;
+                                            if (totalPages <= 5) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage <= 3) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage >= totalPages - 2) {
+                                                pageNum = totalPages - 4 + i;
+                                            } else {
+                                                pageNum = currentPage - 2 + i;
+                                            }
+
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    type="button"
+                                                    onClick={() => setCurrentPage(pageNum)}
+                                                    className={`w-8 h-8 rounded-md text-sm font-medium transition-colors ${currentPage === pageNum
+                                                        ? 'bg-primary text-white'
+                                                        : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                                                        }`}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="flex items-center justify-center w-8 h-8 rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCurrentPage(totalPages)}
+                                        disabled={currentPage === totalPages}
+                                        className="px-3 py-1 text-sm border border-slate-200 rounded-md bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Dernière
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>

@@ -1,5 +1,5 @@
 // Refactored LoanImport component
-// This file imports the new modular implementation from the LoanImport folder
+// This file imports the new modular implementation from the import folder
 
-import LoanImport from './LoanImport/index';
+import LoanImport from './import/index';
 export default LoanImport;
