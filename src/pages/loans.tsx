@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { PageHeader } from '@/components/patterns/PageHeader';
 import { loansApi } from '@/lib/loansApi';
 import { LoanCalculator } from '@/components/loans/LoanCalculator';
 import LoanImport from '@/components/loans/LoanImport';
@@ -167,9 +168,10 @@ export default function LoansPage() {
 
             <AppLayout title="Gestion des emprunts">
                 <div className="space-y-3 md:space-y-6">
-                    {/* Header */}
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="mb-1 flex items-center gap-3">
+                    <PageHeader
+                        title="Gestion des emprunts"
+                        subtitle="Suivez et gérez tous vos emprunts et échéanciers."
+                        icon={
                             <div className="rounded-xl bg-primary/10 p-2.5">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -188,16 +190,8 @@ export default function LoansPage() {
                                     <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                                 </svg>
                             </div>
-                            <div>
-                                <h2 className="text-xl font-bold text-primary">
-                                    Gestion des emprunts
-                                </h2>
-                                <p className="text-sm text-slate-500">
-                                    Suivez et gérez tous vos emprunts et échéanciers.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                        }
+                    />
 
                     <ErrorDialog error={error} />
 

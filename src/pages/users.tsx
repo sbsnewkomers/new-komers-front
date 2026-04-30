@@ -5,8 +5,11 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import Head from "next/head";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
+import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { PageHeader } from "@/components/patterns/PageHeader";
+import { FilterBar } from "@/components/patterns/FilterBar";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +36,7 @@ import {
   acceptInvitation,
   rejectInvitation,
   invitationStatusLabel,
-  invitationStatusColor,
+  invitationStatusVariant,
   allowedInviteRoles,
   INVITATION_STATUSES,
   type InvitationItem,
@@ -92,18 +95,18 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-const roleBadgeColor: Record<UserRole, string> = {
-  SUPER_ADMIN: "bg-purple-50 text-purple-700 border-purple-200",
-  ADMIN: "bg-blue-50 text-blue-700 border-blue-200",
-  HEAD_MANAGER: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  MANAGER: "bg-amber-50 text-amber-700 border-amber-200",
-  END_USER: "bg-slate-50 text-slate-600 border-slate-200",
+const roleVariant: Record<UserRole, BadgeVariant> = {
+  SUPER_ADMIN: "info",
+  ADMIN: "info",
+  HEAD_MANAGER: "warning",
+  MANAGER: "warning",
+  END_USER: "neutral",
 };
 
-const statusBadgeColor: Record<UserStatus, string> = {
-  ACTIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  PENDING: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  SUSPENDED: "bg-red-50 text-red-600 border-red-200",
+const statusVariant: Record<UserStatus, BadgeVariant> = {
+  ACTIVE: "success",
+  PENDING: "warning",
+  SUSPENDED: "danger",
 };
 
 type ActiveTab = "users" | "invitations";
@@ -173,7 +176,7 @@ export default function UsersPage() {
   const [perimNodeId, setPerimNodeId] = useState("");
   const [perimCompanyId, setPerimCompanyId] = useState("");
   const perimBusHook = useBusinessUnits(perimCompanyId || null);
-  const { canImpersonateUser, isImpersonating, impersonate } = useImpersonation();
+  const { canImpersonateUser, impersonate } = useImpersonation();
   const [impersonateLoadingId, setImpersonateLoadingId] = useState<string | null>(null);
   const handleImpersonate = async (targetUser: UserItem) => {
   setImpersonateLoadingId(targetUser.id);
@@ -199,11 +202,11 @@ export default function UsersPage() {
     try { setInvitations(await fetchAllInvitations()); } catch { /* snackbar */ } finally { setInvLoading(false); }
   }, []);
 
-  useEffect(() => { loadUsers(); }, [loadUsers]);
+  useEffect(() => { void Promise.resolve().then(loadUsers); }, [loadUsers]);
   // Load invitations once on mount so the tab counter is accurate,
   // and reload when switching to the invitations tab to ensure freshness.
-  useEffect(() => { loadInvitations(); }, [loadInvitations]);
-  useEffect(() => { if (activeTab === "invitations") loadInvitations(); }, [activeTab, loadInvitations]);
+  useEffect(() => { void Promise.resolve().then(loadInvitations); }, [loadInvitations]);
+  useEffect(() => { if (activeTab === "invitations") void Promise.resolve().then(loadInvitations); }, [activeTab, loadInvitations]);
   useEffect(() => { if (companyIdForBU && permOpen) busHook.fetchList(); }, [companyIdForBU, permOpen, busHook]);
   useEffect(() => { if (perimCompanyId && inviteOpen) perimBusHook.fetchList(); }, [perimCompanyId, inviteOpen, perimBusHook]);
   useEffect(() => {
@@ -231,13 +234,15 @@ export default function UsersPage() {
 
   // Reset perimeter type when role changes
   useEffect(() => {
-    if (inviteForm.role === "HEAD_MANAGER") {
-      setPerimNodeType("WORKSPACE");
-    } else {
-      setPerimNodeType("GROUP");
-    }
-    setPerimNodeId("");
-    setPerimCompanyId("");
+    void Promise.resolve().then(() => {
+      if (inviteForm.role === "HEAD_MANAGER") {
+        setPerimNodeType("WORKSPACE");
+      } else {
+        setPerimNodeType("GROUP");
+      }
+      setPerimNodeId("");
+      setPerimCompanyId("");
+    });
   }, [inviteForm.role]);
 
   // ── Role-based invite options ──
@@ -483,9 +488,10 @@ export default function UsersPage() {
     <AppLayout title="User Management" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
       <Head><title>Gestion des utilisateurs</title></Head>
       <div className="space-y-3 md:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="mb-1 flex items-center gap-3">
+        <PageHeader
+          title="Utilisateurs & Invitations"
+          subtitle="Gérez les utilisateurs, invitations et permissions."
+          icon={
             <div className="rounded-xl bg-primary/10 p-2.5">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users h-5 w-5 text-primary" aria-hidden="true">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
@@ -494,23 +500,16 @@ export default function UsersPage() {
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
               </svg>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-primary">Utilisateurs &amp; Invitations</h2>
-              <p className="text-sm text-slate-500">G&eacute;rez les utilisateurs, invitations et permissions.</p>
-            </div>
-          </div>
-        
-
-          {/* Actions */}
-          <div className="flex w-full items-center gap-3 sm:w-auto">
-            {invitableRoles.length > 0 && (
+          }
+          actions={
+            invitableRoles.length > 0 ? (
               <Button onClick={openInviteModal} className="w-full bg-primary text-white hover:bg-slate-800 sm:w-auto">
                 <Send className="h-4 w-4" />
                 Inviter un utilisateur
               </Button>
-            )}
-          </div>
-        </div>
+            ) : null
+          }
+        />
         {/* Tabs */}
         <div className="grid grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
           {([
@@ -554,20 +553,31 @@ export default function UsersPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <div className="relative min-w-0 flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input placeholder="Rechercher un utilisateur..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
-              </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
-                <option value="">Tous les r&ocirc;les</option>
-                {ALL_ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
-                <option value="">Tous les statuts</option>
-                {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
-              </Select>
-            </div>
+            <FilterBar
+              search={
+                <div className="relative min-w-0">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    placeholder="Rechercher un utilisateur..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="h-9 pl-10 border-slate-200 bg-white"
+                  />
+                </div>
+              }
+              filters={
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                  <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
+                    <option value="">Tous les r&ocirc;les</option>
+                    {ALL_ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
+                  </Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
+                    <option value="">Tous les statuts</option>
+                    {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                  </Select>
+                </div>
+              }
+            />
 
             {/* Table */}
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -611,14 +621,16 @@ export default function UsersPage() {
                               </div>
                             </td>
                             <td className="px-2 py-4">
-                              <span className={`inline-flex items-center gap-1 rounded-full border w-fit px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide ${roleBadgeColor[u.role]}`}>
-                                <Shield className="h-3 w-3 hidden md:block" />{roleLabel(u.role)}
-                              </span>
+                              <Badge
+                                variant={roleVariant[u.role]}
+                                icon={<Shield className="h-3 w-3 hidden md:block" />}
+                                className="text-[9px]"
+                              >
+                                {roleLabel(u.role)}
+                              </Badge>
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${statusBadgeColor[u.status]}`}>
-                                {statusLabel(u.status)}
-                              </span>
+                              <Badge variant={statusVariant[u.status]}>{statusLabel(u.status)}</Badge>
                             </td>
                             <td className="px-6 py-4 text-sm text-slate-500">{u.createdAt ? new Date(u.createdAt).toLocaleDateString("fr-FR") : "\u2014"}</td>
                             <td className="px-6 py-4">
@@ -728,16 +740,20 @@ export default function UsersPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <div className="relative min-w-0 flex-1 sm:min-w-[200px] sm:max-w-xs">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input placeholder="Rechercher par email..." value={invSearch} onChange={(e) => setInvSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
-              </div>
-              <Select value={invStatusFilter} onValueChange={(v) => setInvStatusFilter(v as InvitationStatus | "")} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
-                <option value="">Tous les statuts</option>
-                {INVITATION_STATUSES.map((s) => <option key={s} value={s}>{invitationStatusLabel(s)}</option>)}
-              </Select>
-            </div>
+            <FilterBar
+              search={
+                <div className="relative min-w-0 sm:min-w-[200px] sm:max-w-xs">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input placeholder="Rechercher par email..." value={invSearch} onChange={(e) => setInvSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
+                </div>
+              }
+              filters={
+                <Select value={invStatusFilter} onValueChange={(v) => setInvStatusFilter(v as InvitationStatus | "")} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
+                  <option value="">Tous les statuts</option>
+                  {INVITATION_STATUSES.map((s) => <option key={s} value={s}>{invitationStatusLabel(s)}</option>)}
+                </Select>
+              }
+            />
 
             {/* Pending Invitations Table */}
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -780,18 +796,26 @@ export default function UsersPage() {
                             </td>
                             <td className="px-6 py-4">
                               {inv.role && (
-                                <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${roleBadgeColor[inv.role]}`}>
-                                  <Shield className="h-3 w-3" />{roleLabel(inv.role)}
-                                </span>
+                                <Badge variant={roleVariant[inv.role]} icon={<Shield className="h-3 w-3" />}>
+                                  {roleLabel(inv.role)}
+                                </Badge>
                               )}
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${invitationStatusColor(inv.status)}`}>
-                                {inv.status === "PENDING" && <Clock className="h-3 w-3" />}
-                                {inv.status === "ACCEPTED" && <Check className="h-3 w-3" />}
-                                {inv.status === "REJECTED" && <XCircle className="h-3 w-3" />}
+                              <Badge
+                                variant={invitationStatusVariant(inv.status)}
+                                icon={
+                                  inv.status === "PENDING" ? (
+                                    <Clock className="h-3 w-3" />
+                                  ) : inv.status === "ACCEPTED" ? (
+                                    <Check className="h-3 w-3" />
+                                  ) : (
+                                    <XCircle className="h-3 w-3" />
+                                  )
+                                }
+                              >
                                 {invitationStatusLabel(inv.status)}
-                              </span>
+                              </Badge>
                               {inv.status === "PENDING" && isExpired(inv) && (
                                 <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-600">Expir&eacute;e</span>
                               )}
@@ -872,17 +896,26 @@ export default function UsersPage() {
                           </td>
                           <td className="px-4 py-2">
                             {inv.role && (
-                              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${roleBadgeColor[inv.role]}`}>
-                                <Shield className="h-3 w-3" />{roleLabel(inv.role)}
-                              </span>
+                              <Badge variant={roleVariant[inv.role]} icon={<Shield className="h-3 w-3" />}>
+                                {roleLabel(inv.role)}
+                              </Badge>
                             )}
                           </td>
                           <td className="px-4 py-2">
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${invitationStatusColor(inv.status)}`}>
-                              {inv.status === "ACCEPTED" && <Check className="h-3 w-3" />}
-                              {inv.status === "REJECTED" && <XCircle className="h-3 w-3" />}
+                            <Badge
+                              variant={invitationStatusVariant(inv.status)}
+                              icon={
+                                inv.status === "ACCEPTED" ? (
+                                  <Check className="h-3 w-3" />
+                                ) : inv.status === "REJECTED" ? (
+                                  <XCircle className="h-3 w-3" />
+                                ) : (
+                                  <Clock className="h-3 w-3" />
+                                )
+                              }
+                            >
                               {invitationStatusLabel(inv.status)}
-                            </span>
+                            </Badge>
                           </td>
                           <td className="px-4 py-2 text-sm text-slate-500">
                             {new Date(inv.expiresAt).toLocaleDateString("fr-FR")}

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { Calculator, ArrowLeft } from 'lucide-react';
-import { StepIndicator } from './StepIndicator';
+import { StepIndicator } from '@/components/ui/StepIndicator';
 
 interface CalculatorHeaderProps {
     currentStep: number;
@@ -11,6 +11,12 @@ interface CalculatorHeaderProps {
 }
 
 export function CalculatorHeader({ currentStep, onBack }: CalculatorHeaderProps) {
+    const steps = [
+        { n: 1, label: 'Caractéristiques' },
+        { n: 2, label: 'Modalités' },
+        { n: 3, label: 'Validation' },
+    ];
+
     return (
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             {onBack && (
@@ -37,7 +43,7 @@ export function CalculatorHeader({ currentStep, onBack }: CalculatorHeaderProps)
                 </div>
             </div>
             <div className="mt-6">
-                <StepIndicator currentStep={currentStep} />
+                <StepIndicator currentStep={currentStep} steps={steps} />
             </div>
         </div>
     );

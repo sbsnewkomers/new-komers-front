@@ -1,5 +1,6 @@
 import React from 'react';
 import { TrendingUp, Wallet, Percent, CheckCircle2 } from 'lucide-react';
+import { formatCurrencyEUR, formatPercent } from '@/lib/format';
 
 interface LoanStatsProps {
     overviewStats?: {
@@ -10,13 +11,6 @@ interface LoanStatsProps {
         averageRate: number;
     };
 }
-
-const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'EUR',
-        maximumFractionDigits: 0,
-    }).format(amount);
 
 export function LoanStats({ overviewStats }: LoanStatsProps) {
     const stats = {
@@ -47,14 +41,14 @@ export function LoanStats({ overviewStats }: LoanStatsProps) {
                     },
                     {
                         label: 'Capital total',
-                        value: formatCurrency(stats.principal),
+                        value: formatCurrencyEUR(stats.principal, { maximumFractionDigits: 0, fallback: "0 €" }),
                         color: 'text-blue-700',
                         bg: 'bg-linear-to-l from-blue-200 to-white ring-1 ring-blue-100',
                         icon: Wallet,
                     },
                     {
                         label: 'Taux moyen',
-                        value: `${stats.rate.toFixed(2)}%`,
+                        value: formatPercent(stats.rate, { decimals: 2 }),
                         color: 'text-amber-700',
                         bg: 'bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100',
                         icon: Percent,

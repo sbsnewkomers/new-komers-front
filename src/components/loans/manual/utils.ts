@@ -1,9 +1,7 @@
+import { formatCurrencyEUR } from "@/lib/format";
+
 export const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'EUR',
-        maximumFractionDigits: 0,
-    }).format(amount);
+  formatCurrencyEUR(amount, { maximumFractionDigits: 0, fallback: "0 €" });
 
 export interface EditableInstallment {
     id?: string;

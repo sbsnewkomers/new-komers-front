@@ -10,28 +10,20 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { apiFetch } from "@/lib/apiClient";
+import { formatCurrencyEUR, formatDateFR } from "@/lib/format";
+import { PageHeader } from "@/components/patterns/PageHeader";
+import { FilterBar } from "@/components/patterns/FilterBar";
 import { ArrowLeft, ChevronLeft, ChevronRight, Search, Landmark, TrendingUp, TrendingDown } from "lucide-react";
 import { EntryMovementFilter, ImportEntriesResponse, ImportedAccountingEntry } from "@/features/import/types";
 
 const PAGE_SIZE = 25;
 
-const currencyFormatter = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-const dateFormatter = new Intl.DateTimeFormat("fr-FR");
-
 function formatAmount(value: number): string {
-  return currencyFormatter.format(value || 0);
+  return formatCurrencyEUR(value || 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function formatDate(value?: string | null): string {
-  if (!value) return "-";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "-" : dateFormatter.format(date);
+  return formatDateFR(value, { fallback: "-" });
 }
 
 export default function ImportEntriesPage() {
@@ -109,21 +101,30 @@ export default function ImportEntriesPage() {
       </Head>
 
       <div className="space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-          <Button
-            variant="outline"
-            className="w-full gap-2 border-slate-200 bg-white/90 shadow-sm hover:shadow-md sm:w-auto"
-            onClick={() => void router.push("/import")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Retour aux imports
-          </Button>
-          <div className="flex min-w-0 items-center gap-2 text-sm">Fichier:
-            <span className="max-w-full truncate rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 shadow-sm sm:max-w-[420px]" title={selectedFile || "-"}>
+        <PageHeader
+          title="Écritures importées"
+          subtitle="Consultez et filtrez les écritures issues de l’import."
+          actions={
+            <Button
+              variant="outline"
+              className="w-full gap-2 border-slate-200 bg-white/90 shadow-sm hover:shadow-md sm:w-auto"
+              onClick={() => void router.push("/import")}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Retour aux imports
+            </Button>
+          }
+        >
+          <div className="flex min-w-0 items-center gap-2 text-sm">
+            Fichier:
+            <span
+              className="max-w-full truncate rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 shadow-sm sm:max-w-[420px]"
+              title={selectedFile || "-"}
+            >
               {selectedFile || "-"}
             </span>
           </div>
-        </div>
+        </PageHeader>
 
         {!selectedFile ? (
           <Card className="bg-white shadow-sm ring-1 ring-slate-100">
@@ -165,31 +166,35 @@ export default function ImportEntriesPage() {
 
             <Card className="bg-white/95 drop-shadow-lg ring-1 ring-slate-100">
               <CardContent className="p-5!">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center">
-                  <div className="relative flex-1">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <Input
-                      value={searchInput}
-                      onChange={(e) => setSearchInput(e.target.value)}
-                      className="pl-9 border-slate-200 bg-white shadow-sm focus-visible:ring-sky-400"
-                      placeholder="Rechercher par libelle, piece, compte, journal..."
-                    />
-                  </div>
-                  <div className="w-full md:w-56">
-                    <Select
-                      value={movement}
-                      onValueChange={(nextValue) => {
-                        setMovement((nextValue as EntryMovementFilter) || "all");
-                        setPage(1);
-                      }}
-                      options={[
-                        { value: "all", label: "Tous les mouvements" },
-                        { value: "debit", label: "Debits uniquement" },
-                        { value: "credit", label: "Credits uniquement" },
-                      ]}
-                    />
-                  </div>
-                </div>
+                <FilterBar
+                  search={
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        className="pl-9 border-slate-200 bg-white shadow-sm focus-visible:ring-sky-400"
+                        placeholder="Rechercher par libelle, piece, compte, journal..."
+                      />
+                    </div>
+                  }
+                  filters={
+                    <div className="w-full md:w-56">
+                      <Select
+                        value={movement}
+                        onValueChange={(nextValue) => {
+                          setMovement((nextValue as EntryMovementFilter) || "all");
+                          setPage(1);
+                        }}
+                        options={[
+                          { value: "all", label: "Tous les mouvements" },
+                          { value: "debit", label: "Debits uniquement" },
+                          { value: "credit", label: "Credits uniquement" },
+                        ]}
+                      />
+                    </div>
+                  }
+                />
               </CardContent>
             </Card>
 

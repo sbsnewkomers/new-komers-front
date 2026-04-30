@@ -94,13 +94,15 @@ export function invitationStatusLabel(s: InvitationStatus): string {
   return labels[s] ?? s;
 }
 
-export function invitationStatusColor(s: InvitationStatus): string {
-  const colors: Record<InvitationStatus, string> = {
-    PENDING: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    ACCEPTED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    REJECTED: "bg-red-50 text-red-600 border-red-200",
+export type InvitationStatusVariant = "neutral" | "success" | "warning" | "danger" | "info";
+
+export function invitationStatusVariant(s: InvitationStatus): InvitationStatusVariant {
+  const variants: Record<InvitationStatus, InvitationStatusVariant> = {
+    PENDING: "warning",
+    ACCEPTED: "success",
+    REJECTED: "danger",
   };
-  return colors[s] ?? "";
+  return variants[s] ?? "neutral";
 }
 
 export function allowedInviteRoles(currentRole: UserRole): UserRole[] {

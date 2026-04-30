@@ -34,7 +34,7 @@ import {
   LineChart,
   Line,
 } from "recharts";
-import { Building2, TrendingUp, Euro, Activity, Calendar } from "lucide-react";
+import { Building2, Euro, Activity, Calendar } from "lucide-react";
 
 type WidgetType = "kpi" | "chart";
 type Widget = {
@@ -136,7 +136,7 @@ export default function DashboardPage() {
   React.useEffect(() => {
     if (!isAuthReady || !user) return;
     void companies.fetchList();
-  }, [isAuthReady, user, companies.fetchList]);
+  }, [isAuthReady, user, companies]);
 
   // Simulate initial loading then rely on real data
   React.useEffect(() => {
@@ -198,16 +198,6 @@ export default function DashboardPage() {
           icon: Calendar,
         },
         latestCompany && {
-          id: "k-latest-company",
-          type: "kpi",
-          title: "DERNIÈRE CRÉATION",
-          value: latestCompany.name ?? "—",
-          description: latestCompany.siret
-            ? `SIRET ${latestCompany.siret}`
-            : "",
-          icon: Activity,
-        },
-        {
           id: "k-latest-company",
           type: "kpi",
           title: "DERNIÈRE CRÉATION",

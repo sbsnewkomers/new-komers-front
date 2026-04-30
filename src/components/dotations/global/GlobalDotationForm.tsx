@@ -18,6 +18,7 @@ import { Checkbox } from '@/components/ui/Checkbox';
 import { globalDotationsApi } from '@/lib/globalDotationsApi';
 import { usePermissionsContext } from '@/permissions/PermissionsProvider';
 import { entitiesApi, Group, Company, BusinessUnit } from '@/lib/entitiesApi';
+import { formatCurrencyEUR } from '@/lib/format';
 
 import { GlobalDotation, EntityType } from '@/types/asset.types';
 
@@ -27,17 +28,7 @@ import { Save, X } from 'lucide-react';
 
 // Utility functions
 
-const formatCurrency = (amount: number) => {
-
-  return new Intl.NumberFormat('fr-FR', {
-
-    style: 'currency',
-
-    currency: 'EUR'
-
-  }).format(amount);
-
-};
+const formatCurrency = (amount: number) => formatCurrencyEUR(amount, { fallback: "0,00 €" });
 
 
 

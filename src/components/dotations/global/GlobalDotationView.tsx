@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Label } from '@/components/ui/Label';
 import { Button } from '@/components/ui/Button';
 import { GlobalDotation } from '@/types/asset.types';
+import { formatCurrencyEUR } from '@/lib/format';
+import { Badge } from '@/components/ui/Badge';
 
 interface GlobalDotationViewProps {
   dotation: GlobalDotation;
@@ -26,11 +28,11 @@ export function GlobalDotationView({ dotation, entityName, onCancel }: GlobalDot
           </div>
           <div>
             <Label>Montant total annuel</Label>
-            <p className="font-semibold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(dotation.totalAnnualAmortization) || 0)}</p>
+            <p className="font-semibold">{formatCurrencyEUR(Number(dotation.totalAnnualAmortization) || 0, { fallback: "0,00 €" })}</p>
           </div>
           <div>
             <Label>Montant mensuel</Label>
-            <p className="font-semibold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(dotation.monthlyAmortization) || (Number(dotation.totalAnnualAmortization) || 0) / 12)}</p>
+            <p className="font-semibold">{formatCurrencyEUR(Number(dotation.monthlyAmortization) || (Number(dotation.totalAnnualAmortization) || 0) / 12, { fallback: "0,00 €" })}</p>
           </div>
           <div>
             <Label>Type d&apos;entité</Label>
@@ -44,13 +46,9 @@ export function GlobalDotationView({ dotation, entityName, onCancel }: GlobalDot
             <Label>Statut de validation</Label>
             <p className="font-semibold">
               {dotation.isValidated ? (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Validée
-                </span>
+                <Badge variant="success" size="md">Validée</Badge>
               ) : (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                  En attente
-                </span>
+                <Badge variant="warning" size="md">En attente</Badge>
               )}
             </p>
           </div>

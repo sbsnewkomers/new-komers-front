@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
+import { Badge, type BadgeVariant } from '@/components/ui/Badge';
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Loan, LoanStatus, EntityType } from '@/types/loans';
 import { usePermissionsContext } from '@/permissions/PermissionsProvider';
+import { formatCurrencyEUR, formatDateFR } from '@/lib/format';
 
 interface LoanListProps {
     loans: Loan[];
@@ -46,20 +48,15 @@ interface LoanListProps {
 }
 
 const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'EUR',
-        maximumFractionDigits: 0,
-    }).format(amount);
+  formatCurrencyEUR(amount, { maximumFractionDigits: 0, fallback: "0 €" });
 
-const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString('fr-FR');
+const formatDate = (dateString: string) => formatDateFR(dateString, { fallback: "-" });
 
-const statusBadgeColor: Record<string, string> = {
-    ACTIVE: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    COMPLETED: 'bg-blue-50 text-blue-700 border-blue-200',
-    PENDING: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-    SUSPENDED: 'bg-red-50 text-red-600 border-red-200',
+const statusVariant: Record<string, BadgeVariant> = {
+    ACTIVE: 'success',
+    COMPLETED: 'info',
+    PENDING: 'warning',
+    SUSPENDED: 'danger',
 };
 
 const statusLabel: Record<string, string> = {
@@ -75,10 +72,10 @@ const entityTypeLabel: Record<string, string> = {
     'business unit': "Unité d'affaires",
 };
 
-const methodBadgeColor: Record<string, string> = {
-    CALCULATOR: 'bg-purple-50 text-purple-700 border-purple-200',
-    IMPORT: 'bg-orange-50 text-orange-700 border-orange-200',
-    MANUAL: 'bg-slate-50 text-slate-600 border-slate-200',
+const methodVariant: Record<string, BadgeVariant> = {
+    CALCULATOR: 'info',
+    IMPORT: 'warning',
+    MANUAL: 'neutral',
 };
 
 const methodLabel: Record<string, string> = {
@@ -306,34 +303,26 @@ export function LoanList({
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-2">
-                                                        <span
-                                                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${methodBadgeColor[loan.inputMethod] ??
-                                                                'bg-slate-50 text-slate-600 border-slate-200'
-                                                                }`}
-                                                        >
+                                                        <Badge variant={methodVariant[loan.inputMethod] ?? "neutral"}>
                                                             {methodLabel[loan.inputMethod] ?? loan.inputMethod}
-                                                        </span>
+                                                        </Badge>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-right text-sm font-medium text-slate-900">
                                                     {formatCurrency(loan.principalAmount)}
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-blue-700">
+                                                    <Badge variant="info" className="ml-auto">
                                                         {loan.annualInterestRate}%
-                                                    </span>
+                                                    </Badge>
                                                 </td>
                                                 <td className="px-6 py-4 text-right text-sm text-slate-600">
                                                     {loan.durationMonths} mois
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <span
-                                                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${statusBadgeColor[loan.status] ??
-                                                            'bg-slate-50 text-slate-600 border-slate-200'
-                                                            }`}
-                                                    >
+                                                    <Badge variant={statusVariant[loan.status] ?? "neutral"}>
                                                         {statusLabel[loan.status] ?? loan.status}
-                                                    </span>
+                                                    </Badge>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="w-32">

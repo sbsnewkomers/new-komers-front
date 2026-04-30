@@ -24,6 +24,7 @@ import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { usePermissions } from "@/permissions/usePermissions";
 import { CRUD_ACTION } from "@/permissions/actions";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
@@ -2606,14 +2607,14 @@ export default function StructurePage() {
                         : node.type === "company"
                           ? "Entreprise"
                           : "BU";
-                  const typeBadgeColor =
+                  const typeBadgeVariant =
                     node.type === "workspace"
-                      ? "bg-purple-50 text-purple-700 border-purple-100"
+                      ? "info"
                       : node.type === "group"
-                        ? "bg-blue-50 text-blue-700 border-blue-100"
+                        ? "info"
                         : node.type === "company"
-                          ? "bg-slate-100 text-slate-700 border-slate-200"
-                          : "bg-slate-50 text-slate-500 border-slate-100";
+                          ? "neutral"
+                          : "neutral";
                   const completion =
                     node.type === "company" ? node.completionPercentage : null;
                   const canExpand =
@@ -2664,18 +2665,12 @@ export default function StructurePage() {
                             {node.name}
                           </span>
                           {node.type === "company" && node.groupId === null && (
-                            <span className="inline-flex items-center rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 text-[10px] font-medium">
-                              Indépendante
-                            </span>
+                            <Badge variant="warning">Indépendante</Badge>
                           )}
                         </div>
 
                         <div>
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide transition-colors ${typeBadgeColor}`}
-                          >
-                            {typeText}
-                          </span>
+                          <Badge variant={typeBadgeVariant}>{typeText}</Badge>
                         </div>
 
                         <div>
