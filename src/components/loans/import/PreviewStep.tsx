@@ -166,12 +166,12 @@ export function PreviewStep({
                             value: loanName || 'Prêt importé',
                         },
                         {
-                            label: 'Capital',
-                            value: 'N/A',
+                            label: 'Total des échéances',
+                            value: `${importResult?.totalRows || 0}`,
                         },
                         {
-                            label: 'Durée',
-                            value: 'N/A',
+                            label: 'Taux de réussite',
+                            value: `${Math.round(((importResult?.importedRows || 0) / (importResult?.totalRows || 1)) * 100)}%`,
                         },
                         {
                             label: 'Fichier source',

@@ -72,36 +72,46 @@ export function LoanImport({ onLoanImported, onBack, entityType, entityId }: Loa
         'insurancePayment',
     ];
 
-    // API calls
-    const loadEntities = async (entityType: EntityType) => {
-        try {
-            let entitiesList: Array<{ id: string; name: string }> = [];
 
-            switch (entityType) {
-                case EntityType.GROUP:
-                    entitiesList = await entitiesApi.getGroups();
-                    break;
-                case EntityType.COMPANY:
-                    entitiesList = await entitiesApi.getCompanies();
-                    break;
-                case EntityType.BUSINESSUNIT:
-                    entitiesList = await entitiesApi.getBusinessUnitsForUser();
-                    break;
-                default:
-                    entitiesList = [];
-            }
-
-            setEntities(entitiesList);
-        } catch (error) {
-            console.error('Error loading entities:', error);
-            setEntities([]);
-        }
-    };
-
-    // Load entities on component mount
+    // Load entities when selectedEntityType changes
     useEffect(() => {
-        loadEntities(selectedEntityType);
-    }, []);
+        let isMounted = true;
+
+        const loadEntitiesAsync = async () => {
+            try {
+                let entitiesList: Array<{ id: string; name: string }> = [];
+
+                switch (selectedEntityType) {
+                    case EntityType.GROUP:
+                        entitiesList = await entitiesApi.getGroups();
+                        break;
+                    case EntityType.COMPANY:
+                        entitiesList = await entitiesApi.getCompanies();
+                        break;
+                    case EntityType.BUSINESSUNIT:
+                        entitiesList = await entitiesApi.getBusinessUnitsForUser();
+                        break;
+                    default:
+                        entitiesList = [];
+                }
+
+                if (isMounted) {
+                    setEntities(entitiesList);
+                }
+            } catch (error) {
+                console.error('Error loading entities:', error);
+                if (isMounted) {
+                    setEntities([]);
+                }
+            }
+        };
+
+        loadEntitiesAsync();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [selectedEntityType]);
 
     const validateLoanName = async (name: string, entityType: EntityType, entityId: string) => {
         if (!name.trim() || !entityType || !entityId) {
@@ -127,7 +137,6 @@ export function LoanImport({ onLoanImported, onBack, entityType, entityId }: Loa
         const entityType = value as EntityType;
         setSelectedEntityType(entityType);
         setSelectedEntityId('');
-        loadEntities(entityType);
         // Validate loan name when entity type changes
         if (loanName.trim() && entityType && selectedEntityId) {
             validateLoanName(loanName, entityType, selectedEntityId);
@@ -318,9 +327,6 @@ export function LoanImport({ onLoanImported, onBack, entityType, entityId }: Loa
             const result = await loansApi.processImport(processDto);
 
             setImportResult(result as LoanImport);
-            if (result.loanId) {
-                onLoanImported?.(result.loanId);
-            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Processing failed');
         } finally {

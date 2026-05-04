@@ -1,9 +1,13 @@
-export const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('fr-FR', {
+export const formatCurrency = (amount: number) => {
+    if (isNaN(amount) || !isFinite(amount)) {
+        return '0,00 €';
+    }
+    return new Intl.NumberFormat('fr-FR', {
         style: 'currency',
         currency: 'EUR',
         maximumFractionDigits: 0,
     }).format(amount);
+};
 
 export interface EditableInstallment {
     id?: string;
