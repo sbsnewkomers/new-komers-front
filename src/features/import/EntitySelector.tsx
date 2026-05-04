@@ -30,6 +30,8 @@ interface EntitySelectorProps {
   onPeriodChange: (start: string, end: string) => void;
   hasData: boolean | null;
   onHasDataChange: (hasData: boolean | null) => void;
+  includeDescendants: boolean;
+  onIncludeDescendantsChange: (value: boolean) => void;
 }
 
 export function EntitySelector({
@@ -42,6 +44,8 @@ export function EntitySelector({
   hasData,
   onHasDataChange,
   disabled = false,
+  includeDescendants,         
+  onIncludeDescendantsChange, 
 }: EntitySelectorProps) {
   const [groups, setGroups] = useState<Entity[]>([]);
   const [companies, setCompanies] = useState<Entity[]>([]);
@@ -283,6 +287,29 @@ export function EntitySelector({
           </span>
         </div>
       )}
+      {/* Checkbox includeDescendants — uniquement pour Group et Company */}
+{selectedEntityId && selectedEntityType && selectedEntityType !== 'BusinessUnit' && (
+  <div className="mt-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+    <input
+      type="checkbox"
+      id="includeDescendants"
+      checked={includeDescendants}
+      onChange={(e) => onIncludeDescendantsChange(e.target.checked)}
+      disabled={disabled}
+      className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer"
+    />
+    <label
+      htmlFor="includeDescendants"
+      className={`text-xs font-medium cursor-pointer select-none ${
+        disabled ? 'text-slate-400' : 'text-slate-700'
+      }`}
+    >
+      {selectedEntityType === 'Group'
+        ? 'Importer aussi pour tous les descendants (Entreprises et Business Units du groupe)'
+        : 'Importer aussi pour tous les descendants (Business Units de cette entreprise)'}
+    </label>
+  </div>
+)}
       {/* Avertissement + sélection de période si l'entité a déjà des données */}
 {selectedEntityId && selectedEntityType && hasData === true && (
   <div className="mt-3 space-y-3">

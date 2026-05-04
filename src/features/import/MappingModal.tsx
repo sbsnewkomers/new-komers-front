@@ -332,16 +332,13 @@ export function MappingModal({
   );
 
   const clearMapping = useCallback(() => {
-    const initial: Record<string, string> = {};
-    csvHeaders.forEach((h) => {
-      const match = Basic_COLUMNS.find(
-        (col) => col.name.toLowerCase() === h.toLowerCase(),
-      );
-      initial[h] = match ? match.name : "";
-    });
-    onMappingChange(initial);
-    setSelectedSavedMapping(null);
-  }, [csvHeaders, onMappingChange]);
+  const empty: Record<string, string> = {};
+  csvHeaders.forEach((h) => {
+    empty[h] = ""; 
+  });
+  onMappingChange(empty);
+  setSelectedSavedMapping(null);
+}, [csvHeaders, onMappingChange]);
 
   const handleImportClick = useCallback(() => {
     if (onImport) onImport();

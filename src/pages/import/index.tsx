@@ -69,40 +69,49 @@ export default function ImportPage() {
   const isAdmin = currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN';
   const isEndUser = currentUser?.role === 'END_USER';
   const isManager = currentUser?.role === 'MANAGER';
-
+  const [includeDescendants, setIncludeDescendants] = useState(false);
   const isImportingRef = useRef(false);
   useImportNotifications(currentUser?.id, (payload) => {
-    if (payload.severity === 'ERROR') {
-      if (payload.metadata?.errors && payload.metadata.errors.length > 0) {
-        const mappedErrors: ValidationError[] = payload.metadata.errors.map((e: any) => ({
-          line: e.line,
-          column: e.column,
-          value: '',
-          reason: e.reason,
-          message: e.reason,
-        }));
-        setValidationErrors(mappedErrors);
-        setValidationModalOpen(true);
-      } else {
-        setValidationErrors([{
-          line: 0,
-          column: 'N/A',
-          value: '',
-          reason: payload.message,
-          message: payload.message,
-        }]);
-        setValidationModalOpen(true);
-      }
-      fetchHistory();
-      setHistoryOpen(true);
+  console.log('[IMPORT PAGE] callback appelée, payload:', JSON.stringify(payload));
+
+  if (payload.severity === 'error') {
+    const errors = payload.metadata?.errors;
+
+    if (Array.isArray(errors) && errors.length > 0) {
+      // Le backend renvoie des objets GenericValidationError
+      // On normalise quelle que soit la structure
+      const mappedErrors: ValidationError[] = errors.map((e: any) => ({
+        line: e.line ?? 0,
+        column: e.column ?? 'N/A',
+        value: e.value ?? '',
+        reason: e.reason ?? e.message ?? 'Erreur inconnue',
+        message: e.reason ?? e.message ?? 'Erreur inconnue',
+      }));
+      setValidationErrors(mappedErrors);
+    } else {
+      // Pas de détail d'erreurs → on affiche le message général
+      setValidationErrors([{
+        line: 0,
+        column: 'N/A',
+        value: '',
+        reason: payload.message,
+        message: payload.message,
+      }]);
     }
 
-    if (payload.severity === 'SUCCESS') {
-      setSuccessMessage(`✅ ${payload.title}`);
-      fetchHistory();
-      setHistoryOpen(true);
-    }
-  });
+    setValidationModalOpen(true);
+    fetchHistory();
+    setHistoryOpen(true);
+  }
+
+  if (payload.severity === 'success') {
+    setSuccessMessage(`✅ ${payload.title}`);
+    fetchHistory();
+    setHistoryOpen(true);
+  }
+});
+  
+  
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -210,7 +219,8 @@ export default function ImportPage() {
         } else {
           const text = reader.result as string;
           const firstLine = text.split("\n")[0];
-          headers = firstLine.split(/[,\t;]/).map((h) => h.trim().replace(/^"|"$/g, ''));
+          headers = firstLine.split(/[,\t;|]/).map((h) => h.trim().replace(/^"|"$/g, ''));
+
         }
 
         setCsvHeaders(headers);
@@ -259,7 +269,7 @@ export default function ImportPage() {
           resolve((json[0] as string[]) || []);
         } else {
           const text = event.target?.result as string;
-          resolve(text.split("\n")[0].split(/[,\t;]/).map((h) => h.trim().replace(/^"|"$/g, "")));
+          resolve(text.split("\n")[0].split(/[,\t;|]/).map((h) => h.trim().replace(/^"|"$/g, "")));
         }
       };
       isExcel ? reader.readAsArrayBuffer(file) : reader.readAsText(file, "UTF-8");
@@ -286,6 +296,7 @@ export default function ImportPage() {
     setPeriodStart("");  
     setPeriodEnd("");    
     setHasData(null);   
+    setIncludeDescendants(false);
     try {
       if (entityType === 'Company') {
         const company = await apiFetch<{ workspace_id: string }>(
@@ -397,7 +408,10 @@ export default function ImportPage() {
       formData.append('mappingId', mappingId);
       formData.append('entityId', entityId);
       formData.append('entityType', entityType);
-      formData.append('includeDescendants', 'false');
+      formData.append(
+        'includeDescendants',
+        entityType === 'BusinessUnit' ? 'false' : String(includeDescendants)
+      );
       if (periodStart) formData.append('periodStart', periodStart);
       if (periodEnd)   formData.append('periodEnd', periodEnd);
 
@@ -411,7 +425,6 @@ export default function ImportPage() {
         // Réinitialisation du formulaire — succès/erreurs métier arrivent via WebSocket
         setCsvFile(null);
         setCsvHeaders([]);
-        setValidationErrors([]);
         setConfirmReplaceOpen(false);
         setConfirmReplaceInput("");
         setPendingMappingId(null);
@@ -696,6 +709,8 @@ export default function ImportPage() {
           onPeriodChange={(start, end) => { setPeriodStart(start); setPeriodEnd(end); }}
           hasData={hasData}
           onHasDataChange={setHasData}
+          includeDescendants={includeDescendants}           
+          onIncludeDescendantsChange={setIncludeDescendants} 
         />
         
 
