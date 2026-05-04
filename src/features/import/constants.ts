@@ -19,4 +19,5 @@ export const Basic_COLUMNS: ColumnDefinition[] = [
   { name: 'ValidDate', type: 'date', required: false },
   { name: 'Montantdevise', type: 'number', required: false },
   { name: 'Idevise', type: 'string', required: false },
+  { name : 'code_entité', type: 'string', required: false },
 ];

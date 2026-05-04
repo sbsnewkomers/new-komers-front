@@ -17,6 +17,7 @@ import {
 } from "@/lib/structureImportApi";
 import { getWorkspaces, Workspace } from "@/lib/workspaceApi";
 import { Download, Upload } from "lucide-react";
+// Mettez à jour TEMPLATE_SHEETS avec les nouvelles colonnes
 const TEMPLATE_SHEETS = [
       {
         id: "groups",
@@ -28,8 +29,10 @@ const TEMPLATE_SHEETS = [
           { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
           { name: "Activité", key: "mainActivity", req: true, type: "Texte", note: "" },
           { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
+          { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
+          { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 15/06/2010" },
         ],
-        example: { name: "Groupe Alpha", fiscal_year_start: "01-01", siret: "12345678901234", mainActivity: "Secteur Technologique", country: "France" },
+        example: { name: "Groupe Alpha", fiscal_year_start: "01-01", siret: "12345678901234", mainActivity: "Secteur Technologique", country: "France", entity_code: "GRP-ALPHA", registrationDate: "15/06/2010" },
       },
       {
         id: "companies",
@@ -46,8 +49,10 @@ const TEMPLATE_SHEETS = [
           { name: "Modèle", key: "model", req: false, type: "Enum", note: "HOLDING / SUBSIDIARY" },
           { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
           { name: "Nom du groupe", key: "group_name", req: false, type: "Référence", note: "Doit exister dans onglet 1" },
+          { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
+          { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 01/03/2015" },
         ],
-        example: { name: "Alpha Digital SAS", fiscal_year_start: "01-01", siret: "98765432100012", address: "15 Rue de la Paix", ape_code: "6201Z", main_activity: "Édition de logiciels", size: "MEDIUM", model: "SUBSIDIARY", country: "France", group_name: "Groupe Alpha" },
+        example: { name: "Alpha Digital SAS", fiscal_year_start: "01-01", siret: "98765432100012", address: "15 Rue de la Paix", ape_code: "6201Z", main_activity: "Édition de logiciels", size: "MEDIUM", model: "SUBSIDIARY", country: "France", group_name: "Groupe Alpha", entity_code: "ENT-ALPHA", registrationDate: "01/03/2015" },
       },
       {
         id: "bu",
@@ -60,8 +65,10 @@ const TEMPLATE_SHEETS = [
           { name: "Activité", key: "activity", req: false, type: "Texte", note: "" },
           { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
           { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
+          { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
+          { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 20/09/2018" },
         ],
-        example: { name: "Finance Alpha", company_name: "Alpha Digital SAS", code: "BU-FINANCE", activity: "Gestion Comptable", siret: "98765432100012", country: "France" },
+        example: { name: "Finance Alpha", company_name: "Alpha Digital SAS", code: "BU-FINANCE", activity: "Gestion Comptable", siret: "98765432100012", country: "France", entity_code: "BU-FIN-ALPHA", registrationDate: "20/09/2018" },
       },
     ] as const;
 

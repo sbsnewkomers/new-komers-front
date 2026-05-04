@@ -53,7 +53,7 @@ interface MappingModalProps {
   onImport?: () => void;
   isSubmitting: boolean;
   entityId?: string | null;
-  entityType?: "Group" | "Company" | null;
+  entityType?: "Group" | "Company" | 'BusinessUnit' | null;
   showImportButton?: boolean;
   onFileUpload?: (file: File) => void;
   workspaceId?: string | null;
