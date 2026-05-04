@@ -18,8 +18,9 @@ import {
     Pencil,
     Loader2,
 } from 'lucide-react';
-import { Loan, LoanStatus } from '@/types/loans';
+import { Loan, LoanStatus, LoanInputMethod } from '@/types/loans';
 import { loansApi } from '@/lib/loansApi';
+import { LoanEditManual } from './LoanEditManual';
 
 interface LoanEditProps {
     loanId: string;
@@ -31,6 +32,8 @@ interface LoanEditProps {
 export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditProps) {
     const [loan, setLoan] = useState<Loan | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Standard edit form states (always declared to avoid hook order issues)
     const [isSaving, setIsSaving] = useState(false);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [hasCriticalChanges, setHasCriticalChanges] = useState(false);
@@ -45,21 +48,26 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
         status: '' as LoanStatus,
     });
 
+    // Load loan data to determine which component to use
     useEffect(() => {
         const loadLoan = async () => {
             try {
                 const loanData = await loansApi.getLoan(loanId);
                 setLoan(loanData);
-                setFormData({
-                    name: loanData.name,
-                    principalAmount: loanData.principalAmount.toString(),
-                    annualInterestRate: loanData.annualInterestRate.toString(),
-                    durationMonths: loanData.durationMonths.toString(),
-                    firstInstallmentDate: loanData.firstInstallmentDate,
-                    monthlyInsuranceCost: loanData.monthlyInsuranceCost.toString(),
-                    deferralPeriodMonths: loanData.deferralPeriodMonths.toString(),
-                    status: loanData.status,
-                });
+
+                // Initialize form data for non-manual loans
+                if (loanData.inputMethod !== LoanInputMethod.MANUAL) {
+                    setFormData({
+                        name: loanData.name,
+                        principalAmount: loanData.principalAmount.toString(),
+                        annualInterestRate: loanData.annualInterestRate.toString(),
+                        durationMonths: loanData.durationMonths.toString(),
+                        firstInstallmentDate: loanData.firstInstallmentDate,
+                        monthlyInsuranceCost: loanData.monthlyInsuranceCost.toString(),
+                        deferralPeriodMonths: loanData.deferralPeriodMonths.toString(),
+                        status: loanData.status,
+                    });
+                }
             } catch (err) {
                 onError(err instanceof Error ? err.message : 'Failed to load loan');
             } finally {
@@ -69,6 +77,28 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
 
         loadLoan();
     }, [loanId, onError]);
+
+    // Show loading state
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">Chargement du prêt...</span>
+            </div>
+        );
+    }
+
+    // If loan is manual, use LoanEditManual component
+    if (loan && loan.inputMethod === LoanInputMethod.MANUAL) {
+        return (
+            <LoanEditManual
+                loanId={loanId}
+                onBack={onBack}
+                onLoanUpdated={onLoanUpdated}
+                onError={onError}
+            />
+        );
+    }
 
     const handleInputChange = (field: string, value: string) => {
         setFormData((prev) => ({
