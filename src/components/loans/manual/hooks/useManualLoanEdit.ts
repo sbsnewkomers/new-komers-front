@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { loansApi } from '@/lib/loansApi';
 import { entitiesApi } from '@/lib/entitiesApi';
 import { Loan, EntityType, UpdateManualLoanDto } from '@/types/loans';
-import { EditableInstallment, LoanTotals } from '../utils';
+import { EditableInstallment, LoanTotals, validateDateSequence } from '../utils';
 
 interface UseManualLoanEditProps {
     loanId: string;
@@ -22,6 +22,8 @@ export function useManualLoanEdit({ loanId }: UseManualLoanEditProps) {
     const [selectedEntityId, setSelectedEntityId] = useState('');
     const [installments, setInstallments] = useState<EditableInstallment[]>([]);
     const [nameValidationError, setNameValidationError] = useState<string | null>(null);
+    const [dateValidationErrors, setDateValidationErrors] = useState<Record<number, string>>({});
+    const [fieldValidationErrors, setFieldValidationErrors] = useState<Record<number, Record<string, string>>>({});
     const [entities, setEntities] = useState<Array<{ id: string; name: string }>>([]);
 
     // Confirmation state
@@ -152,13 +154,69 @@ export function useManualLoanEdit({ loanId }: UseManualLoanEditProps) {
             const installment = { ...updated[index] };
 
             if (field === 'dueDate') {
-                installment[field] = value as string;
+                const newDate = value as string;
+
+                // Validate sequential dates using utility function
+                if (!validateDateSequence(updated, index, newDate)) {
+                    // Set error message
+                    const errorMessage = index > 0 && new Date(newDate) <= new Date(updated[index - 1].dueDate)
+                        ? 'La date doit être postérieure à la date précédente'
+                        : 'La date doit être antérieure à la date suivante';
+
+                    setDateValidationErrors(prev => ({ ...prev, [index]: errorMessage }));
+                    return prev; // Don't update if date is not sequential
+                } else {
+                    // Clear any existing error for this index
+                    setDateValidationErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors[index];
+                        return newErrors;
+                    });
+                }
+
+                installment[field] = newDate;
             } else if (
                 field === 'principalPayment' ||
                 field === 'interestPayment' ||
                 field === 'insurancePayment'
             ) {
                 const numValue = Number(value) || 0;
+
+                // Validation logic
+                const errors: Record<string, string> = {};
+
+                if (field === 'principalPayment') {
+                    // Capital must be strictly positive (> 0)
+                    if (numValue <= 0 || isNaN(numValue)) {
+                        errors.principalPayment = 'Le capital doit être strictement positif';
+                    }
+                } else {
+                    // Other fields can be positive or null (>= 0)
+                    if (numValue < 0 || isNaN(numValue)) {
+                        errors[field] = 'Le montant doit être positif ou nul';
+                    }
+                }
+
+                // Update field validation errors
+                setFieldValidationErrors(prev => {
+                    const newErrors = { ...prev };
+                    if (Object.keys(errors).length > 0) {
+                        newErrors[index] = { ...newErrors[index], ...errors };
+                    } else {
+                        // Clear errors for this field
+                        if (newErrors[index]) {
+                            const fieldErrors = { ...newErrors[index] };
+                            delete fieldErrors[field];
+                            if (Object.keys(fieldErrors).length === 0) {
+                                delete newErrors[index];
+                            } else {
+                                newErrors[index] = fieldErrors;
+                            }
+                        }
+                    }
+                    return newErrors;
+                });
+
                 installment[field] = numValue;
 
                 // Calculate total payment safely
@@ -202,25 +260,82 @@ export function useManualLoanEdit({ loanId }: UseManualLoanEditProps) {
                 installmentNumber: i + 1,
             }));
 
-            if (updated.length > 0) {
-                const totalCapital = updated.reduce((sum, i) => sum + (Number(i.principalPayment) || 0), 0);
+            return updated;
+        });
+
+        // Clear validation errors for removed installment and reindex others
+        setFieldValidationErrors((prev) => {
+            const newErrors: Record<number, Record<string, string>> = {};
+            Object.keys(prev).forEach(key => {
+                const errorIndex = Number(key);
+                if (errorIndex < index) {
+                    newErrors[errorIndex] = prev[errorIndex];
+                } else if (errorIndex > index) {
+                    newErrors[errorIndex - 1] = prev[errorIndex];
+                }
+            });
+            return newErrors;
+        });
+
+        // Clear validation errors for removed installment and reindex others
+        setFieldValidationErrors((prev) => {
+            const newErrors: Record<number, Record<string, string>> = {};
+            Object.keys(prev).forEach(key => {
+                const errorIndex = Number(key);
+                if (errorIndex < index) {
+                    newErrors[errorIndex] = prev[errorIndex];
+                } else if (errorIndex > index) {
+                    newErrors[errorIndex - 1] = prev[errorIndex];
+                }
+            });
+            return newErrors;
+        });
+
+        // Clear date validation errors for removed installment and reindex others
+        setDateValidationErrors((prev) => {
+            const newErrors: Record<number, string> = {};
+            Object.keys(prev).forEach(key => {
+                const errorIndex = Number(key);
+                if (errorIndex < index) {
+                    newErrors[errorIndex] = prev[errorIndex];
+                } else if (errorIndex > index) {
+                    newErrors[errorIndex - 1] = prev[errorIndex];
+                }
+            });
+            return newErrors;
+        });
+
+        // Recalculate remaining balances after removal
+        setInstallments((prev) => {
+            if (prev.length > 0) {
+                const totalCapital = prev.reduce((sum, i) => sum + (Number(i.principalPayment) || 0), 0);
                 let cumulativePaid = 0;
+                const updated = [...prev];
                 for (let i = 0; i < updated.length; i++) {
                     cumulativePaid += Number(updated[i].principalPayment) || 0;
                     const remainingBalance = totalCapital - cumulativePaid;
                     updated[i].remainingBalance = isNaN(remainingBalance) ? 0 : remainingBalance;
                 }
+                return updated;
             }
-
-            return updated;
+            return prev;
         });
     };
 
     // Add new installment
     const addNewInstallment = () => {
+        // Calculate next sequential date
+        let nextDate = new Date();
+        if (installments.length > 0) {
+            const lastInstallment = installments[installments.length - 1];
+            const lastDate = new Date(lastInstallment.dueDate);
+            // Set to one month after the last installment
+            nextDate = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, lastDate.getDate());
+        }
+
         const newInstallment: EditableInstallment = {
             installmentNumber: installments.length + 1,
-            dueDate: new Date().toISOString().split('T')[0],
+            dueDate: nextDate.toISOString().split('T')[0],
             principalPayment: 0,
             interestPayment: 0,
             insurancePayment: 0,
@@ -272,6 +387,11 @@ export function useManualLoanEdit({ loanId }: UseManualLoanEditProps) {
             throw new Error('Au moins une échéance est requise');
         }
 
+        // Validate all installments have positive principal amounts
+        if (installments.some(inst => Number(inst.principalPayment) <= 0)) {
+            throw new Error('Le montant principal doit être supérieur à 0');
+        }
+
         if (hasPaidInstallments && installments.some(inst => inst.isNew)) {
             throw new Error('Impossible d\'ajouter de nouvelles échéances à un prêt qui contient déjà des échéances payées');
         }
@@ -321,6 +441,8 @@ export function useManualLoanEdit({ loanId }: UseManualLoanEditProps) {
         entities,
         installments,
         nameValidationError,
+        dateValidationErrors,
+        fieldValidationErrors,
         confirmRegeneration,
         hasExistingInstallments,
         hasPaidInstallments,

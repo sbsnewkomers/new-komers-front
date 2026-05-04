@@ -11,6 +11,8 @@ interface InstallmentsTableProps {
     onUpdate: (index: number, field: keyof EditableInstallment, value: string | number) => void;
     onRemove: (index: number) => void;
     onAdd: () => void;
+    dateValidationErrors?: Record<number, string>;
+    fieldValidationErrors?: Record<number, Record<string, string>>;
 }
 
 export function InstallmentsTable({
@@ -18,6 +20,8 @@ export function InstallmentsTable({
     onUpdate,
     onRemove,
     onAdd,
+    dateValidationErrors,
+    fieldValidationErrors,
 }: InstallmentsTableProps) {
     return (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -75,6 +79,8 @@ export function InstallmentsTable({
                                 index={index}
                                 onUpdate={onUpdate}
                                 onRemove={onRemove}
+                                dateError={dateValidationErrors?.[index]}
+                                fieldErrors={fieldValidationErrors?.[index]}
                             />
                         ))}
                         {installments.length === 0 && (

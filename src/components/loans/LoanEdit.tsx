@@ -26,10 +26,9 @@ interface LoanEditProps {
     loanId: string;
     onBack: () => void;
     onLoanUpdated: (loan: Loan) => void;
-    onError: (error: string) => void;
 }
 
-export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditProps) {
+export function LoanEdit({ loanId, onBack, onLoanUpdated }: LoanEditProps) {
     const [loan, setLoan] = useState<Loan | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -69,14 +68,19 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
                     });
                 }
             } catch (err) {
-                onError(err instanceof Error ? err.message : 'Failed to load loan');
+                const errorMessage = err instanceof Error ? err.message : 'Failed to load loan';
+                const { emitSnackbar } = await import('@/ui/snackbarBus');
+                emitSnackbar({
+                    message: errorMessage,
+                    variant: 'error'
+                });
             } finally {
                 setIsLoading(false);
             }
         };
 
         loadLoan();
-    }, [loanId, onError]);
+    }, [loanId]);
 
     // Show loading state
     if (isLoading) {
@@ -95,7 +99,6 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
                 loanId={loanId}
                 onBack={onBack}
                 onLoanUpdated={onLoanUpdated}
-                onError={onError}
             />
         );
     }
@@ -198,7 +201,12 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated, onError }: LoanEditPro
 
             onLoanUpdated(updatedLoan);
         } catch (err) {
-            onError(err instanceof Error ? err.message : 'Failed to update loan');
+            const errorMessage = err instanceof Error ? err.message : 'Failed to update loan';
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: errorMessage,
+                variant: 'error'
+            });
         } finally {
             setIsSaving(false);
             setShowConfirmDialog(false);

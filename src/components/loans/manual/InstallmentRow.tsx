@@ -10,6 +10,8 @@ interface InstallmentRowProps {
     index: number;
     onUpdate: (index: number, field: keyof EditableInstallment, value: string | number) => void;
     onRemove: (index: number) => void;
+    dateError?: string;
+    fieldErrors?: Record<string, string>;
 }
 
 export function InstallmentRow({
@@ -17,6 +19,8 @@ export function InstallmentRow({
     index,
     onUpdate,
     onRemove,
+    dateError,
+    fieldErrors,
 }: InstallmentRowProps) {
     return (
         <tr className="transition-colors hover:bg-slate-50/50">
@@ -28,17 +32,19 @@ export function InstallmentRow({
                     type="date"
                     value={installment.dueDate}
                     onChange={(e) => onUpdate(index, 'dueDate', e.target.value)}
-                    className="w-36"
+                    className={`w-36 ${dateError ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
+                    title={dateError}
                 />
             </td>
             <td className="px-2 py-2">
                 <Input
                     type="number"
                     step="0.01"
-                    min="0"
+                    min="0.01"
                     value={installment.principalPayment}
                     onChange={(e) => onUpdate(index, 'principalPayment', e.target.value)}
-                    className="w-28 text-right"
+                    className={`w-28 text-right ${fieldErrors?.principalPayment ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
+                    title={fieldErrors?.principalPayment}
                 />
             </td>
             <td className="px-2 py-2">
@@ -48,7 +54,8 @@ export function InstallmentRow({
                     min="0"
                     value={installment.interestPayment}
                     onChange={(e) => onUpdate(index, 'interestPayment', e.target.value)}
-                    className="w-28 text-right"
+                    className={`w-28 text-right ${fieldErrors?.interestPayment ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
+                    title={fieldErrors?.interestPayment}
                 />
             </td>
             <td className="px-2 py-2">
@@ -58,7 +65,8 @@ export function InstallmentRow({
                     min="0"
                     value={installment.insurancePayment}
                     onChange={(e) => onUpdate(index, 'insurancePayment', e.target.value)}
-                    className="w-28 text-right"
+                    className={`w-28 text-right ${fieldErrors?.insurancePayment ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
+                    title={fieldErrors?.insurancePayment}
                 />
             </td>
             <td className="px-4 py-2 text-right text-sm font-semibold text-slate-900">
