@@ -35,7 +35,7 @@ export function DeleteMappingConfirm({
       <AlertDialogContent size="md">
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/15 text-(--nebula-gold-light)">
               <AlertTriangle className="h-4 w-4" aria-hidden />
             </span>
             <AlertDialogTitle>Supprimer ce mapping ?</AlertDialogTitle>
@@ -44,7 +44,7 @@ export function DeleteMappingConfirm({
             {mappingName ? (
               <>
                 Le mapping{" "}
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-white">
                   « {mappingName} »
                 </span>{" "}
                 sera supprimé définitivement.

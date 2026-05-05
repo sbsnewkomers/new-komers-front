@@ -275,7 +275,7 @@ export default function DashboardPage() {
       onCompanyChange={() => { }}
     >
       {/* Header */}
-      <div>
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 mb-1">
           <div className="rounded-xl bg-primary/10 p-2.5">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-layout-dashboard h-5 w-5 text-primary" aria-hidden="true">
@@ -290,16 +290,16 @@ export default function DashboardPage() {
             <p className="text-sm text-slate-500">Tableau de bord avec indicateurs clés et widgets personnalisables.</p>
           </div>
         </div>
-      </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-3">
-        <Button
-          onClick={() => setAddModalOpen(true)}
-          className="bg-primary text-white hover:bg-slate-800"
-        >
-          Ajouter un widget
-        </Button>
+        {/* Actions */}
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setAddModalOpen(true)}
+            className="bg-primary text-white! hover:bg-slate-800"
+            >
+            Ajouter un widget
+          </Button>
+        </div>
       </div>
 
       {loading && (
@@ -341,7 +341,7 @@ export default function DashboardPage() {
             {widgets.map((w) => (
               <Card
                 key={w.id}
-                className="relative overflow-hidden transition-all hover:shadow-md bg-white"
+                className="relative overflow-hidden nebula-blob"
               >
                 <CardContent className="p-6!">
                   <div className="flex items-start justify-between">
@@ -349,7 +349,7 @@ export default function DashboardPage() {
                       <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                         {w.title}
                       </p>
-                      <div className="text-2xl font-bold text-primary mt-2">
+                      <div className="text-xl font-bold text-primary mt-2">
                         {w.value}
                       </div>
                     </div>
@@ -383,7 +383,7 @@ export default function DashboardPage() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
             {chartWidgets.map((w) => (
               <>
-                <Card key={w.id} className="flex flex-col bg-white">
+                <Card key={w.id} className="flex flex-col bg-white nebula-blob">
                   <div className="border-b border-slate-100 px-6 py-4">
                     <h3 className="font-semibold text-primary">{w.title}</h3>
                   </div>
@@ -404,13 +404,13 @@ export default function DashboardPage() {
                               dataKey="name"
                               axisLine={false}
                               tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 12 }}
+                              tick={{ fill: "#b8924a", fontSize: 12 }}
                               dy={10}
                             />
                             <YAxis
                               axisLine={false}
                               tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 12 }}
+                              tick={{ fill: "#b8924a", fontSize: 12 }}
                             />
                             <Tooltip
                               contentStyle={{
@@ -447,13 +447,13 @@ export default function DashboardPage() {
                               dataKey="name"
                               axisLine={false}
                               tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 12 }}
+                                tick={{ fill: "#b8924a", fontSize: 12 }}
                               dy={10}
                             />
                             <YAxis
                               axisLine={false}
                               tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 12 }}
+                                tick={{ fill: "#b8924a", fontSize: 12 }}
                             />
                             <Tooltip
                               cursor={{ fill: "#f1f5f9" }}
@@ -465,7 +465,7 @@ export default function DashboardPage() {
                             />
                             <Bar
                               dataKey="value"
-                              fill="#2967bc"
+                                fill="#b8924a"
                               radius={[4, 4, 0, 0]}
                               barSize={40}
                             />
@@ -485,7 +485,7 @@ export default function DashboardPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card key={w.id} className="flex flex-col bg-white">
+                <Card key={w.id} className="flex flex-col bg-white nebula-blob">
                   <div className="border-b border-slate-100 px-6 py-4">
                     <h3 className="font-semibold text-primary">{w.title}</h3>
                   </div>
@@ -567,7 +567,7 @@ export default function DashboardPage() {
                             />
                             <Bar
                               dataKey="value"
-                              fill="#2967bc"
+                                fill="#b8924a"
                               radius={[4, 4, 0, 0]}
                               barSize={40}
                             />

@@ -4,11 +4,11 @@ export type BadgeVariant = "neutral" | "success" | "info" | "warning" | "danger"
 export type BadgeSize = "sm" | "md";
 
 const VARIANT_CLASSES: Record<BadgeVariant, string> = {
-  neutral: "bg-muted text-muted-foreground ring-border",
-  success: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  info: "bg-blue-50 text-blue-700 ring-blue-200",
-  warning: "bg-yellow-50 text-yellow-700 ring-yellow-200",
-  danger: "bg-red-50 text-red-700 ring-red-200",
+  neutral: "bg-white/5 text-(--nebula-muted) ring-white/10",
+  success: "bg-white/5 text-white ring-white/10",
+  info: "bg-white/5 text-white ring-white/10",
+  warning: "bg-white/5 text-white ring-white/10",
+  danger: "bg-white/5 text-white ring-white/10",
 };
 
 const SIZE_CLASSES: Record<BadgeSize, string> = {
@@ -30,7 +30,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex w-fit items-center gap-1.5 rounded-full font-medium uppercase tracking-wide ring-1 ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className ?? ""}`}
+      className={`inline-flex w-fit items-center gap-1.5 rounded-full font-medium uppercase tracking-[0.18em] ring-1 ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className ?? ""}`}
       {...props}
     >
       {icon}

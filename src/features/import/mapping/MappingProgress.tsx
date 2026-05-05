@@ -19,35 +19,33 @@ export function MappingProgress({
   const pct = totalRequired === 0 ? 100 : Math.round((mappedRequired / totalRequired) * 100);
   const isComplete = mappedRequired === totalRequired;
   const barColor = isComplete
-    ? "bg-emerald-500"
-    : pct >= 50
-      ? "bg-amber-500"
-      : "bg-rose-500";
+    ? "bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold)"
+    : "bg-linear-to-r from-(--nebula-gold-deep) to-(--nebula-gold)";
 
   return (
     <div
-      className={`rounded-xl border border-slate-200 bg-white p-4 ${className ?? ""}`}
+      className={`rounded-2xl border border-white/10 bg-white/5 p-4 nebula-blob ${className ?? ""}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {isComplete ? (
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
+            <CheckCircle2 className="h-4 w-4 text-(--nebula-gold-light)" aria-hidden />
           ) : (
-            <CircleDashed className="h-4 w-4 text-slate-400" aria-hidden />
+            <CircleDashed className="h-4 w-4 text-white/50" aria-hidden />
           )}
-          <span className="text-sm font-medium text-slate-900">
+          <span className="text-sm font-medium text-white">
             Champs obligatoires
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-sm font-semibold text-slate-900 tabular-nums">
+          <span className="font-mono text-sm font-semibold text-white tabular-nums">
             {mappedRequired}/{totalRequired}
           </span>
           <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium border ${
               isComplete
-                ? "bg-emerald-100 text-emerald-700"
-                : "bg-slate-100 text-slate-700"
+                ? "bg-white/10 border-white/15 text-white"
+                : "bg-white/5 border-white/10 text-(--nebula-muted)"
             }`}
           >
             {pct}%
@@ -55,7 +53,7 @@ export function MappingProgress({
         </div>
       </div>
       <div
-        className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100"
+        className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10"
         role="progressbar"
         aria-valuenow={pct}
         aria-valuemin={0}
@@ -67,7 +65,7 @@ export function MappingProgress({
           style={{ width: `${pct}%` }}
         />
       </div>
-      <p className="mt-2 text-xs text-slate-500">
+      <p className="mt-2 text-xs text-(--nebula-muted)">
         {totalMapped} champ{totalMapped > 1 ? "s" : ""} mappé
         {totalMapped > 1 ? "s" : ""} sur {totalFields}
       </p>

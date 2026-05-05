@@ -420,16 +420,27 @@ export default function AuditPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
-            { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" },
-            { label: "Aujourd’hui", value: stats.today, color: "text-blue-700", bg: "bg-linear-to-l from-blue-200 to-white ring-1 ring-blue-100" },
-            { label: "Échecs", value: stats.failures, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
-            { label: "Utilisateurs", value: stats.users, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
+            { label: "Total", value: stats.total },
+            { label: "Aujourd’hui", value: stats.today },
+            { label: "Utilisateurs", value: stats.users },
+            { label: "Échecs", value: stats.failures },
           ].map((s) => (
-            <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-              <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>
-                {s.label}
+            <div
+              key={s.label}
+              className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden"
+            >
+              <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+                § {s.label}
               </p>
-              <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
+              <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
+                {s.value}
+              </p>
+              {s.label === "Échecs" ? (
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-10 -right-10 w-full h-full rounded-full bg-red-500 blur-3xl"
+                />
+              ) : null}
             </div>
           ))}
         </div>

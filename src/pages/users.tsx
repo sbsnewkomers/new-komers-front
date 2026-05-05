@@ -503,7 +503,7 @@ export default function UsersPage() {
           }
           actions={
             invitableRoles.length > 0 ? (
-              <Button onClick={openInviteModal} className="w-full bg-primary text-white hover:bg-slate-800 sm:w-auto">
+              <Button onClick={openInviteModal} className="w-full bg-primary text-white! hover:bg-slate-800 sm:w-auto">
                 <Send className="h-4 w-4" />
                 Inviter un utilisateur
               </Button>
@@ -511,7 +511,7 @@ export default function UsersPage() {
           }
         />
         {/* Tabs */}
-        <div className="grid grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+        <div className="grid grid-cols-2 gap-1 rounded-lg border border-primary/40! bg-primary/10 p-1">
           {([
             { key: "users" as ActiveTab, label: "Utilisateurs", count: stats.total },
             { key: "invitations" as ActiveTab, label: "Invitations", count: invStats.total },
@@ -521,12 +521,12 @@ export default function UsersPage() {
               type="button"
               onClick={() => setActiveTab(tab.key)}
               className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all ${activeTab === tab.key
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-primary/90 text-white! shadow-sm"
+                : "hover:text-primary/80"
                 }`}
             >
               {tab.label}
-              <span className={`ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${activeTab === tab.key ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-600"
+              <span className={`ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${activeTab === tab.key ? "bg-white text-primary" : "bg-primary/50 text-white"
                 }`}>
                 {tab.count}
               </span>
@@ -539,15 +539,28 @@ export default function UsersPage() {
           <>
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {([
-                { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" },
-                { label: "Actifs", value: stats.active, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
-                { label: "En attente", value: stats.pending, color: "text-amber-700", bg: "bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100" },
-                { label: "Suspendus", value: stats.suspended, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
-              ]).map((s) => (
-                <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-                  <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>{s.label}</p>
-                  <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
+              {[
+                { label: "Total", value: stats.total },
+                { label: "Actifs", value: stats.active, colored: "bg-green-500" },
+                { label: "En attente", value: stats.pending, colored: "bg-yellow-500" },
+                { label: "Suspendus", value: stats.suspended, colored: "bg-red-500" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden"
+                >
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+                    § {s.label}
+                  </p>
+                  <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
+                    {s.value}
+                  </p>
+                  {s.colored ? (
+                    <div
+                      aria-hidden
+                      className={`pointer-events-none absolute -bottom-10 -right-40 h-full w-full rounded-full ${s.colored} blur-3xl`}
+                    />
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -567,11 +580,11 @@ export default function UsersPage() {
               }
               filters={
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                  <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
+                  <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-full border-primary/40! bg-white text-sm sm:w-fit!">
                     <option value="">Tous les r&ocirc;les</option>
                     {ALL_ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
                   </Select>
-                  <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
+                  <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-full border-primary/40! bg-white text-sm sm:w-fit!">
                     <option value="">Tous les statuts</option>
                     {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
                   </Select>
@@ -580,10 +593,10 @@ export default function UsersPage() {
             />
 
             {/* Table */}
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="rounded-xl border border-primary/40! bg-primary/10 shadow-sm">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/40! border-t-primary" />
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="py-16 text-center">
@@ -595,28 +608,28 @@ export default function UsersPage() {
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/50">
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Utilisateur</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Statut</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Cr&eacute;&eacute; le</th>
-                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Actions</th>
+                      <tr className="border-b border-primary/40! bg-primary/10 hover:bg-primary/10">
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Utilisateur</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">R&ocirc;le</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Statut</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Cr&eacute;&eacute; le</th>
+                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-primary/40!">
                       {filtered.map((u) => {
                         const isProtectedSuperAdmin =
                           u.role === "SUPER_ADMIN" && currentUser?.role === "ADMIN";
                         return (
-                          <tr key={u.id} className="group transition-colors hover:bg-slate-50/50">
+                          <tr key={u.id} className="group transition-colors hover:bg-primary/5">
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                                   {(u.firstName?.[0] || u.email[0]).toUpperCase()}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium text-slate-900">{u.firstName || u.lastName ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "\u2014"}</p>
-                                  <p className="text-xs text-slate-500">{u.email}</p>
+                                  <p className="text-sm font-medium text-primary">{u.firstName || u.lastName ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "\u2014"}</p>
+                                  <p className="text-xs">{u.email}</p>
                                 </div>
                               </div>
                             </td>
@@ -632,12 +645,12 @@ export default function UsersPage() {
                             <td className="px-6 py-4">
                               <Badge variant={statusVariant[u.status]}>{statusLabel(u.status)}</Badge>
                             </td>
-                            <td className="px-6 py-4 text-sm text-slate-500">{u.createdAt ? new Date(u.createdAt).toLocaleDateString("fr-FR") : "\u2014"}</td>
+                            <td className="px-6 py-4 text-sm">{u.createdAt ? new Date(u.createdAt).toLocaleDateString("fr-FR") : "\u2014"}</td>
                             <td className="px-6 py-4">
                               <div className="flex justify-end">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 opacity-100 transition-all hover:bg-white hover:text-slate-900 hover:shadow-sm sm:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                                    <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg opacity-100 transition-all hover:bg-white hover:text-slate-900 hover:shadow-sm">
                                       <MoreHorizontal className="h-4 w-4" />
                                     </button>
                                   </DropdownMenuTrigger>
@@ -726,15 +739,28 @@ export default function UsersPage() {
           <>
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {([
-                { label: "Total", value: invStats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" }, 
-                { label: "En attente", value: invStats.pending, color: "text-yellow-700", bg: "bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100" },
-                { label: "Accept\u00e9es", value: invStats.accepted, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
-                { label: "Rejet\u00e9es", value: invStats.rejected, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
-              ]).map((s) => (
-                <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-                  <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>{s.label}</p>
-                  <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
+              {[
+                { label: "Total", value: invStats.total },
+                { label: "En attente", value: invStats.pending, colored: "bg-yellow-500" },
+                { label: "Accept\u00e9es", value: invStats.accepted, colored: "bg-green-500" },
+                { label: "Rejet\u00e9es", value: invStats.rejected, colored: "bg-red-500" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden"
+                >
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+                    § {s.label}
+                  </p>
+                  <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
+                    {s.value}
+                  </p>
+                  {s.colored ? (
+                    <div
+                      aria-hidden
+                      className={`pointer-events-none absolute -bottom-10 -right-40 h-full w-full rounded-full ${s.colored} blur-3xl`}
+                    />
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -756,10 +782,10 @@ export default function UsersPage() {
             />
 
             {/* Pending Invitations Table */}
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="rounded-xl border border-primary/40! bg-primary/10 shadow-sm">
               {invLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/40! border-t-primary" />
                 </div>
               ) : pendingInv.length === 0 ? (
                 <div className="py-16 text-center">
@@ -771,16 +797,16 @@ export default function UsersPage() {
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/50">
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Email</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Statut</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">P&eacute;rim&egrave;tre</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Expire le</th>
-                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Actions</th>
+                      <tr className="border-b border-primary/40! bg-primary/10 hover:bg-primary/10">
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">R&ocirc;le</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Statut</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">P&eacute;rim&egrave;tre</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Expire le</th>
+                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-primary/40!">
                       {pendingInv.map((inv) => {
                         const invitedUser = users.find(
                           (u) => u.email.toLowerCase() === inv.email.toLowerCase(),
@@ -789,10 +815,10 @@ export default function UsersPage() {
                           invitedUser && invitedUser.status === "PENDING";
 
                         return (
-                          <tr key={inv.id} className="group transition-colors hover:bg-slate-50/50">
+                          <tr key={inv.id} className="group transition-colors hover:bg-primary/5">
                             <td className="px-6 py-4">
-                              <p className="text-sm font-medium text-slate-900">{inv.email}</p>
-                              <p className="text-xs text-slate-400">Envoy&eacute; le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
+                              <p className="text-sm font-medium text-primary">{inv.email}</p>
+                              <p className="text-xs">Envoy&eacute; le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
                             </td>
                             <td className="px-6 py-4">
                               {inv.role && (
@@ -830,10 +856,10 @@ export default function UsersPage() {
                                   ))}
                                 </div>
                               ) : (
-                                <span className="text-xs text-slate-400">&mdash;</span>
+                                <span className="text-xs">&mdash;</span>
                               )}
                             </td>
-                            <td className="px-6 py-4 text-sm text-slate-500">
+                            <td className="px-6 py-4 text-sm">
                               {new Date(inv.expiresAt).toLocaleDateString("fr-FR")}
                             </td>
                             <td className="px-6 py-4">
@@ -856,7 +882,7 @@ export default function UsersPage() {
                                     </button>
                                   </>
                                 ) : (
-                                  <span className="text-xs text-slate-400">
+                                  <span className="text-xs">
                                     {invitedUser
                                       ? `Utilisateur déjà ${statusLabel(invitedUser.status)}`
                                       : "L'utilisateur n'a pas encore utilis\u00e9 l'invitation"}
@@ -875,24 +901,24 @@ export default function UsersPage() {
 
             {/* Archived Invitations (non-pending) */}
             {archivedInv.length > 0 && (
-              <div className="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm p-4">
-                <h4 className="mb-3 text-sm font-semibold text-slate-800">Invitations archivées</h4>
+              <div className="mt-6 rounded-xl border border-primary/40! bg-primary/10 shadow-sm p-4">
+                <h4 className="mb-3 text-sm font-semibold text-primary">Invitations archivées</h4>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-xs">
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/70">
-                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-slate-500">Email</th>
-                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le</th>
-                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-slate-500">Statut</th>
-                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-slate-500">Expire le</th>
+                      <tr className="border-b border-primary/40! bg-primary/10 hover:bg-primary/10">
+                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider">Email</th>
+                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider">R&ocirc;le</th>
+                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider">Statut</th>
+                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider">Expire le</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-primary/40!">
                       {archivedInv.map((inv) => (
-                        <tr key={inv.id} className="bg-white/60">
+                        <tr key={inv.id} className="bg-primary/5">
                           <td className="px-4 py-2">
-                            <p className="text-sm font-medium text-slate-900">{inv.email}</p>
-                            <p className="text-[11px] text-slate-400">Envoy\u00e9 le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
+                            <p className="text-sm font-medium">{inv.email}</p>
+                            <p className="text-[11px]">Envoy\u00e9 le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
                           </td>
                           <td className="px-4 py-2">
                             {inv.role && (
@@ -917,7 +943,7 @@ export default function UsersPage() {
                               {invitationStatusLabel(inv.status)}
                             </Badge>
                           </td>
-                          <td className="px-4 py-2 text-sm text-slate-500">
+                          <td className="px-4 py-2 text-sm">
                             {new Date(inv.expiresAt).toLocaleDateString("fr-FR")}
                           </td>
                         </tr>

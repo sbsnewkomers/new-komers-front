@@ -13,7 +13,7 @@ import { apiFetch } from "@/lib/apiClient";
 import { formatCurrencyEUR, formatDateFR } from "@/lib/format";
 import { PageHeader } from "@/components/patterns/PageHeader";
 import { FilterBar } from "@/components/patterns/FilterBar";
-import { ArrowLeft, ChevronLeft, ChevronRight, Search, Landmark, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { EntryMovementFilter, ImportEntriesResponse, ImportedAccountingEntry } from "@/features/import/types";
 
 const PAGE_SIZE = 25;
@@ -100,14 +100,14 @@ export default function ImportEntriesPage() {
         <title>Ecritures importees - NewKomers</title>
       </Head>
 
-      <div className="space-y-6">
+      <div className="space-y-6 p-1">
         <PageHeader
           title="Écritures importées"
           subtitle="Consultez et filtrez les écritures issues de l’import."
           actions={
             <Button
               variant="outline"
-              className="w-full gap-2 border-slate-200 bg-white/90 shadow-sm hover:shadow-md sm:w-auto"
+              className="w-full gap-2 border-primary text-primary hover:border-primary! hover:bg-primary/10 sm:w-auto"
               onClick={() => void router.push("/import")}
             >
               <ArrowLeft className="h-4 w-4" />
@@ -118,7 +118,7 @@ export default function ImportEntriesPage() {
           <div className="flex min-w-0 items-center gap-2 text-sm">
             Fichier:
             <span
-              className="max-w-full truncate rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 shadow-sm sm:max-w-[420px]"
+              className="max-w-full truncate rounded-lg border border-primary bg-primary/70 text-white! shadow-lg shadow-primary/50 px-3 py-2 text-sm font-medium sm:max-w-[420px]"
               title={selectedFile || "-"}
             >
               {selectedFile || "-"}
@@ -127,7 +127,7 @@ export default function ImportEntriesPage() {
         </PageHeader>
 
         {!selectedFile ? (
-          <Card className="bg-white shadow-sm ring-1 ring-slate-100">
+          <Card className="nebula-glass shadow-sm ring-1 ring-primary">
             <CardContent className="py-10! text-center text-slate-500">
               Aucun fichier selectionne. Revenez sur la page d&apos;import et cliquez sur &quot;Voir ecritures&quot;.
             </CardContent>
@@ -135,36 +135,43 @@ export default function ImportEntriesPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <Card className="bg-linear-to-l from-blue-200 to-white drop-shadow-lg drop-shadow-blue-100 ring-1 ring-blue-100">
-                <CardContent className="p-5!">
-                  <div className="mb-2 inline-flex rounded-lg bg-slate-100 p-2 text-slate-600">
-                    <Landmark className="h-4 w-4" />
-                  </div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Lignes</p>
-                  <p className="mt-1 text-2xl font-semibold text-slate-800">{summary.totalRows}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-linear-to-l from-green-200 to-white drop-shadow-lg drop-shadow-green-100 ring-1 ring-green-100">
-                <CardContent className="p-5!">
-                  <div className="mb-2 inline-flex rounded-lg bg-emerald-100 p-2 text-emerald-700">
-                    <TrendingUp className="h-4 w-4" />
-                  </div>
-                  <p className="text-xs uppercase tracking-wide text-emerald-700">Total debit</p>
-                  <p className="mt-1 text-2xl font-semibold text-emerald-800">{formatAmount(summary.totalDebit)}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-linear-to-l from-red-200 to-white drop-shadow-lg drop-shadow-red-100 ring-1 ring-red-100 ">
-                <CardContent className="p-5!">
-                  <div className="mb-2 inline-flex rounded-lg bg-rose-100 p-2 text-rose-700">
-                    <TrendingDown className="h-4 w-4" />
-                  </div>
-                  <p className="text-xs uppercase tracking-wide text-rose-700">Total credit</p>
-                  <p className="mt-1 text-2xl font-semibold text-rose-800">{formatAmount(summary.totalCredit)}</p>
-                </CardContent>
-              </Card>
+              <div className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+                  § Lignes
+                </p>
+                <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
+                  {summary.totalRows}
+                </p>
+              </div>
+
+              <div className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+                  § Total débit
+                </p>
+                <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
+                  {formatAmount(summary.totalDebit)}
+                </p>
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-5 -right-40 h-full w-full rounded-full bg-green-600 blur-3xl"
+                />
+              </div>
+
+              <div className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+                  § Total crédit
+                </p>
+                <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
+                  {formatAmount(summary.totalCredit)}
+                </p>
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-5 -right-40 h-full w-full rounded-full bg-red-500 blur-3xl"
+                />
+              </div>
             </div>
 
-            <Card className="bg-white/95 drop-shadow-lg ring-1 ring-slate-100">
+            <Card className="nebula-glass drop-shadow-lg ring-1 ring-primary">
               <CardContent className="p-5!">
                 <FilterBar
                   search={
@@ -198,7 +205,7 @@ export default function ImportEntriesPage() {
               </CardContent>
             </Card>
 
-            <Card className="overflow-hidden bg-white drop-shadow-lg ring-1 ring-slate-100">
+            <Card className="overflow-hidden nebula-glass drop-shadow-lg ring-1 ring-primary">
               {error ? (
                 <CardContent className="py-10! text-center text-red-600">{error}</CardContent>
               ) : (
@@ -206,13 +213,13 @@ export default function ImportEntriesPage() {
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-linear-to-t from-slate-200 to-white">
-                          <TableHead className="font-semibold text-slate-600">Date</TableHead>
-                          <TableHead className="font-semibold text-slate-600">N. ecriture</TableHead>
-                          <TableHead className="font-semibold text-slate-600">Libelle</TableHead>
-                          <TableHead className="font-semibold text-slate-600">Journal</TableHead>
-                          <TableHead className="font-semibold text-slate-600">Compte</TableHead>
-                          <TableHead className="font-semibold text-slate-600">Piece</TableHead>
+                        <TableRow className="bg-primary/10 hover:bg-primary/10">
+                          <TableHead className="font-semibold text-primary">Date</TableHead>
+                          <TableHead className="font-semibold text-primary">N. ecriture</TableHead>
+                          <TableHead className="font-semibold text-primary">Libelle</TableHead>
+                          <TableHead className="font-semibold text-primary">Journal</TableHead>
+                          <TableHead className="font-semibold text-primary">Compte</TableHead>
+                          <TableHead className="font-semibold text-primary">Piece</TableHead>
                           <TableHead className="text-right font-semibold text-emerald-700!">Debit</TableHead>
                           <TableHead className="text-right font-semibold text-rose-700">Credit</TableHead>
                         </TableRow>
@@ -220,27 +227,27 @@ export default function ImportEntriesPage() {
                       <TableBody>
                         {loading ? (
                           <TableRow>
-                            <TableCell colSpan={8} className="py-8 text-center text-slate-500">
+                            <TableCell colSpan={8} className="py-8 text-center text-primary">
                               Chargement des ecritures...
                             </TableCell>
                           </TableRow>
                         ) : items.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={8} className="py-8 text-center text-slate-500">
+                            <TableCell colSpan={8} className="py-8 text-center text-primary">
                               Aucune ecriture ne correspond a vos filtres.
                             </TableCell>
                           </TableRow>
                         ) : (
                           items.map((entry) => (
-                            <TableRow key={entry.id} className="hover:bg-slate-50/70">
+                            <TableRow key={entry.id} className="hover:bg-primary/5">
                               <TableCell>{formatDate(entry.writingDate)}</TableCell>
-                              <TableCell className="font-medium text-slate-700">{entry.writingNumber || "-"}</TableCell>
+                              <TableCell className="font-medium text-primary">{entry.writingNumber || "-"}</TableCell>
                               <TableCell>{entry.writingLib || "-"}</TableCell>
                               <TableCell>{entry.journalCode || "-"}</TableCell>
                               <TableCell>
                                 <div className="flex flex-col">
-                                  <span className="font-medium text-slate-700">{entry.accountNumber || "-"}</span>
-                                  <span className="text-xs text-slate-500">{entry.accountLib || "-"}</span>
+                                  <span className="font-medium">{entry.accountNumber || "-"}</span>
+                                  <span className="text-xs">{entry.accountLib || "-"}</span>
                                 </div>
                               </TableCell>
                               <TableCell>{entry.pieceReference || "-"}</TableCell>
@@ -257,16 +264,16 @@ export default function ImportEntriesPage() {
                     </Table>
                   </div>
 
-                      <div className="border-t border-slate-100 bg-linear-to-b from-slate-200 to-white px-5 py-4">
+                      <div className="border-t border-primary nebula-glass px-5 py-4">
                     <div className="flex flex-col items-center justify-between gap-3 md:flex-row">
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-primary">
                         {pagination.totalFilteredRows} ligne(s) trouvee(s) - page {pagination.page} / {pagination.totalPages}
                       </p>
                       <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-1 bg-white shadow-sm hover:shadow"
+                          className="gap-1 nebula-glass border-primary text-primary hover:border-primary! hover:bg-primary/10"
                           disabled={pagination.page <= 1 || loading}
                           onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                         >
@@ -276,7 +283,7 @@ export default function ImportEntriesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-1 bg-white shadow-sm hover:shadow"
+                          className="gap-1 nebula-glass border-primary text-primary hover:border-primary! hover:bg-primary/10"
                           disabled={pagination.page >= pagination.totalPages || loading}
                           onClick={() => setPage((prev) => Math.min(pagination.totalPages, prev + 1))}
                         >

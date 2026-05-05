@@ -11,28 +11,23 @@ import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { useWorkspaceContext } from "@/providers/WorkspaceProvider";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
-import { useImpersonation } from "@/hooks/useImpersonation";
-import { useState } from "react";
-
-import { Button } from "@/components/ui/Button";
+import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import {
-  LayoutDashboard,
-  BarChart3,
-  BookOpen,
-  Network,
+  APP_NAV_FOOTER_ITEMS,
+  APP_NAV_MAIN_ITEMS,
+} from "@/components/layout/appNavConfig";
+import { useImpersonation } from "@/hooks/useImpersonation";
+
+import {
   Bell,
   HelpCircle,
   ChevronRight,
-  ChevronDown,
-  Upload,
-  Users,
-  ScrollText,
   Menu,
   X,
-  Building,
-  DollarSign,
-  Database,
   Shield,
+  Sun,
+  Moon,
+  User,
 } from "lucide-react";
 
 type AppLayoutProps = {
@@ -66,11 +61,21 @@ export function AppLayout({
 
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [extracomptablesMenuOpen, setExtracomptablesMenuOpen] = React.useState(false);
+  const [theme, setTheme] = React.useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    const stored = window.localStorage.getItem("nebula-theme");
+    return stored === "light" ? "light" : "dark";
+  });
 
   const menuRef = React.useRef<HTMLDivElement>(null);
   const { isImpersonating, exitImpersonation } = useImpersonation();
-  const [exitLoading, setExitLoading] = useState(false);
+  const [exitLoading, setExitLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("nebula-theme", theme);
+    document.documentElement.classList.toggle("nebula-light", theme === "light");
+  }, [theme]);
 
   // Récupérer le nom de l'workspace pour les rôles non-admin
 
@@ -103,79 +108,65 @@ export function AppLayout({
 
   const pathname = router.pathname;
   const handleExitImpersonation = async () => {
-  setExitLoading(true);
-  try {
-    await exitImpersonation();
+    setExitLoading(true);
+    try {
+      await exitImpersonation();
 
-    // petit délai pour laisser React re-render
-    await new Promise((r) => setTimeout(r, 50));
+      // petit délai pour laisser React re-render
+      await new Promise((r) => setTimeout(r, 50));
 
-    router.push("/users");
-  } finally {
-    setExitLoading(false);
-  }
-};
-
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-
-    return pathname === href || pathname.startsWith(href + "/");
+      router.push("/users");
+    } finally {
+      setExitLoading(false);
+    }
   };
-
-  const navLinkClass = (href: string) =>
-    "group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-sm font-medium " +
-    (isActive(href)
-      ? "bg-primary text-white"
-      : "text-slate-500 hover:bg-slate-50 hover:text-primary");
 
   return (
     <>
-    {/* Bannière impersonation — visible uniquement en mode impersonation */}
-    {isImpersonating && (
-      <div className="fixed top-0 left-0 right-0 z-100 flex items-center 
-                      justify-between bg-amber-500 px-6 py-2 shadow-lg">
-        <div className="flex items-center gap-2 text-sm font-medium text-white">
-          <Shield className="h-4 w-4 shrink-0" />
-          <span>
-            Mode impersonation — vous naviguez en tant que{" "}
-            <strong>
-              {user?.firstName && user?.lastName
-                ? `${user.firstName} ${user.lastName}`
-                : user?.email}
-            </strong>
-          </span>
+      {/* Bannière impersonation — visible uniquement en mode impersonation */}
+      {isImpersonating && (
+        <div className="fixed left-4 right-4 top-4 z-50">
+          <div className="nebula-glass rounded-2xl px-5 py-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-[13px]">
+              <Shield className="h-4 w-4 shrink-0 text-(--nebula-gold-light)" />
+              <span className="text-(--nebula-muted)">
+                Mode impersonation — vous naviguez en tant que{" "}
+                <strong className="text-white">
+                  {user?.firstName && user?.lastName
+                    ? `${user.firstName} ${user.lastName}`
+                    : user?.email}
+                </strong>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleExitImpersonation}
+              disabled={exitLoading}
+              className="rounded-2xl bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) px-5 py-2 text-[12px] font-semibold text-white flex items-center gap-2 nebula-glow hover:scale-105 transition-transform disabled:opacity-50"
+            >
+              {exitLoading ? "Retour en cours..." : "← Reprendre ma session"}
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={handleExitImpersonation}
-          disabled={exitLoading}
-          className="flex items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1 
-                     text-xs font-semibold text-white hover:bg-white/30 
-                     disabled:opacity-50 transition-colors"
-        >
-          {exitLoading
-            ? "Retour en cours..."
-            : "← Reprendre ma session"}
-        </button>
-      </div>
-    )}
-    <div className="min-h-screen w-full overflow-x-hidden">
+      )}
+      <div className="h-screen w-full overflow-x-hidden nebula-grid-bg p-4">
+        <div className="flex gap-4">
       {/* Sidebar */}
 
-      <div className="fixed inset-y-0 left-0 z-20 hidden w-[240px] border-r border-slate-100 bg-white shadow-[1px_0px_3px_-1px_rgba(0,0,0,0.1)] md:block lg:w-[260px]">
-        <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-20 items-center px-6">
+          <div className="hidden md:block w-[260px] sticky top-0 h-[calc(100vh-2rem)] nebula-glass p-5 shadow-lg! shadow-primary/20!">
+        <div className="flex h-full flex-col gap-2">
+          <div className="flex items-center gap-3 px-1 py-2">
             <Link href="/" className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-(--nebula-gold-light) to-(--nebula-gold) text-white! nebula-glow">
                 <span className="text-xl font-bold">N</span>
               </div>
 
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-primary uppercase tracking-wide line-clamp-1">
+                <span className="text-sm font-bold nebula-grad-text uppercase tracking-wide line-clamp-1">
                   NEWKOMERS
                 </span>
 
-                <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider line-clamp-1">
+                <span className="text-[10px] font-medium text-(--nebula-muted) uppercase tracking-wider line-clamp-1">
                   B2B SAAS PLATFORM
                 </span>
 
@@ -193,143 +184,41 @@ export function AppLayout({
             </Link>
           </div>
 
-          <nav className="flex-1 space-y-1 px-4 py-4">
-            <Link href="/dashboard" className={navLinkClass("/dashboard")}>
-              <LayoutDashboard className="h-5 w-5" />
-              Dashboard
-            </Link>
-
-            <Link href="/structure" className={navLinkClass("/structure")}>
-              <Network className="h-5 w-5" />
-              Structure
-            </Link>
-
-            {(user?.role === "SUPER_ADMIN" ||
-              user?.role === "ADMIN" ||
-              user?.role === "MANAGER") && (
-                <Link
-                  href="/shareholders"
-                  className={navLinkClass("/shareholders")}
-                >
-                  <Users className="h-5 w-5" />
-                  Shareholders
-                </Link>
-              )}
-            {user && (
-              <div>
-                <button
-                  onClick={() => setExtracomptablesMenuOpen(!extracomptablesMenuOpen)}
-                  className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-sm font-medium w-full text-left ${isActive("/loans") || isActive("/dotations")
-                    ? "bg-slate-100 text-primary"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-primary"
-                    }`}
-                >
-                  <Database className="h-5 w-5" />
-                  Données extracomptables
-                  <ChevronDown
-                    className={`ml-auto h-4 w-4 transition-transform ${extracomptablesMenuOpen ? "rotate-180" : ""
-                      }`}
-                  />
-                </button>
-                {extracomptablesMenuOpen && (
-                  <div className="ml-8 mt-1 space-y-1">
-                    <Link
-                      href="/loans"
-                      className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm font-medium ${isActive("/loans")
-                        ? "bg-primary/10 text-primary"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-primary"
-                        }`}
-                    >
-                      <DollarSign className="h-4 w-4" />
-                      Emprunts
-                    </Link>
-                    <Link
-                      href="/dotations"
-                      className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm font-medium ${isActive("/dotations")
-                        ? "bg-primary/10 text-primary"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-primary"
-                        }`}
-                    >
-                      <BookOpen className="h-4 w-4" />
-                      Dotations
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* <Link href="/budget" className={navLinkClass("/budget")}>
-              <BookOpen className="h-5 w-5" />
-              Accounting
-            </Link> */}
-
-            <Link href="/import" className={navLinkClass("/import")}>
-              <Upload className="h-5 w-5" />
-              Import des données comptables
-            </Link>
-
-            <Link href="/reporting" className={navLinkClass("/reporting")}>
-              <BarChart3 className="h-5 w-5" />
-              Reporting
-            </Link>
-
-            {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
-              <Link href="/audit" className={navLinkClass("/audit")}>
-                <ScrollText className="h-5 w-5" />
-                Audit
-              </Link>
-            )}
-          </nav>
-
-          <div
-            className="mt-auto border-t border-slate-100 p-4 space-y-2"
-            ref={menuRef}
-          >
-            {(user?.role === "SUPER_ADMIN" ||
-              user?.role === "ADMIN" ||
-              user?.role === "MANAGER" ||
-              user?.role === "HEAD_MANAGER") && (
-                <Link href="/users" className={navLinkClass("/users")}>
-                  <Users className="h-5 w-5" />
-                  Users
-                </Link>
-              )}
-
-            {/* <Link href="/settings" className={navLinkClass("/settings")}>
-              <Settings className="h-5 w-5" />
-              Settings
-            </Link> */}
-
+          <AppSidebarNav
+            variant="desktop"
+            pathname={pathname}
+            user={user}
+            mainItems={APP_NAV_MAIN_ITEMS}
+            footerItems={APP_NAV_FOOTER_ITEMS}
+            footerRef={menuRef}
+            bottomSlot={(
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((o) => !o)}
-                className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-all hover:bg-slate-50"
+                className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-all hover:bg-white/5 border border-white/10"
               >
-                <Avatar className="h-10 w-10 border border-slate-100 bg-emerald-100">
-                  <AvatarImage src="" />
-
-                  <AvatarFallback className="bg-emerald-100 text-emerald-700 font-semibold">
-                    {(user?.email ?? "JW").slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
+                <Avatar className="h-10 w-10 border border-white/10 bg-white/5 rounded-xl flex items-center justify-center">
+                    <User className="h-5 w-5 text-black" />
                 </Avatar>
 
                 <div className="flex flex-col overflow-hidden">
-                  <span className="truncate text-sm font-semibold text-primary">
+                  <span className="truncate text-sm font-semibold text-white">
                     {user?.email?.split("@")[0] || "-----"}
                   </span>
 
-                  <span className="truncate text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                  <span className="truncate text-[10px] font-medium text-(--nebula-muted) uppercase tracking-wider">
                     {user?.role?.replace("_", " ") || "----"}
                   </span>
                 </div>
+                <span className="ml-auto inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
               </button>
 
               {userMenuOpen && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-slate-100 bg-white p-1 shadow-lg z-50">
+                <div className="absolute bottom-full left-0 right-0 mb-2 nebula-glass rounded-2xl p-1 z-50">
                   <button
                     type="button"
-                    className="w-full rounded-lg px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                    className="w-full rounded-xl px-4 py-2 text-left text-sm text-white hover:bg-white/5"
                     onClick={() => {
                       setUserMenuOpen(false);
 
@@ -341,7 +230,7 @@ export function AppLayout({
 
                   <button
                     type="button"
-                    className="w-full rounded-lg px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                    className="w-full rounded-xl px-4 py-2 text-left text-sm text-white hover:bg-white/5"
                     onClick={() => {
                       setUserMenuOpen(false);
 
@@ -355,83 +244,85 @@ export function AppLayout({
                 </div>
               )}
             </div>
-          </div>
+            )}
+          />
+
         </div>
       </div>
 
       {/* Main */}
 
-      <div className="flex h-screen min-w-0 flex-col bg-background md:pl-[240px] lg:pl-[260px]">
-        <header className="flex h-16 items-center justify-between border-b border-slate-100 bg-white px-4 md:px-6 shadow-sm z-10">
-          {/* Left: mobile menu button + breadcrumbs */}
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
+        <header className="bg-slate-950 h-16 rounded-2xl sticky top-0 z-10 shadow-lg! shadow-primary/20!">
+              <div className="h-full w-full flex items-center justify-between px-6 nebula-glass bg-linear-to-r! from-(--nebula-gold-light)/30 via-(--nebula-gold-light)/15 to-transparent">
+            {/* Left: mobile menu button + breadcrumbs */}
 
-          <div className="flex min-w-0 items-center gap-3">
-            <button
-              type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 md:hidden"
-              onClick={() => setMobileMenuOpen(true)}
-              aria-label="Ouvrir le menu de navigation"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-
-            <div className="flex min-w-0 items-center gap-1 text-sm text-slate-500">
-              {/* <span
-                className="cursor-pointer hover:text-primary transition-colors"
-                onClick={() => void router.push("/")}
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center md:hidden"
+                onClick={() => setMobileMenuOpen(true)}
+                aria-label="Ouvrir le menu de navigation"
               >
-                NewKomers
-              </span>
+                <Menu className="h-5 w-5" />
+              </button>
 
-              <ChevronRight className="h-4 w-4 text-slate-300" /> */}
+              <div className="flex min-w-0 items-center gap-1">
+                <span className="h-2 w-2 mr-1 rounded-full bg-(--nebula-gold-light) animate-pulse shadow-[0_0_10px_rgba(212,176,106,0.6)]" />
+                <span className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+                  § Navigation
+                </span>
 
-              {workspaceName && (
-                <>
-                  <Building className="size-9 p-1.5 text-white bg-linear-to-r from-cyan-400 to-blue-600 rounded-full" />
-                  <span className="font-semibold text-blue-600 drop-shadow-sm">
-                    {workspaceName}
-                  </span>
-
-                  <ChevronRight className="h-4 w-4 text-slate-300" />
-                </>
-              )}
-
-              <span className="line-clamp-1 font-medium text-primary">
-                {title}
-              </span>
-
+                <ChevronRight className="h-4 w-4 text-primary/60" />
+                {workspaceName && (
+                  <>
+                    <span className="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-mono text-white">
+                      {workspaceName}
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-primary/60" />
+                  </>
+                )}
+                <span className="line-clamp-1 font-semibold text-primary">
+                  {title}
+                </span>
+              </div>
             </div>
-          </div>
 
-          {/* Right Actions */}
+            {/* Right Actions */} 
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="flex items-center gap-1 border-l border-slate-100 pl-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 text-slate-400 hover:bg-slate-50 hover:text-primary border border-slate-300!"
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
+                className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center"
+                aria-label="Basculer le thème"
+              >
+                {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </button>
+              <button
+                type="button"
+                className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center"
+                aria-label="Aide"
               >
                 <HelpCircle className="h-5 w-5" />
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 text-slate-400 hover:bg-slate-50 hover:text-primary relative border border-slate-300!"
+              </button>
+              <button
+                type="button"
+                className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center relative"
+                aria-label="Notifications"
               >
                 <Bell className="h-5 w-5" />
-
-                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-              </Button>
+                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-(--nebula-gold-light) ring-2 ring-black/40" />
+              </button>
             </div>
           </div>
         </header>
 
-        <main className="safe-area-pb flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-blue-100/60 p-4 sm:gap-6 sm:p-6">
+        <main className="safe-area-pb flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-0">
           {children}
         </main>
       </div>
+        </div>
 
       {/* Mobile sidebar / drawer */}
 
@@ -442,25 +333,25 @@ export function AppLayout({
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          <div className="relative z-10 flex h-full w-[min(85vw,260px)] flex-col border-r border-slate-100 bg-white shadow-xl">
-            <div className="flex items-center justify-between px-4 py-4 border-b border-slate-100">
+          <div className="relative z-10 flex h-full w-[min(85vw,260px)] flex-col nebula-glass rounded-none border-r border-white/10">
+            <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
               <Link
                 href="/"
                 className="flex items-center gap-2 min-w-0 flex-1"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white shadow-sm shrink-0">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-(--nebula-gold-light) to-(--nebula-gold) text-white nebula-glow shrink-0">
                   <span className="text-lg font-bold">N</span>
                 </div>
 
-                <span className="text-sm font-bold text-primary uppercase tracking-wide truncate">
+                <span className="text-sm font-bold text-white uppercase tracking-wide truncate">
                   NEWKOMERS
                 </span>
               </Link>
 
               <button
                 type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                className="h-8 w-8 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center"
                 onClick={() => setMobileMenuOpen(false)}
                 aria-label="Fermer le menu"
               >
@@ -468,147 +359,14 @@ export function AppLayout({
               </button>
             </div>
 
-            <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
-              <Link
-                href="/dashboard"
-                className={navLinkClass("/dashboard")}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <LayoutDashboard className="h-5 w-5" />
-                Dashboard
-              </Link>
-
-              <Link
-                href="/structure"
-                className={navLinkClass("/structure")}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Network className="h-5 w-5" />
-                Structure
-              </Link>
-
-              {(user?.role === "SUPER_ADMIN" ||
-                user?.role === "ADMIN" ||
-                user?.role === "MANAGER") && (
-                  <Link
-                    href="/shareholders"
-                    className={navLinkClass("/shareholders")}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Users className="h-5 w-5" />
-                    Shareholders
-                  </Link>
-                )}
-
-              {(user?.role === "SUPER_ADMIN" ||
-                user?.role === "ADMIN" ||
-                user?.role === "HEAD_MANAGER" ||
-                user?.role === "MANAGER") && (
-                  <div>
-                    <button
-                      onClick={() => setExtracomptablesMenuOpen(!extracomptablesMenuOpen)}
-                      className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-sm font-medium w-full text-left ${isActive("/loans") || isActive("/dotations")
-                        ? "bg-slate-100 text-primary"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-primary"
-                        }`}
-                    >
-                      <Database className="h-5 w-5" />
-                      Données extracomptables
-                      <ChevronDown
-                        className={`ml-auto h-4 w-4 transition-transform ${extracomptablesMenuOpen ? "rotate-180" : ""
-                          }`}
-                      />
-                    </button>
-                    {extracomptablesMenuOpen && (
-                      <div className="ml-8 mt-1 space-y-1">
-                        <Link
-                          href="/loans"
-                          className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm font-medium ${isActive("/loans")
-                            ? "bg-primary/10 text-primary"
-                            : "text-slate-500 hover:bg-slate-50 hover:text-primary"
-                            }`}
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <DollarSign className="h-4 w-4" />
-                          Emprunts
-                        </Link>
-                        <Link
-                          href="/dotations"
-                          className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm font-medium ${isActive("/dotations")
-                            ? "bg-primary/10 text-primary"
-                            : "text-slate-500 hover:bg-slate-50 hover:text-primary"
-                            }`}
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <BookOpen className="h-4 w-4" />
-                          Dotations
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-              <Link
-                href="/budget"
-                className={navLinkClass("/budget")}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <BookOpen className="h-5 w-5" />
-                Accounting
-              </Link>
-
-              <Link
-                href="/import"
-                className={navLinkClass("/import")}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Upload className="h-5 w-5" />
-                Mapping
-              </Link>
-
-              <Link
-                href="/reporting"
-                className={navLinkClass("/reporting")}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <BarChart3 className="h-5 w-5" />
-                Reporting
-              </Link>
-
-              {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
-                <Link
-                  href="/audit"
-                  className={navLinkClass("/audit")}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <ScrollText className="h-5 w-5" />
-                  Audit
-                </Link>
-              )}
-
-              {(user?.role === "SUPER_ADMIN" ||
-                user?.role === "ADMIN" ||
-                user?.role === "MANAGER" ||
-                user?.role === "HEAD_MANAGER") && (
-                  <Link
-                    href="/users"
-                    className={navLinkClass("/users")}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Users className="h-5 w-5" />
-                    Users
-                  </Link>
-                )}
-
-              {/* <Link
-                href="/settings"
-                className={navLinkClass("/settings")}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Settings className="h-5 w-5" />
-                Settings
-              </Link> */}
-            </nav>
+            <AppSidebarNav
+              variant="mobile"
+              pathname={pathname}
+              user={user}
+              mainItems={APP_NAV_MAIN_ITEMS}
+              footerItems={APP_NAV_FOOTER_ITEMS}
+              onLinkClick={() => setMobileMenuOpen(false)}
+            />
 
             <div className="border-t border-slate-100 p-4">
               <button
