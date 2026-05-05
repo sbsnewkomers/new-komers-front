@@ -253,8 +253,8 @@ export function AppLayout({
       {/* Main */}
 
       <div className="flex min-w-0 flex-1 flex-col gap-4">
-        <header className="bg-slate-950 h-16 rounded-2xl sticky top-0 z-10 shadow-lg! shadow-primary/20!">
-              <div className="h-full w-full flex items-center justify-between px-6 nebula-glass bg-linear-to-r! from-(--nebula-gold-light)/30 via-(--nebula-gold-light)/15 to-transparent">
+        <header className="bg-slate-950 h-16 rounded-3xl sticky top-0 z-10 shadow-lg! shadow-primary/20!">
+              <div className="h-full w-full flex items-center rounded-2xl justify-between px-6 nebula-glass bg-linear-to-l! from-(--nebula-gold-light)/30 via-(--nebula-gold-light)/15 to-transparent">
             {/* Left: mobile menu button + breadcrumbs */}
 
             <div className="flex min-w-0 items-center gap-3">
