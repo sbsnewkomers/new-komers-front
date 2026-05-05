@@ -7,7 +7,7 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variants = {
   default:
-    "bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) text-white nebula-glow hover:nebula-glow-soft transition-transform",
+    "bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) text-white! nebula-glow hover:nebula-glow-soft transition-transform",
   ghost:
     "bg-linear border border-white/10 hover:bg-white/10 text-white",
   outline:
