@@ -57,6 +57,9 @@ interface MappingModalProps {
   showImportButton?: boolean;
   onFileUpload?: (file: File) => void;
   workspaceId?: string | null;
+  hasData?: boolean | null;
+  periodStart?: string;
+  periodEnd?: string;
 }
 
 type Tab = "editor" | "templates";
@@ -99,6 +102,9 @@ export function MappingModal({
   showImportButton = false,
   onFileUpload,
   workspaceId,
+  hasData,
+  periodStart,
+  periodEnd,
 }: MappingModalProps) {
   const { user: currentUser } = usePermissionsContext();
   const isAdmin =
@@ -153,6 +159,8 @@ export function MappingModal({
   const [lastSavedHash, setLastSavedHash] = useState<string | null>(null);
 
   const prevActiveLocalWorkspaceId = useRef<string | null>(null);
+  const mappingFileInputRef = useRef<HTMLInputElement>(null);
+
 
   // ───────────────────────────────────────────── Fetchers
   const fetchAccessibleWorkspaces = useCallback(async () => {
@@ -368,7 +376,7 @@ export function MappingModal({
   }, [editSavedMapping, requiredColumns]);
 
   const handleFileInputClick = useCallback(() => {
-    document.getElementById("mapping-file-input")?.click();
+  mappingFileInputRef.current?.click();
   }, []);
 
   const handleFileChange = useCallback(
@@ -592,7 +600,8 @@ export function MappingModal({
   ]);
 
   // ───────────────────────────────────────────── Import disabled
-  const importDisabled = !isComplete || !hasFile || isSubmitting;
+  const periodRequired = hasData === true && (!periodStart || !periodEnd);
+  const importDisabled = !isComplete || !hasFile || isSubmitting || periodRequired;
   const canSaveCurrent = isComplete && hasFile;
 
   // ───────────────────────────────────────────── Workspace selector (templates)
@@ -650,6 +659,13 @@ export function MappingModal({
           </DialogHeader>
 
           <DialogBody className="bg-slate-50/40">
+          <input
+            ref={mappingFileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls,.txt"
+            className="hidden"
+            onChange={handleFileChange}
+          />
             {feedback ? (
               <div className="mb-4">
                 <MappingFeedback
@@ -682,18 +698,28 @@ export function MappingModal({
                           <h3 className="text-sm font-semibold text-slate-900">
                             Champs attendus
                           </h3>
-                          <button
-                            type="button"
-                            onClick={() => setShowOnlyRequired((v) => !v)}
-                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
-                              showOnlyRequired
-                                ? "bg-primary/10 text-primary"
-                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                            }`}
-                          >
-                            <Filter className="h-3 w-3" aria-hidden />
-                            {showOnlyRequired ? "Requis" : "Tous"}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={handleFileInputClick}
+                              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                            >
+                              <Upload className="h-3 w-3" aria-hidden />
+                              Changer le fichier
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowOnlyRequired((v) => !v)}
+                              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                                showOnlyRequired
+                                  ? "bg-primary/10 text-primary"
+                                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                              }`}
+                            >
+                              <Filter className="h-3 w-3" aria-hidden />
+                              {showOnlyRequired ? "Requis" : "Tous"}
+                            </button>
+                          </div>
                         </div>
                         <div className="space-y-2">
                           {displayedColumns.map((field) => {

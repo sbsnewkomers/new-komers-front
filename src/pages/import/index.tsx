@@ -26,7 +26,31 @@ import { ImportHistoryRow, ImportProgress, ValidationError, SavedMapping, Mappin
 import { useRouter } from 'next/navigation';
 import { ImportGuide } from '@/features/import/ImportGuide';
 import { useImportNotifications } from '@/hooks/useImportNotifications';
+function decodeBuffer(buffer: ArrayBuffer): string {
+  const uint8Array = new Uint8Array(buffer);
+  
+  // Log les premiers octets pour voir l'encodage réel
+  console.log("PREMIERS OCTETS:", Array.from(uint8Array.slice(0, 50)).map(b => b.toString(16).padStart(2, '0')).join(' '));
 
+  // BOM UTF-8
+  if (uint8Array.length >= 3 && uint8Array[0] === 0xEF && uint8Array[1] === 0xBB && uint8Array[2] === 0xBF) {
+    console.log("ENCODAGE DÉTECTÉ: UTF-8 avec BOM");
+    return new TextDecoder("utf-8").decode(buffer);
+  }
+
+  try {
+    const utf8Decoder = new TextDecoder("utf-8", { fatal: true });
+    const result = utf8Decoder.decode(buffer);
+    console.log("ENCODAGE DÉTECTÉ: UTF-8 strict OK");
+    console.log("RÉSULTAT DÉBUT:", result.substring(0, 100));
+    return result;
+  } catch (e) {
+    console.log("ENCODAGE DÉTECTÉ: Windows-1252 (UTF-8 a échoué)");
+    const result = new TextDecoder("windows-1252").decode(buffer);
+    console.log("RÉSULTAT DÉBUT:", result.substring(0, 100));
+    return result;
+  }
+}
 export default function ImportPage() {
   const companies = useCompanies();
   const router = useRouter();
@@ -165,129 +189,120 @@ export default function ImportPage() {
   };
 
   const handleFileUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const data = new Uint8Array(e.target?.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target?.result as ArrayBuffer);
+    const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    if (json.length > 0) {
+      const headers = json[0] as string[];
+      setCsvHeaders(headers);
+      const initialMapping: Record<string, string> = {};
+      headers.forEach((h) => {
+        const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+        initialMapping[h] = match ? match.name : "";
+      });
+      setMapping(initialMapping);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
+  const handleDrop = useCallback((e: React.DragEvent, type: "excel") => {
+  e.preventDefault();
+  setDragOver(false);
+  const f = e.dataTransfer.files[0];
+  if (!f) return;
 
-      if (json.length > 0) {
-        const headers = json[0] as string[];
-        setCsvHeaders(headers);
-        const initialMapping: Record<string, string> = {};
+  setCsvFile(null);
+  setCsvHeaders([]);
+  setMapping({});
+
+  const isCsv = f.name.endsWith(".csv");
+  const isExcel = f.name.endsWith(".xlsx") || f.name.endsWith(".xls");
+  const isTxt = f.name.endsWith(".txt");
+
+  if (type === "excel" && !isCsv && !isExcel && !isTxt) return;
+
+  if (type === "excel") {
+    setCsvFile(f);
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      let headers: string[] = [];
+
+      if (isExcel) {
+        // Pour les fichiers binaire .xlsx ou .xls, SheetJS gère très bien tout seul
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
+      } else {
+        // POUR LE CSV / TXT : On gère l'encodage NOUS-MÊMES
+        const buffer = event.target?.result as ArrayBuffer;
+        const text = decodeBuffer(buffer); // Utilise la fonction améliorée ci-dessus
+        
+        // On passe le texte décodé à SheetJS au lieu du buffer brut
+        const workbook = XLSX.read(text, { type: "string" }); 
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
+      }
+
+      setCsvHeaders(headers);
+
+      let initialMapping: Record<string, string> = {};
+
+      if (selectedSavedMapping) {
+        headers.forEach((h) => {
+          if (selectedSavedMapping.rules[h]) {
+            initialMapping[h] = selectedSavedMapping.rules[h];
+          } else {
+            const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+            initialMapping[h] = match ? match.name : "";
+          }
+        });
+        setSelectedSavedMapping(null);
+      } else {
         headers.forEach((h) => {
           const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
           initialMapping[h] = match ? match.name : "";
         });
-        setMapping(initialMapping);
       }
+
+      setMapping(initialMapping);
+      setMappingOpen(true);
     };
-    reader.readAsArrayBuffer(file);
-  };
 
-  const handleDrop = useCallback((e: React.DragEvent, type: "excel") => {
-    e.preventDefault();
-    setDragOver(false);
-    const f = e.dataTransfer.files[0];
-    if (!f) return;
-
-    setCsvFile(null);
-    setCsvHeaders([]);
-    setMapping({});
-
-    const isCsv = f.name.endsWith(".csv");
-    const isExcel = f.name.endsWith(".xlsx") || f.name.endsWith(".xls");
-    const isTxt = f.name.endsWith(".txt");
-
-    if (type === "excel" && !isCsv && !isExcel && !isTxt) return;
-
-    if (type === "excel") {
-      setCsvFile(f);
-      const reader = new FileReader();
-
-      reader.onload = (event) => {
-        let headers: string[] = [];
-
-        if (isExcel) {
-          const data = new Uint8Array(event.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: "array" });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-          headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
-        } else {
-          const text = reader.result as string;
-          const firstLine = text.split("\n")[0];
-          headers = firstLine.split(/[,\t;|]/).map((h) => h.trim().replace(/^"|"$/g, ''));
-
-        }
-
-        setCsvHeaders(headers);
-
-        let initialMapping: Record<string, string> = {};
-
-        if (selectedSavedMapping) {
-          headers.forEach((h) => {
-            if (selectedSavedMapping.rules[h]) {
-              initialMapping[h] = selectedSavedMapping.rules[h];
-            } else {
-              const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
-              initialMapping[h] = match ? match.name : "";
-            }
-          });
-          setSelectedSavedMapping(null);
-        } else {
-          headers.forEach((h) => {
-            const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
-            initialMapping[h] = match ? match.name : "";
-          });
-        }
-
-        setMapping(initialMapping);
-        setMappingOpen(true);
-      };
-
-      if (isExcel) {
-        reader.readAsArrayBuffer(f);
-      } else {
-        reader.readAsText(f, "UTF-8");
-      }
-    }
-  }, [selectedSavedMapping]);
+    // FIX : toujours lire en ArrayBuffer (plus readAsText)
+    reader.readAsArrayBuffer(f);
+  }
+}, [selectedSavedMapping]);
 
   const parseHeaders = (file: File): Promise<string[]> => {
-    return new Promise((resolve) => {
-      const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (isExcel) {
-          const data = new Uint8Array(event.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: "array" });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-          resolve((json[0] as string[]) || []);
-        } else {
-          const text = event.target?.result as string;
-          resolve(text.split("\n")[0].split(/[,\t;|]/).map((h) => h.trim().replace(/^"|"$/g, "")));
-        }
-      };
-      isExcel ? reader.readAsArrayBuffer(file) : reader.readAsText(file, "UTF-8");
-    });
-  };
-
-  const checkEntityHasData = async (entityId: string, entityType: 'Group' | 'Company' | 'BusinessUnit'): Promise<boolean> => {
-    try {
-      const response = await apiFetch<{ hasData: boolean }>(
-        `/generic-import/entityType/${entityId}/has-data?entityType=${entityType}`,
-        { snackbar: { showSuccess: false, showError: false } }
-      );
-      return response.hasData;
-    } catch (error) {
-      console.error("Erreur:", error);
-      return false;
-    }
-  };
+  return new Promise((resolve) => {
+    const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (isExcel) {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        resolve((json[0] as string[]) || []);
+      } else {
+        // FIX ENCODAGE : détecter UTF-8 vs Windows-1252
+        const buffer = event.target?.result as ArrayBuffer;
+        const text = decodeBuffer(buffer);
+        resolve(text.split("\n")[0].split(/[,\t;|]/).map((h) => h.trim().replace(/^"|"$/g, "")));
+      }
+    };
+    // FIX : toujours lire en ArrayBuffer
+    reader.readAsArrayBuffer(file);
+  });
+};
 
   const handleEntityChange = async (entityId: string, entityType: 'Group' | 'Company' | 'BusinessUnit') => {
     setSelectedEntityId(entityId);
@@ -417,6 +432,11 @@ export default function ImportPage() {
 
       // ─── MODIFIÉ : appel simple, résultat via WebSocket ───
       try {
+        const formDataLog: Record<string, any> = {};
+        formData.forEach((value, key) => {
+          formDataLog[key] = value instanceof File ? `[File: ${value.name}, ${value.size} bytes]` : value;
+        });
+        console.log("📤 DONNÉES ENVOYÉES AU BACKEND:", JSON.stringify(formDataLog, null, 2));
         await apiFetch<any>("/generic-import", {
           method: 'POST',
           body: formData,
@@ -657,9 +677,18 @@ export default function ImportPage() {
 };
 
   const handleImport = () => {
-    setMappingOpen(false);
-    handleConfirmReplace();
-  };
+  if (hasData === true && (!periodStart || !periodEnd)) {
+    setValidationErrors([{
+      line: 0, column: 'N/A', value: '',
+      reason: "Cette entité a des données existantes. Veuillez sélectionner une période de remplacement avant d'importer.",
+      message: "Période de remplacement obligatoire."
+    }]);
+    setValidationModalOpen(true);
+    return;
+  }
+  setMappingOpen(false);
+  handleConfirmReplace();
+};
 
   return (
     <AppLayout
@@ -753,6 +782,7 @@ export default function ImportPage() {
               onDragLeave={handleDragLeave}
               onFileInput={handleFileInput}
               disabled={isEndUser}
+              fileName={csvFile?.name}
             />
           </TabsContent>
 
@@ -794,6 +824,9 @@ export default function ImportPage() {
         showImportButton={!!csvFile}
         onFileUpload={handleFileUpload}
         workspaceId={workspaceId}
+        hasData={hasData}
+        periodStart={periodStart}
+        periodEnd={periodEnd}
       />
 
       <SavedMappingModal
