@@ -246,7 +246,6 @@ export default function LoansPage() {
                             loanId={editingLoanId}
                             onBack={handleEditBack}
                             onLoanUpdated={handleLoanUpdated}
-                            onError={setError}
                         />
                     )}
 

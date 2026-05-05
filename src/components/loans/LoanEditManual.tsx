@@ -17,10 +17,9 @@ interface LoanEditManualProps {
     loanId: string;
     onBack: () => void;
     onLoanUpdated: (loan: Loan) => void;
-    onError: (error: string) => void;
 }
 
-export function LoanEditManual({ loanId, onBack, onLoanUpdated, onError }: LoanEditManualProps) {
+export function LoanEditManual({ loanId, onBack, onLoanUpdated }: LoanEditManualProps) {
     const {
         isLoading,
         isSaving,
@@ -32,6 +31,8 @@ export function LoanEditManual({ loanId, onBack, onLoanUpdated, onError }: LoanE
         entities,
         installments,
         nameValidationError,
+        dateValidationErrors,
+        fieldValidationErrors,
         confirmRegeneration,
         hasExistingInstallments,
         hasPaidInstallments,
@@ -58,7 +59,12 @@ export function LoanEditManual({ loanId, onBack, onLoanUpdated, onError }: LoanE
             const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde';
             // Ne pas afficher l'erreur de confirmation via l'interface, seulement via apiFetch
             if (!errorMessage.includes('Ce prêt contient déjà des échéances. Veuillez confirmer la régénération')) {
-                onError(errorMessage);
+                // Utiliser emitSnackbar au lieu de onError pour éviter les alertes modales
+                const { emitSnackbar } = await import('@/ui/snackbarBus');
+                emitSnackbar({
+                    message: errorMessage,
+                    variant: 'error'
+                });
             }
         }
     };
@@ -146,6 +152,8 @@ export function LoanEditManual({ loanId, onBack, onLoanUpdated, onError }: LoanE
                         onUpdate={updateInstallment}
                         onRemove={removeInstallment}
                         onAdd={addNewInstallment}
+                        dateValidationErrors={dateValidationErrors}
+                        fieldValidationErrors={fieldValidationErrors}
                     />
 
                     {/* Confirmation checkbox for existing installments */}

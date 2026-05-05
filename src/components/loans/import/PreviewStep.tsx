@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { FileText, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
-import { LoanImport, ColumnMappingDto, ImportPreviewDto, ImportErrorDto } from '@/types/loans';
+import { ColumnMappingDto, ImportPreviewDto, ImportErrorDto, ImportResultDto } from '@/types/loans';
 import { getValidationErrors } from './ValidationUtils';
 import { ErrorReport } from './ErrorReport';
 import { PreviewTable } from './PreviewTable';
@@ -13,7 +13,7 @@ interface PreviewStepProps {
     selectedFile: File | null;
     columnMapping: ColumnMappingDto[];
     preview: ImportPreviewDto | null;
-    importResult: LoanImport | null;
+    importResult: ImportResultDto | null;
     isLoading: boolean;
     onModifyMapping: () => void;
     onSaveImport: () => void;
@@ -175,7 +175,7 @@ export function PreviewStep({
                         },
                         {
                             label: 'Fichier source',
-                            value: importResult?.originalFileName || 'Fichier importé',
+                            value: selectedFile?.name || 'Fichier importé',
                         },
                         {
                             label: 'Lignes importées',

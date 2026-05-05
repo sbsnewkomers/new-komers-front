@@ -220,13 +220,20 @@ export function useManualLoanEntry({ entityType, entityId }: UseManualLoanEntryP
                 return false;
             }
 
+            if (installment.principalPayment <= 0) {
+                emitSnackbar({
+                    message: `Le montant principal doit être supérieur à 0 pour l'échéance ${i + 1}`,
+                    variant: 'error',
+                });
+                return false;
+            }
+
             if (
-                installment.principalPayment < 0 ||
                 installment.interestPayment < 0 ||
                 installment.insurancePayment < 0
             ) {
                 emitSnackbar({
-                    message: `Les montants doivent être positifs pour l'échéance ${i + 1}`,
+                    message: `Les montants d'intérêts et d'assurance doivent être positifs ou nuls pour l'échéance ${i + 1}`,
                     variant: 'error',
                 });
                 return false;

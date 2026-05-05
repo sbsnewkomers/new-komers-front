@@ -29,3 +29,21 @@ export interface LoanTotals {
     totalPayment: number;
     averageMonthlyPayment: number;
 }
+
+export const validateDateSequence = (installments: EditableInstallment[], index: number, newDate: string): boolean => {
+    if (index > 0) {
+        const previousDate = new Date(installments[index - 1].dueDate);
+        const currentDate = new Date(newDate);
+        if (currentDate <= previousDate) {
+            return false;
+        }
+    }
+    if (index < installments.length - 1) {
+        const nextDate = new Date(installments[index + 1].dueDate);
+        const currentDate = new Date(newDate);
+        if (currentDate >= nextDate) {
+            return false;
+        }
+    }
+    return true;
+};
