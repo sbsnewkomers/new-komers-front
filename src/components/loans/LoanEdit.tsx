@@ -21,6 +21,7 @@ import {
 import { Loan, LoanStatus, LoanInputMethod } from '@/types/loans';
 import { loansApi } from '@/lib/loansApi';
 import { LoanEditManual } from './LoanEditManual';
+import { LoanEditImport } from './LoanEditImport';
 
 interface LoanEditProps {
     loanId: string;
@@ -96,6 +97,17 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated }: LoanEditProps) {
     if (loan && loan.inputMethod === LoanInputMethod.MANUAL) {
         return (
             <LoanEditManual
+                loanId={loanId}
+                onBack={onBack}
+                onLoanUpdated={onLoanUpdated}
+            />
+        );
+    }
+
+    // If loan is import, use LoanEditImport component
+    if (loan && loan.inputMethod === LoanInputMethod.IMPORT) {
+        return (
+            <LoanEditImport
                 loanId={loanId}
                 onBack={onBack}
                 onLoanUpdated={onLoanUpdated}

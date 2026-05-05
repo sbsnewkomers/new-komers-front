@@ -14,7 +14,8 @@ import {
     EntityType,
     CreateManualLoanDto,
     ManualInstallmentDto,
-    UpdateManualLoanDto
+    UpdateManualLoanDto,
+    ColumnMappingDto
 } from '../types/loans';
 import { apiFetch, ApiFetchSnackbarOptions, setAccessTokenGetter } from './apiClient';
 
@@ -174,6 +175,26 @@ class LoansApi {
         return apiFetch<ImportResultDto>('/loans/import/process', {
             method: 'POST',
             body: JSON.stringify(processDto),
+        });
+    }
+
+    async uploadUpdateImportFile(file: File, loanId: string, options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<LoanImport> {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('loanId', loanId);
+
+        return apiFetch<LoanImport>('/loans/import/update', {
+            method: 'POST',
+            body: formData,
+            snackbar: options?.snackbar,
+        });
+    }
+
+    async processUpdateImport(processUpdateDto: { importId: string; columnMapping: ColumnMappingDto[]; targetLoanId: string }, options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<ImportResultDto> {
+        return apiFetch<ImportResultDto>('/loans/import/update/process', {
+            method: 'POST',
+            body: JSON.stringify(processUpdateDto),
+            snackbar: options?.snackbar,
         });
     }
 

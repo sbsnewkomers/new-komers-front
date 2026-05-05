@@ -18,6 +18,7 @@ import {
     Check,
     X,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { Loan, LoanStatistics, InstallmentStatus } from '@/types/loans';
 import { entitiesApi } from '@/lib/entitiesApi';
 import { loansApi } from '@/lib/loansApi';
@@ -282,40 +283,59 @@ export function LoanDetails({
             return;
         }
 
-        // Trier les échéances par numéro
-        const sortedInstallments = [...loan.installments].sort((a, b) => a.installmentNumber - b.installmentNumber);
+        try {
+            // Trier les échéances par numéro
+            const sortedInstallments = [...loan.installments].sort((a, b) => a.installmentNumber - b.installmentNumber);
 
-        // Créer le contenu CSV avec le même format que le template d'import
-        const headers = ['Date', 'Capital', 'Intérêts', 'Assurance'];
-        const csvContent = [
-            headers.join(','),
-            ...sortedInstallments.map(inst => [
+            // Préparer les données pour l'export Excel avec le même format que le template
+            const headers = ['Date', 'Capital', 'Intérêts', 'Assurance'];
+            const rows = sortedInstallments.map(inst => [
                 // Format ISO pour les dates (YYYY-MM-DD) comme dans le template
                 new Date(inst.dueDate).toISOString().split('T')[0],
                 // Format décimal avec 2 décimales comme dans le template
                 (Number(inst.principalPayment) || 0).toFixed(2),
                 (Number(inst.interestPayment) || 0).toFixed(2),
                 (Number(inst.insurancePayment) || 0).toFixed(2)
-            ].join(','))
-        ].join('\n');
+            ]);
 
-        // Créer un blob et télécharger
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `echeances_${loan.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            // Créer le workbook et la worksheet
+            const wb = XLSX.utils.book_new();
+            const wsData = [headers, ...rows];
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-        // Message de confirmation
-        const { emitSnackbar } = await import('@/ui/snackbarBus');
-        emitSnackbar({
-            message: 'Échéances exportées avec succès',
-            variant: 'success',
-        });
+            // Ajouter la worksheet au workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Échéances');
+
+            // Générer le fichier Excel
+            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([excelBuffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8;'
+            });
+
+            // Télécharger le fichier
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `echeances_${loan.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Message de confirmation
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: 'Échéances exportées avec succès au format Excel',
+                variant: 'success',
+            });
+        } catch (err) {
+            console.error('Error exporting installments:', err);
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: 'Erreur lors de l\'export des échéances',
+                variant: 'error',
+            });
+        }
     };
 
     const totalPaid =
