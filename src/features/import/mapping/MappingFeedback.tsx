@@ -23,27 +23,27 @@ const TONE_STYLES: Record<
   }
 > = {
   success: {
-    container: "border-emerald-200 bg-emerald-50",
+    container: "nebula-glass border border-white/10",
     icon: CheckCircle2,
-    iconColor: "text-emerald-600",
-    titleColor: "text-emerald-900",
-    messageColor: "text-emerald-800",
+    iconColor: "text-(--nebula-gold-light)",
+    titleColor: "text-white",
+    messageColor: "text-(--nebula-muted)",
     live: "polite",
   },
   error: {
-    container: "border-rose-200 bg-rose-50",
+    container: "nebula-glass border border-white/15",
     icon: AlertCircle,
-    iconColor: "text-rose-600",
-    titleColor: "text-rose-900",
-    messageColor: "text-rose-800",
+    iconColor: "text-(--nebula-gold)",
+    titleColor: "text-white",
+    messageColor: "text-(--nebula-muted)",
     live: "assertive",
   },
   info: {
-    container: "border-sky-200 bg-sky-50",
+    container: "nebula-glass border border-white/10",
     icon: Info,
-    iconColor: "text-sky-600",
-    titleColor: "text-sky-900",
-    messageColor: "text-sky-800",
+    iconColor: "text-(--nebula-gold-light)",
+    titleColor: "text-white",
+    messageColor: "text-(--nebula-muted)",
     live: "polite",
   },
 };
@@ -61,7 +61,7 @@ export function MappingFeedback({
     <div
       role="alert"
       aria-live={style.live}
-      className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-sm ${style.container} ${className ?? ""}`}
+      className={`flex items-start gap-3 rounded-2xl px-4 py-3 text-sm ${style.container} ${className ?? ""}`}
     >
       <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${style.iconColor}`} />
       <div className="min-w-0 flex-1">
@@ -79,7 +79,7 @@ export function MappingFeedback({
           type="button"
           aria-label="Masquer"
           onClick={onDismiss}
-          className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-white/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${style.iconColor}`}
+          className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light) ${style.iconColor}`}
         >
           <X className="h-4 w-4" />
         </button>

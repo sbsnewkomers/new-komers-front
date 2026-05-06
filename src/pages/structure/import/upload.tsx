@@ -217,24 +217,43 @@ const handleExecute = async () => {
     const rep = await executeStructureImport(file, accessToken, workspaceId);
     
     // La réponse est { success, message, data: { created: { ... } } }
-    const result = (rep as any)?.data ?? rep;
+    const result =
+      (rep as { data?: ImportExecuteResult | null } | null | undefined)?.data ??
+      rep;
     if (result && result.created) {
       setExecuteResult(result);
     } else {
       setError("Réponse inattendue du serveur.");
     }
-  } catch (err: any) {
-    const details = err?.details?.originalResponse;
+  } catch (err: unknown) {
+    const details =
+      err && typeof err === "object" && "details" in err
+        ? (err as { details?: { originalResponse?: unknown } }).details
+            ?.originalResponse
+        : undefined;
     
-    if (details?.errors && details?.summary) {
+    if (
+      details &&
+      typeof details === "object" &&
+      "errors" in details &&
+      "summary" in details
+    ) {
       setReport({
-        summary: details.summary,
-        errors: details.errors,
+        summary: (details as { summary: ImportReport["summary"] }).summary,
+        errors: (details as { errors: ImportReport["errors"] }).errors,
       });
       setError("L'import a échoué : des erreurs de validation ont été détectées.");
     } else {
-      const msg = err?.details?.message || err?.message || "Erreur lors de l'import.";
-      setError(msg);
+      const msg =
+        err && typeof err === "object" && "details" in err
+          ? String(
+              (err as { details?: { message?: unknown } }).details?.message ??
+                "",
+            )
+          : err instanceof Error
+            ? err.message
+            : "";
+      setError(msg || "Erreur lors de l'import.");
     }
     
     setExecuteResult(null);
@@ -260,26 +279,28 @@ const handleExecute = async () => {
         <div className="flex items-center gap-1">
           <Link
             href="/structure"
-            className="text-sm text-muted-foreground hover:text-foreground"
+            className="text-sm text-(--nebula-muted) hover:text-white"
           >
             ← Structure /
           </Link>
           <Link
             href="/structure/import/upload"
-            className="text-sm font-medium text-foreground"
+            className="text-sm font-medium text-white"
           >
             Import
           </Link>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm space-y-4 flex items-center justify-between">
+        <div className="nebula-glass nebula-blob rounded-3xl p-6 space-y-4 flex items-center justify-between">
           <div className="flex flex-col gap-2 ">
-            <h1 className="text-xl font-semibold flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Upload className="h-5 w-5 text-primary" />
+            <h1 className="text-3xl font-bold leading-[1.05] tracking-tight flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center">
+                <Upload className="h-5 w-5 text-(--nebula-gold-light)" />
               </div>
-              Import en masse de la structure
+              <span>
+                <span className="nebula-grad-text">Import</span> en masse de la structure
+              </span>
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[13px] text-(--nebula-muted)">
               Utilisez le modèle Excel pour créer ou mettre à jour groupes,
               entreprises et business units.
             </p>
@@ -306,16 +327,16 @@ const handleExecute = async () => {
 
         {/* Workspace Selector for Super Admin and Admin */}
         {canSelectWorkspace && (
-          <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm">
+          <div className="nebula-glass nebula-blob rounded-3xl p-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                Sélectionner un workspace
+              <label className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+                § Sélectionner un workspace
               </label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-(--nebula-muted)">
                 En tant que {user?.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}, vous pouvez importer la structure dans un workspace spécifique.
               </p>
               {isLoadingWorkspaces ? (
-                <div className="text-sm text-muted-foreground">Chargement des workspaces...</div>
+                <div className="text-[13px] text-(--nebula-muted)">Chargement des workspaces...</div>
               ) : workspaces.length > 0 ? (
                 <Select
                   value={selectedWorkspaceId}
@@ -330,7 +351,7 @@ const handleExecute = async () => {
                   ))}
                 </Select>
               ) : (
-                <div className="text-sm text-muted-foreground">Aucun workspace disponible</div>
+                <div className="text-[13px] text-(--nebula-muted)">Aucun workspace disponible</div>
               )}
             </div>
           </div>
@@ -341,10 +362,10 @@ const handleExecute = async () => {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           className={
-            "rounded-xl border-2 border-dashed p-12 text-center " +
+            "nebula-glass nebula-blob rounded-3xl border-2 border-dashed p-12 text-center " +
             (dragOver
-              ? "border-primary bg-primary/5"
-              : "border-border bg-muted")
+              ? "border-(--nebula-gold-light) bg-white/10"
+              : "border-white/15 bg-white/5")
           }
         >
           <input
@@ -356,9 +377,9 @@ const handleExecute = async () => {
           />
           <label htmlFor="file-upload" className="cursor-pointer">
             {file ? (
-              <p className="font-medium text-foreground">{file.name}</p>
+              <p className="font-medium text-white font-mono">{file.name}</p>
             ) : (
-              <p className="text-muted-foreground">
+              <p className="text-(--nebula-muted)">
                 Glissez-déposez un fichier Excel (.xlsx) ici ou cliquez pour
                 parcourir.
               </p>
@@ -366,7 +387,7 @@ const handleExecute = async () => {
           </label>
         </div>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p className="text-sm text-red-400">{error}</p>}
 
         <div className="flex flex-wrap gap-4">
           <Button
@@ -387,8 +408,8 @@ const handleExecute = async () => {
         </div>
 
         {executeResult && executeResult.created && (
-        <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
-          <p className="font-semibold mb-1">Import terminé avec succès.</p>
+        <div className="nebula-glass nebula-blob rounded-3xl p-6 text-sm">
+          <p className="font-semibold mb-1 text-white">Import terminé avec succès.</p>
           <p>
             Groupes créés : <strong>{executeResult.created.groups}</strong>,{" "}
             Entreprises créées :{" "}
@@ -400,54 +421,54 @@ const handleExecute = async () => {
 
         {report && (
           <div className="space-y-4">
-            <div className="rounded-xl border border-border bg-card p-4">
-              <h2 className="text-sm font-semibold mb-2">
-                Résumé de la validation
-              </h2>
-              <ul className="text-sm text-muted-foreground space-y-1">
+            <div className="nebula-glass nebula-blob rounded-3xl p-6">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted) mb-3">
+                § Résumé de la validation
+              </p>
+              <ul className="text-[13px] text-(--nebula-muted) space-y-1">
                 <li>
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-white">
                     Lignes totales :
                   </span>{" "}
-                  {report.summary.totalRows}
+                  <span className="font-mono text-white tabular-nums">{report.summary.totalRows}</span>
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-white">
                     Lignes valides :
                   </span>{" "}
-                  {report.summary.validRows}
+                  <span className="font-mono text-white tabular-nums">{report.summary.validRows}</span>
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-white">
                     Lignes en erreur :
                   </span>{" "}
-                  {report.summary.errorRows}
+                  <span className="font-mono text-white tabular-nums">{report.summary.errorRows}</span>
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-white">
                     Groupes à créer :
                   </span>{" "}
-                  {report.summary.entitiesToCreate.groups}
+                  <span className="font-mono text-white tabular-nums">{report.summary.entitiesToCreate.groups}</span>
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-white">
                     Entreprises à créer :
                   </span>{" "}
-                  {report.summary.entitiesToCreate.companies}
+                  <span className="font-mono text-white tabular-nums">{report.summary.entitiesToCreate.companies}</span>
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-white">
                     Business units à créer :
                   </span>{" "}
-                  {report.summary.entitiesToCreate.businessUnits}
+                  <span className="font-mono text-white tabular-nums">{report.summary.entitiesToCreate.businessUnits}</span>
                 </li>
               </ul>
             </div>
 
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="nebula-glass rounded-3xl overflow-hidden border border-white/10">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border bg-muted/50">
+                  <tr className="border-b border-white/10 bg-white/5">
                     <th className="p-3 text-left font-medium">Feuille</th>
                     <th className="p-3 text-left font-medium">Ligne</th>
                     <th className="p-3 text-left font-medium">Colonne</th>
@@ -460,21 +481,21 @@ const handleExecute = async () => {
                     <tr>
                       <td
                         colSpan={5}
-                        className="p-6 text-center text-muted-foreground"
+                        className="p-6 text-center text-(--nebula-muted)"
                       >
                         Aucune erreur détectée.
                       </td>
                     </tr>
                   ) : (
                     report.errors.map((err, idx) => (
-                      <tr key={idx} className="border-b border-border">
+                      <tr key={idx} className="border-b border-white/10">
                         <td className="p-3">{err.sheet}</td>
                         <td className="p-3 font-mono">{err.row}</td>
                         <td className="p-3">{err.column}</td>
-                        <td className="p-3 text-xs text-muted-foreground">
+                        <td className="p-3 text-xs text-(--nebula-muted)">
                           {err.value !== undefined ? String(err.value) : ""}
                         </td>
-                        <td className="p-3 text-destructive">{err.message}</td>
+                        <td className="p-3 text-red-400">{err.message}</td>
                       </tr>
                     ))
                   )}

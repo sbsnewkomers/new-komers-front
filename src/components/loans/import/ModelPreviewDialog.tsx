@@ -35,7 +35,7 @@ export function ModelPreviewDialog({
                         <h4 className="mb-3 text-sm font-semibold text-slate-900">Colonnes requises</h4>
                         <div className="space-y-2">
                             {[
-                                { field: 'dueDate', label: 'Date d\'échéance', example: '01/01/2024', description: 'Date de chaque mensualité' },
+                                { field: 'dueDate', label: 'Date', example: '01/01/2024', description: 'Date de chaque mensualité' },
                                 { field: 'principalPayment', label: 'Capital', example: '1500.00', description: 'Montant du capital remboursé' },
                                 { field: 'interestPayment', label: 'Intérêts', example: '250.00', description: 'Montant des intérêts' },
                                 { field: 'insurancePayment', label: 'Assurance', example: '50.00', description: 'Montant de l\'assurance (optionnel)' },

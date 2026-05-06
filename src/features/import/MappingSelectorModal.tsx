@@ -33,7 +33,7 @@ export function MappingSelectorModal({
       <DialogContent size="2xl">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/15 text-(--nebula-gold-light)">
               <BookMarked className="h-4 w-4" aria-hidden />
             </span>
             <div className="min-w-0">
@@ -46,7 +46,7 @@ export function MappingSelectorModal({
           </div>
         </DialogHeader>
 
-        <DialogBody className="bg-slate-50/40">
+        <DialogBody className="bg-transparent">
           <MappingTemplateList
             mappings={mappings}
             onSelect={(m) => {
@@ -63,7 +63,7 @@ export function MappingSelectorModal({
           <Button
             variant="ghost"
             onClick={onNewMapping}
-            className="text-slate-600 hover:text-primary"
+            className="text-(--nebula-muted) hover:text-white"
           >
             <Plus className="mr-2 h-4 w-4" aria-hidden />
             Créer un nouveau mapping

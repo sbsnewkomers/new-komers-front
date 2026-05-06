@@ -1,5 +1,5 @@
 export { LoanImport as default } from './LoanImportRefactored';
-export { StepIndicator } from './StepIndicator';
+export { StepIndicator } from '@/components/ui/StepIndicator';
 export { FileUploadStep } from './FileUploadStep';
 export { ColumnMappingStep } from './ColumnMappingStep';
 export { PreviewStep } from './PreviewStep';

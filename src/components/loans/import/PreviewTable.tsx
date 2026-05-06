@@ -2,6 +2,51 @@ import React from 'react';
 import { AlertTriangle, Info } from 'lucide-react';
 import { ColumnMappingDto, ImportPreviewDto, ImportErrorDto } from '@/types/loans';
 import { fieldLabel } from './ValidationUtils';
+import { formatDateFR } from '@/lib/format';
+
+// Helper function to format display values
+const formatDisplayValue = (value: unknown, targetField: string): string => {
+    if (value === null || value === undefined || value === '') {
+        return '-';
+    }
+
+    const stringValue = String(value);
+
+    // Format dates for display
+    if (targetField === 'dueDate') {
+        // Handle Excel serial dates
+        if (/^\d+$/.test(stringValue)) {
+            const excelSerial = parseInt(stringValue, 10);
+            if (excelSerial > 0 && excelSerial < 100000) {
+                try {
+                    // Excel epoch starts on 1900-01-01, but Excel incorrectly treats 1900 as a leap year
+                    const excelEpoch = new Date(1900, 0, 1);
+                    const daysToSubtract = excelSerial > 59 ? 1 : 0;
+                    const parsedDate = new Date(excelEpoch.getTime() + (excelSerial - 1 - daysToSubtract) * 24 * 60 * 60 * 1000);
+
+                    if (!isNaN(parsedDate.getTime())) {
+                        return formatDateFR(parsedDate, { fallback: stringValue });
+                    }
+                } catch {
+                    // If conversion fails, return original value
+                }
+            }
+        }
+
+        // Handle other date formats - return as-is for display
+        return stringValue;
+    }
+
+    // For numeric fields, format with 2 decimal places if it's a number
+    if (targetField === 'principalPayment' || targetField === 'interestPayment' || targetField === 'insurancePayment') {
+        const numValue = Number(value);
+        if (!isNaN(numValue)) {
+            return numValue.toFixed(2);
+        }
+    }
+
+    return stringValue;
+};
 
 interface PreviewTableProps {
     preview: ImportPreviewDto | null;
@@ -11,7 +56,7 @@ interface PreviewTableProps {
 
 export function PreviewTable({ preview, columnMapping, errors }: PreviewTableProps) {
     const errorRows = new Set(errors.map(error => error.rowNumber));
-    
+
     return (
         <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
             <h4 className="mb-3 text-sm font-semibold text-slate-900">
@@ -42,10 +87,10 @@ export function PreviewTable({ preview, columnMapping, errors }: PreviewTablePro
                             const rowNumber = index + 1;
                             const hasRowErrors = errorRows.has(rowNumber);
                             const rowErrors = errors.filter(error => error.rowNumber === rowNumber);
-                            
+
                             return (
-                                <tr 
-                                    key={index} 
+                                <tr
+                                    key={index}
                                     className={`hover:bg-slate-50 ${hasRowErrors ? 'bg-red-50 border-red-200' : ''}`}
                                 >
                                     <td className={`border border-slate-300 p-2 text-xs font-medium ${hasRowErrors ? 'border-red-300 bg-red-100' : ''}`}>
@@ -56,17 +101,17 @@ export function PreviewTable({ preview, columnMapping, errors }: PreviewTablePro
                                     </td>
                                     {columnMapping.map((mapping) => {
                                         const value = row[mapping.sourceColumn];
-                                        const fieldErrors = rowErrors.filter(error => 
+                                        const fieldErrors = rowErrors.filter(error =>
                                             error.errorMessage.includes(fieldLabel(mapping.targetField))
                                         );
                                         const hasFieldError = fieldErrors.length > 0;
-                                        
+
                                         return (
                                             <td
                                                 key={mapping.targetField}
                                                 className={`border border-slate-300 p-2 text-xs font-mono ${hasFieldError ? 'border-red-300 bg-red-100 text-red-700' : ''}`}
                                             >
-                                                {value !== null && value !== undefined && value !== '' ? String(value) : '-'}
+                                                {formatDisplayValue(value, mapping.targetField)}
                                                 {hasFieldError && (
                                                     <div className="mt-1 text-xs text-red-600">
                                                         <Info className="h-3 w-3 inline mr-1" />
@@ -85,7 +130,7 @@ export function PreviewTable({ preview, columnMapping, errors }: PreviewTablePro
                                     colSpan={columnMapping.length + 1}
                                     className="border border-slate-300 p-4 text-center text-xs text-slate-500"
                                 >
-                                    Aucune donnée de prévisualisation disponible. 
+                                    Aucune donnée de prévisualisation disponible.
                                     Les données seront traitées lors de l&apos;import.
                                 </td>
                             </tr>

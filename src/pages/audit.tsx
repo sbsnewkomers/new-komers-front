@@ -420,31 +420,42 @@ export default function AuditPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
-            { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" },
-            { label: "Aujourd’hui", value: stats.today, color: "text-blue-700", bg: "bg-linear-to-l from-blue-200 to-white ring-1 ring-blue-100" },
-            { label: "Échecs", value: stats.failures, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
-            { label: "Utilisateurs", value: stats.users, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
+            { label: "Total", value: stats.total },
+            { label: "Aujourd’hui", value: stats.today },
+            { label: "Utilisateurs", value: stats.users },
+            { label: "Échecs", value: stats.failures },
           ].map((s) => (
-            <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-              <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>
-                {s.label}
+            <div
+              key={s.label}
+              className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden"
+            >
+              <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+                § {s.label}
               </p>
-              <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
+              <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
+                {s.value}
+              </p>
+              {s.label === "Échecs" ? (
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-10 -right-10 w-full h-full rounded-full bg-red-500 blur-3xl"
+                />
+              ) : null}
             </div>
           ))}
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="nebula-glass nebula-blob rounded-3xl p-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="relative min-w-0 flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
             <Input
               placeholder="Rechercher..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
               }}
-              className="h-9 pl-10 border-slate-200 bg-white"
+              className="h-9 pl-10"
             />
           </div>
           <Select
@@ -452,7 +463,7 @@ export default function AuditPage() {
             onValueChange={(v) => {
               setCategoryFilter(v as AuditCategory | "");
             }}
-            className="h-9 w-full border-slate-200 bg-white text-sm sm:flex-1"
+            className="h-9 w-full text-sm sm:flex-1"
           >
             <option value="">Toutes catégories</option>
             {(Object.keys(categoryLabels) as AuditCategory[]).map((c) => (
@@ -466,7 +477,7 @@ export default function AuditPage() {
             onValueChange={(v) => {
               setActionFilter(v as AuditActionUi | "");
             }}
-            className="h-9 w-full border-slate-200 bg-white text-sm sm:flex-1"
+            className="h-9 w-full text-sm sm:flex-1"
           >
             <option value="">Toutes actions</option>
             {(Object.keys(actionConfig) as AuditActionUi[]).map((a) => (
@@ -480,7 +491,7 @@ export default function AuditPage() {
             onValueChange={(v) => {
               setStatusFilter(v as "" | "success" | "failure");
             }}
-            className="h-9 w-full border-slate-200 bg-white text-sm sm:flex-1"
+            className="h-9 w-full text-sm sm:flex-1"
           >
             <option value="">Tous statuts</option>
             <option value="success">Succès</option>
@@ -491,14 +502,14 @@ export default function AuditPage() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="h-9 w-full min-w-[150px] border-slate-200 bg-white text-sm"
+              className="h-9 w-full min-w-[150px] text-sm"
             />
-            <span className="text-xs text-slate-400 sm:text-center">à</span>
+            <span className="text-xs text-white/50 sm:text-center">à</span>
             <Input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="h-9 w-full min-w-[150px] border-slate-200 bg-white text-sm"
+              className="h-9 w-full min-w-[150px] text-sm"
             />
           </div>
           {(search || actionFilter || categoryFilter || statusFilter) && (
@@ -512,7 +523,7 @@ export default function AuditPage() {
                 setStartDate("");
                 setEndDate("");
               }}
-              className="text-xs font-medium text-slate-500 hover:text-slate-900 underline"
+              className="h-9 px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-(--nebula-muted) hover:text-white text-xs font-semibold"
             >
               Réinitialiser
             </button>
@@ -520,38 +531,38 @@ export default function AuditPage() {
         </div>
 
         {/* Table */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="nebula-glass rounded-3xl overflow-hidden border border-white/10">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-(--nebula-gold-light)" />
             </div>
           ) : (
             <>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/50">
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    <tr className="border-b border-white/10 bg-white/5">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">
                         Date
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">
                         Utilisateur
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">
                         Action
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">
                         Détail
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">
                         IP
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">
                         Statut
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-white/10">
                     {filtered.map((entry) => {
                       const cfg = actionConfig[entry.action];
                       const Icon = cfg.icon;
@@ -560,7 +571,7 @@ export default function AuditPage() {
                           key={entry.id}
                           role="button"
                           tabIndex={0}
-                          className="cursor-pointer transition-colors hover:bg-slate-50/50 focus:outline-hidden focus:ring-2 focus:ring-slate-300"
+                          className="cursor-pointer transition-colors hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)"
                           onClick={() => {
                             const log = logsById.get(entry.id) ?? null;
                             setSelectedLog(log);
@@ -575,19 +586,19 @@ export default function AuditPage() {
                           }}
                           aria-label="Voir le détail de l'audit"
                         >
-                          <td className="whitespace-nowrap px-5 py-3 text-xs text-slate-500">
+                          <td className="whitespace-nowrap px-5 py-3 text-xs text-(--nebula-muted) font-mono">
                             {formatTime(entry.timestamp)}
                           </td>
                           <td className="px-5 py-3">
                             <div className="flex items-center gap-2">
-                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-600">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 border border-white/15 text-[10px] font-semibold text-white">
                                 {entry.user.name[0]?.toUpperCase() || "?"}
                               </div>
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-medium text-slate-900">
+                                <p className="truncate text-sm font-medium text-white">
                                   {entry.user.name}
                                 </p>
-                                <p className="truncate text-[10px] text-slate-400">
+                                <p className="truncate text-[10px] text-(--nebula-muted)">
                                   {entry.user.email}
                                 </p>
                               </div>
@@ -595,26 +606,26 @@ export default function AuditPage() {
                           </td>
                           <td className="px-5 py-3">
                             <span
-                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${cfg.color}`}
+                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] bg-white/10 border border-white/15 text-white"
                             >
-                              <Icon className="h-3 w-3" />
+                              <Icon className="h-3 w-3 text-(--nebula-gold-light)" />
                               {cfg.label}
                             </span>
                           </td>
                           <td className="max-w-xs px-5 py-3">
-                            <p className="truncate text-sm text-slate-700">{entry.detail || "—"}</p>
-                            <p className="text-[10px] text-slate-400">{entry.resource}</p>
+                            <p className="truncate text-sm text-white">{entry.detail || "—"}</p>
+                            <p className="text-[10px] text-(--nebula-muted)">{entry.resource}</p>
                           </td>
-                          <td className="whitespace-nowrap px-5 py-3 font-mono text-xs text-slate-400">
+                          <td className="whitespace-nowrap px-5 py-3 font-mono text-xs text-(--nebula-muted)">
                             {entry.ip || "—"}
                           </td>
                           <td className="px-5 py-3">
                             {entry.status === "success" ? (
-                              <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                              <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white">
                                 Succès
                               </span>
                             ) : (
-                              <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600">
+                              <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white">
                                 Échec
                               </span>
                             )}
@@ -625,11 +636,11 @@ export default function AuditPage() {
                     {!loading && filtered.length === 0 && (
                       <tr>
                         <td colSpan={6} className="py-12 text-center">
-                          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-50">
-                            <Filter className="h-5 w-5 text-slate-300" />
+                          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10">
+                            <Filter className="h-5 w-5 text-white/40" />
                           </div>
-                          <p className="text-sm font-medium text-slate-900">Aucun résultat</p>
-                          <p className="mt-1 text-xs text-slate-500">
+                          <p className="text-sm font-medium text-white">Aucun résultat</p>
+                          <p className="mt-1 text-xs text-(--nebula-muted)">
                             Modifiez vos filtres pour voir plus d&apos;entrées.
                           </p>
                         </td>
@@ -655,17 +666,55 @@ export default function AuditPage() {
                       <ChevronLeft className="h-4 w-4" />
                     </button>
                     <div className="hidden items-center gap-1 sm:flex">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setPage(p)}
-                        className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition ${p === page ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
-                          }`}
-                      >
-                        {p}
-                      </button>
-                    ))}
+                      {(() => {
+                        const windowSize = 1; // pages shown on each side of current
+                        const pages = Array.from(
+                          new Set([
+                            1,
+                            totalPages,
+                            page - 1,
+                            page,
+                            page + 1,
+                            ...Array.from({ length: windowSize * 2 + 1 }, (_, i) => page - windowSize + i),
+                          ].filter((p) => p >= 1 && p <= totalPages)),
+                        ).sort((a, b) => a - b);
+
+                        const items: Array<{ kind: "page"; value: number } | { kind: "gap"; key: string }> = [];
+                        for (let i = 0; i < pages.length; i++) {
+                          const p = pages[i];
+                          const prev = pages[i - 1];
+                          if (i > 0 && prev !== undefined && p - prev > 1) {
+                            items.push({ kind: "gap", key: `gap-${prev}-${p}` });
+                          }
+                          items.push({ kind: "page", value: p });
+                        }
+
+                        return items.map((it) => {
+                          if (it.kind === "gap") {
+                            return (
+                              <span key={it.key} className="px-2 text-xs text-white/50">
+                                …
+                              </span>
+                            );
+                          }
+                          const p = it.value;
+                          const active = p === page;
+                          return (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => setPage(p)}
+                              className={`flex h-8 w-8 items-center justify-center rounded-xl text-sm font-medium transition ${
+                                active
+                                  ? "bg-white/10 border border-white/20 text-white"
+                                  : "bg-white/5 border border-white/10 text-(--nebula-muted) hover:bg-white/10 hover:text-white"
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          );
+                        });
+                      })()}
                     </div>
                     <span className="text-xs font-medium text-slate-500 sm:hidden">
                       {page}/{totalPages}

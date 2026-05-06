@@ -1,8 +1,9 @@
 import React from 'react';
-import { Calculator, FileSpreadsheet, PenTool, Info, ArrowRight } from 'lucide-react';
+import { Calculator, FileSpreadsheet, PenTool, Info, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface LoanCreateProps {
     onMethodSelect: (method: 'calculator' | 'import' | 'manual') => void;
+    onBack: () => void;
 }
 
 type Method = {
@@ -60,10 +61,20 @@ const methods: Method[] = [
     },
 ];
 
-export function LoanCreate({ onMethodSelect }: LoanCreateProps) {
+export function LoanCreate({ onMethodSelect, onBack }: LoanCreateProps) {
     return (
         <div className="space-y-6">
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                {/* back button */}
+                <div className="mb-6">
+                    <button
+                        type="button"
+                        onClick={onBack}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                    </button>
+                </div>
                 <h3 className="text-sm font-semibold text-slate-900">
                     Choisissez une méthode de création
                 </h3>

@@ -145,7 +145,7 @@ export function EntitySelector({
         <div className="rounded-lg bg-primary/10 p-1.5">
           <Building className="h-4 w-4 text-primary" />
         </div>
-        <h3 className="text-sm font-semibold text-slate-700">
+        <h3 className="text-sm font-semibold">
           Sélectionner l&apos;entité cible
         </h3>
         {!selectedEntityId && (
@@ -163,7 +163,7 @@ export function EntitySelector({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Type d'entité */}
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1.5">
+          <label className="block text-xs font-medium mb-1.5">
             Type d&apos;entité
           </label>
           <div className="flex gap-2">
@@ -249,13 +249,17 @@ export function EntitySelector({
               }
             }}
             disabled={disabled || !selectedEntityType || isLoading}
-            className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${
+            className={[
+              "w-full px-3 py-2 text-[13px] rounded-xl transition-all",
+              "nebula-glass border border-white/10 text-white",
+              "hover:border-white/15 hover:bg-white/5",
+              "focus-visible:outline-none",
               disabled || !selectedEntityType || isLoading
-                ? 'bg-slate-50 text-slate-400 cursor-not-allowed'
-                : 'bg-white text-slate-700'
-            }`}
+                ? "cursor-not-allowed opacity-50"
+                : "cursor-pointer",
+            ].join(" ")}
           >
-            <option value="">
+            <option value="" className="">
               {isLoading
                 ? 'Chargement...'
                 : !selectedEntityType
@@ -384,7 +388,7 @@ export function EntitySelector({
 
       {/* Message si type sélectionné mais pas d'entité */}
       {!selectedEntityId && selectedEntityType && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 p-2 rounded-lg">
+        <div className="mt-3 flex items-center gap-2 text-xs text-primary bg-primary/30 p-2 rounded-lg">
           <AlertCircle className="h-3 w-3" />
           <span>
             Veuillez sélectionner{' '}

@@ -5,14 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
 import { Asset, AmortizationSchedule } from '@/types/asset.types';
 import { assetsApi } from '@/lib/assetsApi';
+import { formatCurrencyEUR } from '@/lib/format';
 
 // Utility functions
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(amount);
-};
+const formatCurrency = (amount: number) => formatCurrencyEUR(amount, { fallback: "0,00 €" });
 
 interface AmortizationScheduleProps {
   asset?: Asset;

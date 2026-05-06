@@ -671,7 +671,7 @@ useEffect(() => {
         <DialogContent size="6xl" className="sm:max-h-[90dvh]">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/15 text-(--nebula-gold-light)">
                 <Sparkles className="h-4 w-4" aria-hidden />
               </span>
               <div className="min-w-0">
@@ -685,7 +685,7 @@ useEffect(() => {
             <div
               role="tablist"
               aria-label="Sections du mapping"
-              className="mt-3 inline-flex self-start rounded-full border border-slate-200 bg-slate-50 p-1"
+              className="mt-3 inline-flex self-start rounded-full border border-white/10 bg-white/5 p-1"
             >
               <TabButton
                 active={tab === "editor"}
@@ -740,7 +740,7 @@ useEffect(() => {
                     ) : (
                       <>
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h3 className="text-sm font-semibold text-slate-900">
+                          <h3 className="text-sm font-semibold text-white">
                             Champs attendus
                           </h3>
                           <div className="flex items-center gap-2">
@@ -755,10 +755,10 @@ useEffect(() => {
                             <button
                               type="button"
                               onClick={() => setShowOnlyRequired((v) => !v)}
-                              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light) border ${
                                 showOnlyRequired
-                                  ? "bg-primary/10 text-primary"
-                                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                  ? "bg-white/10 border-white/15 text-white"
+                                  : "bg-white/5 border-white/10 text-(--nebula-muted) hover:bg-white/10 hover:text-white"
                               }`}
                             >
                               <Filter className="h-3 w-3" aria-hidden />
@@ -791,7 +791,7 @@ useEffect(() => {
                   </div>
 
                   <aside
-                    className={`min-w-0 rounded-xl border border-slate-200 bg-white ${
+                    className={`min-w-0 rounded-2xl border border-white/10 bg-white/5 nebula-blob ${
                       hasFile ? "" : "hidden lg:block"
                     }`}
                     aria-label="Colonnes du fichier"
@@ -800,23 +800,23 @@ useEffect(() => {
                       type="button"
                       onClick={() => setShowSource((v) => !v)}
                       aria-expanded={showSource}
-                      className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                      className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)"
                     >
                       <span className="flex items-center gap-2">
                         <FileUp
-                          className="h-4 w-4 text-slate-500"
+                          className="h-4 w-4 text-white/60"
                           aria-hidden
                         />
-                        <span className="text-sm font-medium text-slate-900">
+                        <span className="text-sm font-medium text-white">
                           Colonnes du fichier
                         </span>
                       </span>
                       <span className="flex items-center gap-2">
-                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 tabular-nums">
+                        <span className="inline-flex items-center rounded-full bg-white/10 border border-white/15 px-2 py-0.5 text-[11px] font-medium text-white font-mono tabular-nums">
                           {csvHeaders.length}
                         </span>
                         <ChevronDown
-                          className={`h-4 w-4 text-slate-400 transition-transform ${
+                          className={`h-4 w-4 text-white/50 transition-transform ${
                             showSource ? "rotate-180" : ""
                           }`}
                           aria-hidden
@@ -824,10 +824,10 @@ useEffect(() => {
                       </span>
                     </button>
                     {showSource ? (
-                      <div className="border-t border-slate-100 p-3">
+                      <div className="border-t border-white/10 p-3">
                         {hasFile ? (
                           <>
-                            <p className="mb-2 text-xs text-slate-500">
+                            <p className="mb-2 text-xs text-(--nebula-muted)">
                               {unmappedHeaders} non mappée
                               {unmappedHeaders > 1 ? "s" : ""} sur{" "}
                               {csvHeaders.length}
@@ -836,20 +836,20 @@ useEffect(() => {
                               {sourceMappings.map((s) => (
                                 <li
                                   key={s.header}
-                                  className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 text-xs ${
+                                  className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-xs ${
                                     s.dbField
-                                      ? "border-emerald-100 bg-emerald-50/60 text-emerald-800"
-                                      : "border-slate-100 bg-white text-slate-600"
+                                      ? "border-white/15 bg-white/10 text-white"
+                                      : "border-white/10 bg-white/5 text-(--nebula-muted)"
                                   }`}
                                 >
                                   {s.dbField ? (
                                     <CheckCircle2
-                                      className="h-3.5 w-3.5 shrink-0 text-emerald-500"
+                                      className="h-3.5 w-3.5 shrink-0 text-(--nebula-gold-light)"
                                       aria-hidden
                                     />
                                   ) : (
                                     <span
-                                      className="h-2 w-2 shrink-0 rounded-full border border-slate-300"
+                                      className="h-2 w-2 shrink-0 rounded-full border border-white/20"
                                       aria-hidden
                                     />
                                   )}
@@ -860,7 +860,7 @@ useEffect(() => {
                                     {s.header}
                                   </span>
                                   {s.dbField ? (
-                                    <span className="ml-auto truncate rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] text-emerald-700">
+                                    <span className="ml-auto truncate rounded-full bg-white/10 border border-white/15 px-1.5 py-0.5 text-[10px] font-mono text-white">
                                       {s.dbField}
                                     </span>
                                   ) : null}
@@ -869,7 +869,7 @@ useEffect(() => {
                             </ul>
                           </>
                         ) : (
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-(--nebula-muted)">
                             Importez un fichier pour voir ses colonnes.
                           </p>
                         )}
@@ -881,12 +881,12 @@ useEffect(() => {
             ) : (
               <div className="space-y-4">
                 {needsTemplateWorkspaceSelector && (
-                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3 nebula-blob">
                     <label
                       htmlFor="mapping-workspace-select"
-                      className="mb-1.5 block text-xs font-medium text-slate-600"
+                      className="mb-2 block text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)"
                     >
-                      Workspace pour les mappings de workspace
+                      § Workspace pour les mappings
                     </label>
                     <select
                       id="mapping-workspace-select"
@@ -895,7 +895,7 @@ useEffect(() => {
                         setActiveLocalWorkspaceId(e.target.value || null)
                       }
                       disabled={isLoadingWorkspaces}
-                      className="block h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                      className="block h-10 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-[13px] text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)"
                     >
                       <option value="">— Tous les workspaces —</option>
                       {accessibleWorkspaces.map((ws) => (
@@ -925,7 +925,7 @@ useEffect(() => {
               variant="ghost"
               onClick={clearMapping}
               disabled={totalMapped === 0}
-              className="text-slate-500 hover:text-amber-600"
+              className="text-(--nebula-muted) hover:text-white"
             >
               <Eraser className="mr-2 h-4 w-4" aria-hidden />
               Effacer le mapping
@@ -935,11 +935,7 @@ useEffect(() => {
                 <Button
                   onClick={() => setSaveDialogOpen(true)}
                   disabled={!canSaveCurrent || isSaving || isCurrentMappingSaved}
-                  className={
-                    isCurrentMappingSaved
-                      ? "bg-emerald-500 hover:bg-emerald-600"
-                      : "bg-emerald-600 hover:bg-emerald-700"
-                  }
+                  className={isCurrentMappingSaved ? "opacity-90" : ""}
                 >
                   {isCurrentMappingSaved ? (
                     <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden />
@@ -1050,7 +1046,7 @@ useEffect(() => {
         <DialogContent size="md">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/15 text-(--nebula-gold-light)">
                 <AlertCircle className="h-4 w-4" aria-hidden />
               </span>
               <DialogTitle>Impossible de supprimer ce mapping</DialogTitle>
@@ -1060,7 +1056,7 @@ useEffect(() => {
               {deleteErrorDialog ? (
                 <>
                   {" "}
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-white">
                     « {deleteErrorDialog.name} »
                   </span>
                 </>
@@ -1068,16 +1064,16 @@ useEffect(() => {
               est utilisé par des écritures comptables existantes.
             </DialogDescription>
           </DialogHeader>
-          <DialogBody className="space-y-3 text-sm text-slate-700">
+          <DialogBody className="space-y-3 text-sm text-(--nebula-muted)">
             <p>
               La suppression pourrait causer des incohérences dans votre base
               de données.
             </p>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="mb-1 text-sm font-medium text-slate-800">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <p className="mb-1 text-sm font-medium text-white">
                 Comment faire ?
               </p>
-              <ul className="list-inside list-disc space-y-1 text-sm text-slate-600">
+              <ul className="list-inside list-disc space-y-1 text-sm text-(--nebula-muted)">
                 <li>Créez un nouveau mapping si besoin.</li>
                 <li>Le mapping existant reste disponible en lecture.</li>
                 <li>
@@ -1123,18 +1119,16 @@ function TabButton({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
-        active
-          ? "bg-white text-slate-900 shadow-sm"
-          : "text-slate-600 hover:text-slate-900"
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light) ${
+        active ? "bg-white/10 text-white" : "text-(--nebula-muted) hover:text-white"
       }`}
     >
       {icon}
       {label}
       {typeof badge === "number" && badge > 0 ? (
         <span
-          className={`rounded-full px-1.5 text-[10px] tabular-nums ${
-            active ? "bg-slate-100 text-slate-700" : "bg-white text-slate-500"
+          className={`rounded-full px-1.5 text-[10px] font-mono tabular-nums ${
+            active ? "bg-white/10 text-white" : "bg-white/5 text-(--nebula-muted)"
           }`}
         >
           {badge}
@@ -1152,16 +1146,16 @@ function NoFileCard({
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center">
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-500">
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-white/15 bg-white/5 px-6 py-10 text-center nebula-blob">
+      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border border-white/15 text-(--nebula-gold-light)">
         <AlertCircle className="h-5 w-5" aria-hidden />
       </span>
       <div>
-        <p className="text-sm font-medium text-slate-700">
+        <p className="text-sm font-medium text-white">
           Aucun fichier chargé
         </p>
-        <p className="mt-0.5 text-xs text-slate-500">
-          Importez d'abord un fichier Excel/CSV/TXT pour mapper ses colonnes.
+        <p className="mt-0.5 text-xs text-(--nebula-muted)">
+          Importez d&apos;abord un fichier Excel/CSV/TXT pour mapper ses colonnes.
         </p>
       </div>
       <Button size="sm" onClick={onUploadClick}>
@@ -1241,7 +1235,7 @@ function MappingDetailModal({
       <DialogContent size="4xl">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/15 text-(--nebula-gold-light)">
               <Layers className="h-4 w-4" aria-hidden />
             </span>
             <div className="min-w-0">
@@ -1261,7 +1255,7 @@ function MappingDetailModal({
           </div>
         </DialogHeader>
 
-        <DialogBody className="space-y-4 bg-slate-50/40">
+        <DialogBody className="space-y-4 bg-transparent">
           {feedback ? (
             <MappingFeedback
               tone={feedback.tone}
@@ -1446,7 +1440,7 @@ function MappingDetailModal({
         </DialogBody>
 
         <DialogFooter className="flex-wrap sm:justify-between">
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-(--nebula-muted)">
             {mappedCount} / {Basic_COLUMNS.length} champs configurés
           </span>
           <div className="flex w-full flex-wrap gap-2 sm:w-auto">

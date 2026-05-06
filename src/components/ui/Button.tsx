@@ -6,23 +6,27 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants = {
-  default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
-  ghost: "hover:bg-slate-100 hover:text-slate-900",
-  outline: "border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900",
-  destructive: "bg-red-600 text-white hover:bg-red-700 shadow-sm",
+  default:
+    "bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) text-white! nebula-glow hover:nebula-glow-soft transition-transform",
+  ghost:
+    "bg-linear border border-white/10 hover:bg-white/10 text-white",
+  outline:
+    "text-primary! border-primary! border-[0.2px]! nebula-glow hover:nebula-glow-soft transition-transform",
+  destructive:
+    "bg-linear-to-r from-(--nebula-gold) to-(--nebula-gold-deep) text-white nebula-glow hover:nebula-glow-soft transition-transform",
 };
 
 const sizes = {
-  default: "h-10 px-4 py-2",
-  sm: "h-9 rounded-lg px-3 text-xs",
-  lg: "h-11 rounded-lg px-8",
-  icon: "h-10 w-10",
+  default: "h-10 px-6 py-3.5 rounded-2xl text-[13px] font-semibold",
+  sm: "h-9 rounded-xl px-4 text-[12px] font-semibold",
+  lg: "h-11 rounded-2xl px-8 text-[13px] font-semibold",
+  icon: "h-9 w-9 rounded-xl",
 };
 
 export function Button({ className, variant = "default", size = "default", ...props }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:pointer-events-none disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className ?? ""}`}
+      className={`inline-flex items-center justify-center gap-2 shadow-lg whitespace-nowrap disabled:pointer-events-none disabled:opacity-50 cursor-pointer ${variants[variant]} ${sizes[size]} ${className ?? ""}`}
       {...props}
     />
   );

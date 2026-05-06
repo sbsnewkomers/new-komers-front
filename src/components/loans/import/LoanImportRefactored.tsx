@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { FileSpreadsheet } from 'lucide-react';
+import { FileSpreadsheet, ArrowLeft } from 'lucide-react';
 import { loansApi } from '@/lib/loansApi';
 import { entitiesApi } from '@/lib/entitiesApi';
 import {
@@ -12,7 +12,7 @@ import {
     ImportFileFormat,
 } from '@/types/loans';
 
-import { StepIndicator } from './StepIndicator';
+import { StepIndicator } from '@/components/ui/StepIndicator';
 import { FileUploadStep } from './FileUploadStep';
 import { ColumnMappingStep } from './ColumnMappingStep';
 import { PreviewStep } from './PreviewStep';
@@ -20,11 +20,12 @@ import { ModelPreviewDialog } from './ModelPreviewDialog';
 
 interface LoanImportProps {
     onLoanImported?: (loanId: string) => void;
+    onBack?: () => void;
     entityType?: EntityType;
     entityId?: string;
 }
 
-export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportProps) {
+export function LoanImport({ onLoanImported, onBack, entityType, entityId }: LoanImportProps) {
     // State
     const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
     const [isLoading, setIsLoading] = useState(false);
@@ -49,6 +50,11 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
     const [selectedModelFormat, setSelectedModelFormat] = useState<ImportFileFormat>(ImportFileFormat.EXCEL);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const steps = [
+        { n: 1, label: 'Fichier' },
+        { n: 2, label: 'Mapping' },
+        { n: 3, label: 'Résultat' },
+    ];
 
     // Utility functions
     const resetImport = () => {
@@ -71,36 +77,46 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         'insurancePayment',
     ];
 
-    // API calls
-    const loadEntities = async (entityType: EntityType) => {
-        try {
-            let entitiesList: Array<{ id: string; name: string }> = [];
 
-            switch (entityType) {
-                case EntityType.GROUP:
-                    entitiesList = await entitiesApi.getGroups();
-                    break;
-                case EntityType.COMPANY:
-                    entitiesList = await entitiesApi.getCompanies();
-                    break;
-                case EntityType.BUSINESSUNIT:
-                    entitiesList = await entitiesApi.getBusinessUnitsForUser();
-                    break;
-                default:
-                    entitiesList = [];
-            }
-
-            setEntities(entitiesList);
-        } catch (error) {
-            console.error('Error loading entities:', error);
-            setEntities([]);
-        }
-    };
-
-    // Load entities on component mount
+    // Load entities when selectedEntityType changes
     useEffect(() => {
-        loadEntities(selectedEntityType);
-    }, []);
+        let isMounted = true;
+
+        const loadEntitiesAsync = async () => {
+            try {
+                let entitiesList: Array<{ id: string; name: string }> = [];
+
+                switch (selectedEntityType) {
+                    case EntityType.GROUP:
+                        entitiesList = await entitiesApi.getGroups();
+                        break;
+                    case EntityType.COMPANY:
+                        entitiesList = await entitiesApi.getCompanies();
+                        break;
+                    case EntityType.BUSINESSUNIT:
+                        entitiesList = await entitiesApi.getBusinessUnitsForUser();
+                        break;
+                    default:
+                        entitiesList = [];
+                }
+
+                if (isMounted) {
+                    setEntities(entitiesList);
+                }
+            } catch (error) {
+                console.error('Error loading entities:', error);
+                if (isMounted) {
+                    setEntities([]);
+                }
+            }
+        };
+
+        loadEntitiesAsync();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [selectedEntityType]);
 
     const validateLoanName = async (name: string, entityType: EntityType, entityId: string) => {
         if (!name.trim() || !entityType || !entityId) {
@@ -126,7 +142,6 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         const entityType = value as EntityType;
         setSelectedEntityType(entityType);
         setSelectedEntityId('');
-        loadEntities(entityType);
         // Validate loan name when entity type changes
         if (loanName.trim() && entityType && selectedEntityId) {
             validateLoanName(loanName, entityType, selectedEntityId);
@@ -317,9 +332,6 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
             const result = await loansApi.processImport(processDto);
 
             setImportResult(result as LoanImport);
-            if (result.loanId) {
-                onLoanImported?.(result.loanId);
-            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Processing failed');
         } finally {
@@ -382,6 +394,18 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
         <div className="space-y-6">
             {/* Header */}
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                {/* Back button */}
+                {onBack && (
+                    <div className="mb-4">
+                        <button
+                            type="button"
+                            onClick={onBack}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                        </button>
+                    </div>
+                )}
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
                         <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
@@ -396,7 +420,7 @@ export function LoanImport({ onLoanImported, entityType, entityId }: LoanImportP
                     </div>
                 </div>
                 <div className="mt-6">
-                    <StepIndicator currentStep={currentStep} />
+            <StepIndicator currentStep={currentStep} steps={steps} />
                 </div>
             </div>
 
