@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/Button";
 import { Sheet, Plug, ArrowRight, FileUp, Settings } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/apiClient";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
-import { Toast } from "@/components/ui/Toast";
 import { EntitySelector } from "@/features/import/EntitySelector";
 import { cleanMapping } from "@/features/import/MappingUtils";
 import { SavedMappingModal } from "@/features/import/SavedMappingModal";
@@ -24,7 +23,35 @@ import { ApiTabContent } from "@/features/import/ApiTabContent";
 import { Basic_COLUMNS } from "@/features/import/constants";
 import { ImportHistoryRow, ImportProgress, ValidationError, SavedMapping, MappingPayload } from "@/features/import/types";
 import { useRouter } from 'next/navigation';
+import { ImportGuide } from '@/features/import/ImportGuide';
+import { useImportNotifications } from '@/hooks/useImportNotifications';
+import { ImportSuccessModal } from '@/features/import/ImportSuccessModal';
 
+function decodeBuffer(buffer: ArrayBuffer): string {
+  const uint8Array = new Uint8Array(buffer);
+  
+  // Log les premiers octets pour voir l'encodage réel
+  console.log("PREMIERS OCTETS:", Array.from(uint8Array.slice(0, 50)).map(b => b.toString(16).padStart(2, '0')).join(' '));
+
+  // BOM UTF-8
+  if (uint8Array.length >= 3 && uint8Array[0] === 0xEF && uint8Array[1] === 0xBB && uint8Array[2] === 0xBF) {
+    console.log("ENCODAGE DÉTECTÉ: UTF-8 avec BOM");
+    return new TextDecoder("utf-8").decode(buffer);
+  }
+
+  try {
+    const utf8Decoder = new TextDecoder("utf-8", { fatal: true });
+    const result = utf8Decoder.decode(buffer);
+    console.log("ENCODAGE DÉTECTÉ: UTF-8 strict OK");
+    console.log("RÉSULTAT DÉBUT:", result.substring(0, 100));
+    return result;
+  } catch (e) {
+    console.log("ENCODAGE DÉTECTÉ: Windows-1252 (UTF-8 a échoué)");
+    const result = new TextDecoder("windows-1252").decode(buffer);
+    console.log("RÉSULTAT DÉBUT:", result.substring(0, 100));
+    return result;
+  }
+}
 export default function ImportPage() {
   const companies = useCompanies();
   const router = useRouter();
@@ -47,67 +74,154 @@ export default function ImportPage() {
   const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
-  const [selectedEntityType, setSelectedEntityType] = useState<'Group' | 'Company' | null>(null);
-  
+  const [selectedEntityType, setSelectedEntityType] = useState<'Group' | 'Company' | 'BusinessUnit' | null>(null);
+
   const [selectedSavedMapping, setSelectedSavedMapping] = useState<SavedMapping | null>(null);
   const [savedMappingModalOpen, setSavedMappingModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingMappingId, setPendingMappingId] = useState<string | null>(null);
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [successTitle, setSuccessTitle] = useState("");
   const [successDetails, setSuccessDetails] = useState<{
-    linesCount?: number;
-    fileName?: string;
-    entityName?: string;
+    totalProcessed?: number;
+    skippedLines?: number;
+    newFiscalYearsCount?: number;
+    fiscalYears?: {
+      entityName: string | null;
+      entityType: string;
+      calendarYear: number;
+      startDate: string;
+      endDate: string;
+      isNew: boolean;
+      linesCount: number;
+    }[];
+    dataImports?: {
+      entityName: string | null;
+      entityType: string;
+      linesCount: number;
+    }[];
   } | null>(null);
-
-  // Récupération du rôle utilisateur courant
+  const [successSimpleMessage, setSuccessSimpleMessage] = useState<string | null>(null);
+  const [periodStart, setPeriodStart] = useState("");
+  const [periodEnd, setPeriodEnd] = useState("");
+  const [hasData, setHasData] = useState<boolean | null>(null);
   const { user: currentUser } = usePermissionsContext();
   const isAdmin = currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN';
-  const isEndUser = currentUser?.role === 'END_USER'; 
+  const isEndUser = currentUser?.role === 'END_USER';
   const isManager = currentUser?.role === 'MANAGER';
-
-
-  // Ref pour éviter les appels multiples
+  const [includeDescendants, setIncludeDescendants] = useState(false);
   const isImportingRef = useRef(false);
-  const fetchHistory = useCallback(async () => {
-  try {
-    const data = await apiFetch<any[]>("/generic-import/history", {
-      method: "GET",
-      snackbar: { showError: false, showSuccess: false },
-    });
+  useImportNotifications(currentUser?.id, async (payload) => {
+  console.log('[IMPORT PAGE] callback appelée, payload:', JSON.stringify(payload));
 
-    const mapped: ImportHistoryRow[] = data.map((item) => ({
-      id: item.id,
-      file: item.file,
-      date: item.date,
-      status: item.status,  
-      entityType: item.entityType ?? "—",
-      entityName: item.entityName ?? "—",
-      entityId: item.entityId,
-      user: item.user,
-      linesCount: item.linesCount,
-      errorMessage: item.errorMessage ?? null,
-    }));
+  if (payload.severity === 'error') {
+    const errors = payload.metadata?.errors;
 
-    setHistory(mapped);
-  } catch (err) {
-    console.error("Erreur load history:", err);
+    if (Array.isArray(errors) && errors.length > 0) {
+      // Le backend renvoie des objets GenericValidationError
+      // On normalise quelle que soit la structure
+      const mappedErrors: ValidationError[] = errors.map((e: any) => ({
+        line: e.line ?? 0,
+        column: e.column ?? 'N/A',
+        value: e.value ?? '',
+        reason: e.reason ?? e.message ?? 'Erreur inconnue',
+        message: e.reason ?? e.message ?? 'Erreur inconnue',
+      }));
+      setValidationErrors(mappedErrors);
+    } else {
+      // Pas de détail d'erreurs → on affiche le message général
+      setValidationErrors([{
+        line: 0,
+        column: 'N/A',
+        value: '',
+        reason: payload.message,
+        message: payload.message,
+      }]);
+    }
+
+    setValidationModalOpen(true);
+    fetchHistory();
+    setHistoryOpen(true);
   }
-}, []);
+
+  if (payload.severity === 'success') {
+  const meta = payload.metadata;
+  setSuccessTitle(payload.title);
+  setSuccessDetails({
+    totalProcessed: meta?.totalProcessed,
+    skippedLines: meta?.skippedDescendantLines,
+    newFiscalYearsCount: meta?.newFiscalYearsCount,
+    fiscalYears: meta?.fiscalYears?.map((fy) => ({
+      entityName: fy.entityName,
+      entityType: fy.entityType,
+      calendarYear: fy.calendarYear,
+      startDate: fy.startDate,
+      endDate: fy.endDate,
+      isNew: fy.isNew,
+      linesCount: fy.linesCount,
+    })),
+    dataImports: meta?.dataImports?.map((di) => ({
+      entityName: di.entityName,
+      entityType: di.entityType,
+      linesCount: di.linesCount,
+    })),
+  });
+  setSuccessModalOpen(true);
+  fetchHistory();
+  setHistoryOpen(true);
+  if (selectedEntityId && selectedEntityType) {
+    try {
+      const response = await apiFetch<{ hasData: boolean }>(
+        `/generic-import/entityType/${selectedEntityId}/has-data?entityType=${selectedEntityType}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      setHasData(response.hasData);
+    } catch {
+      setHasData(null);
+    }
+  }
+}
+});
+  
+  
+
+  const fetchHistory = useCallback(async () => {
+    try {
+      const data = await apiFetch<any[]>("/generic-import/history", {
+        method: "GET",
+        snackbar: { showError: false, showSuccess: false },
+      });
+
+      const mapped: ImportHistoryRow[] = data.map((item) => ({
+        id: item.id,
+        file: item.file,
+        date: item.date,
+        status: item.status,
+        entityType: item.entityType ?? "—",
+        entityName: item.entityName ?? "—",
+        entityId: item.entityId,
+        user: item.user,
+        linesCount: item.linesCount,
+        errorMessage: item.errorMessage ?? null,
+      }));
+
+      setHistory(mapped);
+    } catch (err) {
+      console.error("Erreur load history:", err);
+    }
+  }, []);
 
   useEffect(() => {
     companies.fetchList();
     fetchHistory();
   }, []);
 
-  
-
   const companyList = companies.list ?? [];
 
   const applySavedMapping = (savedMapping: SavedMapping) => {
     setSelectedSavedMapping(savedMapping);
-    
+
     if (csvFile && csvHeaders.length > 0) {
       const newMapping: Record<string, string> = {};
       csvHeaders.forEach(header => {
@@ -124,163 +238,182 @@ export default function ImportPage() {
   };
 
   const handleFileUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const data = new Uint8Array(e.target?.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target?.result as ArrayBuffer);
+    const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    if (json.length > 0) {
+      const headers = json[0] as string[];
+      setCsvHeaders(headers);
+      const initialMapping: Record<string, string> = {};
+      headers.forEach((h) => {
+        const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+        initialMapping[h] = match ? match.name : "";
+      });
+      setMapping(initialMapping);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
+  const handleDrop = useCallback((e: React.DragEvent, type: "excel") => {
+  e.preventDefault();
+  setDragOver(false);
+  const f = e.dataTransfer.files[0];
+  if (!f) return;
 
-      if (json.length > 0) {
-        const headers = json[0] as string[];
-        setCsvHeaders(headers);
-        const initialMapping: Record<string, string> = {};
+  setCsvFile(null);
+  setCsvHeaders([]);
+  setMapping({});
+
+  const isCsv = f.name.endsWith(".csv");
+  const isExcel = f.name.endsWith(".xlsx") || f.name.endsWith(".xls");
+  const isTxt = f.name.endsWith(".txt");
+
+  if (type === "excel" && !isCsv && !isExcel && !isTxt) return;
+
+  if (type === "excel") {
+    setCsvFile(f);
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      let headers: string[] = [];
+
+      if (isExcel) {
+        // Pour les fichiers binaire .xlsx ou .xls, SheetJS gère très bien tout seul
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
+      } else {
+        // POUR LE CSV / TXT : On gère l'encodage NOUS-MÊMES
+        const buffer = event.target?.result as ArrayBuffer;
+        const text = decodeBuffer(buffer); // Utilise la fonction améliorée ci-dessus
+        
+        // On passe le texte décodé à SheetJS au lieu du buffer brut
+        const workbook = XLSX.read(text, { type: "string" }); 
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
+      }
+
+      setCsvHeaders(headers);
+
+      let initialMapping: Record<string, string> = {};
+
+      if (selectedSavedMapping) {
+        headers.forEach((h) => {
+          if (selectedSavedMapping.rules[h]) {
+            initialMapping[h] = selectedSavedMapping.rules[h];
+          } else {
+            const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+            initialMapping[h] = match ? match.name : "";
+          }
+        });
+        setSelectedSavedMapping(null);
+      } else {
         headers.forEach((h) => {
           const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
           initialMapping[h] = match ? match.name : "";
         });
-        setMapping(initialMapping);
       }
+
+      setMapping(initialMapping);
+      setMappingOpen(true);
     };
-    reader.readAsArrayBuffer(file);
-  };
 
-  const handleDrop = useCallback((e: React.DragEvent, type: "excel") => {
-    e.preventDefault();
-    setDragOver(false);
-    const f = e.dataTransfer.files[0];
-    if (!f) return;
-    
-    setCsvFile(null);
-    setCsvHeaders([]);
-    setMapping({});
-
-    const isCsv = f.name.endsWith(".csv");
-    const isExcel = f.name.endsWith(".xlsx") || f.name.endsWith(".xls");
-    const isTxt = f.name.endsWith(".txt");
-
-    if (type === "excel" && !isCsv && !isExcel && !isTxt) return;
-
-    if (type === "excel") {
-      setCsvFile(f);
-      const reader = new FileReader();
-
-      reader.onload = (event) => {
-        let headers: string[] = [];
-
-        if (isExcel) {
-          const data = new Uint8Array(event.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: "array" });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-          headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
-        } else {
-          const text = reader.result as string;
-          const firstLine = text.split("\n")[0];
-          headers = firstLine.split(/[,\t;]/).map((h) => h.trim().replace(/^"|"$/g, ''));
-        }
-
-        setCsvHeaders(headers);
-        
-        let initialMapping: Record<string, string> = {};
-        
-        if (selectedSavedMapping) {
-          headers.forEach((h) => {
-            if (selectedSavedMapping.rules[h]) {
-              initialMapping[h] = selectedSavedMapping.rules[h];
-            } else {
-              const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
-              initialMapping[h] = match ? match.name : "";
-            }
-          });
-          setSelectedSavedMapping(null);
-        } else {
-          headers.forEach((h) => {
-            const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
-            initialMapping[h] = match ? match.name : "";
-          });
-        }
-        
-        setMapping(initialMapping);
-        setMappingOpen(true);
-      };
-
-      if (isExcel) {
-        reader.readAsArrayBuffer(f);
-      } else {
-        reader.readAsText(f, "UTF-8");
-      }
-    }
-  }, [selectedSavedMapping]);
+    // FIX : toujours lire en ArrayBuffer (plus readAsText)
+    reader.readAsArrayBuffer(f);
+  }
+}, [selectedSavedMapping]);
 
   const parseHeaders = (file: File): Promise<string[]> => {
-    return new Promise((resolve) => {
-      const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (isExcel) {
-          const data = new Uint8Array(event.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: "array" });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-          resolve((json[0] as string[]) || []);
-        } else {
-          const text = event.target?.result as string;
-          resolve(text.split("\n")[0].split(/[,\t;]/).map((h) => h.trim().replace(/^"|"$/g, "")));
-        }
-      };
-      isExcel ? reader.readAsArrayBuffer(file) : reader.readAsText(file, "UTF-8");
-    });
-  };
+  return new Promise((resolve) => {
+    const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (isExcel) {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        resolve((json[0] as string[]) || []);
+      } else {
+        // FIX ENCODAGE : détecter UTF-8 vs Windows-1252
+        const buffer = event.target?.result as ArrayBuffer;
+        const text = decodeBuffer(buffer);
+        resolve(text.split("\n")[0].split(/[,\t;|]/).map((h) => h.trim().replace(/^"|"$/g, "")));
+      }
+    };
+    // FIX : toujours lire en ArrayBuffer
+    reader.readAsArrayBuffer(file);
+  });
+};
 
-  const checkEntityHasData = async (entityId: string, entityType: 'Group' | 'Company'): Promise<boolean> => {
-    try {
-      const response = await apiFetch<{ hasData: boolean }>(
-        `/generic-import/entityType/${entityId}/has-data?entityType=${entityType}`,
+  const handleEntityChange = async (
+  entityId: string,
+  entityType: 'Group' | 'Company' | 'BusinessUnit'
+) => {
+  // Reset complet si entityId vide (reclique sur le même type ou changement de type)
+  if (!entityId) {
+    setSelectedEntityId(null);
+    setSelectedEntityType(selectedEntityType === entityType ? null : entityType);
+    setWorkspaceId(null);
+    setPeriodStart('');
+    setPeriodEnd('');
+    setHasData(null);
+    setIncludeDescendants(false);
+    return;
+  }
+
+  // Sélection normale d'une entité
+  setSelectedEntityId(entityId);
+  setSelectedEntityType(entityType);
+  setWorkspaceId(null);
+  setPeriodStart('');
+  setPeriodEnd('');
+  setHasData(null);
+  setIncludeDescendants(false);
+
+  try {
+    if (entityType === 'Company') {
+      const company = await apiFetch<{ workspace_id: string }>(
+        `/companies/${entityId}`,
         { snackbar: { showSuccess: false, showError: false } }
       );
-      return response.hasData;
-    } catch (error) {
-      console.error("Erreur:", error);
-      return false;
+      setWorkspaceId(company.workspace_id ?? null);
+    } else if (entityType === 'Group') {
+      const group = await apiFetch<{ workspace_id: string }>(
+        `/groups/${entityId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      setWorkspaceId(group.workspace_id ?? null);
+    } else if (entityType === 'BusinessUnit') {
+      const bu = await apiFetch<{ workspace_id: string }>(
+        `/business-units/${entityId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      setWorkspaceId(bu.workspace_id ?? null);
     }
-  };
-
-  const handleEntityChange = async (entityId: string, entityType: 'Group' | 'Company') => {
-    setSelectedEntityId(entityId);
-    setSelectedEntityType(entityType);
+  } catch {
     setWorkspaceId(null);
-    try {
-      if (entityType === 'Company') {
-        const company = await apiFetch<{ workspace_id: string }>(
-          `/companies/${entityId}`,
-          { snackbar: { showSuccess: false, showError: false } }
-        );
-        setWorkspaceId(company.workspace_id ?? null);
-      } else {
-        const group = await apiFetch<{ workspace_id: string }>(
-          `/groups/${entityId}`,
-          { snackbar: { showSuccess: false, showError: false } }
-        );
-        setWorkspaceId(group.workspace_id ?? null);
-      }
-    } catch {
-      setWorkspaceId(null);
-    }
-  };
+  }
+};
 
   const performImport = async (
     existingMappingId?: string,
     fileOverride?: File,
     entityIdOverride?: string,
-    entityTypeOverride?: 'Group' | 'Company'
+    entityTypeOverride?: 'Group' | 'Company' | 'BusinessUnit'
   ) => {
     if (isImportingRef.current) {
       console.log("Import déjà en cours, ignore");
       return;
     }
-    
+
     const fileToUse = fileOverride ?? csvFile;
     const entityId = entityIdOverride ?? selectedEntityId;
     const entityType = entityTypeOverride ?? selectedEntityType;
@@ -290,18 +423,35 @@ export default function ImportPage() {
       return;
     }
 
-    // ── Vérification workspaceId pour les non-admins ───────────────────────
-    // Les HEAD_MANAGER et MANAGER ne peuvent créer que des mappings locaux.
-    // Sans workspaceId résolu, on bloque l'import plutôt que d'envoyer GLOBAL.
     if (!workspaceId && !isAdmin) {
       setValidationErrors([{
-        line: 0,
-        column: 'N/A',
-        value: '',
-        reason: "Impossible de déterminer le workspace de l'entité sélectionnée. Veuillez resélectionner l'entité.",
+        line: 0, column: 'N/A', value: '',
+        reason: "Impossible de déterminer le workspace de l'entité sélectionnée.",
         message: "Workspace manquant pour l'import local."
       }]);
       setValidationModalOpen(true);
+      return;
+    }
+
+    if (hasData && (!periodStart || !periodEnd)) {
+      setValidationErrors([{
+        line: 0, column: 'N/A', value: '',
+        reason: "Cette entité a des données existantes. Veuillez sélectionner une période de remplacement.",
+        message: "Période de remplacement obligatoire."
+      }]);
+      setValidationModalOpen(true);
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (hasData && periodEnd < periodStart) {
+      setValidationErrors([{
+        line: 0, column: 'N/A', value: '',
+        reason: "La date de fin de période doit être après la date de début.",
+        message: "Dates de période invalides."
+      }]);
+      setValidationModalOpen(true);
+      setIsSubmitting(false);
       return;
     }
 
@@ -315,25 +465,18 @@ export default function ImportPage() {
         mappingId = existingMappingId;
       } else {
         const cleanedRules = cleanMapping(mapping);
-
-        // ── Calcul du scope pour le mapping auto-créé ──────────────────────
-        // - workspaceId présent → LOCAL pour tout le monde
-        // - workspaceId absent + admin → GLOBAL (cas légal)
-        // - workspaceId absent + non-admin → déjà bloqué ci-dessus
         const effectiveScope = workspaceId ? 'LOCAL' : 'GLOBAL';
-
-        const templatePayload: any = {
-          name: `Mapping_${fileToUse.name}_${new Date().toLocaleDateString()}`,
-          rules: cleanedRules,
-          entityId,
-          entityType,
-          workspaceId: workspaceId ?? null,
-          scope: effectiveScope,
-        };
 
         const templateData = await apiFetch<any>("/mapping-templates", {
           method: 'POST',
-          body: JSON.stringify(templatePayload),
+          body: JSON.stringify({
+            name: `Mapping_${fileToUse.name}_${new Date().toLocaleDateString()}`,
+            rules: cleanedRules,
+            entityId,
+            entityType,
+            workspaceId: workspaceId ?? null,
+            scope: effectiveScope,
+          }),
           snackbar: { showSuccess: false, showError: false },
         });
 
@@ -346,148 +489,54 @@ export default function ImportPage() {
       formData.append('mappingId', mappingId);
       formData.append('entityId', entityId);
       formData.append('entityType', entityType);
+      formData.append(
+        'includeDescendants',
+        entityType === 'BusinessUnit' ? 'false' : String(includeDescendants)
+      );
+      if (periodStart) formData.append('periodStart', periodStart);
+      if (periodEnd)   formData.append('periodEnd', periodEnd);
 
-      console.log("Envoi de la requête avec:", {
-        fileName: fileToUse.name,
-        fileSize: fileToUse.size,
-        fileType: fileToUse.type,
-        mappingId,
-        entityId,
-        entityType
-      });
-
-      let importResult;
+      // ─── MODIFIÉ : appel simple, résultat via WebSocket ───
       try {
-        importResult = await apiFetch<any>("/generic-import", {
+        const formDataLog: Record<string, any> = {};
+        formData.forEach((value, key) => {
+          formDataLog[key] = value instanceof File ? `[File: ${value.name}, ${value.size} bytes]` : value;
+        });
+        console.log("📤 DONNÉES ENVOYÉES AU BACKEND:", JSON.stringify(formDataLog, null, 2));
+        await apiFetch<any>("/generic-import", {
           method: 'POST',
           body: formData,
           snackbar: { showSuccess: false, showError: false },
         });
+        // Réinitialisation du formulaire — succès/erreurs métier arrivent via WebSocket
+        setCsvFile(null);
+        setCsvHeaders([]);
+        setConfirmReplaceOpen(false);
+        setConfirmReplaceInput("");
+        setPendingMappingId(null);
       } catch (apiError: unknown) {
-        console.error("Erreur API capturée:", apiError);
-        
-        let mappedErrors: ValidationError[] = [];
-        
+        // Erreurs HTTP immédiates uniquement (réseau, auth, 400 du controller...)
         if (apiError instanceof ApiError) {
-          if (apiError.details?.code === 'MAPPING_MISMATCH') {
-            mappedErrors = [{
-              line: 0,
-              column: 'N/A',
-              value: '',
-              reason: "Le fichier ne correspond pas au mapping sélectionné. Les colonnes de votre fichier ne correspondent pas aux colonnes attendues par le mapping.",
-              message: "Le fichier ne correspond pas au mapping sélectionné."
-            }];
-          } else {
-            mappedErrors = [{
-              line: 0,
-              column: 'N/A',
-              value: '',
-              reason: apiError.details?.message || apiError.message,
-              message: apiError.details?.message || apiError.message
-            }];
-          }
-        } else if (apiError instanceof Error) {
-          mappedErrors = [{
-            line: 0,
-            column: 'N/A',
-            value: '',
-            reason: apiError.message,
-            message: apiError.message
-          }];
-        }
-        
-        if (mappedErrors.length > 0) {
-          setValidationErrors(mappedErrors);
-          setValidationModalOpen(true);
-        }
-        await fetchHistory();
-        setHistoryOpen(true); 
-        return;
-      }
-
-      console.log("Résultat de l'import:", importResult);
-
-      if (importResult && importResult.success === false) {
-        if (importResult.errors && Array.isArray(importResult.errors) && importResult.errors.length > 0) {
-          const mappedErrors: ValidationError[] = importResult.errors.map((err: any) => ({
-            line: err.line || 0,
-            column: err.column || 'N/A',
-            value: err.value || '',
-            reason: err.reason || err.message || 'Erreur inconnue',
-            message: err.reason || err.message
-          }));
-          
-          setValidationErrors(mappedErrors);
-          setValidationModalOpen(true);
-        } else if (importResult.message) {
           setValidationErrors([{
-            line: 0,
-            column: 'N/A',
-            value: '',
-            reason: importResult.message,
-            message: importResult.message
+            line: 0, column: 'N/A', value: '',
+            reason: apiError.message,
+            message: apiError.message,
           }]);
-          setValidationModalOpen(true);
+        } else if (apiError instanceof Error) {
+          setValidationErrors([{
+            line: 0, column: 'N/A', value: '',
+            reason: apiError.message,
+            message: apiError.message,
+          }]);
         }
-         await fetchHistory();
-        setHistoryOpen(true);
-        return;
+        setValidationModalOpen(true);
       }
-
-      if (importResult && importResult.success === true) {
-  // Récupérer le nom de l'entité pour le message de succès
-  let entityName = '';
-  try {
-    if (entityType === 'Company') {
-      const company = await apiFetch<{ name: string }>(
-        `/companies/${entityId}`,
-        { snackbar: { showSuccess: false, showError: false } }
-      );
-      entityName = company.name;
-    } else {
-      const group = await apiFetch<{ name: string }>(
-        `/groups/${entityId}`,
-        { snackbar: { showSuccess: false, showError: false } }
-      );
-      entityName = group.name;
-    }
-  } catch {
-    entityName = entityId;
-  }
-
-  // Afficher le message de succès
-  const linesCount = importResult.linesCount || importResult.count || 0;
-  setSuccessMessage(`✅ Import réussi pour ${entityName}`);
-  setSuccessDetails({
-    linesCount: linesCount,
-    fileName: fileToUse.name,
-    entityName: entityName,
-  });
-
-  // Masquer automatiquement après 6 secondes
-  setTimeout(() => {
-    setSuccessMessage(null);
-    setSuccessDetails(null);
-  }, 6000);
-
-  setConfirmReplaceOpen(false);
-  setConfirmReplaceInput("");
-  setPendingMappingId(null);
-  setCsvFile(null);
-  setCsvHeaders([]);
-  setValidationErrors([]);
-  setValidationModalOpen(false);
-  await new Promise(resolve => setTimeout(resolve, 500));
-  await fetchHistory();
-  setHistoryOpen(true);
-}
+      // ─────────────────────────────────────────────────────
 
     } catch (error: any) {
       console.error("Erreur inattendue:", error);
       setValidationErrors([{
-        line: 0,
-        column: 'N/A',
-        value: '',
+        line: 0, column: 'N/A', value: '',
         reason: error.message || 'Erreur inconnue',
         message: error.message || 'Erreur inconnue'
       }]);
@@ -533,14 +582,12 @@ export default function ImportPage() {
     const headers = await parseHeaders(f);
     setCsvHeaders(headers);
     const initialMapping: Record<string, string> = {};
-    //  Créer le mapping automatique (mais ne pas ouvrir le modal tout de suite)
     headers.forEach((h) => {
       const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
       initialMapping[h] = match ? match.name : "";
     });
     setMapping(initialMapping);
 
-    // Ouvrir le modal pour choisir entre mapping existant ou nouveau
     setSavedMappingModalOpen(true);
   }, []);
 
@@ -608,19 +655,27 @@ export default function ImportPage() {
       const fileToUse = pendingFile;
       const entityId = selectedEntityId;
       const entityType = selectedEntityType;
-
+      // --- 1. Vérification granulaire des pré-requis ---
       if (!fileToUse || !entityId || !entityType) {
+        let errorMessage = "";
+        
+        if (!fileToUse && (!entityId || !entityType)) {
+          errorMessage = "Veuillez sélectionner une entité et un fichier avant d'importer.";
+        } else if (!fileToUse) {
+          errorMessage = "Veuillez sélectionner un fichier avant d'importer.";
+        } else {
+          errorMessage = "Veuillez sélectionner une entité avant d'importer.";
+        }
         setValidationErrors([{
-          line: 0,
-          column: 'N/A',
-          value: '',
-          reason: "Veuillez sélectionner une entité et un fichier avant d'importer.",
-          message: "Veuillez sélectionner une entité et un fichier avant d'importer."
-        }]);
-        setValidationModalOpen(true);
-        return;
-      }
-
+        line: 0,
+        column: 'N/A',
+        value: '',
+        reason: errorMessage,
+        message: errorMessage
+      }]);
+      setValidationModalOpen(true);
+      return;
+    }
       const newMapping: Record<string, string> = {};
       csvHeaders.forEach((h) => {
         newMapping[h] = savedMapping.rules[h] ??
@@ -628,19 +683,12 @@ export default function ImportPage() {
       });
       setMapping(newMapping);
 
-      const hasData = await checkEntityHasData(entityId, entityType);
-      if (hasData) {
-        setPendingMappingId(savedMapping.id);
-        setConfirmReplaceOpen(true);
-        return;
-      }
-
       await performImport(savedMapping.id, fileToUse, entityId, entityType);
     } catch (error) {
       console.error("Erreur dans handleSelectSavedMapping:", error);
-      
+
       let mappedErrors: ValidationError[] = [];
-      
+
       if (error instanceof ApiError) {
         if (error.details?.code === 'MAPPING_MISMATCH') {
           mappedErrors = [{
@@ -668,7 +716,7 @@ export default function ImportPage() {
           message: error.message
         }];
       }
-      
+
       if (mappedErrors.length > 0) {
         setValidationErrors(mappedErrors);
         setValidationModalOpen(true);
@@ -677,78 +725,44 @@ export default function ImportPage() {
   };
 
   const handleConfirmReplace = async () => {
-    if (!csvFile) {
-      setValidationErrors([{
-        line: 0,
-        column: 'N/A',
-        value: '',
-        reason: "Veuillez d'abord sélectionner un fichier.",
-        message: "Veuillez d'abord sélectionner un fichier."
-      }]);
-      setValidationModalOpen(true);
-      return;
-    }
+  if (!csvFile) {
+    setValidationErrors([{
+      line: 0, column: 'N/A', value: '',
+      reason: "Veuillez d'abord sélectionner un fichier.",
+      message: "Veuillez d'abord sélectionner un fichier."
+    }]);
+    setValidationModalOpen(true);
+    return;
+  }
 
-    if (!selectedEntityId || !selectedEntityType) {
-      setValidationErrors([{
-        line: 0,
-        column: 'N/A',
-        value: '',
-        reason: "Veuillez sélectionner une entité (Groupe ou Entreprise) avant d'importer.",
-        message: "Veuillez sélectionner une entité (Groupe ou Entreprise) avant d'importer."
-      }]);
-      setValidationModalOpen(true);
-      return;
-    }
+  if (!selectedEntityId || !selectedEntityType) {
+    setValidationErrors([{
+      line: 0, column: 'N/A', value: '',
+      reason: "Veuillez sélectionner une entité avant d'importer.",
+      message: "Veuillez sélectionner une entité avant d'importer."
+    }]);
+    setValidationModalOpen(true);
+    return;
+  }
 
-    setIsSubmitting(true);
-
-    try {
-      const hasData = await checkEntityHasData(selectedEntityId, selectedEntityType);
-      
-      if (hasData) {
-        setConfirmReplaceOpen(true);
-        setIsSubmitting(false);
-        return;
-      }
-
-      await performImport();
-    } catch (error) {
-      console.error("Erreur dans handleConfirmReplace:", error);
-      
-      let mappedErrors: ValidationError[] = [];
-      
-      if (error instanceof ApiError) {
-        mappedErrors = [{
-          line: 0,
-          column: 'N/A',
-          value: '',
-          reason: error.details?.message || error.message,
-          message: error.details?.message || error.message
-        }];
-      } else if (error instanceof Error) {
-        mappedErrors = [{
-          line: 0,
-          column: 'N/A',
-          value: '',
-          reason: error.message,
-          message: error.message
-        }];
-      }
-      
-      if (mappedErrors.length > 0) {
-        setValidationErrors(mappedErrors);
-        setValidationModalOpen(true);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // ← PLUS de checkEntityHasData ici, on fait confiance au state hasData
+  // Si hasData est true et période non renseignée, performImport le bloquera
+  await performImport();
+};
 
   const handleImport = () => {
-    setMappingOpen(false);
-    handleConfirmReplace();
-  };
+  if (hasData === true && (!periodStart || !periodEnd)) {
+    setValidationErrors([{
+      line: 0, column: 'N/A', value: '',
+      reason: "Cette entité a des données existantes. Veuillez sélectionner une période de remplacement avant d'importer.",
+      message: "Période de remplacement obligatoire."
+    }]);
+    setValidationModalOpen(true);
+    return;
+  }
+  setMappingOpen(false);
+  handleConfirmReplace();
+};
 
   return (
     <AppLayout
@@ -760,17 +774,17 @@ export default function ImportPage() {
       <Head>
         <title>Import</title>
       </Head>
-      {successMessage && (
-      <Toast
-        message={successMessage}
-        type="success"
-        details={successDetails || undefined}
-        onClose={() => {
-          setSuccessMessage(null);
-          setSuccessDetails(null);
-        }}
-      />
-    )}
+      <ImportSuccessModal
+  open={successModalOpen}
+  onOpenChange={setSuccessModalOpen}
+  title={successTitle}
+  totalProcessed={successDetails?.totalProcessed}
+  skippedLines={successDetails?.skippedLines}
+  newFiscalYearsCount={successDetails?.newFiscalYearsCount}
+  fiscalYears={successDetails?.fiscalYears}
+  dataImports={successDetails?.dataImports}
+  simpleMessage={successSimpleMessage}
+/>
 
       <div className="space-y-8">
         <div>
@@ -786,13 +800,22 @@ export default function ImportPage() {
             </div>
           </div>
         </div>
-        
+        <ImportGuide /> 
+
         <EntitySelector
           selectedEntityId={selectedEntityId}
           selectedEntityType={selectedEntityType}
           onEntityChange={handleEntityChange}
           disabled={isEndUser}
+          periodStart={periodStart}
+          periodEnd={periodEnd}
+          onPeriodChange={(start, end) => { setPeriodStart(start); setPeriodEnd(end); }}
+          hasData={hasData}
+          onHasDataChange={setHasData}
+          includeDescendants={includeDescendants}           
+          onIncludeDescendantsChange={setIncludeDescendants} 
         />
+        
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -811,7 +834,7 @@ export default function ImportPage() {
                 variant="outline"
                 className="w-full gap-2 sm:w-auto"
                 onClick={() => setMappingOpen(true)}
-                disabled={isEndUser}        // ← ajoute
+                disabled={isEndUser}
                 title={isEndUser ? "Accès restreint" : undefined}
               >
                 <Settings className="h-4 w-4" />
@@ -833,6 +856,7 @@ export default function ImportPage() {
               onDragLeave={handleDragLeave}
               onFileInput={handleFileInput}
               disabled={isEndUser}
+              fileName={csvFile?.name}
             />
           </TabsContent>
 
@@ -855,8 +879,8 @@ export default function ImportPage() {
             void router.push(`/import/entries?file=${encodeURIComponent(row.file)}`);
           }}
           disabled={isEndUser}
-          currentUserEmail={currentUser?.email}   
-          isManager={isManager}  
+          currentUserEmail={currentUser?.email}
+          isManager={isManager}
         />
       </div>
 
@@ -874,8 +898,31 @@ export default function ImportPage() {
         showImportButton={!!csvFile}
         onFileUpload={handleFileUpload}
         workspaceId={workspaceId}
+        hasData={hasData}
+        periodStart={periodStart}
+        periodEnd={periodEnd}
+        onSaveSuccess={(title, message) => {
+        setSuccessTitle(title);
+        setSuccessDetails(null);
+        setSuccessSimpleMessage(message);
+        setSuccessModalOpen(true);
+      }}
+      onSaveError={(message) => {
+        setValidationErrors([{
+          line: 0, column: 'N/A', value: '',
+          reason: message,
+          message,
+        }]);
+        setValidationModalOpen(true);
+      }}
+      onDeleteSuccess={(mappingName) => {
+        setSuccessTitle("Mapping supprimé ✅");
+        setSuccessDetails(null);
+        setSuccessSimpleMessage(`Le mapping « ${mappingName} » a été supprimé avec succès.`);
+        setSuccessModalOpen(true);
+      }}
       />
-      
+
       <SavedMappingModal
         open={savedMappingModalOpen}
         onOpenChange={setSavedMappingModalOpen}
@@ -904,24 +951,24 @@ export default function ImportPage() {
         onOpenChange={setRollbackConfirmOpen}
         target={rollbackTarget}
         onConfirm={async () => {
-        if (!rollbackTarget) return;
-        try {
-          await apiFetch("/generic-import/restore", {
-            method: "POST",
-            body: JSON.stringify({
-              dataImportId: rollbackTarget.id,
-              entityId: rollbackTarget.entityId,
-              entityType: rollbackTarget.entityType,
-            }),
-            snackbar: { showSuccess: true, showError: true, successMessage: "✅ Import restauré avec succès !" },
-          });
-          await fetchHistory();
-        } catch (err) {
-          console.error("Erreur restauration:", err);
-        }
-        setRollbackConfirmOpen(false);
-        setRollbackTarget(null);
-      }}
+          if (!rollbackTarget) return;
+          try {
+            await apiFetch("/generic-import/restore", {
+              method: "POST",
+              body: JSON.stringify({
+                dataImportId: rollbackTarget.id,
+                entityId: rollbackTarget.entityId,
+                entityType: rollbackTarget.entityType,
+              }),
+              snackbar: { showSuccess: true, showError: true, successMessage: "✅ Import restauré avec succès !" },
+            });
+            await fetchHistory();
+          } catch (err) {
+            console.error("Erreur restauration:", err);
+          }
+          setRollbackConfirmOpen(false);
+          setRollbackTarget(null);
+        }}
       />
     </AppLayout>
   );
