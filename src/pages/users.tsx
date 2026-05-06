@@ -593,43 +593,45 @@ export default function UsersPage() {
             />
 
             {/* Table */}
-            <div className="rounded-xl border border-primary/40! bg-primary/10 shadow-sm">
+            <div className="nebula-glass rounded-3xl overflow-hidden border border-white/10">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/40! border-t-primary" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-(--nebula-gold-light)" />
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="py-16 text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50"><Users className="h-6 w-6 text-slate-300" /></div>
-                  <h3 className="text-sm font-medium text-slate-900">Aucun utilisateur trouv&eacute;</h3>
-                  <p className="mt-1 text-sm text-slate-500">{search || roleFilter || statusFilter ? "Essayez de modifier vos filtres." : "Invitez votre premier utilisateur."}</p>
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 border border-white/10">
+                    <Users className="h-6 w-6 text-white/40" />
+                  </div>
+                  <h3 className="text-sm font-medium text-white">Aucun utilisateur trouv&eacute;</h3>
+                  <p className="mt-1 text-sm text-(--nebula-muted)">{search || roleFilter || statusFilter ? "Essayez de modifier vos filtres." : "Invitez votre premier utilisateur."}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
-                      <tr className="border-b border-primary/40! bg-primary/10 hover:bg-primary/10">
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Utilisateur</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">R&ocirc;le</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Statut</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Cr&eacute;&eacute; le</th>
-                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider">Actions</th>
+                      <tr className="border-b border-white/10 bg-white/5">
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Utilisateur</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">R&ocirc;le</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Statut</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Cr&eacute;&eacute; le</th>
+                        <th className="px-6 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-primary/40!">
+                    <tbody className="divide-y divide-white/10">
                       {filtered.map((u) => {
                         const isProtectedSuperAdmin =
                           u.role === "SUPER_ADMIN" && currentUser?.role === "ADMIN";
                         return (
-                          <tr key={u.id} className="group transition-colors hover:bg-primary/5">
+                          <tr key={u.id} className="group transition-colors hover:bg-white/5">
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/15 text-sm font-semibold text-white">
                                   {(u.firstName?.[0] || u.email[0]).toUpperCase()}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium text-primary">{u.firstName || u.lastName ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "\u2014"}</p>
-                                  <p className="text-xs">{u.email}</p>
+                                  <p className="text-sm font-medium text-white">{u.firstName || u.lastName ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "\u2014"}</p>
+                                  <p className="text-xs text-(--nebula-muted)">{u.email}</p>
                                 </div>
                               </div>
                             </td>
@@ -650,7 +652,7 @@ export default function UsersPage() {
                               <div className="flex justify-end">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg opacity-100 transition-all hover:bg-white hover:text-slate-900 hover:shadow-sm">
+                                    <button type="button" className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center">
                                       <MoreHorizontal className="h-4 w-4" />
                                     </button>
                                   </DropdownMenuTrigger>
@@ -689,7 +691,7 @@ export default function UsersPage() {
                                               setDeleteTarget(u);
                                               setDeleteOpen(true);
                                             }}
-                                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                            className="text-white focus:text-white"
                                           >
                                             <Trash2 className="mr-2 h-4 w-4" /> Supprimer
                                           </DropdownMenuItem>
@@ -708,7 +710,7 @@ export default function UsersPage() {
                                       <DropdownMenuItem
                                         onClick={() => handleImpersonate(u)}
                                         disabled={impersonateLoadingId === u.id}
-                                        className="text-indigo-600 focus:text-indigo-600 focus:bg-indigo-50"
+                                        className="text-white focus:text-white"
                                       >
                                         {impersonateLoadingId === u.id ? (
                                           <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 
@@ -782,31 +784,31 @@ export default function UsersPage() {
             />
 
             {/* Pending Invitations Table */}
-            <div className="rounded-xl border border-primary/40! bg-primary/10 shadow-sm">
+            <div className="nebula-glass rounded-3xl overflow-hidden border border-white/10">
               {invLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/40! border-t-primary" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-(--nebula-gold-light)" />
                 </div>
               ) : pendingInv.length === 0 ? (
                 <div className="py-16 text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50"><Send className="h-6 w-6 text-slate-300" /></div>
-                  <h3 className="text-sm font-medium text-slate-900">Aucune invitation en attente</h3>
-                  <p className="mt-1 text-sm text-slate-500">{invSearch || invStatusFilter ? "Essayez de modifier vos filtres." : "Toutes les invitations ont \u00e9t\u00e9 trait\u00e9es."}</p>
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 border border-white/10"><Send className="h-6 w-6 text-white/40" /></div>
+                  <h3 className="text-sm font-medium text-white">Aucune invitation en attente</h3>
+                  <p className="mt-1 text-sm text-(--nebula-muted)">{invSearch || invStatusFilter ? "Essayez de modifier vos filtres." : "Toutes les invitations ont \u00e9t\u00e9 trait\u00e9es."}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
-                      <tr className="border-b border-primary/40! bg-primary/10 hover:bg-primary/10">
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Email</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">R&ocirc;le</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Statut</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">P&eacute;rim&egrave;tre</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Expire le</th>
-                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider">Actions</th>
+                      <tr className="border-b border-white/10 bg-white/5">
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Email</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">R&ocirc;le</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Statut</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">P&eacute;rim&egrave;tre</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Expire le</th>
+                        <th className="px-6 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-primary/40!">
+                    <tbody className="divide-y divide-white/10">
                       {pendingInv.map((inv) => {
                         const invitedUser = users.find(
                           (u) => u.email.toLowerCase() === inv.email.toLowerCase(),
@@ -815,10 +817,10 @@ export default function UsersPage() {
                           invitedUser && invitedUser.status === "PENDING";
 
                         return (
-                          <tr key={inv.id} className="group transition-colors hover:bg-primary/5">
+                          <tr key={inv.id} className="group transition-colors hover:bg-white/5">
                             <td className="px-6 py-4">
-                              <p className="text-sm font-medium text-primary">{inv.email}</p>
-                              <p className="text-xs">Envoy&eacute; le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
+                              <p className="text-sm font-medium text-white">{inv.email}</p>
+                              <p className="text-xs text-(--nebula-muted)">Envoy&eacute; le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
                             </td>
                             <td className="px-6 py-4">
                               {inv.role && (
@@ -843,14 +845,14 @@ export default function UsersPage() {
                                 {invitationStatusLabel(inv.status)}
                               </Badge>
                               {inv.status === "PENDING" && isExpired(inv) && (
-                                <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-600">Expir&eacute;e</span>
+                                <span className="ml-2 rounded-full bg-white/10 border border-white/15 px-2 py-0.5 text-[10px] font-medium text-white">Expir&eacute;e</span>
                               )}
                             </td>
                             <td className="px-6 py-4">
                               {inv.dataPerimeter && inv.dataPerimeter.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
                                   {inv.dataPerimeter.map((dp, i) => (
-                                    <span key={i} className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                                    <span key={i} className="rounded-full bg-white/10 border border-white/15 px-2 py-0.5 text-[10px] font-medium text-(--nebula-muted)">
                                       {nodeTypeLabelFr(dp.nodeType)}
                                     </span>
                                   ))}
@@ -869,20 +871,20 @@ export default function UsersPage() {
                                     <button
                                       type="button"
                                       onClick={() => handleAccept(inv)}
-                                      className="flex h-8 items-center gap-1 rounded-lg bg-emerald-50 px-3 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
+                                      className="flex h-8 items-center gap-1 rounded-xl bg-white/5 border border-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/10"
                                     >
                                       <Check className="h-3.5 w-3.5" /> Accepter
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => handleReject(inv)}
-                                      className="flex h-8 items-center gap-1 rounded-lg bg-red-50 px-3 text-xs font-medium text-red-600 transition hover:bg-red-100"
+                                      className="flex h-8 items-center gap-1 rounded-xl bg-white/5 border border-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/10"
                                     >
                                       <XCircle className="h-3.5 w-3.5" /> Rejeter
                                     </button>
                                   </>
                                 ) : (
-                                  <span className="text-xs">
+                                  <span className="text-xs text-(--nebula-muted)">
                                     {invitedUser
                                       ? `Utilisateur déjà ${statusLabel(invitedUser.status)}`
                                       : "L'utilisateur n'a pas encore utilis\u00e9 l'invitation"}
@@ -901,24 +903,24 @@ export default function UsersPage() {
 
             {/* Archived Invitations (non-pending) */}
             {archivedInv.length > 0 && (
-              <div className="mt-6 rounded-xl border border-primary/40! bg-primary/10 shadow-sm p-4">
-                <h4 className="mb-3 text-sm font-semibold text-primary">Invitations archivées</h4>
+              <div className="mt-6 nebula-glass rounded-3xl overflow-hidden border border-white/10 p-6">
+                <h4 className="mb-3 text-sm font-semibold text-white">Invitations archivées</h4>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-xs">
                     <thead>
-                      <tr className="border-b border-primary/40! bg-primary/10 hover:bg-primary/10">
-                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider">Email</th>
-                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider">R&ocirc;le</th>
-                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider">Statut</th>
-                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider">Expire le</th>
+                      <tr className="border-b border-white/10 bg-white/5">
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Email</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">R&ocirc;le</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Statut</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Expire le</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-primary/40!">
+                    <tbody className="divide-y divide-white/10">
                       {archivedInv.map((inv) => (
-                        <tr key={inv.id} className="bg-primary/5">
+                        <tr key={inv.id} className="transition-colors hover:bg-white/5">
                           <td className="px-4 py-2">
-                            <p className="text-sm font-medium">{inv.email}</p>
-                            <p className="text-[11px]">Envoy\u00e9 le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
+                            <p className="text-sm font-medium text-white">{inv.email}</p>
+                            <p className="text-[11px] text-(--nebula-muted)">Envoy\u00e9 le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
                           </td>
                           <td className="px-4 py-2">
                             {inv.role && (

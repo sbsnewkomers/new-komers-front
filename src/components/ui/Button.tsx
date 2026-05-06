@@ -11,7 +11,7 @@ const variants = {
   ghost:
     "bg-linear border border-white/10 hover:bg-white/10 text-white",
   outline:
-    "text-primary border-primary! border-[0.2px]! nebula-glow hover:nebula-glow-soft transition-transform",
+    "text-primary! border-primary! border-[0.2px]! nebula-glow hover:nebula-glow-soft transition-transform",
   destructive:
     "bg-linear-to-r from-(--nebula-gold) to-(--nebula-gold-deep) text-white nebula-glow hover:nebula-glow-soft transition-transform",
 };
