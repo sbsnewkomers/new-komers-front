@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { loansApi } from '@/lib/loansApi';
 import { entitiesApi } from '@/lib/entitiesApi';
-import { Loan, EntityType, ImportPreviewDto, ColumnMappingDto, ImportFileFormat, ImportResultDto } from '@/types/loans';
+import { Loan, EntityType, ImportPreviewDto, ColumnMappingDto, ImportFileFormat, ImportResultDto, LoanInputMethod } from '@/types/loans';
 
 interface UseImportLoanEditProps {
     loanId: string;
@@ -65,11 +65,6 @@ export function useImportLoanEdit({ loanId }: UseImportLoanEditProps) {
                 setIsLoading(true);
                 const loanData = await loansApi.getLoan(loanId);
 
-                // Verify it's an import loan
-                if (loanData.inputMethod !== 'IMPORT') {
-                    setError('Ce composant ne peut être utilisé qu\'avec les prêts créés par import');
-                    return;
-                }
 
                 setLoan(loanData);
                 setLoanName(loanData.name);
@@ -149,27 +144,10 @@ export function useImportLoanEdit({ loanId }: UseImportLoanEditProps) {
         }
     };
 
-    // Process column mapping
+    // Process column mapping - go to preview step first
     const handleColumnMappingSubmit = async (mapping: ColumnMappingDto[]) => {
-        if (!importId) return;
-
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            // Use the proper API method for update processing
-            const data = await loansApi.processUpdateImport({
-                importId,
-                columnMapping: mapping,
-                targetLoanId: loanId,
-            });
-            setImportResult(data);
-            setCurrentStep(3);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erreur lors du traitement du mapping');
-        } finally {
-            setIsLoading(false);
-        }
+        setColumnMapping(mapping);
+        setCurrentStep(3);
     };
 
     // Save loan with updated information
@@ -185,25 +163,35 @@ export function useImportLoanEdit({ loanId }: UseImportLoanEditProps) {
             throw new Error('Veuillez corriger les erreurs de validation');
         }
 
-        if (!importResult || importResult.status !== 'COMPLETED') {
-            throw new Error('L\'import n\'a pas été complété avec succès');
-        }
-
         setIsSaving(true);
 
         try {
-            // Update loan basic information if changed
-            const updateData: Record<string, unknown> = {};
+            // Process the import first if not already processed
+            if (!importResult && importId && columnMapping.length > 0) {
+                const data = await loansApi.processUpdateImport({
+                    importId,
+                    columnMapping: columnMapping,
+                    targetLoanId: loanId,
+                });
+                setImportResult(data);
+
+                if (data.status !== 'COMPLETED') {
+                    throw new Error('L\'import n\'a pas été complété avec succès');
+                }
+            } else if (!importResult || importResult.status !== 'COMPLETED') {
+                throw new Error('L\'import n\'a pas été complété avec succès');
+            }
+
+            // Use standard API for ALL loans edited via import method
+            // Always set inputMethod to IMPORT when editing via import method
+            const updateData: Record<string, unknown> = {
+                inputMethod: LoanInputMethod.IMPORT,
+            };
             if (loanName !== loan.name) updateData.name = loanName;
             if (selectedEntityType !== loan.entityType) updateData.entityType = selectedEntityType;
             if (selectedEntityId !== loan.entityId) updateData.entityId = selectedEntityId;
 
-            let updatedLoan = loan;
-
-            // Only make API call if there are changes to basic info
-            if (Object.keys(updateData).length > 0) {
-                updatedLoan = await loansApi.updateLoan(loanId, updateData);
-            }
+            const updatedLoan = await loansApi.updateLoan(loanId, updateData);
 
             return updatedLoan;
         } finally {

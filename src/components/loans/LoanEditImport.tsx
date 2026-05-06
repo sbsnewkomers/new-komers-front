@@ -58,10 +58,11 @@ export function LoanEditImport({ loanId, onBack, onLoanUpdated }: LoanEditImport
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleViewLoan = (_loanId: string) => {
-        // Navigate back to the loan view
-        onBack();
+    const handleViewLoan = () => {
+        // Navigate to loan details view
+        if (loan) {
+            onLoanUpdated(loan);
+        }
     };
 
     const handleSaveLoan = async () => {
@@ -204,7 +205,7 @@ export function LoanEditImport({ loanId, onBack, onLoanUpdated }: LoanEditImport
             )}
 
             {/* Step 3: Preview and Confirmation */}
-            {currentStep === 3 && importResult && (
+            {currentStep === 3 && (
                 <PreviewStep
                     loanName={loanName}
                     selectedEntityId={selectedEntityId}
