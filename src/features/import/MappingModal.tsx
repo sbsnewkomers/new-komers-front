@@ -546,6 +546,7 @@ useEffect(() => {
         ]);
         setSaveAsNewDialogOpen(false);
         setShowMappingDetail(false);
+        onOpenChange(false); 
         // Afficher le feedback dans la modal principale
         setTab("editor");
         setFeedback({
