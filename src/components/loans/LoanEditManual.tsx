@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { ManualEntryHeader } from './manual/ManualEntryHeader';
 import { LoanInformationForm } from './manual/LoanInformationForm';
 import { SummaryStats } from './manual/SummaryStats';
 import { InstallmentsTable } from './manual/InstallmentsTable';
@@ -11,7 +10,7 @@ import { Loan } from '@/types/loans';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Label } from '@/components/ui/Label';
-import { AlertTriangle, ArrowLeft, Loader2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Loader2, Pencil } from 'lucide-react';
 
 interface LoanEditManualProps {
     loanId: string;
@@ -114,7 +113,30 @@ export function LoanEditManual({ loanId, onBack, onLoanUpdated }: LoanEditManual
 
     return (
         <div className="space-y-6">
-            <ManualEntryHeader onBack={onBack} />
+            {/* Header */}
+            <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={onBack}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                        aria-label="Retour"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
+                            <Pencil className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-base font-semibold text-slate-900">
+                                Modification manuelle
+                            </h3>
+                            <p className="text-xs text-slate-500">{loan?.name}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             {/* Warning for paid installments */}
             {hasPaidInstallments && (

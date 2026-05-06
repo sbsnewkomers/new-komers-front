@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { loansApi } from '@/lib/loansApi';
 import { entitiesApi } from '@/lib/entitiesApi';
-import { Loan, EntityType, UpdateManualLoanDto } from '@/types/loans';
+import { Loan, EntityType, UpdateManualLoanDto, LoanInputMethod } from '@/types/loans';
 import { EditableInstallment, LoanTotals, validateDateSequence } from '../utils';
 
 interface UseManualLoanEditProps {
@@ -64,11 +64,6 @@ export function useManualLoanEdit({ loanId }: UseManualLoanEditProps) {
                 setIsLoading(true);
                 const loanData = await loansApi.getLoan(loanId);
 
-                // Verify it's a manual loan
-                if (loanData.inputMethod !== 'MANUAL') {
-                    setError('Ce composant ne peut être utilisé qu\'avec les prêts créés manuellement');
-                    return;
-                }
 
                 setLoan(loanData);
                 setLoanName(loanData.name);
@@ -80,18 +75,21 @@ export function useManualLoanEdit({ loanId }: UseManualLoanEditProps) {
 
                 // Convert existing installments to update format
                 if (loanData.installments && loanData.installments.length > 0) {
-                    const convertedInstallments: EditableInstallment[] = loanData.installments.map(inst => ({
-                        id: inst.id,
-                        installmentNumber: inst.installmentNumber,
-                        dueDate: inst.dueDate,
-                        principalPayment: Number(inst.principalPayment) || 0,
-                        interestPayment: Number(inst.interestPayment) || 0,
-                        insurancePayment: Number(inst.insurancePayment) || 0,
-                        totalPayment: Number(inst.totalPayment) || 0,
-                        remainingBalance: Number(inst.remainingBalance) || 0,
-                        comments: undefined, // Existing installments might not have comments
-                        isNew: false,
-                    }));
+                    const convertedInstallments: EditableInstallment[] = loanData.installments
+                        .map(inst => ({
+                            id: inst.id,
+                            installmentNumber: inst.installmentNumber,
+                            dueDate: inst.dueDate,
+                            principalPayment: Number(inst.principalPayment) || 0,
+                            interestPayment: Number(inst.interestPayment) || 0,
+                            insurancePayment: Number(inst.insurancePayment) || 0,
+                            totalPayment: Number(inst.totalPayment) || 0,
+                            remainingBalance: Number(inst.remainingBalance) || 0,
+                            comments: undefined, // Existing installments might not have comments
+                            isNew: false,
+                        }))
+                        .sort((a, b) => a.installmentNumber - b.installmentNumber); // Sort by installment number
+
                     setInstallments(convertedInstallments);
                     setHasExistingInstallments(true);
 
@@ -406,10 +404,13 @@ export function useManualLoanEdit({ loanId }: UseManualLoanEditProps) {
         setIsSaving(true);
 
         try {
+            // Use manual loan API for ALL loans edited via manual method
+            // This ensures proper handling of installments regardless of original creation method
             const updateData: UpdateManualLoanDto = {
                 name: loanName !== loan.name ? loanName : undefined,
                 entityType: selectedEntityType !== loan.entityType ? selectedEntityType : undefined,
                 entityId: selectedEntityId !== loan.entityId ? selectedEntityId : undefined,
+                inputMethod: LoanInputMethod.MANUAL, // Always set to MANUAL when editing via manual method
                 // Only include installments if we're actually modifying them and there are no paid installments
                 installments: (!hasPaidInstallments && isModifyingInstallments) ? installments : undefined,
                 confirmInstallmentsRegeneration: (!hasPaidInstallments && hasExistingInstallments && isModifyingInstallments) ? confirmRegeneration : undefined,
@@ -418,7 +419,7 @@ export function useManualLoanEdit({ loanId }: UseManualLoanEditProps) {
             const updatedLoan = await loansApi.updateManualLoan(loanId, updateData, {
                 snackbar: {
                     showSuccess: true,
-                    successMessage: 'Prêt manuel modifié avec succès',
+                    successMessage: 'Prêt modifié avec succès',
                     showError: true,
                 },
             });
