@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { Badge, type BadgeVariant } from '@/components/ui/Badge';
 import {
     ArrowLeft,
@@ -18,6 +19,7 @@ import {
     Check,
     X,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { Loan, LoanStatistics, InstallmentStatus } from '@/types/loans';
 import { entitiesApi } from '@/lib/entitiesApi';
 import { loansApi } from '@/lib/loansApi';
@@ -132,6 +134,7 @@ export function LoanDetails({
     const [entityName, setEntityName] = useState<string>('');
     const [creatorName, setCreatorName] = useState<string>('');
     const [loading, setLoading] = useState<string | null>(null);
+    const [selectedInstallments, setSelectedInstallments] = useState<Set<string>>(new Set());
     const { user } = usePermissionsContext();
     const canManage = user?.role !== 'END_USER';
 
@@ -208,6 +211,112 @@ export function LoanDetails({
             });
         } finally {
             setLoading(null);
+        }
+    };
+
+    const handleToggleSelection = (installmentId: string) => {
+        setSelectedInstallments(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(installmentId)) {
+                newSet.delete(installmentId);
+            } else {
+                newSet.add(installmentId);
+            }
+            return newSet;
+        });
+    };
+
+    const handleMarkSelectedAsPaid = async () => {
+        if (selectedInstallments.size === 0) return;
+
+        setLoading('batch');
+        try {
+            await Promise.all(
+                Array.from(selectedInstallments).map(installmentId =>
+                    loansApi.markInstallmentAsPaid(loan.id, installmentId)
+                )
+            );
+            setSelectedInstallments(new Set());
+            if (onLoanUpdate) onLoanUpdate();
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: `${selectedInstallments.size} échéance(s) marquée(s) comme payée(s) avec succès`,
+                variant: 'success',
+            });
+        } catch (error) {
+            console.error('Erreur lors du marquage multiple comme payé:', error);
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: 'Erreur lors du marquage comme payé',
+                variant: 'error',
+            });
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    const handleExportInstallments = async () => {
+        if (!loan.installments || loan.installments.length === 0) {
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: 'Aucune échéance à exporter',
+                variant: 'error',
+            });
+            return;
+        }
+
+        try {
+            // Trier les échéances par numéro
+            const sortedInstallments = [...loan.installments].sort((a, b) => a.installmentNumber - b.installmentNumber);
+
+            // Préparer les données pour l'export Excel avec le même format que le template
+            const headers = ['Date', 'Capital', 'Intérêts', 'Assurance'];
+            const rows = sortedInstallments.map(inst => [
+                // Format ISO pour les dates (YYYY-MM-DD) comme dans le template
+                new Date(inst.dueDate).toISOString().split('T')[0],
+                // Format décimal avec 2 décimales comme dans le template
+                (Number(inst.principalPayment) || 0).toFixed(2),
+                (Number(inst.interestPayment) || 0).toFixed(2),
+                (Number(inst.insurancePayment) || 0).toFixed(2)
+            ]);
+
+            // Créer le workbook et la worksheet
+            const wb = XLSX.utils.book_new();
+            const wsData = [headers, ...rows];
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+            // Ajouter la worksheet au workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Échéances');
+
+            // Générer le fichier Excel
+            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([excelBuffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8;'
+            });
+
+            // Télécharger le fichier
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `echeances_${loan.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Message de confirmation
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: 'Échéances exportées avec succès au format Excel',
+                variant: 'success',
+            });
+        } catch (err) {
+            console.error('Error exporting installments:', err);
+            const { emitSnackbar } = await import('@/ui/snackbarBus');
+            emitSnackbar({
+                message: 'Erreur lors de l\'export des échéances',
+                variant: 'error',
+            });
         }
     };
 
@@ -449,8 +558,8 @@ export function LoanDetails({
                             label="Total payé"
                             value={formatCurrencyPrecise(
                                 loanStats.totalInterestPaid +
-                                    loanStats.totalInsurancePaid +
-                                    loanStats.totalPrincipalPaid,
+                                loanStats.totalInsurancePaid +
+                                loanStats.totalPrincipalPaid,
                             )}
                             icon={CheckCircle2}
                         />
@@ -459,9 +568,9 @@ export function LoanDetails({
                             value={
                                 loan.principalAmount > 0
                                     ? formatPercentage(
-                                          (loanStats.totalPrincipalPaid / loan.principalAmount) *
-                                              100,
-                                      )
+                                        (loanStats.totalPrincipalPaid / loan.principalAmount) *
+                                        100,
+                                    )
                                     : '0%'
                             }
                             icon={TrendingUp}
@@ -481,16 +590,68 @@ export function LoanDetails({
                                 ({totalPaid}/{totalInstallments} payées)
                             </span>
                         </div>
+                        <div className="flex items-center gap-2">
+                            {canManage && selectedInstallments.size > 0 && (
+                                <span className="text-xs text-slate-600">
+                                    {selectedInstallments.size} sélectionnée(s)
+                                </span>
+                            )}
+                            <Button
+                                onClick={handleExportInstallments}
+                                size="sm"
+                                className="text-xs"
+                            >
+                                <FileText className="h-3 w-3 mr-1" />
+                                Exporter
+                            </Button>
+                            {canManage && selectedInstallments.size > 0 && (
+                                <Button
+                                    onClick={handleMarkSelectedAsPaid}
+                                    disabled={loading === 'batch'}
+                                    size="sm"
+                                    className="text-xs"
+                                >
+                                    {loading === 'batch' ? (
+                                        <>
+                                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent mr-1" />
+                                            Traitement...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Check className="h-3 w-3 mr-1" />
+                                            Marquer comme payé
+                                        </>
+                                    )}
+                                </Button>
+                            )}
+                        </div>
                     </div>
                     <div className="max-h-[520px] overflow-auto">
                         <table className="min-w-full">
                             <thead>
                                 <tr className="border-b border-slate-100 bg-slate-50/50">
+                                    {canManage && (
+                                        <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur" title="Sélectionner toutes les échéances non payées">
+                                            <Checkbox
+                                                checked={selectedInstallments.size > 0 && loan.installments!.every(inst => inst.isPaid || selectedInstallments.has(inst.id))}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setSelectedInstallments(new Set(loan.installments!.filter(inst => !inst.isPaid).map(inst => inst.id)));
+                                                    } else {
+                                                        setSelectedInstallments(new Set());
+                                                    }
+                                                }}
+                                            />
+                                        </th>
+                                    )}
                                     <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
                                         N°
                                     </th>
                                     <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
                                         Date
+                                    </th>
+                                    <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
+                                        Date de paiement
                                     </th>
                                     <th className="sticky top-0 bg-slate-50/95 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur">
                                         Capital
@@ -518,7 +679,7 @@ export function LoanDetails({
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {loan.installments.map((inst) => {
+                                {[...loan.installments].sort((a, b) => a.installmentNumber - b.installmentNumber).map((inst) => {
                                     const st = getInstallmentStatusDisplay(inst.status);
                                     const isLoadingThis = loading === inst.id;
                                     return (
@@ -526,11 +687,23 @@ export function LoanDetails({
                                             key={inst.id}
                                             className="transition-colors hover:bg-slate-50/50"
                                         >
+                                            {canManage && (
+                                                <td className="px-4 py-3">
+                                                    <Checkbox
+                                                        checked={selectedInstallments.has(inst.id)}
+                                                        onCheckedChange={() => handleToggleSelection(inst.id)}
+                                                        disabled={inst.isPaid}
+                                                    />
+                                                </td>
+                                            )}
                                             <td className="px-4 py-3 text-sm font-medium text-slate-900">
                                                 {inst.installmentNumber}
                                             </td>
                                             <td className="px-4 py-3 text-sm text-slate-600">
                                                 {formatDate(inst.dueDate)}
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-slate-600">
+                                                {inst.paymentDate ? formatDate(inst.paymentDate) : '-'}
                                             </td>
                                             <td className="px-4 py-3 text-right text-sm text-slate-700">
                                                 {formatCurrencyPrecise(inst.principalPayment)}

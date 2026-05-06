@@ -111,7 +111,7 @@ export default function LoansPage() {
         setActiveTab('list');
     };
 
-    const handleLoanUpdated = (updatedLoan: Loan) => {
+    const handleLoanUpdated = async (updatedLoan: Loan) => {
         if (!updatedLoan || !updatedLoan.id) {
             console.error('Invalid loan data received:', updatedLoan);
             return;
@@ -122,7 +122,8 @@ export default function LoansPage() {
         );
 
         if (selectedLoan?.id === updatedLoan.id) {
-            setSelectedLoan(updatedLoan);
+            // Reload loan details to get updated statistics and installments
+            await loadLoanDetails(updatedLoan.id);
         }
 
         setActiveTab('details');
@@ -240,7 +241,6 @@ export default function LoansPage() {
                             loanId={editingLoanId}
                             onBack={handleEditBack}
                             onLoanUpdated={handleLoanUpdated}
-                            onError={setError}
                         />
                     )}
 
