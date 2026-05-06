@@ -5,7 +5,7 @@ import { ArrowLeft, AlertTriangle, Loader2, FileSpreadsheet } from 'lucide-react
 import { Loan } from '@/types/loans';
 import { Button } from '@/components/ui/Button';
 import { useImportLoanEdit } from './import/hooks/useImportLoanEdit';
-import { StepIndicator } from './import/StepIndicator';
+import { StepIndicator } from '@/components/ui/StepIndicator';
 import { FileUploadStep } from './import/FileUploadStep';
 import { ColumnMappingStep } from './import/ColumnMappingStep';
 import { PreviewStep } from './import/PreviewStep';
@@ -19,6 +19,14 @@ interface LoanEditImportProps {
 
 export function LoanEditImport({ loanId, onBack, onLoanUpdated }: LoanEditImportProps) {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const steps = React.useMemo(
+        () => [
+            { n: 1, label: 'Fichier' },
+            { n: 2, label: 'Mapping' },
+            { n: 3, label: 'Résultat' },
+        ],
+        [],
+    );
 
     const {
         isLoading,
@@ -150,7 +158,7 @@ export function LoanEditImport({ loanId, onBack, onLoanUpdated }: LoanEditImport
             </div>
 
             {/* Step Indicator */}
-            <StepIndicator currentStep={currentStep} />
+            <StepIndicator currentStep={currentStep} steps={steps} />
 
             {/* Warning about import modification */}
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
