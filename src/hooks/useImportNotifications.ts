@@ -5,13 +5,40 @@ import type { Socket } from 'socket.io-client';
 interface ImportNotificationPayload {
   severity: 'success' | 'error' | 'info' | 'warning';
   type: string;
-  metadata?: {
-    errors?: any[];
-    importId?: string;
-    totalProcessed?: number;
-  };
   title: string;
   message: string;
+  metadata?: {
+    // erreurs
+    errors?: any[];
+    // succès
+    importId?: string;
+    totalProcessed?: number;
+    skippedDescendantLines?: number;
+    newFiscalYearsCount?: number;
+    existingFiscalYearsCount?: number;
+    rootEntityId?: string;
+    rootEntityType?: string;
+    rootEntityName?: string;
+    fiscalYears?: {
+      fiscalYearId: string;
+      entityId: string;
+      entityType: string;
+      entityName: string | null;
+      entityCode: string | null;
+      calendarYear: number;
+      startDate: string;
+      endDate: string;
+      isNew: boolean;
+      linesCount: number;
+    }[];
+    dataImports?: {
+      dataImportId: string;
+      entityId: string;
+      entityType: string;
+      entityName: string | null;
+      linesCount: number;
+    }[];
+  };
 }
 
 export function useImportNotifications(

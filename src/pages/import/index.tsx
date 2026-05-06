@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/Button";
 import { Sheet, Plug, ArrowRight, FileUp, Settings } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/apiClient";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
-import { Toast } from "@/components/ui/Toast";
 import { EntitySelector } from "@/features/import/EntitySelector";
 import { cleanMapping } from "@/features/import/MappingUtils";
 import { SavedMappingModal } from "@/features/import/SavedMappingModal";
@@ -26,6 +25,8 @@ import { ImportHistoryRow, ImportProgress, ValidationError, SavedMapping, Mappin
 import { useRouter } from 'next/navigation';
 import { ImportGuide } from '@/features/import/ImportGuide';
 import { useImportNotifications } from '@/hooks/useImportNotifications';
+import { ImportSuccessModal } from '@/features/import/ImportSuccessModal';
+
 function decodeBuffer(buffer: ArrayBuffer): string {
   const uint8Array = new Uint8Array(buffer);
   
@@ -80,12 +81,28 @@ export default function ImportPage() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingMappingId, setPendingMappingId] = useState<string | null>(null);
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [successTitle, setSuccessTitle] = useState("");
   const [successDetails, setSuccessDetails] = useState<{
-    linesCount?: number;
-    fileName?: string;
-    entityName?: string;
+    totalProcessed?: number;
+    skippedLines?: number;
+    newFiscalYearsCount?: number;
+    fiscalYears?: {
+      entityName: string | null;
+      entityType: string;
+      calendarYear: number;
+      startDate: string;
+      endDate: string;
+      isNew: boolean;
+      linesCount: number;
+    }[];
+    dataImports?: {
+      entityName: string | null;
+      entityType: string;
+      linesCount: number;
+    }[];
   } | null>(null);
+  const [successSimpleMessage, setSuccessSimpleMessage] = useState<string | null>(null);
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [hasData, setHasData] = useState<boolean | null>(null);
@@ -95,7 +112,7 @@ export default function ImportPage() {
   const isManager = currentUser?.role === 'MANAGER';
   const [includeDescendants, setIncludeDescendants] = useState(false);
   const isImportingRef = useRef(false);
-  useImportNotifications(currentUser?.id, (payload) => {
+  useImportNotifications(currentUser?.id, async (payload) => {
   console.log('[IMPORT PAGE] callback appelée, payload:', JSON.stringify(payload));
 
   if (payload.severity === 'error') {
@@ -129,10 +146,42 @@ export default function ImportPage() {
   }
 
   if (payload.severity === 'success') {
-    setSuccessMessage(`✅ ${payload.title}`);
-    fetchHistory();
-    setHistoryOpen(true);
+  const meta = payload.metadata;
+  setSuccessTitle(payload.title);
+  setSuccessDetails({
+    totalProcessed: meta?.totalProcessed,
+    skippedLines: meta?.skippedDescendantLines,
+    newFiscalYearsCount: meta?.newFiscalYearsCount,
+    fiscalYears: meta?.fiscalYears?.map((fy) => ({
+      entityName: fy.entityName,
+      entityType: fy.entityType,
+      calendarYear: fy.calendarYear,
+      startDate: fy.startDate,
+      endDate: fy.endDate,
+      isNew: fy.isNew,
+      linesCount: fy.linesCount,
+    })),
+    dataImports: meta?.dataImports?.map((di) => ({
+      entityName: di.entityName,
+      entityType: di.entityType,
+      linesCount: di.linesCount,
+    })),
+  });
+  setSuccessModalOpen(true);
+  fetchHistory();
+  setHistoryOpen(true);
+  if (selectedEntityId && selectedEntityType) {
+    try {
+      const response = await apiFetch<{ hasData: boolean }>(
+        `/generic-import/entityType/${selectedEntityId}/has-data?entityType=${selectedEntityType}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      setHasData(response.hasData);
+    } catch {
+      setHasData(null);
+    }
   }
+}
 });
   
   
@@ -304,38 +353,55 @@ export default function ImportPage() {
   });
 };
 
-  const handleEntityChange = async (entityId: string, entityType: 'Group' | 'Company' | 'BusinessUnit') => {
-    setSelectedEntityId(entityId);
-    setSelectedEntityType(entityType);
+  const handleEntityChange = async (
+  entityId: string,
+  entityType: 'Group' | 'Company' | 'BusinessUnit'
+) => {
+  // Reset complet si entityId vide (reclique sur le même type ou changement de type)
+  if (!entityId) {
+    setSelectedEntityId(null);
+    setSelectedEntityType(selectedEntityType === entityType ? null : entityType);
     setWorkspaceId(null);
-    setPeriodStart("");  
-    setPeriodEnd("");    
-    setHasData(null);   
+    setPeriodStart('');
+    setPeriodEnd('');
+    setHasData(null);
     setIncludeDescendants(false);
-    try {
-      if (entityType === 'Company') {
-        const company = await apiFetch<{ workspace_id: string }>(
-          `/companies/${entityId}`,
-          { snackbar: { showSuccess: false, showError: false } }
-        );
-        setWorkspaceId(company.workspace_id ?? null);
-      } else if (entityType === 'Group') {
-        const group = await apiFetch<{ workspace_id: string }>(
-          `/groups/${entityId}`,
-          { snackbar: { showSuccess: false, showError: false } }
-        );
-        setWorkspaceId(group.workspace_id ?? null);
-      } else if (entityType === 'BusinessUnit') {
-        const bu = await apiFetch<{ workspace_id: string }>(
-          `/business-units/${entityId}`,
-          { snackbar: { showSuccess: false, showError: false } }
-        );
-        setWorkspaceId(bu.workspace_id ?? null);
-      }
-    } catch {
-      setWorkspaceId(null);
+    return;
+  }
+
+  // Sélection normale d'une entité
+  setSelectedEntityId(entityId);
+  setSelectedEntityType(entityType);
+  setWorkspaceId(null);
+  setPeriodStart('');
+  setPeriodEnd('');
+  setHasData(null);
+  setIncludeDescendants(false);
+
+  try {
+    if (entityType === 'Company') {
+      const company = await apiFetch<{ workspace_id: string }>(
+        `/companies/${entityId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      setWorkspaceId(company.workspace_id ?? null);
+    } else if (entityType === 'Group') {
+      const group = await apiFetch<{ workspace_id: string }>(
+        `/groups/${entityId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      setWorkspaceId(group.workspace_id ?? null);
+    } else if (entityType === 'BusinessUnit') {
+      const bu = await apiFetch<{ workspace_id: string }>(
+        `/business-units/${entityId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      setWorkspaceId(bu.workspace_id ?? null);
     }
-  };
+  } catch {
+    setWorkspaceId(null);
+  }
+};
 
   const performImport = async (
     existingMappingId?: string,
@@ -589,19 +655,27 @@ export default function ImportPage() {
       const fileToUse = pendingFile;
       const entityId = selectedEntityId;
       const entityType = selectedEntityType;
-
+      // --- 1. Vérification granulaire des pré-requis ---
       if (!fileToUse || !entityId || !entityType) {
+        let errorMessage = "";
+        
+        if (!fileToUse && (!entityId || !entityType)) {
+          errorMessage = "Veuillez sélectionner une entité et un fichier avant d'importer.";
+        } else if (!fileToUse) {
+          errorMessage = "Veuillez sélectionner un fichier avant d'importer.";
+        } else {
+          errorMessage = "Veuillez sélectionner une entité avant d'importer.";
+        }
         setValidationErrors([{
-          line: 0,
-          column: 'N/A',
-          value: '',
-          reason: "Veuillez sélectionner une entité et un fichier avant d'importer.",
-          message: "Veuillez sélectionner une entité et un fichier avant d'importer."
-        }]);
-        setValidationModalOpen(true);
-        return;
-      }
-
+        line: 0,
+        column: 'N/A',
+        value: '',
+        reason: errorMessage,
+        message: errorMessage
+      }]);
+      setValidationModalOpen(true);
+      return;
+    }
       const newMapping: Record<string, string> = {};
       csvHeaders.forEach((h) => {
         newMapping[h] = savedMapping.rules[h] ??
@@ -700,17 +774,17 @@ export default function ImportPage() {
       <Head>
         <title>Import</title>
       </Head>
-      {successMessage && (
-        <Toast
-          message={successMessage}
-          type="success"
-          details={successDetails || undefined}
-          onClose={() => {
-            setSuccessMessage(null);
-            setSuccessDetails(null);
-          }}
-        />
-      )}
+      <ImportSuccessModal
+  open={successModalOpen}
+  onOpenChange={setSuccessModalOpen}
+  title={successTitle}
+  totalProcessed={successDetails?.totalProcessed}
+  skippedLines={successDetails?.skippedLines}
+  newFiscalYearsCount={successDetails?.newFiscalYearsCount}
+  fiscalYears={successDetails?.fiscalYears}
+  dataImports={successDetails?.dataImports}
+  simpleMessage={successSimpleMessage}
+/>
 
       <div className="space-y-8">
         <div>
@@ -827,6 +901,26 @@ export default function ImportPage() {
         hasData={hasData}
         periodStart={periodStart}
         periodEnd={periodEnd}
+        onSaveSuccess={(title, message) => {
+        setSuccessTitle(title);
+        setSuccessDetails(null);
+        setSuccessSimpleMessage(message);
+        setSuccessModalOpen(true);
+      }}
+      onSaveError={(message) => {
+        setValidationErrors([{
+          line: 0, column: 'N/A', value: '',
+          reason: message,
+          message,
+        }]);
+        setValidationModalOpen(true);
+      }}
+      onDeleteSuccess={(mappingName) => {
+        setSuccessTitle("Mapping supprimé ✅");
+        setSuccessDetails(null);
+        setSuccessSimpleMessage(`Le mapping « ${mappingName} » a été supprimé avec succès.`);
+        setSuccessModalOpen(true);
+      }}
       />
 
       <SavedMappingModal

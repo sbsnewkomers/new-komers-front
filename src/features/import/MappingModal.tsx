@@ -60,6 +60,9 @@ interface MappingModalProps {
   hasData?: boolean | null;
   periodStart?: string;
   periodEnd?: string;
+  onSaveSuccess?: (title: string, message: string) => void;
+  onSaveError?: (message: string) => void;
+  onDeleteSuccess?: (mappingName: string) => void;
 }
 
 type Tab = "editor" | "templates";
@@ -105,6 +108,9 @@ export function MappingModal({
   hasData,
   periodStart,
   periodEnd,
+  onSaveSuccess,
+  onSaveError,
+  onDeleteSuccess,
 }: MappingModalProps) {
   const { user: currentUser } = usePermissionsContext();
   const isAdmin =
@@ -158,8 +164,9 @@ export function MappingModal({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedHash, setLastSavedHash] = useState<string | null>(null);
 
-  const prevActiveLocalWorkspaceId = useRef<string | null>(null);
+ const prevActiveLocalWorkspaceId = useRef<string | null>(null);
   const mappingFileInputRef = useRef<HTMLInputElement>(null);
+  const prevOpenRef = useRef(false);
 
 
   // ───────────────────────────────────────────── Fetchers
@@ -257,28 +264,45 @@ export function MappingModal({
     }
   }, [activeLocalWorkspaceId, open, fetchLocalMappingsForWorkspace]);
 
-  useEffect(() => {
-    if (!open) return;
-    prevActiveLocalWorkspaceId.current = null;
-    fetchGlobalMappings();
-    setSelectedSavedMapping(null);
-    setFeedback(null);
-    setDetailFeedback(null);
-    setLastSavedHash(null);
-    setTab("editor");
+
+useEffect(() => {
+  // Ne reset que quand la modal VIENT DE S'OUVRIR (false → true)
+  if (!open) {
+    prevOpenRef.current = false;
+    return;
+  }
+  if (prevOpenRef.current === true) {
+    // La modal était déjà ouverte, workspaceId ou isAdmin a changé
+    // On ne reset PAS le feedback
     if (isAdmin) {
-      fetchAccessibleWorkspaces();
       const initWs = workspaceId ?? null;
       setActiveLocalWorkspaceId(initWs);
-      setAutoDetectedWorkspaceId(null);
-      setNeedsWorkspaceSelection(false);
       if (initWs) fetchLocalMappingsForWorkspace(initWs);
-      else setLocalMappings([]);
-    } else {
-      autoDetectWorkspaceForNonAdmin();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, workspaceId, isAdmin]);
+    return;
+  }
+  // Vraie ouverture (false → true)
+  prevOpenRef.current = true;
+  prevActiveLocalWorkspaceId.current = null;
+  fetchGlobalMappings();
+  setSelectedSavedMapping(null);
+  setFeedback(null);
+  setDetailFeedback(null);
+  setLastSavedHash(null);
+  setTab("editor");
+  if (isAdmin) {
+    fetchAccessibleWorkspaces();
+    const initWs = workspaceId ?? null;
+    setActiveLocalWorkspaceId(initWs);
+    setAutoDetectedWorkspaceId(null);
+    setNeedsWorkspaceSelection(false);
+    if (initWs) fetchLocalMappingsForWorkspace(initWs);
+    else setLocalMappings([]);
+  } else {
+    autoDetectWorkspaceForNonAdmin();
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [open, workspaceId, isAdmin]);
 
   // ───────────────────────────────────────────── Derived
   const requiredColumns = useMemo(
@@ -428,18 +452,26 @@ export function MappingModal({
             : Promise.resolve(),
           fetchGlobalMappings(),
         ]);
+        setSaveDialogOpen(false);
+        setTab("editor"); // s'assurer qu'on est sur l'onglet editor
         setFeedback({
           tone: "success",
           message: "Mapping enregistré avec succès.",
         });
         setLastSavedHash(currentMappingHash);
-        setSaveDialogOpen(false);
+        onSaveSuccess?.(
+          "Mapping enregistré ✅",
+          `Le mapping « ${value.name} » a été créé et est disponible pour vos prochains imports.`,
+        );
+        onOpenChange(false);
       } catch (err) {
         console.error(err);
         setFeedback({
           tone: "error",
           message: "Impossible d'enregistrer le mapping.",
         });
+        onSaveError?.("Impossible d'enregistrer le mapping.");
+        
       } finally {
         setIsSaving(false);
       }
@@ -455,6 +487,8 @@ export function MappingModal({
       fetchGlobalMappings,
       closeModal,
       currentMappingHash,
+      onSaveSuccess,   
+      onSaveError, 
     ],
   );
 
@@ -510,18 +544,26 @@ export function MappingModal({
             : Promise.resolve(),
           fetchGlobalMappings(),
         ]);
-        setDetailFeedback({
-          tone: "success",
-          message: "Nouveau mapping enregistré.",
-        });
         setSaveAsNewDialogOpen(false);
         setShowMappingDetail(false);
+        // Afficher le feedback dans la modal principale
+        setTab("editor");
+        setFeedback({
+          tone: "success",
+          message: "Nouveau mapping enregistré avec succès.",
+        });
+        setLastSavedHash(currentMappingHash);
+        onSaveSuccess?.(
+          "Mapping dupliqué ✅",
+          `Le mapping « ${value.name} » a été créé comme nouvelle version.`,
+        );
       } catch (err) {
         console.error(err);
         setDetailFeedback({
           tone: "error",
           message: "Impossible d'enregistrer le nouveau mapping.",
         });
+        onSaveError?.("Impossible d'enregistrer le nouveau mapping.");
       } finally {
         setIsSaving(false);
       }
@@ -537,6 +579,8 @@ export function MappingModal({
       fetchLocalMappingsForWorkspace,
       fetchGlobalMappings,
       onOpenChange,
+      onSaveSuccess,   
+      onSaveError,
     ],
   );
 
@@ -551,11 +595,7 @@ export function MappingModal({
     try {
       await apiFetch(`/mapping-templates/${mappingToDelete.id}`, {
         method: "DELETE",
-        snackbar: {
-          showSuccess: true,
-          showError: false,
-          successMessage: `Mapping "${mappingToDelete.name}" supprimé`,
-        },
+        snackbar: { showSuccess: false, showError: false },
       });
       if (isGlobalMapping(mappingToDelete)) {
         await fetchGlobalMappings();
@@ -563,6 +603,11 @@ export function MappingModal({
         await fetchLocalMappingsForWorkspace(activeLocalWorkspaceId);
       }
       setMappingToDelete(null);
+      setFeedback({
+        tone: "success",
+        message: `Le mapping « ${mappingToDelete.name} » a été supprimé.`,
+      });
+      onDeleteSuccess?.(mappingToDelete.name);
     } catch (err: unknown) {
       console.error("Erreur suppression mapping:", err);
       const msg =
