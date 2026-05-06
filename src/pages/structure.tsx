@@ -24,6 +24,7 @@ import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { usePermissions } from "@/permissions/usePermissions";
 import { CRUD_ACTION } from "@/permissions/actions";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
@@ -2307,13 +2308,14 @@ export default function StructurePage() {
           </div>
           <div className="flex w-full flex-wrap justify-end gap-3">
             {canImportStructure && (
-              <Link
-                href="/structure/import/upload"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-md"
+              <Button
+                onClick={() => router.push("/structure/import/upload")}
+                variant="outline"
+                className="h-10 gap-2"
               >
-                <Upload className="size-4" />
+                <Upload className="size-4 text-primary" />
                 Importer
-              </Link>
+              </Button>
             )}
             {(user?.role === "SUPER_ADMIN" ||
               user?.role === "ADMIN" ||
@@ -2321,7 +2323,7 @@ export default function StructurePage() {
               user?.role === "MANAGER") && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button className="bg-primary text-white hover:bg-slate-800">
+                    <Button className="bg-primary text-white! hover:bg-slate-800">
                       <Plus className="size-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -2419,7 +2421,7 @@ export default function StructurePage() {
         </div>
 
         {/* Main content */}
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-primary nebula-glass shadow-sm">
           {treeError && (
             <div className="m-6 p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
               <div className="h-4 w-4 rounded-full bg-red-100 flex items-center justify-center">
@@ -2536,7 +2538,7 @@ export default function StructurePage() {
 
               <div className="min-w-[720px]">
               {tree?.workspaces && tree.workspaces.length > 0 && (
-                <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-slate-100 px-3 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600 sm:px-6">
+                <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-primary bg-linear-to-r from-(--nebula-gold-light) via-(--nebula-gold-light) to-(--nebula-gold) text-white! px-3 py-4 text-xs font-semibold uppercase tracking-wider sm:px-6">
                   <div className="flex items-center">
                     Nom
                   </div>
@@ -2550,29 +2552,29 @@ export default function StructurePage() {
                 </div>
               )}
 
-              <ul className="divide-y divide-slate-100">
-                {treeRows.map((node) => {
+              <ul className="divide-y divide-primary/30">
+                {treeRows.map((node, index) => {
                   // Gérer l'en-tête de section pour les entreprises indépendantes
                   if (node.type === "section-header") {
                     const isPackageIcon = node.name === "ENTREPRISES INDÉPENDANTES";
                     return (
                       <li
                         key={node.id}
-                        className="bg-slate-50/80 border-y border-slate-100"
+                        className={`bg-primary/0 border-y border-primary/0 ${user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" ? "mx-11" : ""}`}
                       >
                         <div className="flex items-center gap-2 px-3 py-3 sm:px-6">
-                          <div className="h-px flex-1 bg-slate-200" />
+                          <div className="h-px flex-1 bg-primary" />
                           <div className="flex items-center gap-2">
                             {isPackageIcon ? (
-                              <Package className="h-4 w-4 text-amber-600" />
+                              <Package className="h-4 w-4 text-primary" />
                             ) : (
-                              <Building className="h-4 w-4 text-amber-600" />
+                              <Building className="h-4 w-4 text-primary" />
                             )}
-                            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide whitespace-nowrap">
+                            <span className="text-xs font-semibold text-primary uppercase tracking-wide whitespace-nowrap">
                               {node.name}
                             </span>
                           </div>
-                          <div className="h-px flex-1 bg-slate-200" />
+                          <div className="h-px flex-1 bg-primary" />
                         </div>
                       </li>
                     );
@@ -2592,12 +2594,12 @@ export default function StructurePage() {
                           : Briefcase;
                   const iconColor =
                     node.type === "workspace"
-                      ? "text-purple-600"
+                      ? "text-dark"
                       : node.type === "group"
-                        ? "text-blue-600"
+                        ? "text-primary"
                         : node.type === "company"
-                          ? "text-slate-700"
-                          : "text-emerald-600";
+                          ? "text-light"
+                          : "text-primary";
                   const typeText =
                     node.type === "workspace"
                       ? "Workspace"
@@ -2606,14 +2608,14 @@ export default function StructurePage() {
                         : node.type === "company"
                           ? "Entreprise"
                           : "BU";
-                  const typeBadgeColor =
+                  const typeBadgeVariant =
                     node.type === "workspace"
-                      ? "bg-purple-50 text-purple-700 border-purple-100"
+                      ? "info"
                       : node.type === "group"
-                        ? "bg-blue-50 text-blue-700 border-blue-100"
+                        ? "info"
                         : node.type === "company"
-                          ? "bg-slate-100 text-slate-700 border-slate-200"
-                          : "bg-slate-50 text-slate-500 border-slate-100";
+                          ? "neutral"
+                          : "neutral";
                   const completion =
                     node.type === "company" ? node.completionPercentage : null;
                   const canExpand =
@@ -2622,7 +2624,7 @@ export default function StructurePage() {
                   return (
                     <li
                       key={`${node.type}-${node.id}`}
-                      className="group/row transition-all duration-200 hover:bg-slate-50/50 hover:shadow-sm"
+                      className={`group/row transition-all duration-200 hover:bg-primary/30 hover:shadow-sm ${node.type === "workspace" && index !== 0 ? "border-t-2 border-t-primary" : ""}`}
                     >
                       <div
                         className="grid cursor-pointer grid-cols-[1fr_120px_100px_60px] items-center gap-4 px-3 py-3 sm:px-6"
@@ -2658,24 +2660,18 @@ export default function StructurePage() {
                           <span
                             className={`truncate font-medium transition-colors ${node.type === "group"
                               ? "text-primary font-semibold"
-                              : "text-slate-700"
+                              : "te"
                               }`}
                           >
                             {node.name}
                           </span>
                           {node.type === "company" && node.groupId === null && (
-                            <span className="inline-flex items-center rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 text-[10px] font-medium">
-                              Indépendante
-                            </span>
+                            <Badge variant="warning">Indépendante</Badge>
                           )}
                         </div>
 
                         <div>
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide transition-colors ${typeBadgeColor}`}
-                          >
-                            {typeText}
-                          </span>
+                          <Badge variant={typeBadgeVariant}>{typeText}</Badge>
                         </div>
 
                         <div>
@@ -2925,15 +2921,15 @@ export default function StructurePage() {
           <DialogHeader className="gap-1 pb-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <DialogTitle className="flex items-center gap-2 text-base font-semibold text-slate-900 sm:text-lg">
+                <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white sm:text-lg">
                   {editing ? (
                     <>
-                      <Pencil className="h-4 w-4 text-slate-500" />
+                      <Pencil className="h-4 w-4 text-white/60" />
                       Modifier {typeLabel.toLowerCase()}
                     </>
                   ) : (
                     <>
-                      <Info className="h-4 w-4 text-slate-500" />
+                      <Info className="h-4 w-4 text-white/60" />
                       Détails
                     </>
                   )}
@@ -2961,7 +2957,7 @@ export default function StructurePage() {
             </div>
           </DialogHeader>
 
-          <DialogBody className="space-y-4 bg-slate-50/60 px-4 py-4 sm:px-5">
+          <DialogBody className="space-y-4 bg-transparent px-4 py-4 sm:px-5">
             {/* ---------- WORKSPACE ---------- */}
             {selectedNode?.type === "workspace" && (
               <>
@@ -3940,7 +3936,7 @@ export default function StructurePage() {
                   user?.role === "HEAD_MANAGER") && (
                   <Button
                     variant="outline"
-                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    className="text-white/80 hover:text-white"
                     onClick={() => setConfirmDeleteOpen(true)}
                   >
                     <Trash2 className="mr-1.5 h-3.5 w-3.5" />
@@ -3987,7 +3983,7 @@ export default function StructurePage() {
       <Dialog open={nodeUsersOpen} onOpenChange={setNodeUsersOpen}>
         <DialogContent size="md">
           <DialogHeader>
-            <DialogTitle className="text-sm font-semibold">
+            <DialogTitle className="text-sm font-semibold text-white">
               Utilisateurs liés à ce nœud
             </DialogTitle>
           </DialogHeader>
@@ -4017,27 +4013,27 @@ export default function StructurePage() {
                             : role;
                   return (
                     <div key={role}>
-                      <p className="pl-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <p className="pl-1 text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                         {roleLabel}{" "}
-                        <span className="font-normal text-slate-400">
+                        <span className="font-normal text-white/50">
                           ({users.length}):
                         </span>
                       </p>
-                      <ul className="mt-2 space-y-0.5 text-xs text-slate-700">
+                      <ul className="mt-2 space-y-1 text-xs text-(--nebula-muted)">
                         {sortedUsers.map((u) => {
                           const fullName =
                             `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
                           return (
                             <li
                               key={u.id}
-                              className="flex items-center justify-between rounded-md bg-slate-100 px-2 py-1 border border-slate-300"
+                              className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 border border-white/10 nebula-blob"
                             >
                               <div className="flex flex-col">
-                                <span className="font-medium">
+                                <span className="font-medium text-white">
                                   {fullName || u.email}
                                 </span>
                                 {fullName && (
-                                  <span className="text-[11px] text-slate-400">
+                                  <span className="text-[11px] text-(--nebula-muted) font-mono">
                                     {u.email}
                                   </span>
                                 )}
@@ -4050,7 +4046,7 @@ export default function StructurePage() {
                   );
                 })
             ) : (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-(--nebula-muted)">
                 Aucun utilisateur lié à ce nœud.
               </p>
             )}
@@ -4106,7 +4102,7 @@ export default function StructurePage() {
               Annuler
             </Button>
             <Button
-              className="bg-red-600 text-white hover:bg-red-700"
+              variant="destructive"
               onClick={handleDelete}
             >
               Supprimer
@@ -4120,7 +4116,7 @@ export default function StructurePage() {
         <DialogContent size="7xl">
           <DialogHeader className="gap-1 pb-3">
             <DialogTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-slate-600" />
+              <Building2 className="h-5 w-5 text-(--nebula-gold-light)" />
               <span className="min-w-0 truncate">
                 {ficheCompany?.name ??
                   allTreeCompanies.find((x) => x.id === ficheCompanyId)?.name ??
@@ -4132,19 +4128,19 @@ export default function StructurePage() {
               données extracomptables).
             </DialogDescription>
           </DialogHeader>
-          <DialogBody className="space-y-4 bg-slate-50/60 px-3 py-4 sm:px-5">
+          <DialogBody className="space-y-4 bg-transparent px-3 py-4 sm:px-5">
           {(() => {
             if (!ficheCompany) {
               return (
                 <div className="flex items-center justify-center py-8">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/15 border-t-(--nebula-gold-light)" />
                 </div>
               );
             }
             const bus = busByCompany[ficheCompany.id] ?? [];
             return (
               <Tabs value={ficheTab} onValueChange={setFicheTab} className="space-y-3">
-                <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-lg bg-slate-100 p-1">
+                <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-2xl bg-white/5 border border-white/10 p-1">
                   <TabsTrigger value="informations">Informations</TabsTrigger>
                   <TabsTrigger value="business-units">
                     Business Units
@@ -4181,24 +4177,24 @@ export default function StructurePage() {
                     />
 
                     {typeof ficheCompany.completionPercentage === "number" && (
-                      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white p-4">
+                      <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 nebula-blob">
                         <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0">
-                            <h4 className="text-sm font-semibold text-slate-900">
+                            <h4 className="text-sm font-semibold text-white">
                               Complétion du profil
                             </h4>
-                            <p className="text-[11px] leading-snug text-slate-500">
+                            <p className="text-[11px] leading-snug text-(--nebula-muted)">
                               Pourcentage d&apos;informations renseignées sur cette entreprise.
                             </p>
                           </div>
-                          <span className="text-xl font-semibold tabular-nums text-slate-900">
+                          <span className="text-xl font-semibold tabular-nums text-white font-mono">
                             {Math.round(ficheCompany.completionPercentage)}
-                            <span className="text-sm text-slate-400">%</span>
+                            <span className="text-sm text-(--nebula-muted)">%</span>
                           </span>
                         </div>
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
                           <div
-                            className="h-full rounded-full bg-linear-to-r from-emerald-400 to-emerald-500 transition-all"
+                            className="h-full rounded-full bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) transition-all"
                             style={{
                               width: `${Math.max(
                                 0,

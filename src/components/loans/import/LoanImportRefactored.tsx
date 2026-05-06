@@ -12,7 +12,7 @@ import {
     ImportFileFormat,
 } from '@/types/loans';
 
-import { StepIndicator } from './StepIndicator';
+import { StepIndicator } from '@/components/ui/StepIndicator';
 import { FileUploadStep } from './FileUploadStep';
 import { ColumnMappingStep } from './ColumnMappingStep';
 import { PreviewStep } from './PreviewStep';
@@ -50,6 +50,11 @@ export function LoanImport({ onLoanImported, onBack, entityType, entityId }: Loa
     const [selectedModelFormat, setSelectedModelFormat] = useState<ImportFileFormat>(ImportFileFormat.EXCEL);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const steps = [
+        { n: 1, label: 'Fichier' },
+        { n: 2, label: 'Mapping' },
+        { n: 3, label: 'Résultat' },
+    ];
 
     // Utility functions
     const resetImport = () => {
@@ -415,7 +420,7 @@ export function LoanImport({ onLoanImported, onBack, entityType, entityId }: Loa
                     </div>
                 </div>
                 <div className="mt-6">
-                    <StepIndicator currentStep={currentStep} />
+            <StepIndicator currentStep={currentStep} steps={steps} />
                 </div>
             </div>
 

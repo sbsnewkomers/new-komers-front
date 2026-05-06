@@ -5,6 +5,8 @@ import Link from "next/link";
 import { login } from "@/lib/authApi";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { getApiBaseUrl } from "@/lib/apiClient";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -103,37 +105,35 @@ export default function LoginPage() {
       <Head>
         <title>Connexion - NewKomers</title>
       </Head>
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#F8FAFC] px-4 font-sans text-slate-900">
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <h1 className="text-xl font-bold tracking-widest text-slate-700">
-            NEWKOMERS
-          </h1>
-        </div>
+      <div className="min-h-screen nebula-grid-bg flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-[440px] nebula-glass nebula-blob rounded-3xl p-10 relative overflow-hidden">
+          <div className="absolute top-0 right-0 h-full w-full rounded-full bg-(--nebula-gold)/25 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-full w-full rounded-full bg-(--nebula-gold-light)/20 blur-3xl" />
 
-        {/* Card */}
-        <div className="w-full max-w-[400px] rounded-2xl bg-white p-8 shadow-sm border border-slate-100">
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-semibold text-slate-900">Connexion</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Accédez à votre espace financier
-            </p>
-          </div>
+          <div className="relative">
+            <div className="mb-8">
+              <h1 className="text-5xl font-bold leading-[1.05] tracking-tight">
+                <span className="nebula-grad-text">Connexion</span>
+              </h1>
+              <p className="mt-3 text-[13px] text-(--nebula-muted)">
+                Accédez à votre espace financier.
+              </p>
+            </div>
 
           {errorMessage && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
+            <div className="mb-4 nebula-glass rounded-2xl px-4 py-3 text-xs text-white border border-white/15">
               {errorMessage}
             </div>
           )}
           {statusMessage === "PENDING" && (
-            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+            <div className="mb-4 nebula-glass rounded-2xl px-4 py-3 text-xs text-white border border-white/15">
               Votre compte a bien été créé et est{" "}
               <strong>en attente de validation</strong> par un administrateur.
               Vous recevrez une notification dès qu&apos;il sera activé.
             </div>
           )}
           {statusMessage === "SUSPENDED" && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
+            <div className="mb-4 nebula-glass rounded-2xl px-4 py-3 text-xs text-white border border-white/15">
               Votre compte est actuellement <strong>suspendu</strong>. Contactez
               un administrateur si vous pensez qu&apos;il s&apos;agit d&apos;une
               erreur.
@@ -144,18 +144,17 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-slate-700"
+                className="block text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)"
               >
-                Email
+                § Email
               </label>
-              <input
+              <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
                 placeholder="nom@entreprise.fr"
               />
             </div>
@@ -163,11 +162,11 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-slate-700"
+                className="block text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)"
               >
-                Mot de passe
+                § Mot de passe
               </label>
-              <input
+              <Input
                 id="password"
                 type="password"
                 value={password}
@@ -175,26 +174,21 @@ export default function LoginPage() {
                 required
                 minLength={6}
                 autoComplete="current-password"
-                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
                 placeholder="••••••••"
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-[#1e293b] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
-            >
+            <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Connexion..." : "Se connecter"}
-            </button>
+            </Button>
           </form>
 
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-slate-200" />
+              <span className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-slate-400">
+              <span className="bg-transparent px-2 text-(--nebula-muted)">
                 Ou continuer avec
               </span>
             </div>
@@ -203,7 +197,7 @@ export default function LoginPage() {
           <div className="grid grid-cols-1 gap-3">
             <a
               href={`${getApiBaseUrl()}/auth/google`}
-              className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-1"
+              className="flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[13px] font-semibold h-10"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                 <path
@@ -238,24 +232,19 @@ export default function LoginPage() {
               Microsoft
             </button> */}
           </div>
-        </div>
+          </div>
 
-        {/* Footer Links */}
-        <div className="mt-8 space-y-2 text-center text-sm">
-          <Link
-            href="/forgot-password"
-            className="block text-slate-500 hover:text-slate-700"
-          >
-            Mot de passe oublié ?
-          </Link>
-          <div className="text-slate-500">
-            Pas encore de compte ?{" "}
-            <Link
-              href="/register"
-              className="font-medium text-[#1e293b] hover:underline"
-            >
-              Inscription
+          {/* Footer Links */}
+          <div className="mt-8 space-y-2 text-center text-sm">
+            <Link href="/forgot-password" className="block text-(--nebula-muted) hover:text-white">
+              Mot de passe oublié ?
             </Link>
+            <div className="text-(--nebula-muted)">
+              Pas encore de compte ?{" "}
+              <Link href="/register" className="font-semibold text-white hover:underline">
+                Inscription
+              </Link>
+            </div>
           </div>
         </div>
       </div>

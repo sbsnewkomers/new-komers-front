@@ -8,6 +8,7 @@ import { assetsApi } from '@/lib/assetsApi';
 import { Asset, EntityType } from '@/types/asset.types';
 import { Button } from '@/components/ui/Button';
 import { fetchStructureTree, TreeCompany, TreeBU, TreeGroup } from '@/lib/structureApi';
+import { formatDateFR } from '@/lib/format';
 import { ArrowLeft, Edit3, Building, Calendar, DollarSign, TrendingUp, Package, Settings } from 'lucide-react';
 
 export default function ViewAssetPage() {
@@ -215,7 +216,7 @@ export default function ViewAssetPage() {
                   <Calendar className="h-3 w-3" />
                   Date d&apos;acquisition
                 </div>
-                <p className="text-base font-semibold text-slate-900">{new Date(asset.acquisitionDate).toLocaleDateString('fr-FR')}</p>
+                <p className="text-base font-semibold text-slate-900">{formatDateFR(asset.acquisitionDate, { fallback: "-" })}</p>
               </div>
 
               <div className="space-y-1">
@@ -224,7 +225,7 @@ export default function ViewAssetPage() {
                   Date de mise en service
                 </div>
                 <p className="text-base font-semibold text-slate-900">
-                  {asset.commissioningDate ? new Date(asset.commissioningDate).toLocaleDateString('fr-FR') : 'Non d&eacute;finie'}
+                  {asset.commissioningDate ? formatDateFR(asset.commissioningDate, { fallback: "-" }) : 'Non d&eacute;finie'}
                 </p>
               </div>
 
@@ -269,7 +270,7 @@ export default function ViewAssetPage() {
                     <Calendar className="h-3 w-3" />
                     Date de cession
                   </div>
-                  <p className="text-base font-semibold text-slate-900">{new Date(asset.disposalDate).toLocaleDateString('fr-FR')}</p>
+                  <p className="text-base font-semibold text-slate-900">{formatDateFR(asset.disposalDate, { fallback: "-" })}</p>
                 </div>
               )}
 

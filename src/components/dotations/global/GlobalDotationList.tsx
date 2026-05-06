@@ -10,26 +10,11 @@ import { globalDotationsApi } from '@/lib/globalDotationsApi';
 import { entitiesApi } from '@/lib/entitiesApi';
 import { usePermissions } from '@/permissions/usePermissions';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
+import { formatCurrencyEUR } from '@/lib/format';
 
 // Utility functions
-const formatCurrency = (amount: number | string | null | undefined) => {
-  if (amount === null || amount === undefined) {
-    return '0,00 €';
-  }
-
-  // Convertir en nombre si c'est une chaîne
-  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-
-  if (isNaN(numericAmount)) {
-    console.warn('Valeur invalide pour formatCurrency:', amount);
-    return '0,00 €';
-  }
-
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(numericAmount);
-};
+const formatCurrency = (amount: number | string | null | undefined) =>
+  formatCurrencyEUR(amount, { fallback: "0,00 €" });
 
 interface GlobalDotationListProps {
   entityType: EntityType;

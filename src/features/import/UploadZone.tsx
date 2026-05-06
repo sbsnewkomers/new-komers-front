@@ -60,12 +60,12 @@ export function UploadZone({
           className={`mb-4 rounded-2xl p-2 transition-all duration-300 ${
             dragOver
               ? "bg-primary/10 scale-110"
-              : "bg-slate-50 group-hover:bg-primary/5 group-hover:scale-105"
+              : "nebula-glass group-hover:bg-primary/5 group-hover:scale-105"
           }`}
         >
           <Upload
             className={`h-6 w-6 transition-colors duration-300 ${
-              dragOver ? "text-primary" : "text-slate-400 group-hover:text-primary/70"
+              dragOver ? "text-primary" : "text-primary group-hover:text-primary/70"
             }`}
           />
         </div>
@@ -77,7 +77,7 @@ export function UploadZone({
 
         {disabled && (
           <p className="text-xs text-amber-500 font-medium mb-3">
-            Vous n'avez pas les droits pour importer des données.
+            Vous n&apos;avez pas les droits pour importer des données.
           </p>
         )}
 
@@ -95,7 +95,7 @@ export function UploadZone({
           variant="outline"
           onClick={handleBrowseClick}
           disabled={disabled}  // ← bloque le bouton
-          className="cursor-pointer gap-2 bg-slate-100! text-slate-600 hover:bg-slate-200! hover:text-slate-600"
+          className="cursor-pointer gap-2 nebula-glass border-primary text-primary hover:border-primary! hover:bg-primary/10"
         >
           <FileUp className="h-4 w-4" />
           Parcourir les fichiers

@@ -796,7 +796,7 @@ export default function ImportPage() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <TabsList className="h-auto w-full gap-1 rounded-xl bg-slate-100 p-1.5 sm:h-12 sm:w-auto">
+            <TabsList className="h-auto w-full gap-1 rounded-xl bg-primary/10 p-1.5 sm:h-12 sm:w-auto">
               <TabsTrigger value="excel" className="gap-2 flex-1 rounded-lg px-4 py-2 data-[state=active]:shadow-md">
                 <Sheet className="h-4 w-4" />
                 Excel / CSV

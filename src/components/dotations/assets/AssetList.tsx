@@ -10,18 +10,12 @@ import { Asset, AssetStatus, AmortizationType, EntityType } from '@/types/asset.
 import { usePermissions } from '@/permissions/usePermissions';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
+import { formatCurrencyEUR, formatDateFR } from '@/lib/format';
 
 // Utility functions
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(amount);
-};
+const formatCurrency = (amount: number) => formatCurrencyEUR(amount, { fallback: "0,00 €" });
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('fr-FR');
-};
+const formatDate = (dateString: string) => formatDateFR(dateString, { fallback: "-" });
 
 interface AssetListProps {
   entityType: EntityType;

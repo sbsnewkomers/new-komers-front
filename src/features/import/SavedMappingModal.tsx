@@ -49,6 +49,7 @@ export function SavedMappingModal({
 
   useEffect(() => {
     if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedId(null);
     setLoading(true);
 
@@ -149,14 +150,14 @@ export function SavedMappingModal({
         <DialogContent size="3xl">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/15 text-(--nebula-gold-light)">
                 <BookMarked className="h-4 w-4" aria-hidden />
               </span>
               <div className="min-w-0">
                 <DialogTitle>Choisir un mapping</DialogTitle>
                 <DialogDescription>
                   Fichier&nbsp;:{" "}
-                  <span className="font-medium text-slate-700">
+                  <span className="font-medium text-white">
                     {fileName || "—"}
                   </span>
                 </DialogDescription>
@@ -164,7 +165,7 @@ export function SavedMappingModal({
             </div>
           </DialogHeader>
 
-          <DialogBody className="bg-slate-50/40">
+          <DialogBody className="bg-transparent">
             <MappingTemplateList
               mappings={allMappings}
               loading={loading}
@@ -181,7 +182,7 @@ export function SavedMappingModal({
             <Button
               variant="ghost"
               onClick={handleCreateNew}
-              className="text-slate-600 hover:text-primary"
+              className="text-(--nebula-muted) hover:text-white"
             >
               <Plus className="mr-2 h-4 w-4" aria-hidden />
               Configurer un nouveau mapping

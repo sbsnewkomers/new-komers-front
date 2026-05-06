@@ -65,13 +65,8 @@ export function SaveMappingDialog({
     defaultWorkspaceId,
   );
 
-  React.useEffect(() => {
-    if (open) {
-      setName(defaultName);
-      setScope(defaultScope);
-      setWorkspaceId(defaultWorkspaceId);
-    }
-  }, [open, defaultName, defaultScope, defaultWorkspaceId]);
+  // Reset state by remounting dialog content when reopened.
+  // (This repo enforces no setState inside effects.)
 
   const nameId = React.useId();
   const wsId = React.useId();
@@ -95,23 +90,31 @@ export function SaveMappingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="md">
+      <DialogContent
+        size="md"
+        key={[
+          open ? "open" : "closed",
+          defaultName,
+          defaultScope,
+          defaultWorkspaceId ?? "",
+        ].join("|")}
+      >
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/15 text-(--nebula-gold-light)">
               <Save className="h-4 w-4" aria-hidden />
             </span>
             <DialogTitle>{title}</DialogTitle>
           </div>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <DialogBody className="space-y-4">
+        <DialogBody className="space-y-4 bg-transparent">
           <div>
             <label
               htmlFor={nameId}
-              className="block text-sm font-medium text-slate-700"
+              className="block text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)"
             >
-              Nom du mapping <span className="text-rose-500">*</span>
+              § Nom du mapping <span className="text-(--nebula-gold-light)">*</span>
             </label>
             <input
               id={nameId}
@@ -123,7 +126,7 @@ export function SaveMappingDialog({
                 if (e.key === "Enter" && canSubmit) handleSubmit();
               }}
               placeholder="Ex. Mapping fournisseur A"
-              className="mt-1.5 block h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-xs placeholder:text-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              className="mt-2 block h-10 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-[13px] text-white placeholder:text-(--nebula-muted) focus-visible:outline-none"
             />
           </div>
 
@@ -131,9 +134,9 @@ export function SaveMappingDialog({
             <fieldset>
               <legend
                 id={scopeGroupId}
-                className="text-sm font-medium text-slate-700"
+                className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)"
               >
-                Portée
+                § Portée
               </legend>
               <div
                 role="radiogroup"
@@ -162,12 +165,12 @@ export function SaveMappingDialog({
             <div>
               <label
                 htmlFor={wsId}
-                className="block text-sm font-medium text-slate-700"
+                className="block text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)"
               >
-                Workspace <span className="text-rose-500">*</span>
+                § Workspace <span className="text-(--nebula-gold-light)">*</span>
               </label>
               {isLoadingWorkspaces ? (
-                <div className="mt-1.5 flex items-center gap-2 text-sm text-slate-500">
+                <div className="mt-2 flex items-center gap-2 text-[13px] text-(--nebula-muted)">
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                   Chargement des espaces…
                 </div>
@@ -176,7 +179,7 @@ export function SaveMappingDialog({
                   id={wsId}
                   value={workspaceId ?? ""}
                   onChange={(e) => setWorkspaceId(e.target.value || null)}
-                  className="mt-1.5 block h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  className="mt-2 block h-10 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-[13px] text-white focus-visible:outline-none"
                 >
                   <option value="">— Choisir un workspace —</option>
                   {workspaces.map((ws) => (
@@ -187,7 +190,7 @@ export function SaveMappingDialog({
                 </select>
               )}
               {!workspaceId ? (
-                <p className="mt-1 text-xs text-amber-600">
+                <p className="mt-2 text-[12px] text-(--nebula-muted)">
                   Un workspace est requis pour un mapping de workspace.
                 </p>
               ) : null}
@@ -233,10 +236,10 @@ function ScopeRadio({
 }) {
   return (
     <label
-      className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors focus-within:ring-2 focus-within:ring-primary/40 ${
+      className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-3 transition-colors ${
         checked
-          ? "border-primary/40 bg-primary/5"
-          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+          ? "border-white/20 bg-white/10"
+          : "border-white/10 bg-white/5 hover:border-white/15 hover:bg-white/10"
       }`}
     >
       <input
@@ -246,20 +249,22 @@ function ScopeRadio({
         onChange={onChange}
       />
       <span
-        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-          checked ? "bg-primary/10 text-primary" : "bg-slate-100 text-slate-500"
+        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${
+          checked
+            ? "bg-white/10 border-white/15 text-(--nebula-gold-light)"
+            : "bg-white/5 border-white/10 text-(--nebula-muted)"
         }`}
       >
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium text-slate-900">{label}</span>
-        <span className="mt-0.5 block text-xs text-slate-500">{description}</span>
+        <span className="block text-sm font-medium text-white">{label}</span>
+        <span className="mt-0.5 block text-xs text-(--nebula-muted)">{description}</span>
       </span>
       <span
         aria-hidden
         className={`mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
-          checked ? "border-primary bg-primary" : "border-slate-300 bg-white"
+          checked ? "border-(--nebula-gold-light) bg-(--nebula-gold)" : "border-white/20 bg-white/5"
         }`}
       >
         {checked ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}

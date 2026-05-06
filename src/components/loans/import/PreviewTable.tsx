@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, Info } from 'lucide-react';
 import { ColumnMappingDto, ImportPreviewDto, ImportErrorDto } from '@/types/loans';
 import { fieldLabel } from './ValidationUtils';
+import { formatDateFR } from '@/lib/format';
 
 // Helper function to format display values
 const formatDisplayValue = (value: unknown, targetField: string): string => {
@@ -24,11 +25,7 @@ const formatDisplayValue = (value: unknown, targetField: string): string => {
                     const parsedDate = new Date(excelEpoch.getTime() + (excelSerial - 1 - daysToSubtract) * 24 * 60 * 60 * 1000);
 
                     if (!isNaN(parsedDate.getTime())) {
-                        return parsedDate.toLocaleDateString('fr-FR', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit'
-                        });
+                        return formatDateFR(parsedDate, { fallback: stringValue });
                     }
                 } catch {
                     // If conversion fails, return original value
