@@ -203,7 +203,7 @@ export default function ShareholdersPage() {
             <Button
               type="button"
               onClick={openCreate}
-              className="w-full bg-primary text-white hover:bg-slate-800 sm:w-auto"
+              className="w-full bg-primary text-white! hover:bg-slate-800 sm:w-auto"
             >
               <Plus className="h-4 w-4" />
               Nouvel actionnaire
@@ -212,7 +212,7 @@ export default function ShareholdersPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-xl border border-primary nebula-glass shadow-sm">
         {error && <div className="border-b border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
         {loading && !shareholders.length ? (
           <div className="flex items-center justify-center py-12 text-sm text-slate-500">
@@ -221,40 +221,40 @@ export default function ShareholdersPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-100 text-sm">
-              <thead className="bg-slate-50/60">
+              <thead className="bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) text-white! rounded-t-xl!">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                     Actionnaire
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                     Type
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                     Pourcentage
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                     Entreprises liées
                   </th>
                   {canManageShareholders && (
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">
                       Actions
                     </th>
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-primary/30">
                 {filtered.map((s) => {
                   const ownerLabel =
                     s.ownerType === "USER" ? findUserLabel(s.ownerId) : findCompanyName(s.ownerId);
                   return (
-                    <tr key={s.id} className="hover:bg-slate-50/50">
+                    <tr key={s.id} className="hover:bg-primary/30">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/5 text-slate-700">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                             {s.ownerType === "USER" ? <Users className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-medium text-slate-900">{ownerLabel}</span>
+                            <span className="font-medium">{ownerLabel}</span>
                           </div>
                         </div>
                       </td>

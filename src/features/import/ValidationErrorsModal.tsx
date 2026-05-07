@@ -127,7 +127,7 @@ export function ValidationErrorsModal({ open, onOpenChange, errors }: Validation
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <p className="text-yellow-800 text-xs">
                     ⚠️ Plus de 20 erreurs détectées. Les 20 premières sont affichées.
-                    Corrigez d'abord les premières erreurs et réessayez.
+                    Corrigez d&apos;abord les premières erreurs et réessayez.
                   </p>
                 </div>
               )}

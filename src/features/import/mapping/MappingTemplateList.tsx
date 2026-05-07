@@ -68,7 +68,7 @@ export function MappingTemplateList({
             <div
               role="tablist"
               aria-label="Filtrer par portée"
-              className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1"
+              className="inline-flex rounded-full border border-white/10 bg-white/5 p-1"
             >
               {CHIPS.map((chip) => {
                 const active = scope === chip.id;
@@ -80,18 +80,18 @@ export function MappingTemplateList({
                     role="tab"
                     aria-selected={active}
                     onClick={() => setScope(chip.id)}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light) ${
                       active
-                        ? "bg-white text-slate-900 shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
+                        ? "bg-white/10 text-white"
+                        : "text-(--nebula-muted) hover:text-white"
                     }`}
                   >
                     {chip.label}
                     <span
-                      className={`rounded-full px-1.5 text-[10px] tabular-nums ${
+                      className={`rounded-full px-1.5 text-[10px] font-mono tabular-nums ${
                         active
-                          ? "bg-slate-100 text-slate-700"
-                          : "bg-white text-slate-500"
+                          ? "bg-white/10 text-white"
+                          : "bg-white/5 text-(--nebula-muted)"
                       }`}
                     >
                       {count}
@@ -106,7 +106,7 @@ export function MappingTemplateList({
           {showSearch ? (
             <div className="relative sm:max-w-xs sm:flex-1">
               <Search
-                className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50"
                 aria-hidden
               />
               <input
@@ -115,7 +115,7 @@ export function MappingTemplateList({
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Rechercher un mapping…"
                 aria-label="Rechercher un mapping"
-                className="block h-9 w-full rounded-full border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-900 shadow-xs placeholder:text-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                className="block h-9 w-full rounded-full border border-white/10 bg-white/5 pl-8 pr-3 text-[13px] text-white placeholder:text-(--nebula-muted) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)"
               />
             </div>
           ) : null}
@@ -123,14 +123,14 @@ export function MappingTemplateList({
       )}
 
       {loading ? (
-        <div className="flex h-32 items-center justify-center text-sm text-slate-500">
+        <div className="flex h-32 items-center justify-center text-sm text-(--nebula-muted)">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
           Chargement…
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center">
-          <Inbox className="h-6 w-6 text-slate-400" aria-hidden />
-          <p className="text-sm text-slate-600">
+        <div className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-white/5 px-4 py-8 text-center nebula-blob">
+          <Inbox className="h-6 w-6 text-white/50" aria-hidden />
+          <p className="text-sm text-(--nebula-muted)">
             {query.trim()
               ? `Aucun mapping pour « ${query.trim()} ».`
               : emptyMessage}

@@ -8,6 +8,7 @@ import { assetsApi } from '@/lib/assetsApi';
 import { Asset, EntityType } from '@/types/asset.types';
 import { Button } from '@/components/ui/Button';
 import { fetchStructureTree, TreeCompany, TreeBU, TreeGroup } from '@/lib/structureApi';
+import { formatDateFR } from '@/lib/format';
 import { ArrowLeft, Edit3, Building, Calendar, DollarSign, TrendingUp, Package, Settings } from 'lucide-react';
 
 export default function ViewAssetPage() {
@@ -23,11 +24,9 @@ export default function ViewAssetPage() {
       let entity = null;
 
       if (entityType === EntityType.COMPANY) {
-        // Chercher dans les entreprises autonomes
         const standaloneCompanies = tree?.standaloneCompanies || [];
         entity = standaloneCompanies.find(c => c.id === entityId);
 
-        // Si pas trouvé, chercher dans les groupes des workspaces
         if (!entity) {
           const workspaceGroupCompanies = tree?.workspaces?.flatMap(w =>
             w.groups.flatMap(g => g.companies)
@@ -35,7 +34,6 @@ export default function ViewAssetPage() {
           entity = workspaceGroupCompanies.find(c => c.id === entityId);
         }
       } else if (entityType === EntityType.BUSINESS_UNIT) {
-        // Chercher dans toutes les unités de travail
         const allCompanies = [
           ...(tree?.standaloneCompanies || []),
           ...(tree?.workspaces?.flatMap(w => w.groups.flatMap(g => g.companies)) || [])
@@ -45,7 +43,6 @@ export default function ViewAssetPage() {
           if (entity) break;
         }
       } else if (entityType === EntityType.GROUP) {
-        // Chercher dans les groupes des workspaces
         const groups = tree?.workspaces?.flatMap(w => w.groups) || [];
         entity = groups.find(g => g.id === entityId);
       }
@@ -66,7 +63,6 @@ export default function ViewAssetPage() {
           const assetData = await assetsApi.getAssetById(id);
           setAsset(assetData);
 
-          // Récupérer les informations de l'entité liée
           if (assetData.entityType && assetData.entityId) {
             await fetchEntityInfo(assetData.entityType, assetData.entityId);
           }
@@ -97,10 +93,10 @@ export default function ViewAssetPage() {
       <AppLayout title="Visualiser l&apos;actif">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Building className="h-8 w-8 text-slate-400" />
+            <div className="w-16 h-16 rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center mx-auto mb-4">
+              <Building className="h-8 w-8 text-(--nebula-gold-light)" />
             </div>
-            <p className="text-slate-600 text-lg font-medium">Chargement de l&apos;actif...</p>
+            <p className="text-(--nebula-muted) text-lg font-medium">Chargement de l&apos;actif...</p>
           </div>
         </div>
       </AppLayout>
@@ -112,10 +108,10 @@ export default function ViewAssetPage() {
       <AppLayout title="Visualiser l&apos;actif">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-50 to-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Package className="h-8 w-8 text-red-400" />
+            <div className="w-16 h-16 rounded-2xl border border-red-400/30 bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+              <Package className="h-8 w-8 text-red-300" />
             </div>
-            <p className="text-slate-600 text-lg font-medium">Actif non trouv&eacute;</p>
+            <p className="text-(--nebula-muted) text-lg font-medium">Actif non trouv&eacute;</p>
             <Button
               onClick={handleBack}
               className="mt-4"
@@ -133,19 +129,17 @@ export default function ViewAssetPage() {
   return (
     <AppLayout title={`Visualiser: ${asset.name}`}>
       <div className="space-y-6">
-        {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-md">
-              <Package className="h-5 w-5 text-white" />
+            <div className="w-10 h-10 rounded-xl border border-white/10 bg-white/10 flex items-center justify-center">
+              <Package className="h-5 w-5 text-(--nebula-gold-light)" />
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-slate-900 mb-1">{asset.name}</h1>
-              <p className="text-slate-600 text-sm">D&eacute;tails et plan d&apos;amortissement</p>
+              <h1 className="text-2xl font-bold text-white mb-1">{asset.name}</h1>
+              <p className="text-(--nebula-muted) text-sm">D&eacute;tails et plan d&apos;amortissement</p>
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               variant="outline"
@@ -157,7 +151,7 @@ export default function ViewAssetPage() {
             </Button>
             <Button
               onClick={handleEdit}
-              className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-300"
+              className="w-full sm:w-auto"
             >
               <Edit3 className="h-4 w-4 mr-2" />
               Modifier
@@ -165,36 +159,35 @@ export default function ViewAssetPage() {
           </div>
         </div>
 
-        {/* Asset Summary */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg transition-all duration-300 overflow-hidden">
+        <div className="nebula-glass rounded-3xl border border-white/10 overflow-hidden">
           <div className="p-5">
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
-                <Package className="h-4 w-4 text-blue-700" />
+              <div className="w-9 h-9 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center">
+                <Package className="h-4 w-4 text-(--nebula-gold-light)" />
               </div>
-              <h2 className="text-lg font-bold text-slate-900">R&eacute;sum&eacute; de l&apos;actif</h2>
+              <h2 className="text-lg font-bold text-white">R&eacute;sum&eacute; de l&apos;actif</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
+                <div className="flex items-center gap-2 text-(--nebula-muted) text-xs font-medium">
                   <Building className="h-3 w-3" />
                   Nom de l&apos;actif
                 </div>
-                <p className="text-base font-semibold text-slate-900">{asset.name}</p>
+                <p className="text-base font-semibold text-white">{asset.name}</p>
               </div>
 
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
+                <div className="flex items-center gap-2 text-(--nebula-muted) text-xs font-medium">
                   <Settings className="h-3 w-3" />
                   Entit&eacute; li&eacute;e
                 </div>
                 <div>
-                  <p className="text-base font-semibold text-slate-900">
+                  <p className="text-base font-semibold text-white">
                     {entityInfo ? entityInfo.name : 'Chargement...'}
                   </p>
                   {entityInfo && (
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-(--nebula-muted)">
                       ({asset.entityType === EntityType.COMPANY ? 'Entreprise' :
                         asset.entityType === EntityType.BUSINESS_UNIT ? 'Unité de travail' : 'Groupe'})
                     </span>
@@ -203,61 +196,61 @@ export default function ViewAssetPage() {
               </div>
 
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
+                <div className="flex items-center gap-2 text-(--nebula-muted) text-xs font-medium">
                   <DollarSign className="h-3 w-3" />
                   Montant d&apos;acquisition
                 </div>
-                <p className="text-base font-semibold text-slate-900">{asset.acquisitionAmount.toLocaleString('fr-FR')} &euro;</p>
+                <p className="text-base font-semibold text-white">{asset.acquisitionAmount.toLocaleString('fr-FR')} &euro;</p>
               </div>
 
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
+                <div className="flex items-center gap-2 text-(--nebula-muted) text-xs font-medium">
                   <Calendar className="h-3 w-3" />
                   Date d&apos;acquisition
                 </div>
-                <p className="text-base font-semibold text-slate-900">{new Date(asset.acquisitionDate).toLocaleDateString('fr-FR')}</p>
+                <p className="text-base font-semibold text-white">{formatDateFR(asset.acquisitionDate, { fallback: "-" })}</p>
               </div>
 
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
+                <div className="flex items-center gap-2 text-(--nebula-muted) text-xs font-medium">
                   <TrendingUp className="h-3 w-3" />
                   Date de mise en service
                 </div>
-                <p className="text-base font-semibold text-slate-900">
-                  {asset.commissioningDate ? new Date(asset.commissioningDate).toLocaleDateString('fr-FR') : 'Non d&eacute;finie'}
+                <p className="text-base font-semibold text-white">
+                  {asset.commissioningDate ? formatDateFR(asset.commissioningDate, { fallback: "-" }) : 'Non d&eacute;finie'}
                 </p>
               </div>
 
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
+                <div className="flex items-center gap-2 text-(--nebula-muted) text-xs font-medium">
                   <Calendar className="h-3 w-3" />
                   Dur&eacute;e d&apos;amortissement
                 </div>
-                <p className="text-base font-semibold text-slate-900">{asset.amortizationDurationYears} ans</p>
+                <p className="text-base font-semibold text-white">{asset.amortizationDurationYears} ans</p>
               </div>
 
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
+                <div className="flex items-center gap-2 text-(--nebula-muted) text-xs font-medium">
                   <Settings className="h-3 w-3" />
                   Type d&apos;amortissement
                 </div>
-                <p className="text-base font-semibold text-slate-900">{asset.amortizationType === 'LINEAR' ? 'Linéaire' : 'Dégressif'}</p>
+                <p className="text-base font-semibold text-white">{asset.amortizationType === 'LINEAR' ? 'Linéaire' : 'Dégressif'}</p>
               </div>
 
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
+                <div className="flex items-center gap-2 text-(--nebula-muted) text-xs font-medium">
                   <DollarSign className="h-3 w-3" />
                   Valeur r&eacute;siduelle
                 </div>
-                <p className="text-base font-semibold text-slate-900">{asset.residualValue.toLocaleString('fr-FR')} &euro;</p>
+                <p className="text-base font-semibold text-white">{asset.residualValue.toLocaleString('fr-FR')} &euro;</p>
               </div>
 
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
+                <div className="flex items-center gap-2 text-(--nebula-muted) text-xs font-medium">
                   <TrendingUp className="h-3 w-3" />
                   Statut
                 </div>
-                <p className="text-base font-semibold text-slate-900">
+                <p className="text-base font-semibold text-white">
                   {asset.status === 'ACTIVE' ? 'Actif' :
                     asset.status === 'FULLY_AMORTIZED' ? 'Totalement amorti' : 'C&eacute;d&eacute;'}
                 </p>
@@ -265,45 +258,44 @@ export default function ViewAssetPage() {
 
               {asset.disposalDate && (
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
+                  <div className="flex items-center gap-2 text-(--nebula-muted) text-xs font-medium">
                     <Calendar className="h-3 w-3" />
                     Date de cession
                   </div>
-                  <p className="text-base font-semibold text-slate-900">{new Date(asset.disposalDate).toLocaleDateString('fr-FR')}</p>
+                  <p className="text-base font-semibold text-white">{formatDateFR(asset.disposalDate, { fallback: "-" })}</p>
                 </div>
               )}
 
               {asset.disposalAmount && (
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
+                  <div className="flex items-center gap-2 text-(--nebula-muted) text-xs font-medium">
                     <DollarSign className="h-3 w-3" />
                     Montant de cession
                   </div>
-                  <p className="text-base font-semibold text-slate-900">{asset.disposalAmount.toLocaleString('fr-FR')} &euro;</p>
+                  <p className="text-base font-semibold text-white">{asset.disposalAmount.toLocaleString('fr-FR')} &euro;</p>
                 </div>
               )}
             </div>
 
             {asset.description && (
-              <div className="mt-5 pt-5 border-t border-slate-200">
-                <div className="flex items-center gap-2 text-slate-600 text-xs font-medium mb-2">
+              <div className="mt-5 pt-5 border-t border-white/10">
+                <div className="flex items-center gap-2 text-(--nebula-muted) text-xs font-medium mb-2">
                   <Package className="h-3 w-3" />
                   Description
                 </div>
-                <p className="text-slate-700 leading-relaxed text-sm">{asset.description}</p>
+                <p className="text-white/90 leading-relaxed text-sm">{asset.description}</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Amortization Schedule */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg transition-all duration-300 overflow-hidden">
+        <div className="nebula-glass rounded-3xl border border-white/10 overflow-hidden">
           <div className="p-5">
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-9 h-9 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl flex items-center justify-center">
-                <TrendingUp className="h-4 w-4 text-emerald-700" />
+              <div className="w-9 h-9 rounded-xl border border-emerald-400/25 bg-emerald-500/10 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-emerald-200" />
               </div>
-              <h2 className="text-lg font-bold text-slate-900">Plan d&apos;amortissement</h2>
+              <h2 className="text-lg font-bold text-white">Plan d&apos;amortissement</h2>
             </div>
             <AmortizationScheduleDisplay asset={asset} />
           </div>

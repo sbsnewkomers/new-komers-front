@@ -1,75 +1,101 @@
 @import "tailwindcss";
 
-/* =============================================================================
-   Prompt 3 : Layout & Dashboard – Theme tokens
-   Updated to match "Clean SaaS" look from screenshots.
-   ============================================================================= */
+/* =====================================================
+   NEBULA — Glassmorphism dark futuristic (gold)
+   Dark mode by default. Light mode via `.nebula-light`
+   ===================================================== */
 :root {
-  --background: #f8fafc; /* Slate 50 - Page background */
-  --foreground: #0f172a; /* Slate 900 - Main text */
-  
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  
-  --primary: #2967bc; /* Slate 900 - Primary buttons/actions */
-  --primary-foreground: #f8fafc;
-  
-  --secondary: #f1f5f9; /* Slate 100 */
-  --secondary-foreground: #0f172a;
-  
-  --muted: #f1f5f9; /* Slate 100 */
-  --muted-foreground: #64748b; /* Slate 500 */
-  
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
-  
-  --destructive: #ef4444;
-  --destructive-foreground: #f8fafc;
+  --nebula-bg: #0a0a0a;
+  --nebula-ink: #f5ecd7;
+  --nebula-muted: #9a8f78;
+  --nebula-gold-light: #d4b06a;
+  --nebula-gold: #b8924a;
+  --nebula-gold-deep: #8a6a32;
 
-  --border: #e2e8f0; /* Slate 200 */
-  --input: #e2e8f0;
-  --ring: #94a3b8;
-  
-  --radius: 0.75rem; /* 12px - Rounded look */
+  /* Compatibility for existing Tailwind token usage */
+  --background: var(--nebula-bg);
+  --foreground: var(--nebula-ink);
+  --muted: rgba(255, 255, 255, 0.06);
+  --muted-foreground: var(--nebula-muted);
+  --border: rgba(245, 236, 215, 0.12);
+  --input: rgba(245, 236, 215, 0.12);
+  --ring: var(--nebula-gold-light);
+  --light: var(--nebula-gold-light);
+  --primary: var(--nebula-gold);
+  --dark: var(--nebula-gold-deep);
+  --primary-foreground: #fff;
+  --card: rgba(255, 255, 255, 0.04);
+  --card-foreground: var(--nebula-ink);
+  --popover: rgba(10, 10, 10, 0.92);
+  --popover-foreground: var(--nebula-ink);
 }
 
 @theme inline {
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, sans-serif, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-light: var(--light);
+  --color-dark: var(--dark);
+  --color-primary-foreground: var(--primary-foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+/* Native form controls should follow dark-first theme */
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  color: var(--nebula-ink);
   font-family: var(--font-sans);
+  /* background:
+    radial-gradient(
+      ellipse 80% 60% at 20% 0%,
+      rgba(184, 146, 74, 0.22),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 70% 50% at 90% 20%,
+      rgba(212, 176, 106, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 60% at 50% 100%,
+      rgba(138, 106, 50, 0.18),
+      transparent 60%
+    ),
+    var(--nebula-bg); */
+
+  background:
+    radial-gradient(
+      80% 60% at 20% 0px,
+      rgba(184, 146, 74, 0.22),
+      rgba(0, 0, 0, 0) 60%
+    ),
+    radial-gradient(
+      70% 50% at 90% 20%,
+      rgba(212, 176, 106, 0.18),
+      rgba(0, 0, 0, 0) 60%
+    ),
+    radial-gradient(
+      60% 60% at 50% 100%,
+      rgba(138, 106, 50, 0.18),
+      rgba(0, 0, 0, 0) 60%
+    ),
+    var(--nebula-bg);
+  min-height: 100vh;
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
 }
@@ -82,18 +108,262 @@ body {
   padding-bottom: calc(1rem + env(safe-area-inset-bottom));
 }
 
+.nebula-glass {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.09),
+      rgba(255, 255, 255, 0.03)
+    ),
+    rgba(10, 10, 10, 0.56);
+  border: 1px solid rgba(245, 236, 215, 0.12);
+  border-radius: 20px;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+.nebula-glass:hover {
+  border-color: rgba(245, 236, 215, 0.18);
+}
+
+/* Modal surfaces need higher opacity for readability */
+.nebula-glass-modal {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.11),
+      rgba(255, 255, 255, 0.05)
+    ),
+    rgba(10, 10, 10, 0.72);
+  border: 1px solid rgba(245, 236, 215, 0.14);
+  border-radius: 20px;
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+}
+.nebula-glass-modal:hover {
+  border-color: rgba(245, 236, 215, 0.2);
+}
+
+/* Ensure <select> dropdown + <option> are dark in dark mode */
+select,
+option {
+  background-color: rgba(10, 10, 10, 0.92);
+  color: var(--nebula-ink);
+}
+
+.nebula-glow {
+  box-shadow: 0 0 40px -8px rgba(184, 146, 74, 0.55);
+}
+.nebula-glow-soft {
+  box-shadow: 0 0 40px -8px rgba(212, 176, 106, 0.45);
+}
+
+.nebula-grad-text {
+  background-image: linear-gradient(
+    135deg,
+    var(--nebula-gold-light) 0%,
+    var(--nebula-gold) 50%,
+    var(--nebula-gold-deep) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.nebula-grid-bg {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Global states */
+button {
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--nebula-gold-light);
+  outline-offset: 2px;
+}
+button:disabled,
+input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: saturate(0.6);
+}
+
+/* ----- LIGHT MODE — classe .nebula-light sur la racine ----- */
+.nebula-light {
+  --nebula-bg: #fafaf7;
+  --nebula-ink: #0a0a0a;
+  --nebula-muted: #6b6b66;
+
+  --background: var(--nebula-bg);
+  --foreground: var(--nebula-ink);
+  --muted: rgba(10, 10, 10, 0.06);
+  --muted-foreground: var(--nebula-muted);
+  --border: rgba(10, 10, 10, 0.08);
+  --input: rgba(10, 10, 10, 0.1);
+  --ring: var(--nebula-gold);
+  --primary: var(--nebula-gold);
+  --primary-foreground: #fff;
+  --card: rgba(255, 255, 255, 0.7);
+  --card-foreground: var(--nebula-ink);
+  --popover: rgba(255, 255, 255, 0.85);
+  --popover-foreground: var(--nebula-ink);
+}
+
+.nebula-light html {
+  color-scheme: light;
+}
+
+/* Light dropdown background */
+.nebula-light select,
+.nebula-light option {
+  background-color: rgba(255, 255, 255, 0.92);
+  color: var(--nebula-ink);
+}
+.nebula-light body,
+body.nebula-light {
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 20% 0%,
+      rgba(184, 146, 74, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 70% 50% at 90% 20%,
+      rgba(212, 176, 106, 0.16),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 60% at 50% 100%,
+      rgba(138, 106, 50, 0.12),
+      transparent 60%
+    ),
+    var(--nebula-bg);
+}
+.nebula-light .nebula-glass {
+  background: white;
+  border: 1px solid rgba(10, 10, 10, 0.08);
+  box-shadow: 0 8px 32px -12px rgba(184, 146, 74, 0.18);
+}
+.nebula-light .nebula-glass-modal {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(10, 10, 10, 0.1);
+  box-shadow: 0 12px 36px -16px rgba(10, 10, 10, 0.12);
+}
+.nebula-light .nebula-grid-bg {
+  background-image:
+    linear-gradient(rgba(10, 10, 10, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10, 10, 10, 0.05) 1px, transparent 1px);
+}
+/* Tailwind utility overrides in light mode */
+.nebula-light .text-white {
+  color: var(--nebula-ink) !important;
+}
+.nebula-light .bg-white\/5 {
+  background-color: rgba(10, 10, 10, 0.04) !important;
+}
+.nebula-light .bg-white\/10 {
+  background-color: rgba(10, 10, 10, 0.06) !important;
+}
+.nebula-light .bg-white\/20 {
+  background-color: rgba(10, 10, 10, 0.1) !important;
+}
+.nebula-light .border-white\/10 {
+  border-color: rgba(10, 10, 10, 0.1) !important;
+}
+.nebula-light .border-white\/15 {
+  border-color: rgba(10, 10, 10, 0.12) !important;
+}
+.nebula-light .border-white\/20 {
+  border-color: rgba(10, 10, 10, 0.18) !important;
+}
+.nebula-light .hover\:bg-white\/5:hover {
+  background-color: rgba(10, 10, 10, 0.05) !important;
+}
+.nebula-light .hover\:bg-white\/10:hover {
+  background-color: rgba(10, 10, 10, 0.08) !important;
+}
+.nebula-light .hover\:bg-white\/20:hover {
+  background-color: rgba(10, 10, 10, 0.12) !important;
+}
+.nebula-light .hover\:text-white:hover {
+  color: var(--nebula-ink) !important;
+}
+/* Keep white text readable on gradient chips */
+.nebula-light [class*="bg-gradient-to-"] .text-white,
+.nebula-light [class*="bg-gradient-to-"].text-white {
+  color: #fff !important;
+}
+
+/* Ambient corner glow: inset washes (visible on white) + blurred radials (under content) */
+.nebula-blob {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  /* Sits above background, below descendants — no z-index fight with children */
+  /* box-shadow:
+    inset 52px -48px 100px -36px color-mix(in srgb, var(--nebula-gold-light) 22%, transparent),
+    inset -48px 52px 100px -36px color-mix(in srgb, var(--nebula-gold-deep) 20%, transparent),
+    inset -52px -48px 100px -36px color-mix(in srgb, var(--nebula-gold) 18%, transparent),
+    inset 48px 52px 100px -36px color-mix(in srgb, var(--nebula-gold-light) 14%, transparent); */
+}
+
+.nebula-blob::after {
+  content: "";
+  position: absolute;
+  top: -10rem;
+  right: -10rem;
+  height: 16rem;
+  width: 16rem;
+  border-radius: 100%;
+  background-color: #b8924a4d;
+  filter: blur(48px);
+}
+
+.nebula-blob::before {
+  content: "";
+  position: absolute;
+  bottom: -10rem;
+  left: -10rem;
+  height: 12rem;
+  width: 12rem;
+  border-radius: 100%;
+  background-color: #b8924a4d;
+  filter: blur(48px);
+}
+
+.nebula-blob > * {
+  position: relative;
+  z-index: 1;
+}
+
+.nebula-light .nebula-blob::after {
+  opacity: 0.55;
+  filter: blur(40px);
+}
+
 /* =============================================================================
    Landing page (NEWKOMERS marketing) – scoped
    ============================================================================= */
 .landing {
-  --primary: #0a192f;
-  --primary-light: #112240;
-  --accent: #64ffda;
-  --accent-soft: rgba(100, 255, 218, 0.1);
-  --text-main: #e6f1ff;
-  --text-muted: #8892b0;
-  --border: rgba(230, 241, 255, 0.1);
-  --glass: rgba(17, 34, 64, 0.7);
+  --primary: #080808;
+  --primary-light: #111111;
+  --accent: #d4b06a; /* align with Nebula gold */
+  --accent-soft: rgba(212, 176, 106, 0.12);
+  --text-main: #e8e8e8;
+  --text-muted: #888888;
+  --text-dim: #555555;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-accent: rgba(212, 176, 106, 0.3);
+  --glass: rgba(8, 8, 8, 0.85);
   font-family: "Inter", sans-serif;
   background-color: var(--primary);
   color: var(--text-main);
@@ -108,10 +378,10 @@ body {
   border: 1px solid var(--border);
 }
 .landing .gradient-bg {
-  background: radial-gradient(circle at top right, #112240 0%, #0a192f 100%);
+  background: var(--primary);
 }
 .landing .feature-ui-card {
-  background: linear-gradient(145deg, #112240, #0a192f);
+  background: linear-gradient(145deg, #101010, #080808);
   border: 1px solid var(--border);
 }
 .landing .pricing-card {
@@ -121,5 +391,28 @@ body {
   transform: translateY(-8px);
 }
 .landing .material-symbols-outlined {
-  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
+
+@keyframes landingMarquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.landing .landing-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: landingMarquee 22s linear infinite;
+}
+
+.landing .landing-marquee-track:hover {
+  animation-play-state: paused;
 }

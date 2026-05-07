@@ -53,15 +53,44 @@ interface MappingModalProps {
   onImport?: () => void;
   isSubmitting: boolean;
   entityId?: string | null;
-  entityType?: "Group" | "Company" | null;
+  entityType?: "Group" | "Company" | 'BusinessUnit' | null;
   showImportButton?: boolean;
   onFileUpload?: (file: File) => void;
   workspaceId?: string | null;
+  hasData?: boolean | null;
+  periodStart?: string;
+  periodEnd?: string;
+  onSaveSuccess?: (title: string, message: string) => void;
+  onSaveError?: (message: string) => void;
+  onDeleteSuccess?: (mappingName: string) => void;
 }
 
 type Tab = "editor" | "templates";
 type DetailMode = "view" | "edit";
 type FeedbackState = { tone: "success" | "error"; message: string } | null;
+function buildEditMappingFromTemplate(
+  rules: Record<string, string>,
+  csvHeaders: string[],
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  Basic_COLUMNS.forEach((col) => {
+    const foundCsvCol =
+      Object.entries(rules).find(([, dbField]) => dbField === col.name)?.[0] ?? "";
+    if (!foundCsvCol) {
+      result[col.name] = "";
+      return;
+    }
+    if (csvHeaders.length === 0) {
+      result[col.name] = foundCsvCol;
+      return;
+    }
+    const exactMatch = csvHeaders.find(
+      (h) => h.toLowerCase() === foundCsvCol.toLowerCase(),
+    );
+    result[col.name] = exactMatch ?? foundCsvCol;
+  });
+  return result;
+}
 
 export function MappingModal({
   open,
@@ -76,6 +105,12 @@ export function MappingModal({
   showImportButton = false,
   onFileUpload,
   workspaceId,
+  hasData,
+  periodStart,
+  periodEnd,
+  onSaveSuccess,
+  onSaveError,
+  onDeleteSuccess,
 }: MappingModalProps) {
   const { user: currentUser } = usePermissionsContext();
   const isAdmin =
@@ -109,12 +144,8 @@ export function MappingModal({
   const [selectedSavedMapping, setSelectedSavedMapping] =
     useState<SavedMapping | null>(null);
   const [showMappingDetail, setShowMappingDetail] = useState(false);
-  const [editSavedMapping, setEditSavedMapping] = useState<
-    Record<string, string>
-  >({});
-  const [originalEditMapping, setOriginalEditMapping] = useState<
-    Record<string, string>
-  >({});
+  const [editSavedMapping, setEditSavedMapping] = useState<Record<string, string>>({});
+  const [originalEditMapping, setOriginalEditMapping] = useState<Record<string, string>>({});
   const [detailMode, setDetailMode] = useState<DetailMode>("view");
   const [detailFeedback, setDetailFeedback] = useState<FeedbackState>(null);
 
@@ -133,7 +164,10 @@ export function MappingModal({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedHash, setLastSavedHash] = useState<string | null>(null);
 
-  const prevActiveLocalWorkspaceId = useRef<string | null>(null);
+ const prevActiveLocalWorkspaceId = useRef<string | null>(null);
+  const mappingFileInputRef = useRef<HTMLInputElement>(null);
+  const prevOpenRef = useRef(false);
+
 
   // ───────────────────────────────────────────── Fetchers
   const fetchAccessibleWorkspaces = useCallback(async () => {
@@ -230,28 +264,45 @@ export function MappingModal({
     }
   }, [activeLocalWorkspaceId, open, fetchLocalMappingsForWorkspace]);
 
-  useEffect(() => {
-    if (!open) return;
-    prevActiveLocalWorkspaceId.current = null;
-    fetchGlobalMappings();
-    setSelectedSavedMapping(null);
-    setFeedback(null);
-    setDetailFeedback(null);
-    setLastSavedHash(null);
-    setTab("editor");
+
+useEffect(() => {
+  // Ne reset que quand la modal VIENT DE S'OUVRIR (false → true)
+  if (!open) {
+    prevOpenRef.current = false;
+    return;
+  }
+  if (prevOpenRef.current === true) {
+    // La modal était déjà ouverte, workspaceId ou isAdmin a changé
+    // On ne reset PAS le feedback
     if (isAdmin) {
-      fetchAccessibleWorkspaces();
       const initWs = workspaceId ?? null;
       setActiveLocalWorkspaceId(initWs);
-      setAutoDetectedWorkspaceId(null);
-      setNeedsWorkspaceSelection(false);
       if (initWs) fetchLocalMappingsForWorkspace(initWs);
-      else setLocalMappings([]);
-    } else {
-      autoDetectWorkspaceForNonAdmin();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, workspaceId, isAdmin]);
+    return;
+  }
+  // Vraie ouverture (false → true)
+  prevOpenRef.current = true;
+  prevActiveLocalWorkspaceId.current = null;
+  fetchGlobalMappings();
+  setSelectedSavedMapping(null);
+  setFeedback(null);
+  setDetailFeedback(null);
+  setLastSavedHash(null);
+  setTab("editor");
+  if (isAdmin) {
+    fetchAccessibleWorkspaces();
+    const initWs = workspaceId ?? null;
+    setActiveLocalWorkspaceId(initWs);
+    setAutoDetectedWorkspaceId(null);
+    setNeedsWorkspaceSelection(false);
+    if (initWs) fetchLocalMappingsForWorkspace(initWs);
+    else setLocalMappings([]);
+  } else {
+    autoDetectWorkspaceForNonAdmin();
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [open, workspaceId, isAdmin]);
 
   // ───────────────────────────────────────────── Derived
   const requiredColumns = useMemo(
@@ -313,37 +364,28 @@ export function MappingModal({
   );
 
   const clearMapping = useCallback(() => {
-    const initial: Record<string, string> = {};
-    csvHeaders.forEach((h) => {
-      const match = Basic_COLUMNS.find(
-        (col) => col.name.toLowerCase() === h.toLowerCase(),
-      );
-      initial[h] = match ? match.name : "";
-    });
-    onMappingChange(initial);
-    setSelectedSavedMapping(null);
-  }, [csvHeaders, onMappingChange]);
+  const empty: Record<string, string> = {};
+  csvHeaders.forEach((h) => {
+    empty[h] = ""; 
+  });
+  onMappingChange(empty);
+  setSelectedSavedMapping(null);
+}, [csvHeaders, onMappingChange]);
 
   const handleImportClick = useCallback(() => {
     if (onImport) onImport();
   }, [onImport]);
 
   const viewMappingDetail = useCallback((m: SavedMapping) => {
-    setSelectedSavedMapping(m);
-    const rules = m.rules || {};
-    const fullRules: Record<string, string> = {};
-    Basic_COLUMNS.forEach((col) => {
-      const found = Object.keys(rules).find(
-        (csvCol) => rules[csvCol] === col.name,
-      );
-      fullRules[col.name] = found || "";
-    });
-    setEditSavedMapping(fullRules);
-    setOriginalEditMapping(fullRules);
-    setDetailMode("view");
-    setDetailFeedback(null);
-    setShowMappingDetail(true);
-  }, []);
+  setSelectedSavedMapping(m);
+  const rules = m.rules || {};
+  const fullRules = buildEditMappingFromTemplate(rules, csvHeaders);
+  setEditSavedMapping(fullRules);
+  setOriginalEditMapping(fullRules);
+  setDetailMode("view");
+  setDetailFeedback(null);
+  setShowMappingDetail(true);
+}, [csvHeaders]);
 
   const isMappingChanged = useMemo(
     () =>
@@ -358,7 +400,7 @@ export function MappingModal({
   }, [editSavedMapping, requiredColumns]);
 
   const handleFileInputClick = useCallback(() => {
-    document.getElementById("mapping-file-input")?.click();
+  mappingFileInputRef.current?.click();
   }, []);
 
   const handleFileChange = useCallback(
@@ -410,18 +452,26 @@ export function MappingModal({
             : Promise.resolve(),
           fetchGlobalMappings(),
         ]);
+        setSaveDialogOpen(false);
+        setTab("editor"); // s'assurer qu'on est sur l'onglet editor
         setFeedback({
           tone: "success",
           message: "Mapping enregistré avec succès.",
         });
         setLastSavedHash(currentMappingHash);
-        setSaveDialogOpen(false);
+        onSaveSuccess?.(
+          "Mapping enregistré ✅",
+          `Le mapping « ${value.name} » a été créé et est disponible pour vos prochains imports.`,
+        );
+        onOpenChange(false);
       } catch (err) {
         console.error(err);
         setFeedback({
           tone: "error",
           message: "Impossible d'enregistrer le mapping.",
         });
+        onSaveError?.("Impossible d'enregistrer le mapping.");
+        
       } finally {
         setIsSaving(false);
       }
@@ -437,6 +487,8 @@ export function MappingModal({
       fetchGlobalMappings,
       closeModal,
       currentMappingHash,
+      onSaveSuccess,   
+      onSaveError, 
     ],
   );
 
@@ -492,18 +544,27 @@ export function MappingModal({
             : Promise.resolve(),
           fetchGlobalMappings(),
         ]);
-        setDetailFeedback({
-          tone: "success",
-          message: "Nouveau mapping enregistré.",
-        });
         setSaveAsNewDialogOpen(false);
         setShowMappingDetail(false);
+        onOpenChange(false); 
+        // Afficher le feedback dans la modal principale
+        setTab("editor");
+        setFeedback({
+          tone: "success",
+          message: "Nouveau mapping enregistré avec succès.",
+        });
+        setLastSavedHash(currentMappingHash);
+        onSaveSuccess?.(
+          "Mapping dupliqué ✅",
+          `Le mapping « ${value.name} » a été créé comme nouvelle version.`,
+        );
       } catch (err) {
         console.error(err);
         setDetailFeedback({
           tone: "error",
           message: "Impossible d'enregistrer le nouveau mapping.",
         });
+        onSaveError?.("Impossible d'enregistrer le nouveau mapping.");
       } finally {
         setIsSaving(false);
       }
@@ -519,6 +580,8 @@ export function MappingModal({
       fetchLocalMappingsForWorkspace,
       fetchGlobalMappings,
       onOpenChange,
+      onSaveSuccess,   
+      onSaveError,
     ],
   );
 
@@ -533,11 +596,7 @@ export function MappingModal({
     try {
       await apiFetch(`/mapping-templates/${mappingToDelete.id}`, {
         method: "DELETE",
-        snackbar: {
-          showSuccess: true,
-          showError: false,
-          successMessage: `Mapping "${mappingToDelete.name}" supprimé`,
-        },
+        snackbar: { showSuccess: false, showError: false },
       });
       if (isGlobalMapping(mappingToDelete)) {
         await fetchGlobalMappings();
@@ -545,6 +604,11 @@ export function MappingModal({
         await fetchLocalMappingsForWorkspace(activeLocalWorkspaceId);
       }
       setMappingToDelete(null);
+      setFeedback({
+        tone: "success",
+        message: `Le mapping « ${mappingToDelete.name} » a été supprimé.`,
+      });
+      onDeleteSuccess?.(mappingToDelete.name);
     } catch (err: unknown) {
       console.error("Erreur suppression mapping:", err);
       const msg =
@@ -582,7 +646,8 @@ export function MappingModal({
   ]);
 
   // ───────────────────────────────────────────── Import disabled
-  const importDisabled = !isComplete || !hasFile || isSubmitting;
+  const periodRequired = hasData === true && (!periodStart || !periodEnd);
+  const importDisabled = !isComplete || !hasFile || isSubmitting || periodRequired;
   const canSaveCurrent = isComplete && hasFile;
 
   // ───────────────────────────────────────────── Workspace selector (templates)
@@ -607,7 +672,7 @@ export function MappingModal({
         <DialogContent size="6xl" className="sm:max-h-[90dvh]">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/15 text-(--nebula-gold-light)">
                 <Sparkles className="h-4 w-4" aria-hidden />
               </span>
               <div className="min-w-0">
@@ -621,7 +686,7 @@ export function MappingModal({
             <div
               role="tablist"
               aria-label="Sections du mapping"
-              className="mt-3 inline-flex self-start rounded-full border border-slate-200 bg-slate-50 p-1"
+              className="mt-3 inline-flex self-start rounded-full border border-white/10 bg-white/5 p-1"
             >
               <TabButton
                 active={tab === "editor"}
@@ -639,7 +704,14 @@ export function MappingModal({
             </div>
           </DialogHeader>
 
-          <DialogBody className="bg-slate-50/40">
+          <DialogBody className="bg-transparent">
+          <input
+            ref={mappingFileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls,.txt"
+            className="hidden"
+            onChange={handleFileChange}
+          />
             {feedback ? (
               <div className="mb-4">
                 <MappingFeedback
@@ -669,21 +741,31 @@ export function MappingModal({
                     ) : (
                       <>
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h3 className="text-sm font-semibold text-slate-900">
+                          <h3 className="text-sm font-semibold text-white">
                             Champs attendus
                           </h3>
-                          <button
-                            type="button"
-                            onClick={() => setShowOnlyRequired((v) => !v)}
-                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
-                              showOnlyRequired
-                                ? "bg-primary/10 text-primary"
-                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                            }`}
-                          >
-                            <Filter className="h-3 w-3" aria-hidden />
-                            {showOnlyRequired ? "Requis" : "Tous"}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={handleFileInputClick}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-(--nebula-muted) transition-colors hover:bg-white/15 hover:text-white"
+                            >
+                              <Upload className="h-3 w-3" aria-hidden />
+                              Changer le fichier
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowOnlyRequired((v) => !v)}
+                              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light) border ${
+                                showOnlyRequired
+                                  ? "bg-white/10 border-white/15 text-white"
+                                  : "bg-white/5 border-white/10 text-(--nebula-muted) hover:bg-white/10 hover:text-white"
+                              }`}
+                            >
+                              <Filter className="h-3 w-3" aria-hidden />
+                              {showOnlyRequired ? "Requis" : "Tous"}
+                            </button>
+                          </div>
                         </div>
                         <div className="space-y-2">
                           {displayedColumns.map((field) => {
@@ -710,7 +792,7 @@ export function MappingModal({
                   </div>
 
                   <aside
-                    className={`min-w-0 rounded-xl border border-slate-200 bg-white ${
+                    className={`min-w-0 rounded-2xl border border-white/10 bg-white/5 nebula-blob ${
                       hasFile ? "" : "hidden lg:block"
                     }`}
                     aria-label="Colonnes du fichier"
@@ -719,23 +801,23 @@ export function MappingModal({
                       type="button"
                       onClick={() => setShowSource((v) => !v)}
                       aria-expanded={showSource}
-                      className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                      className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)"
                     >
                       <span className="flex items-center gap-2">
                         <FileUp
-                          className="h-4 w-4 text-slate-500"
+                          className="h-4 w-4 text-white/60"
                           aria-hidden
                         />
-                        <span className="text-sm font-medium text-slate-900">
+                        <span className="text-sm font-medium text-white">
                           Colonnes du fichier
                         </span>
                       </span>
                       <span className="flex items-center gap-2">
-                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 tabular-nums">
+                        <span className="inline-flex items-center rounded-full bg-white/10 border border-white/15 px-2 py-0.5 text-[11px] font-medium text-white font-mono tabular-nums">
                           {csvHeaders.length}
                         </span>
                         <ChevronDown
-                          className={`h-4 w-4 text-slate-400 transition-transform ${
+                          className={`h-4 w-4 text-white/50 transition-transform ${
                             showSource ? "rotate-180" : ""
                           }`}
                           aria-hidden
@@ -743,10 +825,10 @@ export function MappingModal({
                       </span>
                     </button>
                     {showSource ? (
-                      <div className="border-t border-slate-100 p-3">
+                      <div className="border-t border-white/10 p-3">
                         {hasFile ? (
                           <>
-                            <p className="mb-2 text-xs text-slate-500">
+                            <p className="mb-2 text-xs text-(--nebula-muted)">
                               {unmappedHeaders} non mappée
                               {unmappedHeaders > 1 ? "s" : ""} sur{" "}
                               {csvHeaders.length}
@@ -755,20 +837,20 @@ export function MappingModal({
                               {sourceMappings.map((s) => (
                                 <li
                                   key={s.header}
-                                  className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 text-xs ${
+                                  className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-xs ${
                                     s.dbField
-                                      ? "border-emerald-100 bg-emerald-50/60 text-emerald-800"
-                                      : "border-slate-100 bg-white text-slate-600"
+                                      ? "border-white/15 bg-white/10 text-white"
+                                      : "border-white/10 bg-white/5 text-(--nebula-muted)"
                                   }`}
                                 >
                                   {s.dbField ? (
                                     <CheckCircle2
-                                      className="h-3.5 w-3.5 shrink-0 text-emerald-500"
+                                      className="h-3.5 w-3.5 shrink-0 text-(--nebula-gold-light)"
                                       aria-hidden
                                     />
                                   ) : (
                                     <span
-                                      className="h-2 w-2 shrink-0 rounded-full border border-slate-300"
+                                      className="h-2 w-2 shrink-0 rounded-full border border-white/20"
                                       aria-hidden
                                     />
                                   )}
@@ -779,7 +861,7 @@ export function MappingModal({
                                     {s.header}
                                   </span>
                                   {s.dbField ? (
-                                    <span className="ml-auto truncate rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] text-emerald-700">
+                                    <span className="ml-auto truncate rounded-full bg-white/10 border border-white/15 px-1.5 py-0.5 text-[10px] font-mono text-white">
                                       {s.dbField}
                                     </span>
                                   ) : null}
@@ -788,7 +870,7 @@ export function MappingModal({
                             </ul>
                           </>
                         ) : (
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-(--nebula-muted)">
                             Importez un fichier pour voir ses colonnes.
                           </p>
                         )}
@@ -800,12 +882,12 @@ export function MappingModal({
             ) : (
               <div className="space-y-4">
                 {needsTemplateWorkspaceSelector && (
-                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3 nebula-blob">
                     <label
                       htmlFor="mapping-workspace-select"
-                      className="mb-1.5 block text-xs font-medium text-slate-600"
+                      className="mb-2 block text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)"
                     >
-                      Workspace pour les mappings de workspace
+                      § Workspace pour les mappings
                     </label>
                     <select
                       id="mapping-workspace-select"
@@ -814,7 +896,7 @@ export function MappingModal({
                         setActiveLocalWorkspaceId(e.target.value || null)
                       }
                       disabled={isLoadingWorkspaces}
-                      className="block h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                      className="block h-10 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-[13px] text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)"
                     >
                       <option value="">— Tous les workspaces —</option>
                       {accessibleWorkspaces.map((ws) => (
@@ -844,7 +926,7 @@ export function MappingModal({
               variant="ghost"
               onClick={clearMapping}
               disabled={totalMapped === 0}
-              className="text-slate-500 hover:text-amber-600"
+              className="text-(--nebula-muted) hover:text-white"
             >
               <Eraser className="mr-2 h-4 w-4" aria-hidden />
               Effacer le mapping
@@ -854,11 +936,7 @@ export function MappingModal({
                 <Button
                   onClick={() => setSaveDialogOpen(true)}
                   disabled={!canSaveCurrent || isSaving || isCurrentMappingSaved}
-                  className={
-                    isCurrentMappingSaved
-                      ? "bg-emerald-500 hover:bg-emerald-600"
-                      : "bg-emerald-600 hover:bg-emerald-700"
-                  }
+                  className={isCurrentMappingSaved ? "opacity-90" : ""}
                 >
                   {isCurrentMappingSaved ? (
                     <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden />
@@ -969,7 +1047,7 @@ export function MappingModal({
         <DialogContent size="md">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/15 text-(--nebula-gold-light)">
                 <AlertCircle className="h-4 w-4" aria-hidden />
               </span>
               <DialogTitle>Impossible de supprimer ce mapping</DialogTitle>
@@ -979,7 +1057,7 @@ export function MappingModal({
               {deleteErrorDialog ? (
                 <>
                   {" "}
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-white">
                     « {deleteErrorDialog.name} »
                   </span>
                 </>
@@ -987,16 +1065,16 @@ export function MappingModal({
               est utilisé par des écritures comptables existantes.
             </DialogDescription>
           </DialogHeader>
-          <DialogBody className="space-y-3 text-sm text-slate-700">
+          <DialogBody className="space-y-3 text-sm text-(--nebula-muted)">
             <p>
               La suppression pourrait causer des incohérences dans votre base
               de données.
             </p>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="mb-1 text-sm font-medium text-slate-800">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <p className="mb-1 text-sm font-medium text-white">
                 Comment faire ?
               </p>
-              <ul className="list-inside list-disc space-y-1 text-sm text-slate-600">
+              <ul className="list-inside list-disc space-y-1 text-sm text-(--nebula-muted)">
                 <li>Créez un nouveau mapping si besoin.</li>
                 <li>Le mapping existant reste disponible en lecture.</li>
                 <li>
@@ -1042,18 +1120,16 @@ function TabButton({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
-        active
-          ? "bg-white text-slate-900 shadow-sm"
-          : "text-slate-600 hover:text-slate-900"
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light) ${
+        active ? "bg-white/10 text-white" : "text-(--nebula-muted) hover:text-white"
       }`}
     >
       {icon}
       {label}
       {typeof badge === "number" && badge > 0 ? (
         <span
-          className={`rounded-full px-1.5 text-[10px] tabular-nums ${
-            active ? "bg-slate-100 text-slate-700" : "bg-white text-slate-500"
+          className={`rounded-full px-1.5 text-[10px] font-mono tabular-nums ${
+            active ? "bg-white/10 text-white" : "bg-white/5 text-(--nebula-muted)"
           }`}
         >
           {badge}
@@ -1071,16 +1147,16 @@ function NoFileCard({
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center">
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-500">
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-white/15 bg-white/5 px-6 py-10 text-center nebula-blob">
+      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border border-white/15 text-(--nebula-gold-light)">
         <AlertCircle className="h-5 w-5" aria-hidden />
       </span>
       <div>
-        <p className="text-sm font-medium text-slate-700">
+        <p className="text-sm font-medium text-white">
           Aucun fichier chargé
         </p>
-        <p className="mt-0.5 text-xs text-slate-500">
-          Importez d'abord un fichier Excel/CSV/TXT pour mapper ses colonnes.
+        <p className="mt-0.5 text-xs text-(--nebula-muted)">
+          Importez d&apos;abord un fichier Excel/CSV/TXT pour mapper ses colonnes.
         </p>
       </div>
       <Button size="sm" onClick={onUploadClick}>
@@ -1118,7 +1194,6 @@ interface MappingDetailModalProps {
   feedback: FeedbackState;
   onDismissFeedback: () => void;
 }
-
 function MappingDetailModal({
   open,
   onOpenChange,
@@ -1135,23 +1210,18 @@ function MappingDetailModal({
   onDismissFeedback,
 }: MappingDetailModalProps) {
   const sourceColumns = useMemo(() => {
-    // If the original mapping references columns not present in csvHeaders
-    // (e.g. opened before a file is loaded), still include them so users
-    // can see what was mapped.
-    if (csvHeaders.length > 0) return csvHeaders;
-    const refCols = Object.values(editSavedMapping).filter(
-      (v): v is string => Boolean(v),
-    );
-    return Array.from(new Set(refCols));
-  }, [csvHeaders, editSavedMapping]);
+  const templateCols = Object.values(editSavedMapping).filter(
+    (v): v is string => Boolean(v),
+  );
+  if (csvHeaders.length === 0) {
+    return Array.from(new Set(templateCols));
+  }
+  const extraCols = templateCols.filter((c) => !csvHeaders.includes(c));
+  return [...csvHeaders, ...extraCols];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [csvHeaders, mapping?.id]); // ← ne plus dépendre de editSavedMapping
 
-  const usedColumns = useMemo(() => {
-    const s = new Set<string>();
-    Object.values(editSavedMapping).forEach((v) => {
-      if (v) s.add(v);
-    });
-    return s;
-  }, [editSavedMapping]);
+  
 
   const mappedCount = Object.values(editSavedMapping).filter(
     (v) => v && v !== "",
@@ -1163,22 +1233,22 @@ function MappingDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="3xl">
+      <DialogContent size="4xl">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/15 text-(--nebula-gold-light)">
               <Layers className="h-4 w-4" aria-hidden />
             </span>
             <div className="min-w-0">
               <DialogTitle>
                 {detailMode === "edit"
-                  ? "Modifier le mapping"
+                  ? "Dupliquer le mapping"
                   : mapping?.name || "Détail du mapping"}
               </DialogTitle>
               {mapping ? (
                 <DialogDescription>
                   {detailMode === "edit"
-                    ? "Modifiez les associations puis enregistrez en tant que nouveau mapping."
+                    ? "Ajustez les colonnes CSV puis enregistrez comme nouveau mapping."
                     : `Créé le ${formatMappingDate(mapping.createdAt)} • Modifié le ${formatMappingDate(mapping.updatedAt)}`}
                 </DialogDescription>
               ) : null}
@@ -1186,7 +1256,7 @@ function MappingDetailModal({
           </div>
         </DialogHeader>
 
-        <DialogBody className="space-y-4 bg-slate-50/40">
+        <DialogBody className="space-y-4 bg-transparent">
           {feedback ? (
             <MappingFeedback
               tone={feedback.tone}
@@ -1202,39 +1272,176 @@ function MappingDetailModal({
             totalFields={Basic_COLUMNS.length}
           />
 
-          {detailMode === "edit" && csvHeaders.length === 0 ? (
-            <MappingFeedback
-              tone="info"
-              title="Aperçu uniquement"
-              message="Aucun fichier n'est chargé — les colonnes sources proposées sont celles enregistrées avec ce mapping."
-            />
-          ) : null}
+          {/* En-têtes des deux colonnes */}
+            <div className="grid grid-cols-2 gap-3 px-1">
+            <div className="flex items-center gap-2">
+              <FileUp className="h-4 w-4 text-(--nebula-muted)" aria-hidden />
+              <span className="text-xs font-semibold uppercase tracking-wide text-(--nebula-muted)">
+                Colonne CSV
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-(--nebula-muted)" aria-hidden />
+              <span className="text-xs font-semibold uppercase tracking-wide text-(--nebula-muted)">
+                Champ base de données
+              </span>
+            </div>
+          </div>
 
+          {/* Lignes deux colonnes */}
           <div className="space-y-2">
-            {Basic_COLUMNS.map((field) => (
-              <MappingFieldRow
-                key={field.name}
-                field={field}
-                value={editSavedMapping[field.name] || ""}
-                sourceColumns={sourceColumns}
-                usedColumns={usedColumns}
-                disabled={detailMode === "view"}
-                onChange={
-                  detailMode === "edit"
-                    ? (val) =>
-                        setEditSavedMapping((prev) => ({
-                          ...prev,
-                          [field.name]: val,
-                        }))
-                    : undefined
-                }
-              />
-            ))}
+            {Basic_COLUMNS.map((field) => {
+              const csvValue = editSavedMapping[field.name] || "";
+              const hasValue = Boolean(csvValue);
+              const isMissing = field.required && !hasValue;
+              const isReadOnly = detailMode === "view";
+
+              const options = sourceColumns.map((col) => ({
+                value: col,
+                label: col,
+              }));
+
+              return (
+                <div
+                  key={field.name}
+                  className={`grid grid-cols-2 items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
+                    isMissing
+                      ? "border-rose-400/35 bg-rose-500/10"
+                      : hasValue
+                        ? "border-emerald-400/30 bg-emerald-500/10"
+                        : "border-white/10 bg-white/5"
+                  }`}
+                >
+                  {/* Colonne gauche : select CSV */}
+                  <div className="flex items-center gap-2">
+                    {hasValue ? (
+                      <CheckCircle2
+                        className="h-4 w-4 shrink-0 text-emerald-500"
+                        aria-hidden
+                      />
+                    ) : isMissing ? (
+                      <AlertCircle
+                        className="h-4 w-4 shrink-0 text-rose-400"
+                        aria-hidden
+                      />
+                    ) : (
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full border border-white/25"
+                        aria-hidden
+                      />
+                    )}
+
+                    {isReadOnly ? (
+                      <span
+                        className={`truncate text-sm font-medium ${
+                          hasValue ? "text-white" : "text-(--nebula-muted) italic"
+                        }`}
+                      >
+                        {hasValue ? csvValue : "— Non mappé —"}
+                      </span>
+                    ) : (
+                      <div className="flex min-w-0 flex-1 items-center gap-1">
+                        <div className="relative min-w-0 flex-1">
+                          <select
+                            value={sourceColumns.includes(csvValue) ? csvValue : ""}
+                            onChange={(e) => {
+                                const newValue = e.target.value;
+
+                                setEditSavedMapping((prev) => {
+                                  const updated = { ...prev };
+
+                                  // 🔥 libérer la colonne si elle est déjà utilisée ailleurs
+                                  Object.keys(updated).forEach((key) => {
+                                    if (updated[key] === newValue) {
+                                      updated[key] = "";
+                                    }
+                                  });
+
+                                  // assigner au champ courant
+                                  updated[field.name] = newValue;
+
+                                  return updated;
+                                });
+                              }}
+                            className={`block h-9 w-full appearance-none rounded-lg border bg-white/5 px-3 pr-8 text-sm text-white transition-colors focus:outline-none focus-visible:ring-2 ${
+                              isMissing
+                                ? "border-rose-400/50 focus-visible:ring-rose-400/50"
+                                : "border-white/10 hover:border-white/20 focus-visible:ring-(--nebula-gold-light)/50"
+                            }`}
+                          >
+                            <option value="">— Non mappé —</option>
+                            {options.map((opt) => {
+                              const isUsedElsewhere = Object.entries(editSavedMapping).some(
+                                ([key, val]) =>
+                                  key !== field.name && val === opt.value
+                              );
+
+                              return (
+                                <option
+                                  key={opt.value}
+                                  value={opt.value}
+                                  disabled={isUsedElsewhere}
+                                >
+                                  {opt.label}
+                                  {isUsedElsewhere ? " (déjà utilisé)" : ""}
+                                </option>
+                              );
+                            })}
+                          </select>
+
+                          <ChevronDown
+                            className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-(--nebula-muted)"
+                            aria-hidden
+                          />
+                        </div>
+                      </div>
+
+                    )}
+
+                    {/* Bouton effacer en mode edit */}
+                    {!isReadOnly && hasValue ? (
+                      <button
+                        type="button"
+                        aria-label={`Retirer le mappage pour ${field.name}`}
+                        onClick={() =>
+                          setEditSavedMapping((prev) => ({
+                            ...prev,
+                            [field.name]: "",
+                          }))
+                        }
+                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-(--nebula-muted) transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)/40"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {/* Colonne droite : champ DB fixe */}
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-medium text-white">
+                      {field.name}
+                    </span>
+                    <span
+                      className={`shrink-0 inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${
+                        field.required
+                          ? "border-rose-400/30 bg-rose-500/15 text-rose-100"
+                          : "border-white/10 bg-white/10 text-(--nebula-muted)"
+                      }`}
+                    >
+                      {field.required ? "Requis" : "Facultatif"}
+                    </span>
+                    <span className="hidden shrink-0 rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-(--nebula-muted) sm:inline-flex">
+                      {field.type}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </DialogBody>
 
         <DialogFooter className="flex-wrap sm:justify-between">
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-(--nebula-muted)">
             {mappedCount} / {Basic_COLUMNS.length} champs configurés
           </span>
           <div className="flex w-full flex-wrap gap-2 sm:w-auto">
@@ -1245,7 +1452,7 @@ function MappingDetailModal({
                 </Button>
                 <Button onClick={() => setDetailMode("edit")}>
                   <Pencil className="mr-2 h-4 w-4" aria-hidden />
-                  Modifier
+                  Dupliquer le mapping
                 </Button>
               </>
             ) : (

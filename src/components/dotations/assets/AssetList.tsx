@@ -10,18 +10,12 @@ import { Asset, AssetStatus, AmortizationType, EntityType } from '@/types/asset.
 import { usePermissions } from '@/permissions/usePermissions';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
+import { formatCurrencyEUR, formatDateFR } from '@/lib/format';
 
 // Utility functions
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(amount);
-};
+const formatCurrency = (amount: number) => formatCurrencyEUR(amount, { fallback: "0,00 €" });
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('fr-FR');
-};
+const formatDate = (dateString: string) => formatDateFR(dateString, { fallback: "-" });
 
 interface AssetListProps {
   entityType: EntityType;
@@ -33,9 +27,9 @@ interface AssetListProps {
 }
 
 const statusColors = {
-  [AssetStatus.ACTIVE]: 'bg-green-100 text-green-800',
-  [AssetStatus.FULLY_AMORTIZED]: 'bg-blue-100 text-blue-800',
-  [AssetStatus.DISPOSED]: 'bg-red-100 text-red-800',
+  [AssetStatus.ACTIVE]: 'border border-emerald-400/30 bg-emerald-500/15 text-emerald-100',
+  [AssetStatus.FULLY_AMORTIZED]: 'border border-sky-400/30 bg-sky-500/15 text-sky-100',
+  [AssetStatus.DISPOSED]: 'border border-red-400/30 bg-red-500/15 text-red-100',
 };
 
 const amortizationTypeLabels = {
@@ -112,7 +106,7 @@ export function AssetList({
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-(--nebula-gold-light)" />
           </div>
         </CardContent>
       </Card>
@@ -123,7 +117,7 @@ export function AssetList({
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-red-600 text-center">{error}</div>
+          <div className="text-red-300 text-center">{error}</div>
         </CardContent>
       </Card>
     );
@@ -143,21 +137,21 @@ export function AssetList({
         </CardHeader>
         <CardContent>
           {assets.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-(--nebula-muted)">
               Aucun actif trouvé pour cette entité.
             </div>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Montant d'acquisition</TableHead>
-                  <TableHead>Date d'acquisition</TableHead>
-                  <TableHead>Durée d'amortissement</TableHead>
-                  <TableHead>Type d'amortissement</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Valeur nette comptable actuelle</TableHead>
-                  <TableHead>Actions</TableHead>
+                <TableRow className="border-white/10 hover:bg-white/5">
+                  <TableHead className="text-(--nebula-muted) border-white/10">Nom</TableHead>
+                  <TableHead className="text-(--nebula-muted) border-white/10">Montant d&apos;acquisition</TableHead>
+                  <TableHead className="text-(--nebula-muted) border-white/10">Date d&apos;acquisition</TableHead>
+                  <TableHead className="text-(--nebula-muted) border-white/10">Durée d&apos;amortissement</TableHead>
+                  <TableHead className="text-(--nebula-muted) border-white/10">Type d&apos;amortissement</TableHead>
+                  <TableHead className="text-(--nebula-muted) border-white/10">Statut</TableHead>
+                  <TableHead className="text-(--nebula-muted) border-white/10">Valeur nette comptable actuelle</TableHead>
+                  <TableHead className="text-(--nebula-muted) border-white/10">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -170,19 +164,19 @@ export function AssetList({
                     asset.acquisitionAmount;
 
                   return (
-                    <TableRow key={asset.id}>
-                      <TableCell className="font-medium">
+                    <TableRow key={asset.id} className="border-white/10">
+                      <TableCell className="font-medium text-white">
                         <div>
                           <div>{asset.name}</div>
                           {asset.description && (
-                            <div className="text-sm text-gray-500">{asset.description}</div>
+                            <div className="text-sm text-(--nebula-muted)">{asset.description}</div>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{formatCurrency(asset.acquisitionAmount)}</TableCell>
-                      <TableCell>{formatDate(asset.acquisitionDate)}</TableCell>
-                      <TableCell>{asset.amortizationDurationYears} ans</TableCell>
-                      <TableCell>
+                      <TableCell className="text-white">{formatCurrency(asset.acquisitionAmount)}</TableCell>
+                      <TableCell className="text-white">{formatDate(asset.acquisitionDate)}</TableCell>
+                      <TableCell className="text-white">{asset.amortizationDurationYears} ans</TableCell>
+                      <TableCell className="text-white">
                         {amortizationTypeLabels[asset.amortizationType]}
                       </TableCell>
                       <TableCell>
@@ -190,7 +184,7 @@ export function AssetList({
                           {asset.status}
                         </span>
                       </TableCell>
-                      <TableCell>{formatCurrency(netBookValue)}</TableCell>
+                      <TableCell className="text-white">{formatCurrency(netBookValue)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {onView && (
@@ -215,7 +209,7 @@ export function AssetList({
                             variant="ghost"
                             size="sm"
                             onClick={() => confirmDelete(asset.id)}
-                            className="text-red-600 hover:text-red-800"
+                            className="text-red-300 hover:text-red-200"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

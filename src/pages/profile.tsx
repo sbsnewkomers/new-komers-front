@@ -193,45 +193,45 @@ export default function ProfilePage() {
         {/* Header */}
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="rounded-xl bg-primary/10 p-2.5">
-              <UserCircle className="h-5 w-5 text-primary" />
+            <div className="rounded-xl border border-white/10 bg-white/10 p-2.5">
+              <UserCircle className="h-5 w-5 text-(--nebula-gold-light)" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-primary">Profil</h2>
-              <p className="text-sm text-slate-500">Gérez vos informations personnelles et votre mot de passe.</p>
+              <h2 className="text-xl font-bold text-white">Profil</h2>
+              <p className="text-sm text-(--nebula-muted)">Gérez vos informations personnelles et votre mot de passe.</p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="rounded-3xl border border-white/10 nebula-glass-modal overflow-hidden">
           {/* Profile Card - Header + Personal Information */}
-          <div className="border-b border-slate-100 bg-slate-50/60 p-6">
+          <div className="border-b border-white/10 bg-white/5 p-6">
             <div className="flex flex-col lg:flex-row gap-8 w-full">
               {/* Profile Header Section */}
-              <div className="flex flex-col items-center lg:items-start gap-4 lg:gap-6 flex-shrink-0">
+              <div className="flex flex-col items-center lg:items-start gap-4 lg:gap-6 shrink-0">
                 <div className="relative">
-                  <div className="w-24 h-24 bg-gradient-to-br from-primary/10 to-primary/20 rounded-full flex items-center justify-center text-primary border-2 border-primary/20">
-                    <UserCircle className="w-14 h-14" />
+                  <div className="w-24 h-24 rounded-full flex items-center justify-center border border-(--nebula-gold-light)/30 bg-white/10 text-(--nebula-gold-light)">
+                    <UserCircle className="w-14 h-14 text-(--nebula-gold-light)" />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-background"></div>
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-400 rounded-full border-2 border-black/40 shadow-[0_0_10px_rgba(52,211,153,0.6)]"></div>
                 </div>
                 <div className="text-center lg:text-left space-y-3">
-                  <h1 className="text-2xl font-bold text-foreground">
+                  <h1 className="text-2xl font-bold text-white">
                     {user.firstName && user.lastName
                       ? `${user.firstName} ${user.lastName}`
                       : user.email?.split('@')[0] || "Utilisateur"
                     }
                   </h1>
-                  <p className="text-lg text-muted-foreground">
+                  <p className="text-lg text-(--nebula-muted)">
                     {user.email}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6 justify-center lg:justify-start">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
-                      <Shield className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-medium text-primary">{formatRole(user.role)}</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 border border-white/10 bg-white/10 rounded-full">
+                      <Shield className="w-4 h-4 text-(--nebula-gold-light)" />
+                      <span className="text-sm font-medium text-(--nebula-gold-light)">{formatRole(user.role)}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <User className="w-4 h-4" />
+                    <div className="flex items-center gap-2 text-(--nebula-muted)">
+                      <User className="w-4 h-4 text-(--nebula-muted)" />
                       <span className="text-sm">@{user.email?.split('@')[0] || "user"}</span>
                     </div>
                   </div>
@@ -241,9 +241,9 @@ export default function ProfilePage() {
               {/* Personal Information Section */}
               <div className="flex-1 space-y-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="text-xl font-semibold text-foreground">Informations personnelles</h3>
+                  <h3 className="text-xl font-semibold text-white">Informations personnelles</h3>
                   {!isEditing && (
-                    <Button onClick={handleEdit} size="sm">
+                    <Button onClick={handleEdit} size="sm" variant="outline" className="border-white/15 text-white hover:bg-white/10">
                       <Edit2 className="w-4 h-4 mr-2" />
                       Modifier
                     </Button>
@@ -255,13 +255,13 @@ export default function ProfilePage() {
                     <div className="space-y-2">
                       <Label htmlFor="email">Adresse email</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-3 w-4 h-4 text-(--nebula-muted)" />
                         <Input
                           id="email"
                           type="email"
                           value={user.email}
                           disabled
-                          className="pl-10 bg-muted"
+                          className="pl-10 border-white/10 bg-white/5 text-white placeholder:text-(--nebula-muted)"
                         />
                       </div>
                     </div>
@@ -271,6 +271,7 @@ export default function ProfilePage() {
                         id="firstName"
                         value={formData.firstName}
                         onChange={(e) => handleInputChange("firstName", e.target.value)}
+                        className="border-white/10 bg-white/5 text-white placeholder:text-(--nebula-muted)"
                       />
                     </div>
                     <div className="space-y-2">
@@ -279,6 +280,7 @@ export default function ProfilePage() {
                         id="lastName"
                         value={formData.lastName}
                         onChange={(e) => handleInputChange("lastName", e.target.value)}
+                        className="border-white/10 bg-white/5 text-white placeholder:text-(--nebula-muted)"
                       />
                     </div>
                   </div>
@@ -286,19 +288,19 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label>Adresse email</Label>
-                      <div className="px-3 py-2 bg-muted rounded-md text-sm">
+                      <div className="px-3 py-2 border border-white/10 bg-white/5 rounded-xl text-sm text-white">
                         {user.email}
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Prénom</Label>
-                      <div className="px-3 py-2 bg-muted rounded-md text-sm">
+                      <div className="px-3 py-2 border border-white/10 bg-white/5 rounded-xl text-sm text-white">
                         {user.firstName || "Non renseigné"}
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Nom</Label>
-                      <div className="px-3 py-2 bg-muted rounded-md text-sm">
+                      <div className="px-3 py-2 border border-white/10 bg-white/5 rounded-xl text-sm text-white">
                         {user.lastName || "Non renseigné"}
                       </div>
                     </div>
@@ -308,11 +310,11 @@ export default function ProfilePage() {
                 {/* Action Buttons */}
                 {isEditing && (
                   <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row">
-                    <Button onClick={handleSave} disabled={isSaving} className="flex w-full items-center gap-2 sm:w-auto">
+                    <Button onClick={handleSave} disabled={isSaving} className="flex w-full items-center gap-2 sm:w-auto bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) text-white hover:opacity-95">
                       <Save className="w-4 h-4" />
                       {isSaving ? 'Enregistrement...' : 'Enregistrer'}
                     </Button>
-                    <Button variant="outline" onClick={handleCancel} className="flex w-full items-center gap-2 sm:w-auto">
+                    <Button variant="outline" onClick={handleCancel} className="flex w-full items-center gap-2 sm:w-auto border-white/15 text-white hover:bg-white/10">
                       <X className="w-4 h-4" />
                       Annuler
                     </Button>
@@ -326,12 +328,12 @@ export default function ProfilePage() {
           <div className="p-6">
             <div className="space-y-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                  <Lock className="w-5 h-5" />
+                <h3 className="text-xl font-semibold text-white flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-(--nebula-muted)" />
                   Mot de passe
                 </h3>
                 {!isChangingPassword && (
-                  <Button onClick={() => setIsChangingPassword(true)} size="sm" variant="outline">
+                  <Button onClick={() => setIsChangingPassword(true)} size="sm" variant="outline" className="border-white/15 text-white hover:bg-white/10">
                     <Lock className="w-4 h-4 mr-2" />
                     Modifier le mot de passe
                   </Button>
@@ -339,13 +341,13 @@ export default function ProfilePage() {
               </div>
 
               {!isChangingPassword ? (
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-(--nebula-muted)">
                   Votre mot de passe a été défini. Vous pouvez le modifier en cliquant sur le bouton ci-dessus.
                 </div>
               ) : (
                 <div className="space-y-4">
                   {passwordError && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
+                    <div className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-4 py-3 text-xs text-rose-100">
                       {passwordError}
                     </div>
                   )}
@@ -359,12 +361,12 @@ export default function ProfilePage() {
                         value={passwordData.currentPassword}
                         onChange={(e) => handlePasswordInputChange("currentPassword", e.target.value)}
                         placeholder="Entrez votre mot de passe actuel"
-                        className="pr-10"
+                        className="pr-10 border-white/10 bg-white/5 text-white placeholder:text-(--nebula-muted)"
                       />
                       <button
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                        className="absolute right-3 top-3 text-(--nebula-muted) hover:text-white"
                       >
                         {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -380,17 +382,17 @@ export default function ProfilePage() {
                         value={passwordData.newPassword}
                         onChange={(e) => handlePasswordInputChange("newPassword", e.target.value)}
                         placeholder="Entrez le nouveau mot de passe"
-                        className="pr-10"
+                        className="pr-10 border-white/10 bg-white/5 text-white placeholder:text-(--nebula-muted)"
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                        className="absolute right-3 top-3 text-(--nebula-muted) hover:text-white"
                       >
                         {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs text-(--nebula-muted)">
                       Le mot de passe doit contenir :
                       <ul className="mt-1 ml-4 list-disc space-y-1">
                         <li>Au moins 12 caractères</li>
@@ -411,12 +413,12 @@ export default function ProfilePage() {
                         value={passwordData.confirmPassword}
                         onChange={(e) => handlePasswordInputChange("confirmPassword", e.target.value)}
                         placeholder="Confirmez le nouveau mot de passe"
-                        className="pr-10"
+                        className="pr-10 border-white/10 bg-white/5 text-white placeholder:text-(--nebula-muted)"
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                        className="absolute right-3 top-3 text-(--nebula-muted) hover:text-white"
                       >
                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -424,11 +426,11 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row">
-                    <Button onClick={handleSavePassword} disabled={isSavingPassword} className="flex w-full items-center gap-2 sm:w-auto">
+                    <Button onClick={handleSavePassword} disabled={isSavingPassword} className="flex w-full items-center gap-2 sm:w-auto bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) text-white hover:opacity-95">
                       <Save className="w-4 h-4" />
                       {isSavingPassword ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
                     </Button>
-                    <Button variant="outline" onClick={handleCancelPassword} className="flex w-full items-center gap-2 sm:w-auto">
+                    <Button variant="outline" onClick={handleCancelPassword} className="flex w-full items-center gap-2 sm:w-auto border-white/15 text-white hover:bg-white/10">
                       <X className="w-4 h-4" />
                       Annuler
                     </Button>

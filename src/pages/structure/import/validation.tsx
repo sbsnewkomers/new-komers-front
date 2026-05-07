@@ -53,30 +53,33 @@ export default function StructureImportValidationPage() {
       </Head>
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/structure" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link href="/structure" className="text-sm text-(--nebula-muted) hover:text-white">
             ← Structure
           </Link>
-          <Link href="/structure/import/upload" className="text-sm font-medium text-foreground">
+          <Link href="/structure/import/upload" className="text-sm font-medium text-white">
             Import
           </Link>
         </div>
-        <h1 className="text-xl font-semibold">Erreurs de validation</h1>
-        <p className="text-sm text-muted-foreground">
+        <div className="nebula-glass nebula-blob rounded-3xl p-8">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted) mb-3">§ Import</div>
+          <h1 className="text-5xl font-bold nebula-grad-text">Erreurs de validation</h1>
+          <p className="mt-3 text-[13px] text-(--nebula-muted)">
           Corrigez les lignes en erreur dans votre fichier puis réimportez si besoin.
-        </p>
+          </p>
+        </div>
         {!csvText || !mapping ? (
-          <p className="py-4 text-muted-foreground">
+          <p className="py-4 text-(--nebula-muted)">
             Aucune donnée d’import en session.{" "}
-            <Link href="/structure/import/upload" className="text-primary hover:underline">
+            <Link href="/structure/import/upload" className="text-white hover:underline">
               Recommencer l’import
             </Link>
           </p>
         ) : (
           <>
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="nebula-glass rounded-3xl overflow-hidden border border-white/10">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border bg-muted/50">
+                  <tr className="border-b border-white/10 bg-white/5">
                     <th className="p-3 text-left font-medium">Ligne</th>
                     <th className="p-3 text-left font-medium">Message</th>
                   </tr>
@@ -84,15 +87,15 @@ export default function StructureImportValidationPage() {
                 <tbody>
                   {errors.length === 0 ? (
                     <tr>
-                      <td colSpan={2} className="p-6 text-center text-muted-foreground">
+                      <td colSpan={2} className="p-6 text-center text-(--nebula-muted)">
                         Aucune erreur de validation.
                       </td>
                     </tr>
                   ) : (
                     errors.map((e, i) => (
-                      <tr key={i} className="border-b border-border">
+                      <tr key={i} className="border-b border-white/10">
                         <td className="p-3 font-mono">{e.line}</td>
-                        <td className="p-3 text-destructive">{e.message}</td>
+                        <td className="p-3 text-red-400">{e.message}</td>
                       </tr>
                     ))
                   )}

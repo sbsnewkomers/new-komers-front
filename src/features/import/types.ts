@@ -3,7 +3,8 @@ export interface ImportHistoryRow {
   id: string;
   file: string;
   date: string;
-  status: 'active' | 'archived' | 'restored' | 'deleted'; 
+  status: 'active' | 'archived' | 'deleted' | 'failed';
+  errorMessage?: string | null;
   entityType: string;
   entityName: string;
   entityId: string; 
@@ -76,7 +77,7 @@ export interface SavedMapping {
   name: string;
   rules: Record<string, string>;
   entityId?: string;
-  entityType?: 'Group' | 'Company';
+  entityType?: 'Group' | 'Company'| 'BusinessUnit';
   createdAt: string;
   updatedAt: string;   
   workspaceId?: string | null;  
@@ -87,5 +88,5 @@ export type MappingPayload = {
   name: string;
   rules: Record<string, string>;
   entityId?: string;
-  entityType?: 'Group' | 'Company';
+  entityType?: 'Group' | 'Company'| 'BusinessUnit';
 };

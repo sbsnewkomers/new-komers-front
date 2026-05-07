@@ -13,7 +13,9 @@ import {
     ImportResultDto,
     EntityType,
     CreateManualLoanDto,
-    ManualInstallmentDto
+    ManualInstallmentDto,
+    UpdateManualLoanDto,
+    ColumnMappingDto
 } from '../types/loans';
 import { apiFetch, ApiFetchSnackbarOptions, setAccessTokenGetter } from './apiClient';
 
@@ -98,6 +100,14 @@ class LoansApi {
         });
     }
 
+    async validateCalculatorLoanName(name: string, entityType: EntityType, entityId: string): Promise<{ isUnique: boolean }> {
+        return this.checkLoanNameUniqueness(name, entityType, entityId);
+    }
+
+    async validateManualLoanName(name: string, entityType: EntityType, entityId: string): Promise<{ isUnique: boolean }> {
+        return this.checkLoanNameUniqueness(name, entityType, entityId);
+    }
+
     async createManualLoan(manualLoanData: CreateManualLoanDto, options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<Loan> {
         return apiFetch<Loan>('/loans/manual', {
             method: 'POST',
@@ -106,9 +116,32 @@ class LoansApi {
         });
     }
 
+    async updateManualLoan(loanId: string, updateData: UpdateManualLoanDto, options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<Loan> {
+        return apiFetch<Loan>(`/loans/${loanId}/manual`, {
+            method: 'PATCH',
+            body: JSON.stringify(updateData),
+            snackbar: options?.snackbar,
+        });
+    }
+
     // Statistics
     async getLoanStatistics(loanId: string): Promise<LoanStatistics> {
         return apiFetch<LoanStatistics>(`/loans/${loanId}/statistics`);
+    }
+
+    // Validation operations
+    async checkLoanNameUniqueness(name: string, entityType: EntityType, entityId: string, excludeLoanId?: string): Promise<{ isUnique: boolean }> {
+        const params = new URLSearchParams({
+            name,
+            entityType,
+            entityId,
+        });
+
+        if (excludeLoanId) {
+            params.append('excludeLoanId', excludeLoanId);
+        }
+
+        return apiFetch<{ isUnique: boolean }>(`/loans/validate/name?${params.toString()}`);
     }
 
     async getEntityStatistics(entityType: EntityType, entityId: string): Promise<EntityLoanStatistics> {
@@ -142,6 +175,26 @@ class LoansApi {
         return apiFetch<ImportResultDto>('/loans/import/process', {
             method: 'POST',
             body: JSON.stringify(processDto),
+        });
+    }
+
+    async uploadUpdateImportFile(file: File, loanId: string, options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<LoanImport> {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('loanId', loanId);
+
+        return apiFetch<LoanImport>('/loans/import/update', {
+            method: 'POST',
+            body: formData,
+            snackbar: options?.snackbar,
+        });
+    }
+
+    async processUpdateImport(processUpdateDto: { importId: string; columnMapping: ColumnMappingDto[]; targetLoanId: string }, options?: { snackbar?: ApiFetchSnackbarOptions }): Promise<ImportResultDto> {
+        return apiFetch<ImportResultDto>('/loans/import/update/process', {
+            method: 'POST',
+            body: JSON.stringify(processUpdateDto),
+            snackbar: options?.snackbar,
         });
     }
 

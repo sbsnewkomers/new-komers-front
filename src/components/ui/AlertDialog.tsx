@@ -70,7 +70,7 @@ export function AlertDialogContent({
         document.body.style.overflow = prev;
       };
     }
-  }, [ctx?.open]);
+  }, [ctx]);
 
   if (!ctx?.open) return null;
 
@@ -79,7 +79,7 @@ export function AlertDialogContent({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm animate-in fade-in-0"
+        className="fixed inset-0 z-50 bg-black/55 backdrop-blur-sm animate-in fade-in-0"
         onClick={() => ctx.setOpen(false)}
         aria-hidden
       />
@@ -88,7 +88,7 @@ export function AlertDialogContent({
         role="alertdialog"
         aria-modal="true"
         className={
-          `fixed left-1/2 top-1/2 z-50 flex w-[calc(100vw-1rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-150 ${sizeClass} ` +
+          `fixed left-1/2 top-1/2 z-50 flex w-[calc(100vw-1rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-2xl border border-white/10 nebula-glass-modal p-6 shadow-2xl animate-in zoom-in-95 duration-150 ${sizeClass} ` +
           (className ?? "")
         }
         onClick={(e) => e.stopPropagation()}
@@ -117,7 +117,7 @@ export function AlertDialogTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className={`text-lg font-semibold leading-tight tracking-tight text-slate-900 ${className ?? ""}`}
+      className={`text-lg font-semibold leading-tight tracking-tight text-white ${className ?? ""}`}
       {...props}
     />
   );
@@ -129,7 +129,7 @@ export function AlertDialogDescription({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={`text-sm leading-normal text-slate-500 ${className ?? ""}`}
+      className={`text-sm leading-normal text-(--nebula-muted) ${className ?? ""}`}
       {...props}
     />
   );

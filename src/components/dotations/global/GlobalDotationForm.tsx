@@ -18,6 +18,7 @@ import { Checkbox } from '@/components/ui/Checkbox';
 import { globalDotationsApi } from '@/lib/globalDotationsApi';
 import { usePermissionsContext } from '@/permissions/PermissionsProvider';
 import { entitiesApi, Group, Company, BusinessUnit } from '@/lib/entitiesApi';
+import { formatCurrencyEUR } from '@/lib/format';
 
 import { GlobalDotation, EntityType } from '@/types/asset.types';
 
@@ -27,17 +28,7 @@ import { Save, X } from 'lucide-react';
 
 // Utility functions
 
-const formatCurrency = (amount: number) => {
-
-  return new Intl.NumberFormat('fr-FR', {
-
-    style: 'currency',
-
-    currency: 'EUR'
-
-  }).format(amount);
-
-};
+const formatCurrency = (amount: number) => formatCurrencyEUR(amount, { fallback: "0,00 €" });
 
 
 
@@ -357,7 +348,7 @@ export function GlobalDotationForm({
 
               {errors.year && (
 
-                <p className="text-sm text-red-600">{errors.year}</p>
+                <p className="text-sm text-red-300">{errors.year}</p>
 
               )}
 
@@ -395,7 +386,7 @@ export function GlobalDotationForm({
 
               {errors.totalAmount && (
 
-                <p className="text-sm text-red-600">{errors.totalAmount}</p>
+                <p className="text-sm text-red-300">{errors.totalAmount}</p>
 
               )}
 
@@ -420,7 +411,7 @@ export function GlobalDotationForm({
                   placeholder="Sélectionner un type d'entité"
                 />
                 {errors.entityType && (
-                  <p className="text-sm text-red-600">{errors.entityType}</p>
+                  <p className="text-sm text-red-300">{errors.entityType}</p>
                 )}
               </div>
 
@@ -438,10 +429,10 @@ export function GlobalDotationForm({
                   disabled={isLoadingEntities || entities.length === 0}
                 />
                 {errors.entityId && (
-                  <p className="text-sm text-red-600">{errors.entityId}</p>
+                  <p className="text-sm text-red-300">{errors.entityId}</p>
                 )}
                 {entities.length === 0 && !isLoadingEntities && formData.entityType && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-(--nebula-muted)">
                     Aucune entité disponible pour ce type
                   </p>
                 )}
@@ -485,7 +476,7 @@ export function GlobalDotationForm({
                 />
                 <span>Dotation validée</span>
               </Label>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-(--nebula-muted)">
                 Cochez cette case si les dotations ont été validées et sont définitives
               </p>
             </div>
@@ -495,17 +486,17 @@ export function GlobalDotationForm({
 
           {formData.totalAmount > 0 && (
 
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="rounded-2xl border border-sky-400/25 bg-sky-500/10 p-4">
 
-              <h3 className="font-semibold text-blue-900 mb-2">Résumé automatique</h3>
+              <h3 className="font-semibold text-white mb-2">Résumé automatique</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
 
                 <div>
 
-                  <span className="text-blue-700">Montant total annuel:</span>
+                  <span className="text-(--nebula-muted)">Montant total annuel:</span>
 
-                  <span className="ml-2 font-bold text-blue-900">
+                  <span className="ml-2 font-bold text-sky-100">
 
                     {formatCurrency(formData.totalAmount)}
 
@@ -515,9 +506,9 @@ export function GlobalDotationForm({
 
                 <div>
 
-                  <span className="text-blue-700">Montant mensuel (réparti):</span>
+                  <span className="text-(--nebula-muted)">Montant mensuel (réparti):</span>
 
-                  <span className="ml-2 font-bold text-blue-900">
+                  <span className="ml-2 font-bold text-sky-100">
 
                     {formatCurrency(formData.totalAmount / 12)}
 
@@ -527,7 +518,7 @@ export function GlobalDotationForm({
 
               </div>
 
-              <p className="text-xs text-blue-600 mt-2">
+              <p className="text-xs text-sky-200/90 mt-2">
 
                 Le système répartira automatiquement ce montant sur 12 mois pour les calculs périodiques.
 
@@ -541,7 +532,7 @@ export function GlobalDotationForm({
 
           {/* Actions */}
 
-          <div className="flex items-center gap-3 pt-4 border-t">
+          <div className="flex items-center gap-3 pt-4 border-t border-white/10">
 
             <Button
 
@@ -587,9 +578,9 @@ export function GlobalDotationForm({
 
           {errors.submit && (
 
-            <div className="bg-red-50 p-4 rounded-lg">
+            <div className="rounded-xl border border-red-400/30 bg-red-500/10 p-4">
 
-              <p className="text-sm text-red-600">{errors.submit}</p>
+              <p className="text-sm text-red-200">{errors.submit}</p>
 
             </div>
 
@@ -601,11 +592,11 @@ export function GlobalDotationForm({
 
           {!dotation && (
 
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
 
-              <h3 className="font-semibold text-gray-700 mb-2">Mode Global Simplifié</h3>
+              <h3 className="font-semibold text-white mb-2">Mode Global Simplifié</h3>
 
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm text-(--nebula-muted) mb-2">
 
                 Ce mode vous permet de saisir directement le montant global des dotations pour chaque année,
 
@@ -613,7 +604,7 @@ export function GlobalDotationForm({
 
               </p>
 
-              <ul className="text-xs text-gray-500 space-y-1">
+              <ul className="text-xs text-(--nebula-muted) space-y-1">
 
                 <li>· Saisissez le montant total annuel des dotations</li>
 

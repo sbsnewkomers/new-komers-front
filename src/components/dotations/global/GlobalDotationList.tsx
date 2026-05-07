@@ -10,26 +10,11 @@ import { globalDotationsApi } from '@/lib/globalDotationsApi';
 import { entitiesApi } from '@/lib/entitiesApi';
 import { usePermissions } from '@/permissions/usePermissions';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
+import { formatCurrencyEUR } from '@/lib/format';
 
 // Utility functions
-const formatCurrency = (amount: number | string | null | undefined) => {
-  if (amount === null || amount === undefined) {
-    return '0,00 €';
-  }
-
-  // Convertir en nombre si c'est une chaîne
-  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-
-  if (isNaN(numericAmount)) {
-    console.warn('Valeur invalide pour formatCurrency:', amount);
-    return '0,00 €';
-  }
-
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(numericAmount);
-};
+const formatCurrency = (amount: number | string | null | undefined) =>
+  formatCurrencyEUR(amount, { fallback: "0,00 €" });
 
 interface GlobalDotationListProps {
   entityType: EntityType;
@@ -208,7 +193,7 @@ export function GlobalDotationList({
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-(--nebula-gold-light)" />
           </div>
         </CardContent>
       </Card>
@@ -219,7 +204,7 @@ export function GlobalDotationList({
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-red-600 text-center">{error}</div>
+          <div className="text-red-300 text-center">{error}</div>
         </CardContent>
       </Card>
     );
@@ -238,19 +223,19 @@ export function GlobalDotationList({
       </CardHeader>
       <CardContent>
         {dotations.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-(--nebula-muted)">
             Aucune dotation globale trouvée.
           </div>
         ) : (
           <div className="space-y-8">
             {/* Affichage groupé par entité */}
             {groupedDotations.map((entityGroup) => (
-              <div key={`${entityGroup.entityType}-${entityGroup.entityId}`} className="border rounded-lg p-4 bg-gray-50">
+              <div key={`${entityGroup.entityType}-${entityGroup.entityId}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">
+                  <h3 className="text-lg font-semibold text-white">
                     {entityGroup.entityName}
                   </h3>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-(--nebula-muted)">
                     {entityGroup.dotations.length} dotation{entityGroup.dotations.length > 1 ? 's' : ''}
                   </div>
                 </div>
@@ -259,12 +244,12 @@ export function GlobalDotationList({
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Année</TableHead>
-                        <TableHead>Montant total annuel</TableHead>
-                        <TableHead>Montant mensuel</TableHead>
-                        <TableHead>Validation</TableHead>
-                        <TableHead>Actions</TableHead>
+                      <TableRow className="border-white/10 hover:bg-white/5">
+                        <TableHead className="text-(--nebula-muted) border-white/10">Année</TableHead>
+                        <TableHead className="text-(--nebula-muted) border-white/10">Montant total annuel</TableHead>
+                        <TableHead className="text-(--nebula-muted) border-white/10">Montant mensuel</TableHead>
+                        <TableHead className="text-(--nebula-muted) border-white/10">Validation</TableHead>
+                        <TableHead className="text-(--nebula-muted) border-white/10">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -278,34 +263,34 @@ export function GlobalDotationList({
                             <TableRow
                               key={dotation.id}
                               className={
-                                isCurrentYear ? 'bg-blue-50 font-semibold' :
-                                  isFutureYear ? 'text-gray-400' : ''
+                                isCurrentYear ? 'bg-sky-500/10 border-white/10 font-semibold' :
+                                  isFutureYear ? 'text-white/40 border-white/10' : 'border-white/10'
                               }
                             >
-                              <TableCell>
+                              <TableCell className="text-white">
                                 {dotation.year}
                                 {isCurrentYear && (
-                                  <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                  <span className="ml-2 text-xs border border-sky-400/30 bg-sky-500/15 text-sky-100 px-2 py-1 rounded-lg">
                                     Année en cours
                                   </span>
                                 )}
                               </TableCell>
-                              <TableCell className="font-medium">
+                              <TableCell className="font-medium text-white">
                                 {formatCurrency(dotation.totalAnnualAmortization || 0)}
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="text-white">
                                 {formatCurrency(dotation.monthlyAmortization || (dotation.totalAnnualAmortization || 0) / 12)}
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-(--nebula-muted)">
                                   Réparti sur 12 mois
                                 </div>
                               </TableCell>
                               <TableCell>
                                 {dotation.isValidated ? (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border border-emerald-400/30 bg-emerald-500/15 text-emerald-500">
                                     Validée
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border border-amber-400/30 bg-amber-500/15 text-amber-500">
                                     En attente
                                   </span>
                                 )}
@@ -335,7 +320,7 @@ export function GlobalDotationList({
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => handleDeleteClick(dotation.id)}
-                                      className="text-red-600 hover:text-red-800"
+                                      className="text-red-300 hover:text-red-200"
                                     >
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
@@ -350,17 +335,17 @@ export function GlobalDotationList({
                 </div>
 
                 {/* Statistiques pour cette entité */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="mt-4 pt-4 border-t border-white/10">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white p-3 rounded-lg">
-                      <p className="text-xs text-gray-600">Total entité</p>
-                      <p className="text-lg font-bold text-green-600">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-xs text-(--nebula-muted)">Total entité</p>
+                      <p className="text-lg font-bold text-emerald-500">
                         {formatCurrency(entityGroup.dotations.reduce((sum, d) => sum + (Number(d.totalAnnualAmortization) || 0), 0))}
                       </p>
                     </div>
-                    <div className="bg-white p-3 rounded-lg">
-                      <p className="text-xs text-gray-600">Dotation {currentYear}</p>
-                      <p className="text-lg font-bold text-blue-600">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-xs text-(--nebula-muted)">Dotation {currentYear}</p>
+                      <p className="text-lg font-bold text-sky-500">
                         {formatCurrency(
                           entityGroup.dotations
                             .filter(d => d.year === currentYear)
@@ -368,9 +353,9 @@ export function GlobalDotationList({
                         )}
                       </p>
                     </div>
-                    <div className="bg-white p-3 rounded-lg">
-                      <p className="text-xs text-gray-600">Validées</p>
-                      <p className="text-lg font-bold text-purple-600">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-xs text-(--nebula-muted)">Validées</p>
+                      <p className="text-lg font-bold text-violet-500">
                         {entityGroup.dotations.filter(d => d.isValidated).length} / {entityGroup.dotations.length}
                       </p>
                     </div>
@@ -380,8 +365,8 @@ export function GlobalDotationList({
             ))}
 
             {/* Statistiques globales */}
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Statistiques globales</h3>
+            <div className="border-t border-white/10 pt-6">
+              <h3 className="text-lg font-semibold mb-4 text-white">Statistiques globales</h3>
 
               {/* Debug des statistiques */}
               {(() => {
@@ -411,15 +396,15 @@ export function GlobalDotationList({
               })()}
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Total toutes entités</p>
-                  <p className="text-xl font-bold text-green-600">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-sm text-(--nebula-muted)">Total toutes entités</p>
+                  <p className="text-xl font-bold text-emerald-500">
                     {formatCurrency(dotations.reduce((sum, d) => sum + (Number(d.totalAnnualAmortization) || 0), 0))}
                   </p>
                 </div>
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Dotation {currentYear}</p>
-                  <p className="text-xl font-bold text-blue-600">
+                <div className="rounded-xl border border-sky-400/20 bg-sky-500/10 p-4">
+                  <p className="text-sm text-(--nebula-muted)">Dotation {currentYear}</p>
+                  <p className="text-xl font-bold text-sky-500">
                     {formatCurrency(
                       dotations
                         .filter(d => d.year === currentYear)
@@ -427,9 +412,9 @@ export function GlobalDotationList({
                     )}
                   </p>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Moyenne mensuelle</p>
-                  <p className="text-xl font-bold text-purple-600">
+                <div className="rounded-xl border border-violet-400/20 bg-violet-500/10 p-4">
+                  <p className="text-sm text-(--nebula-muted)">Moyenne mensuelle</p>
+                  <p className="text-xl font-bold text-violet-500">
                     {formatCurrency(
                       dotations.length > 0
                         ? dotations.reduce((sum, d) => sum + (Number(d.monthlyAmortization) || (Number(d.totalAnnualAmortization) || 0) / 12), 0) / dotations.length
@@ -437,9 +422,9 @@ export function GlobalDotationList({
                     )}
                   </p>
                 </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Nombre d&apos;entités</p>
-                  <p className="text-xl font-bold text-orange-600">
+                <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-4">
+                  <p className="text-sm text-(--nebula-muted)">Nombre d&apos;entités</p>
+                  <p className="text-xl font-bold text-amber-500">
                     {groupedDotations.length}
                   </p>
                 </div>

@@ -24,6 +24,7 @@ import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { usePermissions } from "@/permissions/usePermissions";
 import { CRUD_ACTION } from "@/permissions/actions";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
@@ -1335,7 +1336,7 @@ export default function StructurePage() {
             fiscal_year_start: toMonthDay(g.fiscal_year_start),
             last_closed_fiscal_year:
               g.last_closed_fiscal_year !== null &&
-              g.last_closed_fiscal_year !== undefined
+                g.last_closed_fiscal_year !== undefined
                 ? String(g.last_closed_fiscal_year)
                 : "",
             mainActivity: g.mainActivity ?? "",
@@ -1370,7 +1371,7 @@ export default function StructurePage() {
             fiscal_year_start: toMonthDay(c.fiscal_year_start),
             last_closed_fiscal_year:
               c.last_closed_fiscal_year !== null &&
-              c.last_closed_fiscal_year !== undefined
+                c.last_closed_fiscal_year !== undefined
                 ? String(c.last_closed_fiscal_year)
                 : "",
             size: c.size ?? "",
@@ -2307,13 +2308,14 @@ export default function StructurePage() {
           </div>
           <div className="flex w-full flex-wrap justify-end gap-3">
             {canImportStructure && (
-              <Link
-                href="/structure/import/upload"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-md"
+              <Button
+                onClick={() => router.push("/structure/import/upload")}
+                variant="outline"
+                className="h-10 gap-2"
               >
-                <Upload className="size-4" />
+                <Upload className="size-4 text-primary" />
                 Importer
-              </Link>
+              </Button>
             )}
             {(user?.role === "SUPER_ADMIN" ||
               user?.role === "ADMIN" ||
@@ -2321,7 +2323,7 @@ export default function StructurePage() {
               user?.role === "MANAGER") && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button className="bg-primary text-white hover:bg-slate-800">
+                    <Button className="bg-primary text-white! hover:bg-slate-800">
                       <Plus className="size-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -2419,7 +2421,7 @@ export default function StructurePage() {
         </div>
 
         {/* Main content */}
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-primary nebula-glass shadow-sm">
           {treeError && (
             <div className="m-6 p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
               <div className="h-4 w-4 rounded-full bg-red-100 flex items-center justify-center">
@@ -2535,219 +2537,327 @@ export default function StructurePage() {
               )}
 
               <div className="min-w-[720px]">
-              {tree?.workspaces && tree.workspaces.length > 0 && (
-                <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-slate-200 bg-slate-100 px-3 py-4 text-xs font-semibold uppercase tracking-wider text-slate-600 sm:px-6">
-                  <div className="flex items-center">
-                    Nom
+                {tree?.workspaces && tree.workspaces.length > 0 && (
+                  <div className="grid grid-cols-[1fr_120px_100px_60px] gap-4 border-b border-primary bg-linear-to-r from-(--nebula-gold-light) via-(--nebula-gold-light) to-(--nebula-gold) text-white! px-3 py-4 text-xs font-semibold uppercase tracking-wider sm:px-6">
+                    <div className="flex items-center">
+                      Nom
+                    </div>
+                    <div className="flex items-center">
+                      Type
+                    </div>
+                    <div className="flex items-center">
+                      Complétion
+                    </div>
+                    <div className="text-right">Actions</div>
                   </div>
-                  <div className="flex items-center">
-                    Type
-                  </div>
-                  <div className="flex items-center">
-                    Complétion
-                  </div>
-                  <div className="text-right">Actions</div>
-                </div>
-              )}
+                )}
 
-              <ul className="divide-y divide-slate-100">
-                {treeRows.map((node) => {
-                  // Gérer l'en-tête de section pour les entreprises indépendantes
-                  if (node.type === "section-header") {
-                    const isPackageIcon = node.name === "ENTREPRISES INDÉPENDANTES";
-                    return (
-                      <li
-                        key={node.id}
-                        className="bg-slate-50/80 border-y border-slate-100"
-                      >
-                        <div className="flex items-center gap-2 px-3 py-3 sm:px-6">
-                          <div className="h-px flex-1 bg-slate-200" />
-                          <div className="flex items-center gap-2">
-                            {isPackageIcon ? (
-                              <Package className="h-4 w-4 text-amber-600" />
-                            ) : (
-                              <Building className="h-4 w-4 text-amber-600" />
-                            )}
-                            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide whitespace-nowrap">
-                              {node.name}
-                            </span>
-                          </div>
-                          <div className="h-px flex-1 bg-slate-200" />
-                        </div>
-                      </li>
-                    );
-                  }
-
-                  const indent =
-                    node.type === "workspace" ? 0 :
-                      node.type === "group" ? 1 :
-                        node.type === "company" ? 2 : 3;
-                  const Icon =
-                    node.type === "workspace"
-                      ? Building2
-                      : node.type === "group"
-                        ? Layers
-                        : node.type === "company"
-                          ? Building
-                          : Briefcase;
-                  const iconColor =
-                    node.type === "workspace"
-                      ? "text-purple-600"
-                      : node.type === "group"
-                        ? "text-blue-600"
-                        : node.type === "company"
-                          ? "text-slate-700"
-                          : "text-emerald-600";
-                  const typeText =
-                    node.type === "workspace"
-                      ? "Workspace"
-                      : node.type === "group"
-                        ? "Groupe"
-                        : node.type === "company"
-                          ? "Entreprise"
-                          : "BU";
-                  const typeBadgeColor =
-                    node.type === "workspace"
-                      ? "bg-purple-50 text-purple-700 border-purple-100"
-                      : node.type === "group"
-                        ? "bg-blue-50 text-blue-700 border-blue-100"
-                        : node.type === "company"
-                          ? "bg-slate-100 text-slate-700 border-slate-200"
-                          : "bg-slate-50 text-slate-500 border-slate-100";
-                  const completion =
-                    node.type === "company" ? node.completionPercentage : null;
-                  const canExpand =
-                    node.type === "company" && companiesWithBus.has(node.id);
-
-                  return (
-                    <li
-                      key={`${node.type}-${node.id}`}
-                      className="group/row transition-all duration-200 hover:bg-slate-50/50 hover:shadow-sm"
-                    >
-                      <div
-                        className="grid cursor-pointer grid-cols-[1fr_120px_100px_60px] items-center gap-4 px-3 py-3 sm:px-6"
-                        onClick={() => openDetail(node)}
-                      >
-                        <div
-                          className="flex items-center gap-3"
-                          style={{ paddingLeft: indent * 24 }}
+                <ul className="divide-y divide-primary/30">
+                  {treeRows.map((node, index) => {
+                    // Gérer l'en-tête de section pour les entreprises indépendantes
+                    if (node.type === "section-header") {
+                      const isPackageIcon = node.name === "ENTREPRISES INDÉPENDANTES";
+                      return (
+                        <li
+                          key={node.id}
+                          className={`bg-primary/0 border-y border-primary/0 ${user?.role === "SUPER_ADMIN" || user?.role === "ADMIN" || user?.role === "HEAD_MANAGER" ? "mx-11" : ""}`}
                         >
-                          {canExpand ? (
-                            <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleExpand(node.id);
-                              }}
-                              className="cursor-pointer rounded p-0.5 transition-colors hover:bg-slate-200 mr-1"
-                            >
-                              <Play
-                                className={`h-3 w-3 fill-slate-500 text-slate-400 transition-transform ${expandedCompanyIds.has(node.id)
-                                  ? "rotate-90"
-                                  : ""
-                                  }`}
-                              />
-                            </div>
-                          ) : (
-                            node.type === "company" && (
-                              <div className="w-5 fill-slate-500 text-slate-400" />
-                            )
-                          )}
-                          <Icon
-                            className={`h-5 w-5 ${iconColor} transition-colors group-hover/row:scale-110`}
-                          />
-                          <span
-                            className={`truncate font-medium transition-colors ${node.type === "group"
-                              ? "text-primary font-semibold"
-                              : "text-slate-700"
-                              }`}
-                          >
-                            {node.name}
-                          </span>
-                          {node.type === "company" && node.groupId === null && (
-                            <span className="inline-flex items-center rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 text-[10px] font-medium">
-                              Indépendante
-                            </span>
-                          )}
-                        </div>
-
-                        <div>
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide transition-colors ${typeBadgeColor}`}
-                          >
-                            {typeText}
-                          </span>
-                        </div>
-
-                        <div>
-                          {completion !== null && (
+                          <div className="flex items-center gap-2 px-3 py-3 sm:px-6">
+                            <div className="h-px flex-1 bg-primary" />
                             <div className="flex items-center gap-2">
-                              <div className="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
-                                <div
-                                  className={`h-1.5 rounded-full transition-all duration-500 ${completion === 100
-                                    ? "bg-green-500"
-                                    : completion >= 50
-                                      ? "bg-amber-400"
-                                      : "bg-slate-300"
-                                    }`}
-                                  style={{ width: `${completion}%` }}
-                                />
-                              </div>
-                              <span className="text-[10px] tabular-nums text-slate-400 font-medium">
-                                {completion}%
+                              {isPackageIcon ? (
+                                <Package className="h-4 w-4 text-primary" />
+                              ) : (
+                                <Building className="h-4 w-4 text-primary" />
+                              )}
+                              <span className="text-xs font-semibold text-primary uppercase tracking-wide whitespace-nowrap">
+                                {node.name}
                               </span>
                             </div>
-                          )}
-                        </div>
+                            <div className="h-px flex-1 bg-primary" />
+                          </div>
+                        </li>
+                      );
+                    }
 
-                        <div className="flex justify-end">
-                          {user?.role === "SUPER_ADMIN" ||
-                            user?.role === "ADMIN" ||
-                            user?.role === "HEAD_MANAGER" ||
-                            user?.role === "MANAGER" ? (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 opacity-100 transition-all hover:bg-white hover:text-primary hover:shadow-md md:opacity-0 md:group-hover/row:opacity-100"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-52">
-                                <DropdownMenuItem
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openDetail(node);
-                                  }}
-                                >
-                                  Voir / Modifier
-                                </DropdownMenuItem>
-                                {node.type === "workspace" && (
+                    const indent =
+                      node.type === "workspace" ? 0 :
+                        node.type === "group" ? 1 :
+                          node.type === "company" ? 2 : 3;
+                    const Icon =
+                      node.type === "workspace"
+                        ? Building2
+                        : node.type === "group"
+                          ? Layers
+                          : node.type === "company"
+                            ? Building
+                            : Briefcase;
+                    const iconColor =
+                      node.type === "workspace"
+                        ? "text-dark"
+                        : node.type === "group"
+                          ? "text-primary"
+                          : node.type === "company"
+                            ? "text-light"
+                            : "text-primary";
+                    const typeText =
+                      node.type === "workspace"
+                        ? "Workspace"
+                        : node.type === "group"
+                          ? "Groupe"
+                          : node.type === "company"
+                            ? "Entreprise"
+                            : "BU";
+                    const typeBadgeVariant =
+                      node.type === "workspace"
+                        ? "info"
+                        : node.type === "group"
+                          ? "info"
+                          : node.type === "company"
+                            ? "neutral"
+                            : "neutral";
+                    const completion =
+                      node.type === "company" ? node.completionPercentage : null;
+                    const canExpand =
+                      node.type === "company" && companiesWithBus.has(node.id);
+
+                    return (
+                      <li
+                        key={`${node.type}-${node.id}`}
+                        className={`group/row transition-all duration-200 hover:bg-primary/30 hover:shadow-sm ${node.type === "workspace" && index !== 0 ? "border-t-2 border-t-primary" : ""}`}
+                      >
+                        <div
+                          className="grid cursor-pointer grid-cols-[1fr_120px_100px_60px] items-center gap-4 px-3 py-3 sm:px-6"
+                          onClick={() => openDetail(node)}
+                        >
+                          <div
+                            className="flex items-center gap-3"
+                            style={{ paddingLeft: indent * 24 }}
+                          >
+                            {canExpand ? (
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleExpand(node.id);
+                                }}
+                                className="cursor-pointer rounded p-0.5 transition-colors hover:bg-slate-200 mr-1"
+                              >
+                                <Play
+                                  className={`h-3 w-3 fill-slate-500 text-slate-400 transition-transform ${expandedCompanyIds.has(node.id)
+                                    ? "rotate-90"
+                                    : ""
+                                    }`}
+                                />
+                              </div>
+                            ) : (
+                              node.type === "company" && (
+                                <div className="w-5 fill-slate-500 text-slate-400" />
+                              )
+                            )}
+                            <Icon
+                              className={`h-5 w-5 ${iconColor} transition-colors group-hover/row:scale-110`}
+                            />
+                            <span
+                              className={`truncate font-medium transition-colors ${node.type === "group"
+                                ? "text-primary font-semibold"
+                                : "te"
+                                }`}
+                            >
+                              {node.name}
+                            </span>
+                            {node.type === "company" && node.groupId === null && (
+                              <Badge variant="warning">Indépendante</Badge>
+                            )}
+                          </div>
+
+                          <div>
+                            <Badge variant={typeBadgeVariant}>{typeText}</Badge>
+                          </div>
+
+                          <div>
+                            {completion !== null && (
+                              <div className="flex items-center gap-2">
+                                <div className="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
+                                  <div
+                                    className={`h-1.5 rounded-full transition-all duration-500 ${completion === 100
+                                      ? "bg-green-500"
+                                      : completion >= 50
+                                        ? "bg-amber-400"
+                                        : "bg-slate-300"
+                                      }`}
+                                    style={{ width: `${completion}%` }}
+                                  />
+                                </div>
+                                <span className="text-[10px] tabular-nums text-slate-400 font-medium">
+                                  {completion}%
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex justify-end">
+                            {user?.role === "SUPER_ADMIN" ||
+                              user?.role === "ADMIN" ||
+                              user?.role === "HEAD_MANAGER" ||
+                              user?.role === "MANAGER" ? (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 opacity-100 transition-all hover:bg-white hover:text-primary hover:shadow-md md:opacity-0 md:group-hover/row:opacity-100"
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-52">
                                   <DropdownMenuItem
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setAddGroupForm({
-                                        name: "",
-                                        siret: "",
-                                        ape_code: "",
-                                        mainActivity: "",
-                                        country: "",
-                                        fiscal_year_start: "",
-                                        last_closed_fiscal_year: "",
-                                        workspaceId: node.id,
-                                        logo: undefined as string | undefined,
-                                      });
-                                      setAddGroupLogoFile(null);
-                                      setAddGroupOpen(true);
+                                      openDetail(node);
                                     }}
                                   >
-                                    <Plus className="mr-2 h-4 w-4" /> Ajouter
-                                    un groupe
+                                    Voir / Modifier
                                   </DropdownMenuItem>
-                                )}
-                                {node.type === "group" && (
-                                  <>
+                                  {node.type === "workspace" && (
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setAddGroupForm({
+                                          name: "",
+                                          siret: "",
+                                          ape_code: "",
+                                          mainActivity: "",
+                                          country: "",
+                                          fiscal_year_start: "",
+                                          last_closed_fiscal_year: "",
+                                          workspaceId: node.id,
+                                          logo: undefined as string | undefined,
+                                        });
+                                        setAddGroupLogoFile(null);
+                                        setAddGroupOpen(true);
+                                      }}
+                                    >
+                                      <Plus className="mr-2 h-4 w-4" /> Ajouter
+                                      un groupe
+                                    </DropdownMenuItem>
+                                  )}
+                                  {node.type === "group" && (
+                                    <>
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openFicheGroup(node.id);
+                                        }}
+                                      >
+                                        Fiche groupe
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (!node.id) {
+                                            console.error('Group node ID is undefined:', node);
+                                            return;
+                                          }
+                                          console.log('Setting addCompanyGroupId to:', node.id);
+                                          setAddCompanyGroupId(node.id);
+                                          setAddCompanyForm({
+                                            name: "",
+                                            siret: "",
+                                            fiscal_year_start: "",
+                                            last_closed_fiscal_year: "",
+                                            address: "",
+                                            country: "",
+                                            ape_code: "",
+                                            main_activity: "",
+                                            size: "SMALL",
+                                            model: "SUBSIDIARY",
+                                            groupId: "",
+                                            workspaceId: "",
+                                            logo: undefined as string | undefined,
+                                          });
+                                          setAddCompanyOpen(true);
+                                        }}
+                                      >
+                                        <Plus className="mr-2 h-4 w-4" /> Ajouter
+                                        une entreprise
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                  {node.type === "company" && (
+                                    <>
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openFiche(node.id);
+                                        }}
+                                      >
+                                        Fiche entreprise
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setAddBUCompanyId(node.id);
+                                          setAddBUForm({
+                                            name: "",
+                                            code: "",
+                                            activity: "",
+                                            siret: "",
+                                            country: "",
+                                            logo: undefined as string | undefined,
+                                          });
+                                          setAddBULogoFile(null);
+                                          setAddBUOpen(true);
+                                        }}
+                                      >
+                                        <Plus className="mr-2 h-4 w-4" /> Ajouter
+                                        une BU
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                  {node.type === "bu" && (
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openFicheBU(node.id, node.companyId);
+                                      }}
+                                    >
+                                      Fiche BU
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedNode(node);
+                                      setConfirmDeleteOpen(true);
+                                    }}
+                                    className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                                  >
+                                    Supprimer
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            ) : (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 opacity-100 transition-all hover:bg-white hover:text-primary hover:shadow-sm md:opacity-0 md:group-hover/row:opacity-100"
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-52">
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openDetail(node);
+                                    }}
+                                  >
+                                    Voir les détails
+                                  </DropdownMenuItem>
+                                  {node.type === "group" && (
                                     <DropdownMenuItem
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -2756,40 +2866,8 @@ export default function StructurePage() {
                                     >
                                       Fiche groupe
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (!node.id) {
-                                          console.error('Group node ID is undefined:', node);
-                                          return;
-                                        }
-                                        console.log('Setting addCompanyGroupId to:', node.id);
-                                        setAddCompanyGroupId(node.id);
-                                        setAddCompanyForm({
-                                          name: "",
-                                          siret: "",
-                                          fiscal_year_start: "",
-                                          last_closed_fiscal_year: "",
-                                          address: "",
-                                          country: "",
-                                          ape_code: "",
-                                          main_activity: "",
-                                          size: "SMALL",
-                                          model: "SUBSIDIARY",
-                                          groupId: "",
-                                          workspaceId: "",
-                                          logo: undefined as string | undefined,
-                                        });
-                                        setAddCompanyOpen(true);
-                                      }}
-                                    >
-                                      <Plus className="mr-2 h-4 w-4" /> Ajouter
-                                      une entreprise
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
-                                {node.type === "company" && (
-                                  <>
+                                  )}
+                                  {node.type === "company" && (
                                     <DropdownMenuItem
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -2798,121 +2876,39 @@ export default function StructurePage() {
                                     >
                                       Fiche entreprise
                                     </DropdownMenuItem>
+                                  )}
+                                  {node.type === "bu" && (
                                     <DropdownMenuItem
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setAddBUCompanyId(node.id);
-                                        setAddBUForm({
-                                          name: "",
-                                          code: "",
-                                          activity: "",
-                                          siret: "",
-                                          country: "",
-                                          logo: undefined as string | undefined,
-                                        });
-                                        setAddBULogoFile(null);
-                                        setAddBUOpen(true);
+                                        openFicheBU(node.id, node.companyId);
                                       }}
                                     >
-                                      <Plus className="mr-2 h-4 w-4" /> Ajouter
-                                      une BU
+                                      Fiche BU
                                     </DropdownMenuItem>
-                                  </>
-                                )}
-                                {node.type === "bu" && (
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openFicheBU(node.id, node.companyId);
-                                    }}
-                                  >
-                                    Fiche BU
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedNode(node);
-                                    setConfirmDeleteOpen(true);
-                                  }}
-                                  className="text-red-600 focus:bg-red-50 focus:text-red-600"
-                                >
-                                  Supprimer
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          ) : (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 opacity-100 transition-all hover:bg-white hover:text-primary hover:shadow-sm md:opacity-0 md:group-hover/row:opacity-100"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-52">
-                                <DropdownMenuItem
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openDetail(node);
-                                  }}
-                                >
-                                  Voir les détails
-                                </DropdownMenuItem>
-                                {node.type === "group" && (
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openFicheGroup(node.id);
-                                    }}
-                                  >
-                                    Fiche groupe
-                                  </DropdownMenuItem>
-                                )}
-                                {node.type === "company" && (
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openFiche(node.id);
-                                    }}
-                                  >
-                                    Fiche entreprise
-                                  </DropdownMenuItem>
-                                )}
-                                {node.type === "bu" && (
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openFicheBU(node.id, node.companyId);
-                                    }}
-                                  >
-                                    Fiche BU
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
                         </div>
+                      </li>
+                    );
+                  })}
+                  {treeRows.length === 0 && !treeLoading && (
+                    <li className="py-16 text-center">
+                      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50">
+                        <Building2 className="h-6 w-6 text-slate-300" />
                       </div>
+                      <h3 className="text-sm font-medium text-primary">
+                        Aucune structure
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Commencez par créer votre première entreprise.
+                      </p>
                     </li>
-                  );
-                })}
-                {treeRows.length === 0 && !treeLoading && (
-                  <li className="py-16 text-center">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50">
-                      <Building2 className="h-6 w-6 text-slate-300" />
-                    </div>
-                    <h3 className="text-sm font-medium text-primary">
-                      Aucune structure
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Commencez par créer votre première entreprise.
-                    </p>
-                  </li>
-                )}
-              </ul>
+                  )}
+                </ul>
               </div>
             </div>
           )}
@@ -2925,15 +2921,15 @@ export default function StructurePage() {
           <DialogHeader className="gap-1 pb-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <DialogTitle className="flex items-center gap-2 text-base font-semibold text-slate-900 sm:text-lg">
+                <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white sm:text-lg">
                   {editing ? (
                     <>
-                      <Pencil className="h-4 w-4 text-slate-500" />
+                      <Pencil className="h-4 w-4 text-white/60" />
                       Modifier {typeLabel.toLowerCase()}
                     </>
                   ) : (
                     <>
-                      <Info className="h-4 w-4 text-slate-500" />
+                      <Info className="h-4 w-4 text-white/60" />
                       Détails
                     </>
                   )}
@@ -2961,7 +2957,7 @@ export default function StructurePage() {
             </div>
           </DialogHeader>
 
-          <DialogBody className="space-y-4 bg-slate-50/60 px-4 py-4 sm:px-5">
+          <DialogBody className="space-y-4 bg-transparent px-4 py-4 sm:px-5">
             {/* ---------- WORKSPACE ---------- */}
             {selectedNode?.type === "workspace" && (
               <>
@@ -3241,7 +3237,7 @@ export default function StructurePage() {
                             : ""
                         }
                         editing={false}
-                        onChange={() => {}}
+                        onChange={() => { }}
                       />
                       <Field
                         label="Code APE"
@@ -3534,7 +3530,7 @@ export default function StructurePage() {
                               : ""
                           }
                           editing={false}
-                          onChange={() => {}}
+                          onChange={() => { }}
                         />
                       </DetailGrid>
                       <div>
@@ -3558,7 +3554,7 @@ export default function StructurePage() {
                         label="Activité principale"
                         value={editCompany.main_activity}
                         editing={false}
-                        onChange={() => {}}
+                        onChange={() => { }}
                       />
                     </div>
                   ) : (
@@ -3938,15 +3934,15 @@ export default function StructurePage() {
                   user?.role === "ADMIN" ||
                   user?.role === "MANAGER" ||
                   user?.role === "HEAD_MANAGER") && (
-                  <Button
-                    variant="outline"
-                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                    onClick={() => setConfirmDeleteOpen(true)}
-                  >
-                    <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                    Supprimer
-                  </Button>
-                )}
+                    <Button
+                      variant="outline"
+                      className="text-white/80 hover:text-white"
+                      onClick={() => setConfirmDeleteOpen(true)}
+                    >
+                      <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                      Supprimer
+                    </Button>
+                  )}
                 <div className="flex-1" />
                 {selectedNode?.type === "company" && (
                   <Button
@@ -3964,11 +3960,11 @@ export default function StructurePage() {
                   user?.role === "ADMIN" ||
                   user?.role === "HEAD_MANAGER" ||
                   user?.role === "MANAGER") && (
-                  <Button onClick={() => setEditing(true)}>
-                    <Pencil className="mr-1.5 h-3.5 w-3.5" />
-                    Modifier
-                  </Button>
-                )}
+                    <Button onClick={() => setEditing(true)}>
+                      <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                      Modifier
+                    </Button>
+                  )}
               </>
             ) : (
               <>
@@ -3987,7 +3983,7 @@ export default function StructurePage() {
       <Dialog open={nodeUsersOpen} onOpenChange={setNodeUsersOpen}>
         <DialogContent size="md">
           <DialogHeader>
-            <DialogTitle className="text-sm font-semibold">
+            <DialogTitle className="text-sm font-semibold text-white">
               Utilisateurs liés à ce nœud
             </DialogTitle>
           </DialogHeader>
@@ -4017,27 +4013,27 @@ export default function StructurePage() {
                             : role;
                   return (
                     <div key={role}>
-                      <p className="pl-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <p className="pl-1 text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                         {roleLabel}{" "}
-                        <span className="font-normal text-slate-400">
+                        <span className="font-normal text-white/50">
                           ({users.length}):
                         </span>
                       </p>
-                      <ul className="mt-2 space-y-0.5 text-xs text-slate-700">
+                      <ul className="mt-2 space-y-1 text-xs text-(--nebula-muted)">
                         {sortedUsers.map((u) => {
                           const fullName =
                             `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
                           return (
                             <li
                               key={u.id}
-                              className="flex items-center justify-between rounded-md bg-slate-100 px-2 py-1 border border-slate-300"
+                              className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 border border-white/10 nebula-blob"
                             >
                               <div className="flex flex-col">
-                                <span className="font-medium">
+                                <span className="font-medium text-white">
                                   {fullName || u.email}
                                 </span>
                                 {fullName && (
-                                  <span className="text-[11px] text-slate-400">
+                                  <span className="text-[11px] text-(--nebula-muted) font-mono">
                                     {u.email}
                                   </span>
                                 )}
@@ -4050,7 +4046,7 @@ export default function StructurePage() {
                   );
                 })
             ) : (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-(--nebula-muted)">
                 Aucun utilisateur lié à ce nœud.
               </p>
             )}
@@ -4106,7 +4102,7 @@ export default function StructurePage() {
               Annuler
             </Button>
             <Button
-              className="bg-red-600 text-white hover:bg-red-700"
+              variant="destructive"
               onClick={handleDelete}
             >
               Supprimer
@@ -4120,7 +4116,7 @@ export default function StructurePage() {
         <DialogContent size="7xl">
           <DialogHeader className="gap-1 pb-3">
             <DialogTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-slate-600" />
+              <Building2 className="h-5 w-5 text-(--nebula-gold-light)" />
               <span className="min-w-0 truncate">
                 {ficheCompany?.name ??
                   allTreeCompanies.find((x) => x.id === ficheCompanyId)?.name ??
@@ -4132,327 +4128,327 @@ export default function StructurePage() {
               données extracomptables).
             </DialogDescription>
           </DialogHeader>
-          <DialogBody className="space-y-4 bg-slate-50/60 px-3 py-4 sm:px-5">
-          {(() => {
-            if (!ficheCompany) {
+          <DialogBody className="space-y-4 bg-transparent px-3 py-4 sm:px-5">
+            {(() => {
+              if (!ficheCompany) {
+                return (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/15 border-t-(--nebula-gold-light)" />
+                  </div>
+                );
+              }
+              const bus = busByCompany[ficheCompany.id] ?? [];
               return (
-                <div className="flex items-center justify-center py-8">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
-                </div>
-              );
-            }
-            const bus = busByCompany[ficheCompany.id] ?? [];
-            return (
-              <Tabs value={ficheTab} onValueChange={setFicheTab} className="space-y-3">
-                <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-lg bg-slate-100 p-1">
-                  <TabsTrigger value="informations">Informations</TabsTrigger>
-                  <TabsTrigger value="business-units">
-                    Business Units
-                  </TabsTrigger>
-                  <TabsTrigger value="actionnaires">Actionnaires</TabsTrigger>
-                  <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
-                </TabsList>
-                <TabsContent value="informations" className="mt-0">
-                  <div className="space-y-4">
-                    <DetailHero
-                      type="company"
-                      name={ficheCompany.name}
-                      logo={ficheCompany.logo}
-                      pills={
-                        <>
-                          {ficheCompany.siret && (
-                            <DetailPill icon={Hash} mono>
-                              SIRET {formatSiret(ficheCompany.siret)}
-                            </DetailPill>
-                          )}
-                          {ficheCompany.ape_code && (
-                            <DetailPill icon={BadgeCheck} mono>
-                              APE {ficheCompany.ape_code}
-                            </DetailPill>
-                          )}
-                          {ficheCompany.country && (
-                            <DetailPill icon={Globe}>{ficheCompany.country}</DetailPill>
-                          )}
-                          {ficheCompany.size && (
-                            <DetailPill icon={UsersIcon}>{ficheCompany.size}</DetailPill>
-                          )}
-                        </>
-                      }
-                    />
+                <Tabs value={ficheTab} onValueChange={setFicheTab} className="space-y-3">
+                  <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-2xl bg-white/5 border border-white/10 p-1">
+                    <TabsTrigger value="informations">Informations</TabsTrigger>
+                    <TabsTrigger value="business-units">
+                      Business Units
+                    </TabsTrigger>
+                    <TabsTrigger value="actionnaires">Actionnaires</TabsTrigger>
+                    <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="informations" className="mt-0">
+                    <div className="space-y-4">
+                      <DetailHero
+                        type="company"
+                        name={ficheCompany.name}
+                        logo={ficheCompany.logo}
+                        pills={
+                          <>
+                            {ficheCompany.siret && (
+                              <DetailPill icon={Hash} mono>
+                                SIRET {formatSiret(ficheCompany.siret)}
+                              </DetailPill>
+                            )}
+                            {ficheCompany.ape_code && (
+                              <DetailPill icon={BadgeCheck} mono>
+                                APE {ficheCompany.ape_code}
+                              </DetailPill>
+                            )}
+                            {ficheCompany.country && (
+                              <DetailPill icon={Globe}>{ficheCompany.country}</DetailPill>
+                            )}
+                            {ficheCompany.size && (
+                              <DetailPill icon={UsersIcon}>{ficheCompany.size}</DetailPill>
+                            )}
+                          </>
+                        }
+                      />
 
-                    {typeof ficheCompany.completionPercentage === "number" && (
-                      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <h4 className="text-sm font-semibold text-slate-900">
-                              Complétion du profil
-                            </h4>
-                            <p className="text-[11px] leading-snug text-slate-500">
-                              Pourcentage d&apos;informations renseignées sur cette entreprise.
+                      {typeof ficheCompany.completionPercentage === "number" && (
+                        <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 nebula-blob">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <h4 className="text-sm font-semibold text-white">
+                                Complétion du profil
+                              </h4>
+                              <p className="text-[11px] leading-snug text-(--nebula-muted)">
+                                Pourcentage d&apos;informations renseignées sur cette entreprise.
+                              </p>
+                            </div>
+                            <span className="text-xl font-semibold tabular-nums text-white font-mono">
+                              {Math.round(ficheCompany.completionPercentage)}
+                              <span className="text-sm text-(--nebula-muted)">%</span>
+                            </span>
+                          </div>
+                          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                            <div
+                              className="h-full rounded-full bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) transition-all"
+                              style={{
+                                width: `${Math.max(
+                                  0,
+                                  Math.min(100, ficheCompany.completionPercentage),
+                                )}%`,
+                              }}
+                            />
+                          </div>
+                        </section>
+                      )}
+
+                      <DetailSection
+                        icon={Info}
+                        title="Identité"
+                        description="Informations générales de l'entreprise."
+                      >
+                        <DetailGrid>
+                          <ReadField label="Nom" value={ficheCompany.name} />
+                          <ReadField label="Pays" icon={Globe} value={ficheCompany.country} />
+                          <ReadField
+                            label="Adresse"
+                            icon={MapPin}
+                            value={ficheCompany.address}
+                            full
+                          />
+                        </DetailGrid>
+                      </DetailSection>
+
+                      <DetailSection
+                        icon={Hash}
+                        title="Informations légales"
+                        description="Identifiants d'immatriculation et activité principale."
+                      >
+                        <DetailGrid>
+                          <ReadField
+                            label="SIRET"
+                            icon={Hash}
+                            value={formatSiret(ficheCompany.siret)}
+                            mono
+                            hint="Identifiant d'établissement à 14 chiffres."
+                          />
+                          <ReadField
+                            label="SIREN"
+                            icon={Hash}
+                            value={formatSiren(ficheCompany.siret)}
+                            mono
+                            hint="Identifiant d'entreprise à 9 chiffres."
+                          />
+                          <ReadField
+                            label="Code APE"
+                            icon={BadgeCheck}
+                            value={ficheCompany.ape_code}
+                            mono
+                          />
+                          <ReadField
+                            label="Activité principale"
+                            icon={FileText}
+                            value={ficheCompany.main_activity}
+                            full
+                          />
+                        </DetailGrid>
+                      </DetailSection>
+
+                      <DetailSection
+                        icon={Calendar}
+                        title="Exercice fiscal"
+                        description="Dates clés de la période comptable."
+                      >
+                        <DetailGrid>
+                          <ReadField
+                            label="Début d'exercice"
+                            icon={Calendar}
+                            value={formatMonthDayForDisplay(ficheCompany.fiscal_year_start)}
+                            mono
+                            hint="Jour/mois de début de l'exercice fiscal."
+                          />
+                          <ReadField
+                            label="Dernier exercice clos"
+                            icon={Calendar}
+                            value={
+                              ficheCompany.last_closed_fiscal_year === null ||
+                                ficheCompany.last_closed_fiscal_year === undefined
+                                ? undefined
+                                : String(ficheCompany.last_closed_fiscal_year)
+                            }
+                            mono
+                          />
+                        </DetailGrid>
+                      </DetailSection>
+
+                      <DetailSection
+                        icon={Briefcase}
+                        title="Profil commercial"
+                        description="Taille et positionnement de l'entreprise."
+                      >
+                        <DetailGrid>
+                          <ReadField label="Taille" icon={UsersIcon} value={ficheCompany.size} />
+                          <ReadField label="Modèle" value={ficheCompany.model} />
+                        </DetailGrid>
+                      </DetailSection>
+
+                      <DetailSection
+                        icon={ImageIcon}
+                        title="Identité visuelle"
+                        description="Logo affiché dans les interfaces."
+                      >
+                        {ficheCompany.logo ? (
+                          <div className="flex items-center gap-3">
+                            <DetailLogoPreview logo={ficheCompany.logo} alt="Logo" size={72} />
+                            <p className="truncate text-xs text-slate-500">
+                              {ficheCompany.logo}
                             </p>
                           </div>
-                          <span className="text-xl font-semibold tabular-nums text-slate-900">
-                            {Math.round(ficheCompany.completionPercentage)}
-                            <span className="text-sm text-slate-400">%</span>
-                          </span>
-                        </div>
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-                          <div
-                            className="h-full rounded-full bg-linear-to-r from-emerald-400 to-emerald-500 transition-all"
-                            style={{
-                              width: `${Math.max(
-                                0,
-                                Math.min(100, ficheCompany.completionPercentage),
-                              )}%`,
-                            }}
-                          />
-                        </div>
-                      </section>
-                    )}
-
-                    <DetailSection
-                      icon={Info}
-                      title="Identité"
-                      description="Informations générales de l'entreprise."
-                    >
-                      <DetailGrid>
-                        <ReadField label="Nom" value={ficheCompany.name} />
-                        <ReadField label="Pays" icon={Globe} value={ficheCompany.country} />
-                        <ReadField
-                          label="Adresse"
-                          icon={MapPin}
-                          value={ficheCompany.address}
-                          full
-                        />
-                      </DetailGrid>
-                    </DetailSection>
-
-                    <DetailSection
-                      icon={Hash}
-                      title="Informations légales"
-                      description="Identifiants d'immatriculation et activité principale."
-                    >
-                      <DetailGrid>
-                        <ReadField
-                          label="SIRET"
-                          icon={Hash}
-                          value={formatSiret(ficheCompany.siret)}
-                          mono
-                          hint="Identifiant d'établissement à 14 chiffres."
-                        />
-                        <ReadField
-                          label="SIREN"
-                          icon={Hash}
-                          value={formatSiren(ficheCompany.siret)}
-                          mono
-                          hint="Identifiant d'entreprise à 9 chiffres."
-                        />
-                        <ReadField
-                          label="Code APE"
-                          icon={BadgeCheck}
-                          value={ficheCompany.ape_code}
-                          mono
-                        />
-                        <ReadField
-                          label="Activité principale"
-                          icon={FileText}
-                          value={ficheCompany.main_activity}
-                          full
-                        />
-                      </DetailGrid>
-                    </DetailSection>
-
-                    <DetailSection
-                      icon={Calendar}
-                      title="Exercice fiscal"
-                      description="Dates clés de la période comptable."
-                    >
-                      <DetailGrid>
-                        <ReadField
-                          label="Début d'exercice"
-                          icon={Calendar}
-                          value={formatMonthDayForDisplay(ficheCompany.fiscal_year_start)}
-                          mono
-                          hint="Jour/mois de début de l'exercice fiscal."
-                        />
-                        <ReadField
-                          label="Dernier exercice clos"
-                          icon={Calendar}
-                          value={
-                            ficheCompany.last_closed_fiscal_year === null ||
-                            ficheCompany.last_closed_fiscal_year === undefined
-                              ? undefined
-                              : String(ficheCompany.last_closed_fiscal_year)
-                          }
-                          mono
-                        />
-                      </DetailGrid>
-                    </DetailSection>
-
-                    <DetailSection
-                      icon={Briefcase}
-                      title="Profil commercial"
-                      description="Taille et positionnement de l'entreprise."
-                    >
-                      <DetailGrid>
-                        <ReadField label="Taille" icon={UsersIcon} value={ficheCompany.size} />
-                        <ReadField label="Modèle" value={ficheCompany.model} />
-                      </DetailGrid>
-                    </DetailSection>
-
-                    <DetailSection
-                      icon={ImageIcon}
-                      title="Identité visuelle"
-                      description="Logo affiché dans les interfaces."
-                    >
-                      {ficheCompany.logo ? (
-                        <div className="flex items-center gap-3">
-                          <DetailLogoPreview logo={ficheCompany.logo} alt="Logo" size={72} />
-                          <p className="truncate text-xs text-slate-500">
-                            {ficheCompany.logo}
+                        ) : (
+                          <p className="text-sm italic text-slate-400">
+                            Aucun logo renseigné
                           </p>
-                        </div>
-                      ) : (
-                        <p className="text-sm italic text-slate-400">
-                          Aucun logo renseigné
-                        </p>
-                      )}
-                    </DetailSection>
-                  </div>
-                </TabsContent>
-                <TabsContent value="business-units" className="mt-0">
-                  <div className="rounded-xl border border-slate-200 bg-white p-2">
-                    <ul className="space-y-2">
-                      {bus.map((b) => (
-                        <li
-                          key={b.id}
-                          className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 transition-colors hover:bg-slate-50"
-                          onClick={() => {
-                            setFicheOpen(false);
-                            openDetail({
-                              type: "bu",
-                              id: b.id,
-                              name: b.name,
-                              companyId: ficheCompany.id,
-                              code: b.code,
-                            });
-                          }}
-                        >
-                          <span className="font-medium text-primary">
-                            {b.name}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-slate-500">
-                              {b.code}
-                              {b.code && b.siret ? " — " : ""}
-                              {b.siret}
-                            </span>
-                            <span className="text-slate-400">›</span>
-                          </div>
-                        </li>
-                      ))}
-                      {bus.length === 0 && (
-                        <li className="py-4 text-center text-slate-400">
-                          Aucune business unit.
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                </TabsContent>
-                <TabsContent value="actionnaires" className="mt-0">
-                  <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-800">
-                        Actionnaires de cette entreprise
-                      </p>
-                      {(user?.role === "SUPER_ADMIN" ||
-                        user?.role === "ADMIN" ||
-                        user?.role === "MANAGER" ||
-                        user?.role === "HEAD_MANAGER") && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={async () => {
+                        )}
+                      </DetailSection>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="business-units" className="mt-0">
+                    <div className="rounded-xl border border-slate-200 bg-white p-2">
+                      <ul className="space-y-2">
+                        {bus.map((b) => (
+                          <li
+                            key={b.id}
+                            className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 transition-colors hover:bg-slate-50"
+                            onClick={() => {
                               setFicheOpen(false);
-                              setFicheShareholderFormOpen(true);
-                              if (!ficheShareholderUsers.length) {
-                                try {
-                                  const us = await fetchUsers();
-                                  setFicheShareholderUsers(us);
-                                } catch {
-                                  /* handled globally */
-                                }
-                              }
+                              openDetail({
+                                type: "bu",
+                                id: b.id,
+                                name: b.name,
+                                companyId: ficheCompany.id,
+                                code: b.code,
+                              });
                             }}
                           >
-                            <Plus className="mr-1 h-4 w-4" />
-                            Ajouter un actionnaire
-                          </Button>
+                            <span className="font-medium text-primary">
+                              {b.name}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-slate-500">
+                                {b.code}
+                                {b.code && b.siret ? " — " : ""}
+                                {b.siret}
+                              </span>
+                              <span className="text-slate-400">›</span>
+                            </div>
+                          </li>
+                        ))}
+                        {bus.length === 0 && (
+                          <li className="py-4 text-center text-slate-400">
+                            Aucune business unit.
+                          </li>
                         )}
-                    </div>
-                    {ficheShareholdersLoading ? (
-                      <p className="text-xs text-slate-400">
-                        Chargement des actionnaires...
-                      </p>
-                    ) : ficheShareholders.length === 0 ? (
-                      <p className="text-xs text-slate-400">
-                        Aucun actionnaire lié à cette entreprise.
-                      </p>
-                    ) : (
-                      <ul className="space-y-2 text-sm">
-                        {ficheShareholders.map((s) => {
-                          const ownerLabel =
-                            s.ownerType === "USER"
-                              ? ficheShareholderUsers.find((u) => u.id === s.ownerId)?.firstName +
-                              " " +
-                              ficheShareholderUsers.find((u) => u.id === s.ownerId)?.lastName
-                              : s.ownerType === "COMPANY"
-                                ? allTreeCompanies.find((c) => c.id === s.ownerId)?.name
-                                : s.ownerId || "Inconnu";
-                          return (
-                            <li
-                              key={s.id}
-                              className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2"
-                            >
-                              <div className="flex flex-col">
-                                <span className="font-medium text-primary">
-                                  {ownerLabel}
-                                </span>
-                                <span className="text-[11px] text-slate-400">
-                                  {ownerTypeLabel(s.ownerType)}
-                                </span>
-                              </div>
-                              <div className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                                <span>{s.percentage}%</span>
-                              </div>
-                            </li>
-                          );
-                        })}
                       </ul>
-                    )}
-                  </div>
-                </TabsContent>
-                <TabsContent value="donnees-extracomptables" className="mt-0">
-                  <div className="space-y-6">
-                    {ficheCompanyDataLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="actionnaires" className="mt-0">
+                    <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-slate-800">
+                          Actionnaires de cette entreprise
+                        </p>
+                        {(user?.role === "SUPER_ADMIN" ||
+                          user?.role === "ADMIN" ||
+                          user?.role === "MANAGER" ||
+                          user?.role === "HEAD_MANAGER") && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                setFicheOpen(false);
+                                setFicheShareholderFormOpen(true);
+                                if (!ficheShareholderUsers.length) {
+                                  try {
+                                    const us = await fetchUsers();
+                                    setFicheShareholderUsers(us);
+                                  } catch {
+                                    /* handled globally */
+                                  }
+                                }
+                              }}
+                            >
+                              <Plus className="mr-1 h-4 w-4" />
+                              Ajouter un actionnaire
+                            </Button>
+                          )}
                       </div>
-                    ) : (
-                      <>
-                        <EmpruntsSection
-                          emprunts={ficheCompanyEmprunts}
-                          emptyMessage="Aucun emprunt enregistré pour cette entreprise."
-                          onLoanClick={handleLoanClick}
-                        />
+                      {ficheShareholdersLoading ? (
+                        <p className="text-xs text-slate-400">
+                          Chargement des actionnaires...
+                        </p>
+                      ) : ficheShareholders.length === 0 ? (
+                        <p className="text-xs text-slate-400">
+                          Aucun actionnaire lié à cette entreprise.
+                        </p>
+                      ) : (
+                        <ul className="space-y-2 text-sm">
+                          {ficheShareholders.map((s) => {
+                            const ownerLabel =
+                              s.ownerType === "USER"
+                                ? ficheShareholderUsers.find((u) => u.id === s.ownerId)?.firstName +
+                                " " +
+                                ficheShareholderUsers.find((u) => u.id === s.ownerId)?.lastName
+                                : s.ownerType === "COMPANY"
+                                  ? allTreeCompanies.find((c) => c.id === s.ownerId)?.name
+                                  : s.ownerId || "Inconnu";
+                            return (
+                              <li
+                                key={s.id}
+                                className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2"
+                              >
+                                <div className="flex flex-col">
+                                  <span className="font-medium text-primary">
+                                    {ownerLabel}
+                                  </span>
+                                  <span className="text-[11px] text-slate-400">
+                                    {ownerTypeLabel(s.ownerType)}
+                                  </span>
+                                </div>
+                                <div className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                                  <span>{s.percentage}%</span>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="donnees-extracomptables" className="mt-0">
+                    <div className="space-y-6">
+                      {ficheCompanyDataLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                        </div>
+                      ) : (
+                        <>
+                          <EmpruntsSection
+                            emprunts={ficheCompanyEmprunts}
+                            emptyMessage="Aucun emprunt enregistré pour cette entreprise."
+                            onLoanClick={handleLoanClick}
+                          />
 
-                      </>
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
-            );
-          })()}
+                        </>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              );
+            })()}
           </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFicheOpen(false)}>
@@ -4474,120 +4470,120 @@ export default function StructurePage() {
             </DialogTitle>
           </DialogHeader>
           <DialogBody className="px-3 sm:px-5">
-          {(() => {
-            if (!ficheGroup) {
+            {(() => {
+              if (!ficheGroup) {
+                return (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                  </div>
+                );
+              }
+              const groupCompanies = allTreeCompanies.filter(c => c.groupId === ficheGroup.id);
               return (
-                <div className="flex items-center justify-center py-8">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
-                </div>
-              );
-            }
-            const groupCompanies = allTreeCompanies.filter(c => c.groupId === ficheGroup.id);
-            return (
-              <Tabs value={ficheGroupTab} onValueChange={setFicheGroupTab} className="space-y-3">
-                <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-lg bg-slate-100 p-1">
-                  <TabsTrigger value="informations">Informations</TabsTrigger>
-                  <TabsTrigger value="entreprises">Entreprises</TabsTrigger>
-                  <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
-                </TabsList>
-                <TabsContent value="informations" className="mt-0">
-                  <div className="rounded-xl border border-slate-200 bg-white p-4">
-                    <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                      <dt className="text-slate-500">SIRET</dt>
-                      <dd className="font-medium text-primary">
-                        {ficheGroup.siret || "—"}
-                      </dd>
-                      <dt className="text-slate-500">SIREN</dt>
-                      <dd className="font-medium text-primary">
-                        {ficheGroup.siret
-                          ? ficheGroup.siret.substring(0, 9)
-                          : "—"}
-                      </dd>
-                      <dt className="text-slate-500">Début d&apos;exercice</dt>
-                      <dd className="font-medium text-primary">
-                        {formatMonthDayForDisplay(ficheGroup.fiscal_year_start)}
-                      </dd>
-                      {ficheGroup.ape_code && (
-                        <>
-                          <dt className="text-slate-500">Code APE</dt>
-                          <dd className="font-medium text-primary">
-                            {ficheGroup.ape_code}
-                          </dd>
-                        </>
-                      )}
-                      {ficheGroup.mainActivity && (
-                        <>
-                          <dt className="text-slate-500">
-                            Activité principale
-                          </dt>
-                          <dd className="font-medium text-primary">
-                            {ficheGroup.mainActivity}
-                          </dd>
-                        </>
-                      )}
-                      {ficheGroup.country && (
-                        <>
-                          <dt className="text-slate-500">Pays</dt>
-                          <dd className="font-medium text-primary">
-                            {ficheGroup.country}
-                          </dd>
-                        </>
-                      )}
-                    </dl>
-                  </div>
-                </TabsContent>
-                <TabsContent value="entreprises" className="mt-0">
-                  <div className="rounded-xl border border-slate-200 bg-white p-2">
-                    <ul className="space-y-2">
-                      {groupCompanies.map((company) => (
-                        <li
-                          key={company.id}
-                          className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 transition-colors hover:bg-slate-50"
-                          onClick={() => {
-                            setFicheGroupOpen(false);
-                            openFiche(company.id);
-                          }}
-                        >
-                          <span className="font-medium text-primary">
-                            {company.name}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-slate-500">
-                              {company.siret}
+                <Tabs value={ficheGroupTab} onValueChange={setFicheGroupTab} className="space-y-3">
+                  <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-lg bg-slate-100 p-1">
+                    <TabsTrigger value="informations">Informations</TabsTrigger>
+                    <TabsTrigger value="entreprises">Entreprises</TabsTrigger>
+                    <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="informations" className="mt-0">
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                        <dt className="text-slate-500">SIRET</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.siret || "—"}
+                        </dd>
+                        <dt className="text-slate-500">SIREN</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.siret
+                            ? ficheGroup.siret.substring(0, 9)
+                            : "—"}
+                        </dd>
+                        <dt className="text-slate-500">Début d&apos;exercice</dt>
+                        <dd className="font-medium text-primary">
+                          {formatMonthDayForDisplay(ficheGroup.fiscal_year_start)}
+                        </dd>
+                        {ficheGroup.ape_code && (
+                          <>
+                            <dt className="text-slate-500">Code APE</dt>
+                            <dd className="font-medium text-primary">
+                              {ficheGroup.ape_code}
+                            </dd>
+                          </>
+                        )}
+                        {ficheGroup.mainActivity && (
+                          <>
+                            <dt className="text-slate-500">
+                              Activité principale
+                            </dt>
+                            <dd className="font-medium text-primary">
+                              {ficheGroup.mainActivity}
+                            </dd>
+                          </>
+                        )}
+                        {ficheGroup.country && (
+                          <>
+                            <dt className="text-slate-500">Pays</dt>
+                            <dd className="font-medium text-primary">
+                              {ficheGroup.country}
+                            </dd>
+                          </>
+                        )}
+                      </dl>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="entreprises" className="mt-0">
+                    <div className="rounded-xl border border-slate-200 bg-white p-2">
+                      <ul className="space-y-2">
+                        {groupCompanies.map((company) => (
+                          <li
+                            key={company.id}
+                            className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 transition-colors hover:bg-slate-50"
+                            onClick={() => {
+                              setFicheGroupOpen(false);
+                              openFiche(company.id);
+                            }}
+                          >
+                            <span className="font-medium text-primary">
+                              {company.name}
                             </span>
-                            <span className="text-slate-400">›</span>
-                          </div>
-                        </li>
-                      ))}
-                      {groupCompanies.length === 0 && (
-                        <li className="py-4 text-center text-slate-400">
-                          Aucune entreprise dans ce groupe.
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                </TabsContent>
-                <TabsContent value="donnees-extracomptables" className="mt-0">
-                  <div className="space-y-6">
-                    {ficheGroupDataLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
-                      </div>
-                    ) : (
-                      <>
-                        <EmpruntsSection
-                          emprunts={ficheGroupEmprunts}
-                          emptyMessage="Aucun emprunt enregistré pour ce groupe."
-                          onLoanClick={handleLoanClick}
-                        />
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-slate-500">
+                                {company.siret}
+                              </span>
+                              <span className="text-slate-400">›</span>
+                            </div>
+                          </li>
+                        ))}
+                        {groupCompanies.length === 0 && (
+                          <li className="py-4 text-center text-slate-400">
+                            Aucune entreprise dans ce groupe.
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="donnees-extracomptables" className="mt-0">
+                    <div className="space-y-6">
+                      {ficheGroupDataLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                        </div>
+                      ) : (
+                        <>
+                          <EmpruntsSection
+                            emprunts={ficheGroupEmprunts}
+                            emptyMessage="Aucun emprunt enregistré pour ce groupe."
+                            onLoanClick={handleLoanClick}
+                          />
 
-                      </>
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
-            );
-          })()}
+                        </>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              );
+            })()}
           </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFicheGroupOpen(false)}>
@@ -4607,71 +4603,71 @@ export default function StructurePage() {
             </DialogTitle>
           </DialogHeader>
           <DialogBody className="px-3 sm:px-5">
-          {(() => {
-            if (!ficheBU) {
+            {(() => {
+              if (!ficheBU) {
+                return (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                  </div>
+                );
+              }
               return (
-                <div className="flex items-center justify-center py-8">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
-                </div>
-              );
-            }
-            return (
-              <Tabs value={ficheBUTab} onValueChange={setFicheBUTab} className="space-y-3">
-                <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-lg bg-slate-100 p-1">
-                  <TabsTrigger value="informations">Informations</TabsTrigger>
-                  <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
-                </TabsList>
-                <TabsContent value="informations" className="mt-0">
-                  <div className="rounded-xl border border-slate-200 bg-white p-4">
-                    <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                      <dt className="text-slate-500">Code</dt>
-                      <dd className="font-medium text-primary">
-                        {ficheBU.code || "—"}
-                      </dd>
-                      <dt className="text-slate-500">SIRET</dt>
-                      <dd className="font-medium text-primary">
-                        {ficheBU.siret || "—"}
-                      </dd>
-                      <dt className="text-slate-500">Activité</dt>
-                      <dd className="font-medium text-primary">
-                        {ficheBU.activity || "—"}
-                      </dd>
-                      <dt className="text-slate-500">Pays</dt>
-                      <dd className="font-medium text-primary">
-                        {ficheBU.country || "—"}
-                      </dd>
-                      {ficheBU.company_id && (
+                <Tabs value={ficheBUTab} onValueChange={setFicheBUTab} className="space-y-3">
+                  <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-lg bg-slate-100 p-1">
+                    <TabsTrigger value="informations">Informations</TabsTrigger>
+                    <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="informations" className="mt-0">
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                        <dt className="text-slate-500">Code</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.code || "—"}
+                        </dd>
+                        <dt className="text-slate-500">SIRET</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.siret || "—"}
+                        </dd>
+                        <dt className="text-slate-500">Activité</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.activity || "—"}
+                        </dd>
+                        <dt className="text-slate-500">Pays</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.country || "—"}
+                        </dd>
+                        {ficheBU.company_id && (
+                          <>
+                            <dt className="text-slate-500">Entreprise</dt>
+                            <dd className="font-medium text-primary">
+                              {allTreeCompanies.find(c => c.id === ficheBU.company_id)?.name || ficheBU.company_id}
+                            </dd>
+                          </>
+                        )}
+                      </dl>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="donnees-extracomptables" className="mt-0">
+                    <div className="space-y-6">
+                      {ficheBUDataLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                        </div>
+                      ) : (
                         <>
-                          <dt className="text-slate-500">Entreprise</dt>
-                          <dd className="font-medium text-primary">
-                            {allTreeCompanies.find(c => c.id === ficheBU.company_id)?.name || ficheBU.company_id}
-                          </dd>
+                          <EmpruntsSection
+                            emprunts={ficheBUEmprunts}
+                            emptyMessage="Aucun emprunt enregistré pour cette business unit."
+                            onLoanClick={handleLoanClick}
+                          />
+
                         </>
                       )}
-                    </dl>
-                  </div>
-                </TabsContent>
-                <TabsContent value="donnees-extracomptables" className="mt-0">
-                  <div className="space-y-6">
-                    {ficheBUDataLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
-                      </div>
-                    ) : (
-                      <>
-                        <EmpruntsSection
-                          emprunts={ficheBUEmprunts}
-                          emptyMessage="Aucun emprunt enregistré pour cette business unit."
-                          onLoanClick={handleLoanClick}
-                        />
-
-                      </>
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
-            );
-          })()}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              );
+            })()}
           </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFicheBUOpen(false)}>

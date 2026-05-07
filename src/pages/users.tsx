@@ -5,8 +5,11 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import Head from "next/head";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
+import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { PageHeader } from "@/components/patterns/PageHeader";
+import { FilterBar } from "@/components/patterns/FilterBar";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +36,7 @@ import {
   acceptInvitation,
   rejectInvitation,
   invitationStatusLabel,
-  invitationStatusColor,
+  invitationStatusVariant,
   allowedInviteRoles,
   INVITATION_STATUSES,
   type InvitationItem,
@@ -92,18 +95,18 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-const roleBadgeColor: Record<UserRole, string> = {
-  SUPER_ADMIN: "bg-purple-50 text-purple-700 border-purple-200",
-  ADMIN: "bg-blue-50 text-blue-700 border-blue-200",
-  HEAD_MANAGER: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  MANAGER: "bg-amber-50 text-amber-700 border-amber-200",
-  END_USER: "bg-slate-50 text-slate-600 border-slate-200",
+const roleVariant: Record<UserRole, BadgeVariant> = {
+  SUPER_ADMIN: "info",
+  ADMIN: "info",
+  HEAD_MANAGER: "warning",
+  MANAGER: "warning",
+  END_USER: "neutral",
 };
 
-const statusBadgeColor: Record<UserStatus, string> = {
-  ACTIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  PENDING: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  SUSPENDED: "bg-red-50 text-red-600 border-red-200",
+const statusVariant: Record<UserStatus, BadgeVariant> = {
+  ACTIVE: "success",
+  PENDING: "warning",
+  SUSPENDED: "danger",
 };
 
 type ActiveTab = "users" | "invitations";
@@ -173,7 +176,7 @@ export default function UsersPage() {
   const [perimNodeId, setPerimNodeId] = useState("");
   const [perimCompanyId, setPerimCompanyId] = useState("");
   const perimBusHook = useBusinessUnits(perimCompanyId || null);
-  const { canImpersonateUser, isImpersonating, impersonate } = useImpersonation();
+  const { canImpersonateUser, impersonate } = useImpersonation();
   const [impersonateLoadingId, setImpersonateLoadingId] = useState<string | null>(null);
   const handleImpersonate = async (targetUser: UserItem) => {
   setImpersonateLoadingId(targetUser.id);
@@ -199,11 +202,11 @@ export default function UsersPage() {
     try { setInvitations(await fetchAllInvitations()); } catch { /* snackbar */ } finally { setInvLoading(false); }
   }, []);
 
-  useEffect(() => { loadUsers(); }, [loadUsers]);
+  useEffect(() => { void Promise.resolve().then(loadUsers); }, [loadUsers]);
   // Load invitations once on mount so the tab counter is accurate,
   // and reload when switching to the invitations tab to ensure freshness.
-  useEffect(() => { loadInvitations(); }, [loadInvitations]);
-  useEffect(() => { if (activeTab === "invitations") loadInvitations(); }, [activeTab, loadInvitations]);
+  useEffect(() => { void Promise.resolve().then(loadInvitations); }, [loadInvitations]);
+  useEffect(() => { if (activeTab === "invitations") void Promise.resolve().then(loadInvitations); }, [activeTab, loadInvitations]);
   useEffect(() => { if (companyIdForBU && permOpen) busHook.fetchList(); }, [companyIdForBU, permOpen, busHook]);
   useEffect(() => { if (perimCompanyId && inviteOpen) perimBusHook.fetchList(); }, [perimCompanyId, inviteOpen, perimBusHook]);
   useEffect(() => {
@@ -231,13 +234,15 @@ export default function UsersPage() {
 
   // Reset perimeter type when role changes
   useEffect(() => {
-    if (inviteForm.role === "HEAD_MANAGER") {
-      setPerimNodeType("WORKSPACE");
-    } else {
-      setPerimNodeType("GROUP");
-    }
-    setPerimNodeId("");
-    setPerimCompanyId("");
+    void Promise.resolve().then(() => {
+      if (inviteForm.role === "HEAD_MANAGER") {
+        setPerimNodeType("WORKSPACE");
+      } else {
+        setPerimNodeType("GROUP");
+      }
+      setPerimNodeId("");
+      setPerimCompanyId("");
+    });
   }, [inviteForm.role]);
 
   // ── Role-based invite options ──
@@ -480,12 +485,13 @@ export default function UsersPage() {
   const isExpired = (inv: InvitationItem) => new Date(inv.expiresAt) < new Date();
 
   return (
-    <AppLayout title="User Management" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
+    <AppLayout title="Gestion des utilisateurs" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
       <Head><title>Gestion des utilisateurs</title></Head>
       <div className="space-y-3 md:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="mb-1 flex items-center gap-3">
+        <PageHeader
+          title="Utilisateurs & Invitations"
+          subtitle="Gérez les utilisateurs, invitations et permissions."
+          icon={
             <div className="rounded-xl bg-primary/10 p-2.5">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users h-5 w-5 text-primary" aria-hidden="true">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
@@ -494,25 +500,18 @@ export default function UsersPage() {
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
               </svg>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-primary">Utilisateurs &amp; Invitations</h2>
-              <p className="text-sm text-slate-500">G&eacute;rez les utilisateurs, invitations et permissions.</p>
-            </div>
-          </div>
-        
-
-          {/* Actions */}
-          <div className="flex w-full items-center gap-3 sm:w-auto">
-            {invitableRoles.length > 0 && (
-              <Button onClick={openInviteModal} className="w-full bg-primary text-white hover:bg-slate-800 sm:w-auto">
+          }
+          actions={
+            invitableRoles.length > 0 ? (
+              <Button onClick={openInviteModal} className="w-full bg-primary text-white! hover:bg-slate-800 sm:w-auto">
                 <Send className="h-4 w-4" />
                 Inviter un utilisateur
               </Button>
-            )}
-          </div>
-        </div>
+            ) : null
+          }
+        />
         {/* Tabs */}
-        <div className="grid grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+        <div className="grid grid-cols-2 gap-1 rounded-lg border border-primary/40! bg-primary/10 p-1">
           {([
             { key: "users" as ActiveTab, label: "Utilisateurs", count: stats.total },
             { key: "invitations" as ActiveTab, label: "Invitations", count: invStats.total },
@@ -522,12 +521,12 @@ export default function UsersPage() {
               type="button"
               onClick={() => setActiveTab(tab.key)}
               className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all ${activeTab === tab.key
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-primary/90 text-white! shadow-sm"
+                : "hover:text-primary/80"
                 }`}
             >
               {tab.label}
-              <span className={`ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${activeTab === tab.key ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-600"
+              <span className={`ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${activeTab === tab.key ? "bg-white text-primary" : "bg-primary/50 text-white"
                 }`}>
                 {tab.count}
               </span>
@@ -540,92 +539,120 @@ export default function UsersPage() {
           <>
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {([
-                { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" },
-                { label: "Actifs", value: stats.active, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
-                { label: "En attente", value: stats.pending, color: "text-amber-700", bg: "bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100" },
-                { label: "Suspendus", value: stats.suspended, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
-              ]).map((s) => (
-                <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-                  <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>{s.label}</p>
-                  <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
+              {[
+                { label: "Total", value: stats.total },
+                { label: "Actifs", value: stats.active, colored: "bg-green-500" },
+                { label: "En attente", value: stats.pending, colored: "bg-yellow-500" },
+                { label: "Suspendus", value: stats.suspended, colored: "bg-red-500" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden"
+                >
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+                    § {s.label}
+                  </p>
+                  <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
+                    {s.value}
+                  </p>
+                  {s.colored ? (
+                    <div
+                      aria-hidden
+                      className={`pointer-events-none absolute -bottom-10 -right-40 h-full w-full rounded-full ${s.colored} blur-3xl`}
+                    />
+                  ) : null}
                 </div>
               ))}
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <div className="relative min-w-0 flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input placeholder="Rechercher un utilisateur..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
-              </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
-                <option value="">Tous les r&ocirc;les</option>
-                {ALL_ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
-                <option value="">Tous les statuts</option>
-                {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
-              </Select>
-            </div>
+            <FilterBar
+              search={
+                <div className="relative min-w-0">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    placeholder="Rechercher un utilisateur..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="h-9 pl-10 border-slate-200 bg-white"
+                  />
+                </div>
+              }
+              filters={
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                  <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-full border-primary/40! bg-white text-sm sm:w-fit!">
+                    <option value="">Tous les r&ocirc;les</option>
+                    {ALL_ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
+                  </Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-full border-primary/40! bg-white text-sm sm:w-fit!">
+                    <option value="">Tous les statuts</option>
+                    {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                  </Select>
+                </div>
+              }
+            />
 
             {/* Table */}
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="nebula-glass rounded-3xl overflow-hidden border border-white/10">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-(--nebula-gold-light)" />
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="py-16 text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50"><Users className="h-6 w-6 text-slate-300" /></div>
-                  <h3 className="text-sm font-medium text-slate-900">Aucun utilisateur trouv&eacute;</h3>
-                  <p className="mt-1 text-sm text-slate-500">{search || roleFilter || statusFilter ? "Essayez de modifier vos filtres." : "Invitez votre premier utilisateur."}</p>
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 border border-white/10">
+                    <Users className="h-6 w-6 text-white/40" />
+                  </div>
+                  <h3 className="text-sm font-medium text-white">Aucun utilisateur trouv&eacute;</h3>
+                  <p className="mt-1 text-sm text-(--nebula-muted)">{search || roleFilter || statusFilter ? "Essayez de modifier vos filtres." : "Invitez votre premier utilisateur."}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/50">
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Utilisateur</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Statut</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Cr&eacute;&eacute; le</th>
-                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Actions</th>
+                      <tr className="border-b border-white/10 bg-white/5">
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Utilisateur</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">R&ocirc;le</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Statut</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Cr&eacute;&eacute; le</th>
+                        <th className="px-6 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-white/10">
                       {filtered.map((u) => {
                         const isProtectedSuperAdmin =
                           u.role === "SUPER_ADMIN" && currentUser?.role === "ADMIN";
                         return (
-                          <tr key={u.id} className="group transition-colors hover:bg-slate-50/50">
+                          <tr key={u.id} className="group transition-colors hover:bg-white/5">
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/15 text-sm font-semibold text-white">
                                   {(u.firstName?.[0] || u.email[0]).toUpperCase()}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium text-slate-900">{u.firstName || u.lastName ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "\u2014"}</p>
-                                  <p className="text-xs text-slate-500">{u.email}</p>
+                                  <p className="text-sm font-medium text-white">{u.firstName || u.lastName ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "\u2014"}</p>
+                                  <p className="text-xs text-(--nebula-muted)">{u.email}</p>
                                 </div>
                               </div>
                             </td>
                             <td className="px-2 py-4">
-                              <span className={`inline-flex items-center gap-1 rounded-full border w-fit px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide ${roleBadgeColor[u.role]}`}>
-                                <Shield className="h-3 w-3 hidden md:block" />{roleLabel(u.role)}
-                              </span>
+                              <Badge
+                                variant={roleVariant[u.role]}
+                                icon={<Shield className="h-3 w-3 hidden md:block" />}
+                                className="text-[9px]"
+                              >
+                                {roleLabel(u.role)}
+                              </Badge>
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${statusBadgeColor[u.status]}`}>
-                                {statusLabel(u.status)}
-                              </span>
+                              <Badge variant={statusVariant[u.status]}>{statusLabel(u.status)}</Badge>
                             </td>
-                            <td className="px-6 py-4 text-sm text-slate-500">{u.createdAt ? new Date(u.createdAt).toLocaleDateString("fr-FR") : "\u2014"}</td>
+                            <td className="px-6 py-4 text-sm">{u.createdAt ? new Date(u.createdAt).toLocaleDateString("fr-FR") : "\u2014"}</td>
                             <td className="px-6 py-4">
                               <div className="flex justify-end">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 opacity-100 transition-all hover:bg-white hover:text-slate-900 hover:shadow-sm sm:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                                    <button type="button" className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center">
                                       <MoreHorizontal className="h-4 w-4" />
                                     </button>
                                   </DropdownMenuTrigger>
@@ -664,7 +691,7 @@ export default function UsersPage() {
                                               setDeleteTarget(u);
                                               setDeleteOpen(true);
                                             }}
-                                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                            className="text-white focus:text-white"
                                           >
                                             <Trash2 className="mr-2 h-4 w-4" /> Supprimer
                                           </DropdownMenuItem>
@@ -683,7 +710,7 @@ export default function UsersPage() {
                                       <DropdownMenuItem
                                         onClick={() => handleImpersonate(u)}
                                         disabled={impersonateLoadingId === u.id}
-                                        className="text-indigo-600 focus:text-indigo-600 focus:bg-indigo-50"
+                                        className="text-white focus:text-white"
                                       >
                                         {impersonateLoadingId === u.id ? (
                                           <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 
@@ -714,57 +741,74 @@ export default function UsersPage() {
           <>
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {([
-                { label: "Total", value: invStats.total, color: "text-slate-900", bg: "bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100" }, 
-                { label: "En attente", value: invStats.pending, color: "text-yellow-700", bg: "bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100" },
-                { label: "Accept\u00e9es", value: invStats.accepted, color: "text-emerald-700", bg: "bg-linear-to-l from-green-200 to-white ring-1 ring-green-100" },
-                { label: "Rejet\u00e9es", value: invStats.rejected, color: "text-red-600", bg: "bg-linear-to-l from-red-200 to-white ring-1 ring-red-100" },
-              ]).map((s) => (
-                <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-                  <p className={`text-xs font-bold uppercase tracking-wider ${s.color}`}>{s.label}</p>
-                  <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
+              {[
+                { label: "Total", value: invStats.total },
+                { label: "En attente", value: invStats.pending, colored: "bg-yellow-500" },
+                { label: "Accept\u00e9es", value: invStats.accepted, colored: "bg-green-500" },
+                { label: "Rejet\u00e9es", value: invStats.rejected, colored: "bg-red-500" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden"
+                >
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+                    § {s.label}
+                  </p>
+                  <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
+                    {s.value}
+                  </p>
+                  {s.colored ? (
+                    <div
+                      aria-hidden
+                      className={`pointer-events-none absolute -bottom-10 -right-40 h-full w-full rounded-full ${s.colored} blur-3xl`}
+                    />
+                  ) : null}
                 </div>
               ))}
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <div className="relative min-w-0 flex-1 sm:min-w-[200px] sm:max-w-xs">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input placeholder="Rechercher par email..." value={invSearch} onChange={(e) => setInvSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
-              </div>
-              <Select value={invStatusFilter} onValueChange={(v) => setInvStatusFilter(v as InvitationStatus | "")} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
-                <option value="">Tous les statuts</option>
-                {INVITATION_STATUSES.map((s) => <option key={s} value={s}>{invitationStatusLabel(s)}</option>)}
-              </Select>
-            </div>
+            <FilterBar
+              search={
+                <div className="relative min-w-0 sm:min-w-[200px] sm:max-w-xs">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input placeholder="Rechercher par email..." value={invSearch} onChange={(e) => setInvSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
+                </div>
+              }
+              filters={
+                <Select value={invStatusFilter} onValueChange={(v) => setInvStatusFilter(v as InvitationStatus | "")} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
+                  <option value="">Tous les statuts</option>
+                  {INVITATION_STATUSES.map((s) => <option key={s} value={s}>{invitationStatusLabel(s)}</option>)}
+                </Select>
+              }
+            />
 
             {/* Pending Invitations Table */}
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="nebula-glass rounded-3xl overflow-hidden border border-white/10">
               {invLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-(--nebula-gold-light)" />
                 </div>
               ) : pendingInv.length === 0 ? (
                 <div className="py-16 text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50"><Send className="h-6 w-6 text-slate-300" /></div>
-                  <h3 className="text-sm font-medium text-slate-900">Aucune invitation en attente</h3>
-                  <p className="mt-1 text-sm text-slate-500">{invSearch || invStatusFilter ? "Essayez de modifier vos filtres." : "Toutes les invitations ont \u00e9t\u00e9 trait\u00e9es."}</p>
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 border border-white/10"><Send className="h-6 w-6 text-white/40" /></div>
+                  <h3 className="text-sm font-medium text-white">Aucune invitation en attente</h3>
+                  <p className="mt-1 text-sm text-(--nebula-muted)">{invSearch || invStatusFilter ? "Essayez de modifier vos filtres." : "Toutes les invitations ont \u00e9t\u00e9 trait\u00e9es."}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/50">
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Email</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Statut</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">P&eacute;rim&egrave;tre</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Expire le</th>
-                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Actions</th>
+                      <tr className="border-b border-white/10 bg-white/5">
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Email</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">R&ocirc;le</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Statut</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">P&eacute;rim&egrave;tre</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Expire le</th>
+                        <th className="px-6 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-white/10">
                       {pendingInv.map((inv) => {
                         const invitedUser = users.find(
                           (u) => u.email.toLowerCase() === inv.email.toLowerCase(),
@@ -773,43 +817,51 @@ export default function UsersPage() {
                           invitedUser && invitedUser.status === "PENDING";
 
                         return (
-                          <tr key={inv.id} className="group transition-colors hover:bg-slate-50/50">
+                          <tr key={inv.id} className="group transition-colors hover:bg-white/5">
                             <td className="px-6 py-4">
-                              <p className="text-sm font-medium text-slate-900">{inv.email}</p>
-                              <p className="text-xs text-slate-400">Envoy&eacute; le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
+                              <p className="text-sm font-medium text-white">{inv.email}</p>
+                              <p className="text-xs text-(--nebula-muted)">Envoy&eacute; le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
                             </td>
                             <td className="px-6 py-4">
                               {inv.role && (
-                                <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${roleBadgeColor[inv.role]}`}>
-                                  <Shield className="h-3 w-3" />{roleLabel(inv.role)}
-                                </span>
+                                <Badge variant={roleVariant[inv.role]} icon={<Shield className="h-3 w-3" />}>
+                                  {roleLabel(inv.role)}
+                                </Badge>
                               )}
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${invitationStatusColor(inv.status)}`}>
-                                {inv.status === "PENDING" && <Clock className="h-3 w-3" />}
-                                {inv.status === "ACCEPTED" && <Check className="h-3 w-3" />}
-                                {inv.status === "REJECTED" && <XCircle className="h-3 w-3" />}
+                              <Badge
+                                variant={invitationStatusVariant(inv.status)}
+                                icon={
+                                  inv.status === "PENDING" ? (
+                                    <Clock className="h-3 w-3" />
+                                  ) : inv.status === "ACCEPTED" ? (
+                                    <Check className="h-3 w-3" />
+                                  ) : (
+                                    <XCircle className="h-3 w-3" />
+                                  )
+                                }
+                              >
                                 {invitationStatusLabel(inv.status)}
-                              </span>
+                              </Badge>
                               {inv.status === "PENDING" && isExpired(inv) && (
-                                <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-600">Expir&eacute;e</span>
+                                <span className="ml-2 rounded-full bg-white/10 border border-white/15 px-2 py-0.5 text-[10px] font-medium text-white">Expir&eacute;e</span>
                               )}
                             </td>
                             <td className="px-6 py-4">
                               {inv.dataPerimeter && inv.dataPerimeter.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
                                   {inv.dataPerimeter.map((dp, i) => (
-                                    <span key={i} className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                                    <span key={i} className="rounded-full bg-white/10 border border-white/15 px-2 py-0.5 text-[10px] font-medium text-(--nebula-muted)">
                                       {nodeTypeLabelFr(dp.nodeType)}
                                     </span>
                                   ))}
                                 </div>
                               ) : (
-                                <span className="text-xs text-slate-400">&mdash;</span>
+                                <span className="text-xs">&mdash;</span>
                               )}
                             </td>
-                            <td className="px-6 py-4 text-sm text-slate-500">
+                            <td className="px-6 py-4 text-sm">
                               {new Date(inv.expiresAt).toLocaleDateString("fr-FR")}
                             </td>
                             <td className="px-6 py-4">
@@ -819,20 +871,20 @@ export default function UsersPage() {
                                     <button
                                       type="button"
                                       onClick={() => handleAccept(inv)}
-                                      className="flex h-8 items-center gap-1 rounded-lg bg-emerald-50 px-3 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
+                                      className="flex h-8 items-center gap-1 rounded-xl bg-white/5 border border-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/10"
                                     >
                                       <Check className="h-3.5 w-3.5" /> Accepter
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => handleReject(inv)}
-                                      className="flex h-8 items-center gap-1 rounded-lg bg-red-50 px-3 text-xs font-medium text-red-600 transition hover:bg-red-100"
+                                      className="flex h-8 items-center gap-1 rounded-xl bg-white/5 border border-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/10"
                                     >
                                       <XCircle className="h-3.5 w-3.5" /> Rejeter
                                     </button>
                                   </>
                                 ) : (
-                                  <span className="text-xs text-slate-400">
+                                  <span className="text-xs text-(--nebula-muted)">
                                     {invitedUser
                                       ? `Utilisateur déjà ${statusLabel(invitedUser.status)}`
                                       : "L'utilisateur n'a pas encore utilis\u00e9 l'invitation"}
@@ -851,40 +903,49 @@ export default function UsersPage() {
 
             {/* Archived Invitations (non-pending) */}
             {archivedInv.length > 0 && (
-              <div className="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm p-4">
-                <h4 className="mb-3 text-sm font-semibold text-slate-800">Invitations archivées</h4>
+              <div className="mt-6 nebula-glass rounded-3xl overflow-hidden border border-white/10 p-6">
+                <h4 className="mb-3 text-sm font-semibold text-white">Invitations archivées</h4>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-xs">
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/70">
-                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-slate-500">Email</th>
-                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le</th>
-                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-slate-500">Statut</th>
-                        <th className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-slate-500">Expire le</th>
+                      <tr className="border-b border-white/10 bg-white/5">
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Email</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">R&ocirc;le</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Statut</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">Expire le</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-white/10">
                       {archivedInv.map((inv) => (
-                        <tr key={inv.id} className="bg-white/60">
+                        <tr key={inv.id} className="transition-colors hover:bg-white/5">
                           <td className="px-4 py-2">
-                            <p className="text-sm font-medium text-slate-900">{inv.email}</p>
-                            <p className="text-[11px] text-slate-400">Envoy\u00e9 le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
+                            <p className="text-sm font-medium text-white">{inv.email}</p>
+                            <p className="text-[11px] text-(--nebula-muted)">Envoy\u00e9 le {new Date(inv.createdAt).toLocaleDateString("fr-FR")}</p>
                           </td>
                           <td className="px-4 py-2">
                             {inv.role && (
-                              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${roleBadgeColor[inv.role]}`}>
-                                <Shield className="h-3 w-3" />{roleLabel(inv.role)}
-                              </span>
+                              <Badge variant={roleVariant[inv.role]} icon={<Shield className="h-3 w-3" />}>
+                                {roleLabel(inv.role)}
+                              </Badge>
                             )}
                           </td>
                           <td className="px-4 py-2">
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${invitationStatusColor(inv.status)}`}>
-                              {inv.status === "ACCEPTED" && <Check className="h-3 w-3" />}
-                              {inv.status === "REJECTED" && <XCircle className="h-3 w-3" />}
+                            <Badge
+                              variant={invitationStatusVariant(inv.status)}
+                              icon={
+                                inv.status === "ACCEPTED" ? (
+                                  <Check className="h-3 w-3" />
+                                ) : inv.status === "REJECTED" ? (
+                                  <XCircle className="h-3 w-3" />
+                                ) : (
+                                  <Clock className="h-3 w-3" />
+                                )
+                              }
+                            >
                               {invitationStatusLabel(inv.status)}
-                            </span>
+                            </Badge>
                           </td>
-                          <td className="px-4 py-2 text-sm text-slate-500">
+                          <td className="px-4 py-2 text-sm">
                             {new Date(inv.expiresAt).toLocaleDateString("fr-FR")}
                           </td>
                         </tr>

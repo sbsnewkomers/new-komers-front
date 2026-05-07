@@ -48,6 +48,7 @@ export interface Loan {
     status: LoanStatus;
     entityType: EntityType;
     entityId: string;
+    entityName?: string;
     createdById: string;
     createdAt: string;
     updatedAt: string;
@@ -239,10 +240,23 @@ export interface ManualInstallmentDto {
     comments?: string;
 }
 
+export interface ManualInstallmentUpdateDto extends ManualInstallmentDto {
+    id?: string;
+}
+
 export interface CreateManualLoanDto {
     name: string;
     entityType: EntityType;
     entityId: string;
     installments: ManualInstallmentDto[];
     inputMethod?: LoanInputMethod;
+}
+
+export interface UpdateManualLoanDto {
+    name?: string;
+    entityType?: EntityType;
+    entityId?: string;
+    installments?: ManualInstallmentUpdateDto[];
+    inputMethod?: LoanInputMethod;
+    confirmInstallmentsRegeneration?: boolean;
 }

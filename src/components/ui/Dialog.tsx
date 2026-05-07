@@ -101,7 +101,7 @@ export function DialogOverlay({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 ${className ?? ""}`}
+      className={`fixed inset-0 z-50 bg-black/55 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 ${className ?? ""}`}
       {...props}
     />
   );
@@ -164,7 +164,7 @@ export function DialogContent({
           ref={ref}
           role="dialog"
           aria-modal="true"
-          className={`relative z-50 flex w-full flex-col overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl max-sm:max-h-[calc(100dvh-1rem)] sm:rounded-2xl sm:max-h-[88dvh] sm:w-full ${sizeClass} animate-in slide-in-from-bottom-4 sm:zoom-in-95 sm:slide-in-from-bottom-0 duration-200 ${className ?? ""}`}
+          className={`relative z-50 flex w-full flex-col overflow-hidden rounded-t-2xl border border-white/10 nebula-glass-modal shadow-2xl max-sm:max-h-[calc(100dvh-1rem)] sm:rounded-2xl sm:max-h-[88dvh] sm:w-full ${sizeClass} animate-in slide-in-from-bottom-4 sm:zoom-in-95 sm:slide-in-from-bottom-0 duration-200 ${className ?? ""}`}
           onClick={(e) => e.stopPropagation()}
         >
           {children}
@@ -176,7 +176,7 @@ export function DialogContent({
                 ctx.setOpen(false);
                 onClose?.();
               }}
-              className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200"
+              className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)"
             >
               <X className="h-4 w-4" />
             </button>
@@ -193,7 +193,7 @@ export function DialogHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`flex shrink-0 flex-col gap-1 border-b border-slate-100 bg-white px-5 pt-5 pb-4 pr-12 ${className ?? ""}`}
+      className={`flex shrink-0 flex-col gap-1 border-b border-white/10 bg-transparent px-5 pt-5 pb-4 pr-12 ${className ?? ""}`}
       {...props}
     />
   );
@@ -205,7 +205,7 @@ export function DialogTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className={`text-base font-semibold leading-tight tracking-tight text-slate-900 sm:text-lg ${className ?? ""}`}
+      className={`text-base font-semibold leading-tight tracking-tight text-white sm:text-lg ${className ?? ""}`}
       {...props}
     />
   );
@@ -217,7 +217,7 @@ export function DialogDescription({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={`text-sm leading-normal text-slate-500 ${className ?? ""}`}
+      className={`text-sm leading-normal text-(--nebula-muted) ${className ?? ""}`}
       {...props}
     />
   );
@@ -241,7 +241,7 @@ export function DialogFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`flex shrink-0 flex-col-reverse gap-2 border-t border-slate-100 bg-white px-5 py-3 sm:flex-row sm:justify-end ${className ?? ""}`}
+      className={`flex shrink-0 flex-col-reverse gap-2 border-t border-white/10 bg-transparent px-5 py-3 sm:flex-row sm:justify-end ${className ?? ""}`}
       {...props}
     />
   );
