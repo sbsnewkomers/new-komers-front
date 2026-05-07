@@ -448,9 +448,9 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
 
                     {hasCriticalChanges && loan.installments && loan.installments.length > 0 && (
                         <div className="flex items-start gap-3 rounded-2xl border border-amber-400/25 bg-amber-500/10 p-4">
-                            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-200" />
+                            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
                             <div className="text-sm">
-                                <p className="font-semibold text-white">Attention</p>
+                                <p className="font-semibold text-amber-700">Attention</p>
                                 <p className="mt-0.5 text-xs text-(--nebula-muted)">
                                     Vous avez modifié des paramètres qui affectent
                                     l&apos;échéancier de remboursement. La régénération

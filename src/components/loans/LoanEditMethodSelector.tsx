@@ -32,7 +32,7 @@ export function LoanEditMethodSelector({
         {
             id: LoanInputMethod.IMPORT,
             title: 'Modification par import',
-            description: 'Importez un nouveau fichier pour remplacer l&apos;échéancier existant',
+            description: 'Importez un nouveau fichier pour remplacer l\'échéancier existant',
             icon: Upload,
             recommended: currentMethod === LoanInputMethod.IMPORT,
         },
@@ -147,7 +147,7 @@ export function LoanEditMethodSelector({
 
                 <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="flex items-start gap-3">
-                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-amber-400/30 bg-amber-500/10 text-xs font-bold text-amber-200">
+                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-amber-400/30 bg-amber-500/10 text-xs font-bold nebula-warning-icon">
                             !
                         </div>
                         <div className="text-sm">

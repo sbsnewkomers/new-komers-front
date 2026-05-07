@@ -29,10 +29,10 @@ export function StepIndicator({
                 className={[
                   "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors",
                   isDone
-                    ? "bg-emerald-500 text-white"
+                    ? "bg-(--nebula-gold) text-white"
                     : isActive
                       ? "bg-primary text-white"
-                      : "bg-slate-100 text-slate-400",
+                      : "bg-white/10 text-(--nebula-muted)",
                 ].join(" ")}
               >
                 {isDone ? <Check className="h-4 w-4" /> : s.n}
@@ -41,10 +41,10 @@ export function StepIndicator({
                 className={[
                   "hidden text-xs font-medium sm:inline",
                   isActive
-                    ? "text-slate-900"
+                    ? "text-white"
                     : isDone
-                      ? "text-slate-700"
-                      : "text-slate-400",
+                      ? "text-(--nebula-muted)"
+                      : "text-(--nebula-muted)",
                 ].join(" ")}
               >
                 {s.label}
@@ -54,7 +54,7 @@ export function StepIndicator({
               <div
                 className={[
                   "mx-3 h-0.5 flex-1 rounded-full transition-colors",
-                  currentStep > s.n ? "bg-emerald-500" : "bg-slate-200",
+                  currentStep > s.n ? "bg-(--nebula-gold)" : "bg-white/20",
                 ].join(" ")}
               />
             )}

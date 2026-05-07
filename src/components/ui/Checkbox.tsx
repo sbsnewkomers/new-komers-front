@@ -29,7 +29,7 @@ export function Checkbox({
       onChange={handleChange}
       disabled={disabled}
       className={
-        "h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-primary " +
+        "h-4 w-4 rounded border-border nebula-checkbox focus:ring-2 focus:ring-primary " +
         (className ?? "")
       }
       {...props}
