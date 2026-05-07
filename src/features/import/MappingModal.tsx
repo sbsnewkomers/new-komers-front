@@ -704,7 +704,7 @@ useEffect(() => {
             </div>
           </DialogHeader>
 
-          <DialogBody className="bg-slate-50/40">
+          <DialogBody className="bg-transparent">
           <input
             ref={mappingFileInputRef}
             type="file"
@@ -748,7 +748,7 @@ useEffect(() => {
                             <button
                               type="button"
                               onClick={handleFileInputClick}
-                              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-(--nebula-muted) transition-colors hover:bg-white/15 hover:text-white"
                             >
                               <Upload className="h-3 w-3" aria-hidden />
                               Changer le fichier
@@ -1273,16 +1273,16 @@ function MappingDetailModal({
           />
 
           {/* En-têtes des deux colonnes */}
-          <div className="grid grid-cols-2 gap-3 px-1">
+            <div className="grid grid-cols-2 gap-3 px-1">
             <div className="flex items-center gap-2">
-              <FileUp className="h-4 w-4 text-slate-400" aria-hidden />
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <FileUp className="h-4 w-4 text-(--nebula-muted)" aria-hidden />
+              <span className="text-xs font-semibold uppercase tracking-wide text-(--nebula-muted)">
                 Colonne CSV
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Layers className="h-4 w-4 text-slate-400" aria-hidden />
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <Layers className="h-4 w-4 text-(--nebula-muted)" aria-hidden />
+              <span className="text-xs font-semibold uppercase tracking-wide text-(--nebula-muted)">
                 Champ base de données
               </span>
             </div>
@@ -1306,10 +1306,10 @@ function MappingDetailModal({
                   key={field.name}
                   className={`grid grid-cols-2 items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
                     isMissing
-                      ? "border-rose-200 bg-rose-50/40"
+                      ? "border-rose-400/35 bg-rose-500/10"
                       : hasValue
-                        ? "border-emerald-200 bg-emerald-50/30"
-                        : "border-slate-200 bg-white"
+                        ? "border-emerald-400/30 bg-emerald-500/10"
+                        : "border-white/10 bg-white/5"
                   }`}
                 >
                   {/* Colonne gauche : select CSV */}
@@ -1326,7 +1326,7 @@ function MappingDetailModal({
                       />
                     ) : (
                       <span
-                        className="h-2 w-2 shrink-0 rounded-full border border-slate-300"
+                        className="h-2 w-2 shrink-0 rounded-full border border-white/25"
                         aria-hidden
                       />
                     )}
@@ -1334,7 +1334,7 @@ function MappingDetailModal({
                     {isReadOnly ? (
                       <span
                         className={`truncate text-sm font-medium ${
-                          hasValue ? "text-slate-900" : "text-slate-400 italic"
+                          hasValue ? "text-white" : "text-(--nebula-muted) italic"
                         }`}
                       >
                         {hasValue ? csvValue : "— Non mappé —"}
@@ -1363,10 +1363,10 @@ function MappingDetailModal({
                                   return updated;
                                 });
                               }}
-                            className={`block h-9 w-full appearance-none rounded-lg border bg-white px-3 pr-8 text-sm text-slate-900 shadow-xs transition-colors focus:outline-none focus-visible:ring-2 ${
+                            className={`block h-9 w-full appearance-none rounded-lg border bg-white/5 px-3 pr-8 text-sm text-white transition-colors focus:outline-none focus-visible:ring-2 ${
                               isMissing
-                                ? "border-rose-300 focus-visible:ring-rose-300"
-                                : "border-slate-200 hover:border-slate-300 focus-visible:ring-primary/40"
+                                ? "border-rose-400/50 focus-visible:ring-rose-400/50"
+                                : "border-white/10 hover:border-white/20 focus-visible:ring-(--nebula-gold-light)/50"
                             }`}
                           >
                             <option value="">— Non mappé —</option>
@@ -1390,7 +1390,7 @@ function MappingDetailModal({
                           </select>
 
                           <ChevronDown
-                            className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                            className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-(--nebula-muted)"
                             aria-hidden
                           />
                         </div>
@@ -1409,7 +1409,7 @@ function MappingDetailModal({
                             [field.name]: "",
                           }))
                         }
-                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-(--nebula-muted) transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)/40"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
@@ -1418,19 +1418,19 @@ function MappingDetailModal({
 
                   {/* Colonne droite : champ DB fixe */}
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium text-slate-800">
+                    <span className="truncate text-sm font-medium text-white">
                       {field.name}
                     </span>
                     <span
-                      className={`shrink-0 inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                      className={`shrink-0 inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${
                         field.required
-                          ? "bg-rose-100 text-rose-700"
-                          : "bg-slate-100 text-slate-600"
+                          ? "border-rose-400/30 bg-rose-500/15 text-rose-100"
+                          : "border-white/10 bg-white/10 text-(--nebula-muted)"
                       }`}
                     >
                       {field.required ? "Requis" : "Facultatif"}
                     </span>
-                    <span className="hidden shrink-0 rounded-full bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 sm:inline-flex">
+                    <span className="hidden shrink-0 rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-(--nebula-muted) sm:inline-flex">
                       {field.type}
                     </span>
                   </div>

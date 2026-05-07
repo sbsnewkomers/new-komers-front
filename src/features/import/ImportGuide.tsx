@@ -176,25 +176,25 @@ const STEPS = [
     icon: Upload,
     label: "Déposez votre fichier",
     detail: "Glissez-déposez ou cliquez pour importer un fichier Excel, CSV ou TXT.",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
+    color: "text-sky-200",
+    bg: "bg-sky-500/10",
+    border: "border-sky-400/25",
   },
   {
     icon: Wand2,
     label: "Configurez le mapping",
     detail: "Associez chaque colonne de votre fichier au champ de base correspondant. Sauvegardez le mapping pour le réutiliser.",
-    color: "text-violet-600",
-    bg: "bg-violet-50",
-    border: "border-violet-200",
+    color: "text-violet-200",
+    bg: "bg-violet-500/10",
+    border: "border-violet-400/25",
   },
   {
     icon: CheckCircle2,
     label: "Importez vos données",
     detail: "Les données sont validées, archivées et intégrées automatiquement par exercice fiscal.",
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
+    color: "text-emerald-200",
+    bg: "bg-emerald-500/10",
+    border: "border-emerald-400/25",
   },
 ];
 
@@ -213,9 +213,9 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  string: "bg-sky-50 text-sky-700 border-sky-200",
-  number: "bg-amber-50 text-amber-700 border-amber-200",
-  date: "bg-purple-50 text-purple-700 border-purple-200",
+  string: "border-sky-400/30 bg-sky-500/15 text-sky-100",
+  number: "border-amber-400/30 bg-amber-500/15 text-amber-100",
+  date: "border-violet-400/30 bg-violet-500/15 text-violet-100",
 };
 
 // ─── Sous-composants ──────────────────────────────────────────────────────────
@@ -237,17 +237,17 @@ function SectionHeader({
     <button
       type="button"
       onClick={onToggle}
-      className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)/40"
     >
-      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-        <Icon className="h-4 w-4 text-primary" />
+      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/10">
+        <Icon className="h-4 w-4 text-(--nebula-gold-light)" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-slate-800">{title}</p>
-        <p className="text-xs text-slate-500">{subtitle}</p>
+        <p className="text-sm font-semibold text-white">{title}</p>
+        <p className="text-xs text-(--nebula-muted)">{subtitle}</p>
       </div>
       <ChevronDown
-        className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
+        className={`h-4 w-4 shrink-0 text-(--nebula-muted) transition-transform duration-200 ${
           open ? "rotate-180" : ""
         }`}
       />
@@ -257,10 +257,10 @@ function SectionHeader({
 
 function FieldRow({ field }: { field: FieldInfo }) {
   return (
-    <div className="flex flex-col gap-1.5 rounded-xl border border-slate-100 bg-white p-3 transition-shadow hover:shadow-sm sm:flex-row sm:items-start sm:gap-3">
+    <div className="flex flex-col gap-1.5 rounded-xl border border-white/10 bg-white/5 p-3 transition-colors hover:border-white/15 sm:flex-row sm:items-start sm:gap-3">
       {/* Nom + badges */}
       <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:w-44">
-        <code className="text-xs font-bold text-slate-800">{field.name}</code>
+        <code className="text-xs font-bold text-white">{field.name}</code>
         <span
           className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${TYPE_COLORS[field.type]}`}
         >
@@ -268,12 +268,12 @@ function FieldRow({ field }: { field: FieldInfo }) {
           {TYPE_LABELS[field.type]}
         </span>
         {field.required ? (
-          <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-600">
+          <span className="inline-flex items-center gap-0.5 rounded-full border border-rose-400/30 bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-medium text-rose-100">
             <CheckCircle2 className="h-2.5 w-2.5" />
             Requis
           </span>
         ) : (
-          <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+          <span className="inline-flex items-center gap-0.5 rounded-full border border-white/10 bg-white/10 px-1.5 py-0.5 text-[10px] font-medium text-(--nebula-muted)">
             <Circle className="h-2.5 w-2.5" />
             Optionnel
           </span>
@@ -282,8 +282,8 @@ function FieldRow({ field }: { field: FieldInfo }) {
 
       {/* Description + exemple */}
       <div className="min-w-0 flex-1">
-        <p className="text-xs text-slate-600">{field.description}</p>
-        <p className="mt-0.5 text-[11px] text-slate-400">
+        <p className="text-xs text-(--nebula-muted)">{field.description}</p>
+        <p className="mt-0.5 text-[11px] text-white/50">
           <span className="font-medium">Ex :</span> {field.example}
         </p>
       </div>
@@ -303,20 +303,20 @@ export function ImportGuide() {
   const optionalFields = FIELD_DESCRIPTIONS.filter((f) => !f.required);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div className="nebula-glass rounded-3xl border border-white/10 overflow-hidden">
       {/* En-tête global */}
-      <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/60 px-5 py-3">
-        <BookOpen className="h-4 w-4 text-primary" />
-        <span className="text-sm font-semibold text-slate-700">
+      <div className="flex items-center gap-3 border-b border-white/10 bg-white/5 px-5 py-3">
+        <BookOpen className="h-4 w-4 text-(--nebula-gold-light)" />
+        <span className="text-sm font-semibold text-white">
           Guide d&apos;utilisation
         </span>
-        <span className="ml-auto text-[11px] text-slate-400">
+        <span className="ml-auto text-[11px] text-(--nebula-muted)">
           Cliquez sur une section pour en savoir plus
         </span>
       </div>
 
       {/* ── Section 1 : Fonctionnement ── */}
-      <div className="border-b border-slate-100">
+      <div className="border-b border-white/10">
         <SectionHeader
           icon={Lightbulb}
           title="Comment ça fonctionne ?"
@@ -333,20 +333,20 @@ export function ImportGuide() {
                     <step.icon className={`h-5 w-5 ${step.color}`} />
                   </div>
                   <div className="sm:px-1">
-                    <p className="text-xs font-semibold text-slate-800">{step.label}</p>
-                    <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{step.detail}</p>
+                    <p className="text-xs font-semibold text-white">{step.label}</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-(--nebula-muted)">{step.detail}</p>
                   </div>
                   {i < STEPS.length - 1 && (
-                    <ArrowRight className="hidden h-4 w-4 shrink-0 self-center text-slate-300 sm:block" />
+                    <ArrowRight className="hidden h-4 w-4 shrink-0 self-center text-white/25 sm:block" />
                   )}
                 </div>
               ))}
             </div>
 
-            <div className="mt-4 rounded-lg border border-amber-100 bg-amber-50 p-3">
+            <div className="mt-4 rounded-xl border border-amber-400/25 bg-amber-500/10 p-3">
               <div className="flex items-start gap-2">
-                <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
-                <p className="text-xs text-amber-800">
+                <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-200" />
+                <p className="text-xs text-amber-100/95">
                   <span className="font-semibold">Bon à savoir : </span>
                   Si l&apos;entité cible contient déjà des données, un message de confirmation vous sera présenté avant tout remplacement. Les données précédentes sont archivées et peuvent être restaurées depuis l&apos;historique.
                 </p>
@@ -357,7 +357,7 @@ export function ImportGuide() {
       </div>
 
       {/* ── Section 2 : Champs attendus ── */}
-      <div className="border-b border-slate-100">
+      <div className="border-b border-white/10">
         <SectionHeader
           icon={FileUp}
           title="Champs attendus dans le fichier"
@@ -370,11 +370,11 @@ export function ImportGuide() {
             {/* Requis */}
             <div>
               <div className="mb-2 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-600">
+                <span className="inline-flex items-center gap-1 rounded-full border border-rose-400/30 bg-rose-500/15 px-2 py-0.5 text-[11px] font-semibold text-rose-100">
                   <CheckCircle2 className="h-3 w-3" />
                   Champs obligatoires
                 </span>
-                <span className="text-[11px] text-slate-400">L&apos;import échouera si l&apos;un d&apos;eux est absent.</span>
+                <span className="text-[11px] text-(--nebula-muted)">L&apos;import échouera si l&apos;un d&apos;eux est absent.</span>
               </div>
               <div className="space-y-1.5">
                 {requiredFields.map((f) => (
@@ -386,11 +386,11 @@ export function ImportGuide() {
             {/* Optionnels */}
             <div>
               <div className="mb-2 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-(--nebula-muted)">
                   <Circle className="h-3 w-3" />
                   Champs optionnels
                 </span>
-                <span className="text-[11px] text-slate-400">Enrichissent la donnée si disponibles.</span>
+                <span className="text-[11px] text-(--nebula-muted)">Enrichissent la donnée si disponibles.</span>
               </div>
               <div className="space-y-1.5">
                 {optionalFields.map((f) => (
@@ -399,12 +399,12 @@ export function ImportGuide() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+            <div className="rounded-xl border border-sky-400/25 bg-sky-500/10 p-3">
               <div className="flex items-start gap-2">
-                <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
-                <p className="text-xs text-blue-800">
+                <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-200" />
+                <p className="text-xs text-sky-100/95">
                   <span className="font-semibold">Format des dates : </span>
-                  Toutes les dates doivent être au format <code className="rounded bg-blue-100 px-1 font-mono text-[11px]">AAAAMMJJ</code> (ex : <code className="rounded bg-blue-100 px-1 font-mono text-[11px]">20240131</code> pour le 31 janvier 2024).
+                  Toutes les dates doivent être au format <code className="rounded border border-white/10 bg-white/10 px-1 font-mono text-[11px] text-white">AAAAMMJJ</code> (ex : <code className="rounded border border-white/10 bg-white/10 px-1 font-mono text-[11px] text-white">20240131</code> pour le 31 janvier 2024).
                 </p>
               </div>
             </div>
@@ -423,33 +423,33 @@ export function ImportGuide() {
         />
         {openSection === "templates" && (
           <div className="px-5 pb-5 space-y-3">
-            <p className="text-xs leading-relaxed text-slate-600">
-              Un <span className="font-semibold text-slate-800">modèle de mapping</span> enregistre la correspondance entre les colonnes de votre fichier et les champs comptables attendus. Vous n&apos;avez ainsi plus besoin de reconfigurer manuellement à chaque import.
+            <p className="text-xs leading-relaxed text-(--nebula-muted)">
+              Un <span className="font-semibold text-white">modèle de mapping</span> enregistre la correspondance entre les colonnes de votre fichier et les champs comptables attendus. Vous n&apos;avez ainsi plus besoin de reconfigurer manuellement à chaque import.
             </p>
 
             <div className="grid gap-2 sm:grid-cols-3">
               {[
                 {
                   icon: Save,
-                  color: "text-emerald-600",
-                  bg: "bg-emerald-50",
-                  border: "border-emerald-200",
+                  color: "text-emerald-200",
+                  bg: "bg-emerald-500/10",
+                  border: "border-emerald-400/25",
                   title: "Enregistrer",
                   desc: "Après avoir configuré votre mapping, cliquez sur « Enregistrer » pour le sauvegarder sous un nom.",
                 },
                 {
                   icon: RefreshCw,
-                  color: "text-violet-600",
-                  bg: "bg-violet-50",
-                  border: "border-violet-200",
+                  color: "text-violet-200",
+                  bg: "bg-violet-500/10",
+                  border: "border-violet-400/25",
                   title: "Réutiliser",
                   desc: "Au prochain import, sélectionnez un modèle existant depuis le modal de sélection — aucune reconfiguration nécessaire.",
                 },
                 {
                   icon: Layers,
-                  color: "text-blue-600",
-                  bg: "bg-blue-50",
-                  border: "border-blue-200",
+                  color: "text-sky-200",
+                  bg: "bg-sky-500/10",
+                  border: "border-sky-400/25",
                   title: "Portée",
                   desc: "Un mapping peut être global (visible par tous) ou local à un workspace (visible seulement par les membres).",
                 },
@@ -458,21 +458,21 @@ export function ImportGuide() {
                   key={item.title}
                   className={`rounded-xl border ${item.border} ${item.bg} p-3`}
                 >
-                  <div className={`mb-1.5 inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white`}>
+                  <div className="mb-1.5 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/10">
                     <item.icon className={`h-3.5 w-3.5 ${item.color}`} />
                   </div>
-                  <p className="text-xs font-semibold text-slate-800">{item.title}</p>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">{item.desc}</p>
+                  <p className="text-xs font-semibold text-white">{item.title}</p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-(--nebula-muted)">{item.desc}</p>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-lg border border-violet-100 bg-violet-50 p-3">
+            <div className="rounded-xl border border-violet-400/25 bg-violet-500/10 p-3">
               <div className="flex items-start gap-2">
-                <Wand2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-600" />
-                <p className="text-xs text-violet-800">
+                <Wand2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-200" />
+                <p className="text-xs text-violet-100/95">
                   <span className="font-semibold">Astuce : </span>
-                  Si votre fichier possède les mêmes noms de colonnes que les champs attendus (ex : colonne nommée <code className="rounded bg-violet-100 px-1 font-mono text-[11px]">JournalCode</code>), le mapping est détecté automatiquement.
+                  Si votre fichier possède les mêmes noms de colonnes que les champs attendus (ex : colonne nommée <code className="rounded border border-white/10 bg-white/10 px-1 font-mono text-[11px] text-white">JournalCode</code>), le mapping est détecté automatiquement.
                 </p>
               </div>
             </div>

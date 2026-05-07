@@ -93,7 +93,13 @@ body {
 }
 
 .nebula-glass {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.016));
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.11),
+      rgba(255, 255, 255, 0.05)
+    ),
+    rgba(10, 10, 10, 0.72);
   border: 1px solid rgba(245, 236, 215, 0.12);
   border-radius: 20px;
   backdrop-filter: blur(20px) saturate(180%);
@@ -101,6 +107,24 @@ body {
 }
 .nebula-glass:hover {
   border-color: rgba(245, 236, 215, 0.18);
+}
+
+/* Modal surfaces need higher opacity for readability */
+.nebula-glass-modal {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.11),
+      rgba(255, 255, 255, 0.05)
+    ),
+    rgba(10, 10, 10, 0.72);
+  border: 1px solid rgba(245, 236, 215, 0.14);
+  border-radius: 20px;
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+}
+.nebula-glass-modal:hover {
+  border-color: rgba(245, 236, 215, 0.2);
 }
 
 /* Ensure <select> dropdown + <option> are dark in dark mode */
@@ -212,6 +236,11 @@ body.nebula-light {
   background: white;
   border: 1px solid rgba(10, 10, 10, 0.08);
   box-shadow: 0 8px 32px -12px rgba(184, 146, 74, 0.18);
+}
+.nebula-light .nebula-glass-modal {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(10, 10, 10, 0.1);
+  box-shadow: 0 12px 36px -16px rgba(10, 10, 10, 0.12);
 }
 .nebula-light .nebula-grid-bg {
   background-image:
