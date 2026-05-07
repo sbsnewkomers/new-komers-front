@@ -163,8 +163,8 @@ export function AppSidebarNav({
 
   const navClassName =
     variant === "desktop"
-      ? "flex-1 space-y-1 py-4"
-      : "flex-1 space-y-1 px-3 py-4 overflow-y-auto";
+      ? "min-h-0 flex-1 space-y-1 overflow-y-auto py-4 pr-1"
+      : "min-h-0 flex-1 space-y-1 px-3 py-4 overflow-y-auto";
 
   if (variant === "mobile") {
     return (
