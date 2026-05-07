@@ -33,6 +33,8 @@ import {
   CartesianGrid,
   LineChart,
   Line,
+  AreaChart,
+  Area,
 } from "recharts";
 import { Building2, Euro, Activity, Calendar } from "lucide-react";
 
@@ -383,101 +385,79 @@ export default function DashboardPage() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
             {chartWidgets.map((w) => (
               <>
-                <Card key={w.id} className="flex flex-col bg-white nebula-blob">
-                  <div className="border-b border-slate-100 px-6 py-4">
-                    <h3 className="font-semibold text-primary">{w.title}</h3>
+                <Card key={`${w.id}-primary`} className="flex flex-col nebula-blob overflow-hidden">
+                  <div className="border-b border-white/10 bg-white/5 px-6 py-4">
+                    <h3 className="font-semibold text-white">{w.title}</h3>
                   </div>
                   <CardContent className="flex-1 p-6!">
                     <div className="h-[300px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        {w.chartType === "line" ? (
-                          <LineChart
-                            data={w.data?.map((d, i) => ({ ...d, value: i !== 2 ? d.value : d.value - (25 * i) })) ?? []}
-                            margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-                          >
-                            <CartesianGrid
-                              strokeDasharray="3 3"
-                              vertical={false}
-                              stroke="#e2e8f0"
-                            />
-                            <XAxis
-                              dataKey="name"
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fill: "#b8924a", fontSize: 12 }}
-                              dy={10}
-                            />
-                            <YAxis
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fill: "#b8924a", fontSize: 12 }}
-                            />
-                            <Tooltip
-                              contentStyle={{
-                                borderRadius: "8px",
-                                border: "none",
-                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                              }}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="value"
-                              stroke="#0f172a"
-                              strokeWidth={3}
-                              dot={{
-                                fill: "#0f172a",
-                                strokeWidth: 2,
-                                r: 4,
-                                stroke: "#fff",
-                              }}
-                              activeDot={{ r: 6, strokeWidth: 0 }}
-                            />
-                          </LineChart>
-                        ) : (
-                          <BarChart
-                            data={w.data?.map((d, i) => ({ ...d, value: i === 2 ? d.value : d.value - ((25 * (i + 1)) * d.value / 100) })) ?? []}
-                            margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-                          >
-                            <CartesianGrid
-                              strokeDasharray="3 3"
-                              vertical={false}
-                              stroke="#e2e8f0"
-                            />
-                            <XAxis
-                              dataKey="name"
-                              axisLine={false}
-                              tickLine={false}
-                                tick={{ fill: "#b8924a", fontSize: 12 }}
-                              dy={10}
-                            />
-                            <YAxis
-                              axisLine={false}
-                              tickLine={false}
-                                tick={{ fill: "#b8924a", fontSize: 12 }}
-                            />
-                            <Tooltip
-                              cursor={{ fill: "#f1f5f9" }}
-                              contentStyle={{
-                                borderRadius: "8px",
-                                border: "none",
-                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                              }}
-                            />
-                            <Bar
-                              dataKey="value"
-                                fill="#b8924a"
-                              radius={[4, 4, 0, 0]}
-                              barSize={40}
-                            />
-                          </BarChart>
-                        )}
+                        <AreaChart
+                          data={
+                            w.data?.map((d) => ({ ...d })) ?? []
+                          }
+                          margin={{ top: 10, right: 20, bottom: 5, left: 0 }}
+                        >
+                          <defs>
+                            <linearGradient id={`${w.id}-goldFill`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#d4b06a" stopOpacity={0.35} />
+                              <stop offset="55%" stopColor="#b8924a" stopOpacity={0.16} />
+                              <stop offset="100%" stopColor="#000000" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.08)" />
+                          <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: "rgba(154,143,120,0.9)", fontSize: 12 }}
+                            dy={10}
+                          />
+                          <YAxis
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: "rgba(154,143,120,0.9)", fontSize: 12 }}
+                          />
+                          <Tooltip
+                            cursor={{ stroke: "rgba(255,255,255,0.08)" }}
+                            contentStyle={{
+                              borderRadius: "14px",
+                              border: "1px solid rgba(255,255,255,0.12)",
+                              background: "rgba(10,10,10,0.9)",
+                              color: "rgba(245,236,215,0.95)",
+                              boxShadow: "0 18px 50px -18px rgba(0,0,0,0.65)",
+                            }}
+                          />
+
+                          {/* Soft glow under the line */}
+                          <Area
+                            type="monotone"
+                            dataKey="value"
+                            stroke="rgba(212,176,106,0.35)"
+                            strokeWidth={8}
+                            fill="none"
+                            dot={false}
+                            activeDot={false}
+                          />
+                          {/* Main line + gradient fill */}
+                          <Area
+                            type="monotone"
+                            dataKey="value"
+                            stroke="#d4b06a"
+                            strokeWidth={3}
+                            fill={`url(#${w.id}-goldFill)`}
+                            dot={false}
+                            activeDot={{ r: 5, fill: "#d4b06a", stroke: "rgba(10,10,10,0.9)", strokeWidth: 2 }}
+                          />
+                        </AreaChart>
                       </ResponsiveContainer>
                     </div>
                     <div className="mt-4 flex justify-end">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-xs text-slate-500 hover:text-primary"
+                        className="text-xs text-(--nebula-muted) hover:text-white"
                         onClick={() => setDrillDownOpen(true)}
                       >
                         Voir le détail →
@@ -485,7 +465,7 @@ export default function DashboardPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card key={w.id} className="flex flex-col bg-white nebula-blob">
+                <Card key={`${w.id}-secondary`} className="flex flex-col bg-white nebula-blob">
                   <div className="border-b border-slate-100 px-6 py-4">
                     <h3 className="font-semibold text-primary">{w.title}</h3>
                   </div>

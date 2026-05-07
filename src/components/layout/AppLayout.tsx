@@ -199,7 +199,7 @@ export function AppLayout({
                 className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-all hover:bg-white/5 border border-white/10"
               >
                 <Avatar className="h-10 w-10 border border-white/10 bg-white/5 rounded-xl flex items-center justify-center">
-                    <User className="h-5 w-5 text-black" />
+                    <User className="h-5 w-5 text-primary" />
                 </Avatar>
 
                 <div className="flex flex-col overflow-hidden">

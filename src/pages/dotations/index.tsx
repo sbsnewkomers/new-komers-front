@@ -98,7 +98,7 @@ export default function DotationsPage() {
             <div className="p-6">
               <div className="flex items-start gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl border border-emerald-400/25 bg-emerald-500/10 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-                  <Calculator className="h-6 w-6 text-emerald-200" />
+                  <Calculator className="h-6 w-6 text-emerald-500" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-white mb-1">Mode Global</h3>
@@ -115,7 +115,7 @@ export default function DotationsPage() {
                 <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/5 p-4">
                   <h4 className="font-semibold text-white mb-3 flex items-center gap-2 text-base">
                     <div className="w-6 h-6 rounded-lg border border-emerald-400/30 bg-emerald-500/15 flex items-center justify-center">
-                      <TrendingUp className="h-3 w-3 text-emerald-200" />
+                      <TrendingUp className="h-3 w-3 text-emerald-500" />
                     </div>
                     Fonctionnalités clés
                   </h4>
