@@ -23,77 +23,77 @@ export function InstallmentRow({
     fieldErrors,
 }: InstallmentRowProps) {
     return (
-        <tr className="transition-colors hover:bg-slate-50/50">
-            <td className="px-4 py-2 text-sm font-medium text-slate-900">
+        <div className="grid grid-cols-[60px_150px_120px_120px_120px_140px_140px_1fr_80px] items-center gap-3 px-4 py-2 transition-colors hover:bg-white/5">
+            <div className="text-sm font-medium text-white">
                 {index + 1}
-            </td>
-            <td className="px-2 py-2">
+            </div>
+            <div>
                 <Input
                     type="date"
                     value={installment.dueDate}
                     onChange={(e) => onUpdate(index, 'dueDate', e.target.value)}
-                    className={`w-36 ${dateError ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
+                    className={`h-9 w-full ${dateError ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
                     title={dateError}
                 />
-            </td>
-            <td className="px-2 py-2">
+            </div>
+            <div>
                 <Input
                     type="number"
                     step="0.01"
                     min="0.01"
                     value={installment.principalPayment}
                     onChange={(e) => onUpdate(index, 'principalPayment', e.target.value)}
-                    className={`w-28 text-right ${fieldErrors?.principalPayment ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
+                    className={`h-9 w-full text-right ${fieldErrors?.principalPayment ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
                     title={fieldErrors?.principalPayment}
                 />
-            </td>
-            <td className="px-2 py-2">
+            </div>
+            <div>
                 <Input
                     type="number"
                     step="0.01"
                     min="0"
                     value={installment.interestPayment}
                     onChange={(e) => onUpdate(index, 'interestPayment', e.target.value)}
-                    className={`w-28 text-right ${fieldErrors?.interestPayment ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
+                    className={`h-9 w-full text-right ${fieldErrors?.interestPayment ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
                     title={fieldErrors?.interestPayment}
                 />
-            </td>
-            <td className="px-2 py-2">
+            </div>
+            <div>
                 <Input
                     type="number"
                     step="0.01"
                     min="0"
                     value={installment.insurancePayment}
                     onChange={(e) => onUpdate(index, 'insurancePayment', e.target.value)}
-                    className={`w-28 text-right ${fieldErrors?.insurancePayment ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
+                    className={`h-9 w-full text-right ${fieldErrors?.insurancePayment ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
                     title={fieldErrors?.insurancePayment}
                 />
-            </td>
-            <td className="px-4 py-2 text-right text-sm font-semibold text-slate-900">
+            </div>
+            <div className="text-right text-sm font-semibold text-white">
                 {formatCurrency(installment.totalPayment)}
-            </td>
-            <td className="px-4 py-2 text-right text-sm text-slate-600">
+            </div>
+            <div className="text-right text-sm text-(--nebula-muted)">
                 {formatCurrency(installment.remainingBalance)}
-            </td>
-            <td className="px-2 py-2">
+            </div>
+            <div className="min-w-0">
                 <Input
                     type="text"
                     placeholder="Commentaires…"
                     value={installment.comments || ''}
                     onChange={(e) => onUpdate(index, 'comments', e.target.value)}
-                    className="w-40"
+                    className="h-9 w-full"
                 />
-            </td>
-            <td className="px-4 py-2 text-center">
+            </div>
+            <div className="flex justify-center">
                 <button
                     type="button"
                     onClick={() => onRemove(index)}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-red-200"
                     aria-label="Supprimer"
                 >
                     <Trash2 className="h-4 w-4" />
                 </button>
-            </td>
-        </tr>
+            </div>
+        </div>
     );
 }

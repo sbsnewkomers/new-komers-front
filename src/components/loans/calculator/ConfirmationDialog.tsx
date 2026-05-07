@@ -44,7 +44,7 @@ export function ConfirmationDialog({
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5 text-blue-600" />
+                        <CheckCircle className="h-5 w-5 text-(--nebula-gold-light)" />
                         Confirmer la sauvegarde
                     </AlertDialogTitle>
                     <AlertDialogDescription>
@@ -54,7 +54,7 @@ export function ConfirmationDialog({
 
                 <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
                     <div>
-                        <Label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <Label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                             Type d&apos;entité
                         </Label>
                         <Select
@@ -73,7 +73,7 @@ export function ConfirmationDialog({
                         </Select>
                     </div>
                     <div>
-                        <Label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <Label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                             Entité
                         </Label>
                         <Select
@@ -96,7 +96,6 @@ export function ConfirmationDialog({
                     </Button>
                     <Button
                         onClick={onConfirm}
-                        className="bg-primary text-white hover:bg-slate-800"
                         disabled={!formData.entityId}
                     >
                         Confirmer

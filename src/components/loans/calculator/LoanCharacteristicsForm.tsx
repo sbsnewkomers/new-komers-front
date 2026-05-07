@@ -21,11 +21,11 @@ export function LoanCharacteristicsForm({
     isLoading
 }: LoanCharacteristicsFormProps) {
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-1 text-sm font-semibold text-slate-900">
+        <div className="nebula-glass rounded-3xl border border-white/10 p-6">
+            <h3 className="mb-1 text-sm font-semibold text-white">
                 Caractéristiques principales
             </h3>
-            <p className="mb-5 text-xs text-slate-500">
+            <p className="mb-5 text-xs text-(--nebula-muted)">
                 Renseignez les informations essentielles de votre emprunt.
             </p>
 
@@ -33,7 +33,7 @@ export function LoanCharacteristicsForm({
                 <div>
                     <Label
                         htmlFor="loanName"
-                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)"
                     >
                         Nom de l&apos;emprunt <span className="text-red-500">*</span>
                     </Label>
@@ -47,7 +47,7 @@ export function LoanCharacteristicsForm({
                 <div>
                     <Label
                         htmlFor="principalAmount"
-                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)"
                     >
                         Capital emprunté (EUR) <span className="text-red-500">*</span>
                     </Label>
@@ -66,7 +66,7 @@ export function LoanCharacteristicsForm({
                 <div>
                     <Label
                         htmlFor="annualInterestRate"
-                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)"
                     >
                         Taux d&apos;intérêt annuel (%){' '}
                         <span className="text-red-500">*</span>
@@ -87,7 +87,7 @@ export function LoanCharacteristicsForm({
                 <div>
                     <Label
                         htmlFor="duration"
-                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)"
                     >
                         Durée totale (mois) <span className="text-red-500">*</span>
                     </Label>
@@ -106,7 +106,7 @@ export function LoanCharacteristicsForm({
                 <div className="md:col-span-2">
                     <Label
                         htmlFor="firstInstallmentDate"
-                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)"
                     >
                         Date de la première échéance{' '}
                         <span className="text-red-500">*</span>
@@ -122,11 +122,10 @@ export function LoanCharacteristicsForm({
                 </div>
             </div>
 
-            <div className="mt-6 flex justify-end border-t border-slate-100 pt-5">
+            <div className="mt-6 flex justify-end border-t border-white/10 pt-5">
                 <Button
                     onClick={onValidate}
                     disabled={isLoading}
-                    className="bg-primary text-white hover:bg-slate-800"
                 >
                     {isLoading ? 'Validation…' : 'Continuer'}
                     <ArrowRight className="h-4 w-4" />

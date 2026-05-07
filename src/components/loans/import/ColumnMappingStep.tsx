@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import { Select } from '@/components/ui/Select';
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { ColumnMappingDto, ImportPreviewDto } from '@/types/loans';
 
 interface ColumnMappingStepProps {
@@ -47,11 +47,11 @@ export function ColumnMappingStep({
     };
 
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-1 text-sm font-semibold text-slate-900">
+        <div className="nebula-glass rounded-3xl border border-white/10 p-6">
+            <h3 className="mb-1 text-sm font-semibold text-white">
                 Mapping des colonnes
             </h3>
-            <p className="mb-5 text-xs text-slate-500">
+            <p className="mb-5 text-xs text-(--nebula-muted)">
                 Associez chaque colonne de votre fichier au champ correspondant.
             </p>
 
@@ -59,9 +59,9 @@ export function ColumnMappingStep({
                 {requiredFields.map((field) => (
                     <div
                         key={field}
-                        className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50/40 p-3 sm:flex-row sm:items-center"
+                        className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-3 sm:flex-row sm:items-center"
                     >
-                        <Label className="w-32 shrink-0 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <Label className="w-32 shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)">
                             {fieldLabel(field)}{' '}
                             <span className="text-red-500">*</span>
                         </Label>
@@ -94,7 +94,7 @@ export function ColumnMappingStep({
                 ))}
             </div>
 
-            <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
+            <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-5">
                 <Button variant="outline" onClick={onGoToPreviousStep}>
                     <ArrowLeft className="h-4 w-4" />
                     Précédent
@@ -102,7 +102,7 @@ export function ColumnMappingStep({
                 <Button
                     onClick={onFinalizeMapping}
                     disabled={!isImportReady() || isLoading}
-                    className="bg-primary text-white hover:bg-slate-800"
+                    className="gap-2"
                 >
                     Finaliser le mapping
                     <ArrowRight className="h-4 w-4" />

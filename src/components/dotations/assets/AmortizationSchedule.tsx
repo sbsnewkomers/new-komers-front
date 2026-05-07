@@ -48,7 +48,7 @@ export function AmortizationScheduleDisplay({ asset, schedules }: AmortizationSc
 
   if (!asset) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-(--nebula-muted)">
         Aucun actif sélectionné.
       </div>
     );
@@ -70,20 +70,20 @@ export function AmortizationScheduleDisplay({ asset, schedules }: AmortizationSc
         </CardHeader>
         <CardContent>
           {sortedSchedules.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-(--nebula-muted)">
               Aucun plan d&apos;amortissement disponible pour cet actif.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Année</TableHead>
-                    <TableHead>Dotation annuelle</TableHead>
-                    <TableHead>Dotation mensuelle</TableHead>
-                    <TableHead>Amortissements cumulés</TableHead>
-                    <TableHead>Valeur nette comptable</TableHead>
-                    <TableHead>Prorata</TableHead>
+                  <TableRow className="border-white/10 hover:bg-white/5">
+                    <TableHead className="text-(--nebula-muted) border-white/10">Année</TableHead>
+                    <TableHead className="text-(--nebula-muted) border-white/10">Dotation annuelle</TableHead>
+                    <TableHead className="text-(--nebula-muted) border-white/10">Dotation mensuelle</TableHead>
+                    <TableHead className="text-(--nebula-muted) border-white/10">Amortissements cumulés</TableHead>
+                    <TableHead className="text-(--nebula-muted) border-white/10">Valeur nette comptable</TableHead>
+                    <TableHead className="text-(--nebula-muted) border-white/10">Prorata</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -95,36 +95,36 @@ export function AmortizationScheduleDisplay({ asset, schedules }: AmortizationSc
                       <TableRow
                         key={schedule.id}
                         className={
-                          isCurrentYear ? 'bg-blue-50 font-semibold' :
-                            isFutureYear ? 'text-gray-400' : ''
+                          isCurrentYear ? 'bg-sky-500/10 border-white/10 font-semibold' :
+                            isFutureYear ? 'text-white/40 border-white/10' : 'border-white/10'
                         }
                       >
-                        <TableCell>
+                        <TableCell className="text-white">
                           {schedule.year}
                           {isCurrentYear && (
-                            <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            <span className="ml-2 text-xs border border-sky-400/30 bg-sky-500/15 text-sky-100 px-2 py-1 rounded-lg">
                               Année en cours
                             </span>
                           )}
                         </TableCell>
-                        <TableCell>{formatCurrency(schedule.annualAmortizationAmount)}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-white">{formatCurrency(schedule.annualAmortizationAmount)}</TableCell>
+                        <TableCell className="text-white">
                           {formatCurrency(schedule.monthlyAmortizationAmount)}
                           {schedule.isProrata && (
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-(--nebula-muted)">
                               ({schedule.monthsUsed} mois)
                             </div>
                           )}
                         </TableCell>
-                        <TableCell>{formatCurrency(schedule.cumulativeAmortization)}</TableCell>
-                        <TableCell>{formatCurrency(schedule.netBookValue)}</TableCell>
+                        <TableCell className="text-white">{formatCurrency(schedule.cumulativeAmortization)}</TableCell>
+                        <TableCell className="text-white">{formatCurrency(schedule.netBookValue)}</TableCell>
                         <TableCell>
                           {schedule.isProrata ? (
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                            <span className="text-xs border border-amber-400/30 bg-amber-500/15 text-amber-100 px-2 py-1 rounded-lg">
                               Oui ({schedule.monthsUsed} mois)
                             </span>
                           ) : (
-                            <span className="text-gray-400">Non</span>
+                            <span className="text-white/40">Non</span>
                           )}
                         </TableCell>
                       </TableRow>
@@ -146,22 +146,22 @@ export function AmortizationScheduleDisplay({ asset, schedules }: AmortizationSc
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <p className="text-sm text-gray-600">Total des dotations prévues</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-sm text-(--nebula-muted)">Total des dotations prévues</p>
+                <p className="text-2xl font-bold text-emerald-200">
                   {isLoadingTotal ? 'Chargement...' : formatCurrency(totalDotations)}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Dotation pour l&apos;année {currentYear}</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-sm text-(--nebula-muted)">Dotation pour l&apos;année {currentYear}</p>
+                <p className="text-2xl font-bold text-sky-200">
                   {formatCurrency(
                     sortedSchedules.find(s => s.year === currentYear)?.annualAmortizationAmount || 0
                   )}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Valeur nette comptable actuelle</p>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-sm text-(--nebula-muted)">Valeur nette comptable actuelle</p>
+                <p className="text-2xl font-bold text-violet-200">
                   {formatCurrency(
                     sortedSchedules.find(s => s.year === currentYear)?.netBookValue ||
                     sortedSchedules[sortedSchedules.length - 1]?.netBookValue ||

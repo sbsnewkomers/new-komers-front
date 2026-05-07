@@ -27,7 +27,6 @@ export function LoanEditMethodSelector({
             title: 'Modification par calculatrice',
             description: 'Recalculez l\'échéancier en modifiant les paramètres du prêt (taux, durée, etc.)',
             icon: Calculator,
-            color: 'blue',
             recommended: currentMethod === LoanInputMethod.CALCULATOR,
         },
         {
@@ -35,7 +34,6 @@ export function LoanEditMethodSelector({
             title: 'Modification par import',
             description: 'Importez un nouveau fichier pour remplacer l&apos;échéancier existant',
             icon: Upload,
-            color: 'green',
             recommended: currentMethod === LoanInputMethod.IMPORT,
         },
         {
@@ -43,45 +41,45 @@ export function LoanEditMethodSelector({
             title: 'Modification manuelle',
             description: 'Modifiez chaque échéance individuellement',
             icon: Edit3,
-            color: 'purple',
             recommended: currentMethod === LoanInputMethod.MANUAL,
         },
     ];
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="nebula-glass nebula-blob flex flex-col gap-4 rounded-3xl border border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                     <button
                         type="button"
                         onClick={onBack}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                         aria-label="Retour"
                     >
                         <ArrowLeft className="h-4 w-4" />
                     </button>
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-                            <Edit3 className="h-5 w-5 text-blue-600" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                            <Edit3 className="h-5 w-5 text-(--nebula-gold-light)" />
                         </div>
                         <div>
-                            <h3 className="text-base font-semibold text-slate-900">
+                            <h3 className="text-base font-semibold text-white">
                                 Modification de l&apos;emprunt
                             </h3>
-                            <p className="text-xs text-slate-500">{loanName}</p>
+                            <p className="text-xs text-(--nebula-muted)">{loanName}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Method Selection */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="nebula-glass rounded-3xl border border-white/10 p-6">
                 <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)">
+                        § Méthode
+                    </p>
+                    <h3 className="mt-2 text-lg font-semibold text-white">
                         Choisissez la méthode de modification
                     </h3>
-                    <p className="text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-(--nebula-muted)">
                         Sélectionnez la manière dont vous souhaitez modifier cet emprunt.
                         Chaque méthode a ses avantages selon vos besoins.
                     </p>
@@ -93,69 +91,68 @@ export function LoanEditMethodSelector({
                         return (
                             <div
                                 key={method.id}
-                                className={`
-                                    relative rounded-lg border-2 p-5 transition-all cursor-pointer
-                                    ${method.recommended
-                                        ? 'border-blue-200 bg-blue-50/30'
-                                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-                                    }
-                                `}
+                                className={[
+                                    'relative cursor-pointer rounded-3xl border p-5 transition-all',
+                                    method.recommended
+                                        ? 'border-white/25 bg-white/10 ring-1 ring-(--nebula-gold-light)/30 nebula-glow'
+                                        : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10',
+                                ].join(' ')}
                                 onClick={() => onSelectMethod(method.id)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        onSelectMethod(method.id);
+                                    }
+                                }}
+                                role="button"
+                                tabIndex={0}
                             >
                                 {method.recommended && (
                                     <div className="absolute -top-2 -right-2">
-                                        <span className="inline-flex items-center rounded-full bg-blue-600 px-2 py-1 text-xs font-medium text-white">
+                                        <span className="inline-flex items-center rounded-full border border-white/10 bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) px-2 py-1 text-xs font-medium text-white">
                                             Recommandé
                                         </span>
                                     </div>
                                 )}
 
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className={`
-                                        flex h-10 w-10 items-center justify-center rounded-lg
-                                        ${method.color === 'blue' ? 'bg-blue-100 text-blue-600' : ''}
-                                        ${method.color === 'green' ? 'bg-green-100 text-green-600' : ''}
-                                        ${method.color === 'purple' ? 'bg-purple-100 text-purple-600' : ''}
-                                    `}>
+                                <div className="mb-3 flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-(--nebula-gold-light)">
                                         <Icon className="h-5 w-5" />
                                     </div>
                                     <div className="flex-1">
-                                        <h4 className="font-semibold text-slate-900">
-                                            {method.title}
-                                        </h4>
+                                        <h4 className="font-semibold text-white">{method.title}</h4>
                                     </div>
                                 </div>
 
-                                <p className="text-sm text-slate-600 leading-relaxed">
+                                <p className="text-sm leading-relaxed text-(--nebula-muted)">
                                     {method.description}
                                 </p>
 
                                 <Button
-                                    variant={method.recommended ? "default" : "outline"}
-                                    className="w-full mt-4"
+                                    variant={method.recommended ? 'default' : 'outline'}
+                                    className="mt-4 w-full"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onSelectMethod(method.id);
                                     }}
                                 >
-                                    {method.recommended ? 'Utiliser cette méthode recommandée' : 'Choisir cette méthode'}
+                                    {method.recommended
+                                        ? 'Utiliser cette méthode recommandée'
+                                        : 'Choisir cette méthode'}
                                 </Button>
                             </div>
                         );
                     })}
                 </div>
 
-                {/* Info Box */}
-                <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50/80 p-4">
+                <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="flex items-start gap-3">
-                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-amber-600 text-xs font-bold">
+                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-amber-400/30 bg-amber-500/10 text-xs font-bold text-amber-200">
                             !
                         </div>
                         <div className="text-sm">
-                            <p className="font-semibold text-amber-900 mb-1">
-                                Important
-                            </p>
-                            <p className="text-amber-800">
+                            <p className="mb-1 font-semibold text-white">Important</p>
+                            <p className="text-(--nebula-muted)">
                                 Changer de méthode de modification peut affecter la structure de vos données.
                                 Par exemple, passer de manuel à calculatrice recréera l&apos;échéancier automatiquement.
                             </p>

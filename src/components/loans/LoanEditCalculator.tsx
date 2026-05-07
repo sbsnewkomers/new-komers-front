@@ -213,21 +213,21 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2 text-muted-foreground">Chargement du prêt...</span>
+                <Loader2 className="h-8 w-8 animate-spin text-(--nebula-gold-light)" />
+                <span className="ml-2 text-(--nebula-muted)">Chargement du prêt...</span>
             </div>
         );
     }
 
     if (!loan) {
         return (
-            <div className="rounded-xl border border-slate-200 bg-white p-12 shadow-sm">
+            <div className="nebula-glass rounded-3xl border border-white/10 p-12">
                 <div className="mx-auto max-w-md text-center">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-                        <AlertTriangle className="h-6 w-6 text-red-600" />
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+                        <AlertTriangle className="h-6 w-6 text-red-300" />
                     </div>
-                    <p className="text-sm font-semibold text-slate-900">Emprunt non trouvé</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-white">Emprunt non trouvé</p>
+                    <p className="mt-1 text-xs text-(--nebula-muted)">
                         L&apos;emprunt demandé n&apos;existe pas ou a été supprimé.
                     </p>
                     <Button onClick={onBack} variant="outline" className="mt-4">
@@ -243,25 +243,25 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
         <>
             <div className="space-y-6">
                 {/* Header */}
-                <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="nebula-glass nebula-blob flex flex-col gap-4 rounded-3xl border border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
                             onClick={onBack}
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                             aria-label="Retour"
                         >
                             <ArrowLeft className="h-4 w-4" />
                         </button>
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-                                <Calculator className="h-5 w-5 text-blue-600" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                                <Calculator className="h-5 w-5 text-(--nebula-gold-light)" />
                             </div>
                             <div>
-                                <h3 className="text-base font-semibold text-slate-900">
+                                <h3 className="text-base font-semibold text-white">
                                     Modification par calculatrice
                                 </h3>
-                                <p className="text-xs text-slate-500">{loan.name}</p>
+                                <p className="text-xs text-(--nebula-muted)">{loan.name}</p>
                             </div>
                         </div>
                     </div>
@@ -269,11 +269,11 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
 
                 {/* Method Change Warning */}
                 {originalMethod !== LoanInputMethod.CALCULATOR && (
-                    <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50/80 p-4">
-                        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
-                        <div className="text-sm text-blue-900">
-                            <p className="font-semibold">Changement de méthode</p>
-                            <p className="mt-0.5 text-xs text-blue-800">
+                    <div className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/5 p-4">
+                        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-(--nebula-gold-light)" />
+                        <div className="text-sm">
+                            <p className="font-semibold text-white">Changement de méthode</p>
+                            <p className="mt-0.5 text-xs text-(--nebula-muted)">
                                 Vous modifiez ce prêt avec la calculatrice alors qu&apos;il a été créé avec la méthode &quot;{originalMethod}&quot;.
                                 L&apos;échéancier sera complètement recalculé.
                             </p>
@@ -283,11 +283,11 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                        <h3 className="mb-1 text-sm font-semibold text-slate-900">
+                    <div className="nebula-glass rounded-3xl border border-white/10 p-6">
+                        <h3 className="mb-1 text-sm font-semibold text-white">
                             Paramètres du prêt
                         </h3>
-                        <p className="mb-5 text-xs text-slate-500">
+                        <p className="mb-5 text-xs text-(--nebula-muted)">
                             Modifier ces paramètres recalculera automatiquement l&apos;échéancier.
                         </p>
 
@@ -295,7 +295,7 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                             <div>
                                 <Label
                                     htmlFor="name"
-                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                                 >
                                     Nom de l&apos;emprunt
                                 </Label>
@@ -310,7 +310,7 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                             <div>
                                 <Label
                                     htmlFor="principalAmount"
-                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                                 >
                                     Capital emprunté (EUR)
                                 </Label>
@@ -329,7 +329,7 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                             <div>
                                 <Label
                                     htmlFor="annualInterestRate"
-                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                                 >
                                     Taux d&apos;intérêt annuel (%)
                                 </Label>
@@ -348,7 +348,7 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                             <div>
                                 <Label
                                     htmlFor="durationMonths"
-                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                                 >
                                     Durée (mois)
                                 </Label>
@@ -366,7 +366,7 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                             <div>
                                 <Label
                                     htmlFor="firstInstallmentDate"
-                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                                 >
                                     Date de première échéance
                                 </Label>
@@ -387,7 +387,7 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                             <div>
                                 <Label
                                     htmlFor="monthlyInsuranceCost"
-                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                                 >
                                     Coût mensuel assurance
                                 </Label>
@@ -409,7 +409,7 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                             <div>
                                 <Label
                                     htmlFor="deferralPeriodMonths"
-                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                                 >
                                     Période de différé (mois)
                                 </Label>
@@ -430,7 +430,7 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                             <div>
                                 <Label
                                     htmlFor="status"
-                                    className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                                    className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                                 >
                                     Statut
                                 </Label>
@@ -447,11 +447,11 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                     </div>
 
                     {hasCriticalChanges && loan.installments && loan.installments.length > 0 && (
-                        <div className="flex items-start gap-3 rounded-xl border border-yellow-200 bg-yellow-50/80 p-4">
-                            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-yellow-600" />
-                            <div className="text-sm text-yellow-900">
-                                <p className="font-semibold">Attention</p>
-                                <p className="mt-0.5 text-xs text-yellow-800">
+                        <div className="flex items-start gap-3 rounded-2xl border border-amber-400/25 bg-amber-500/10 p-4">
+                            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-200" />
+                            <div className="text-sm">
+                                <p className="font-semibold text-white">Attention</p>
+                                <p className="mt-0.5 text-xs text-(--nebula-muted)">
                                     Vous avez modifié des paramètres qui affectent
                                     l&apos;échéancier de remboursement. La régénération
                                     supprimera les échéances existantes et en créera de
@@ -462,14 +462,14 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                     )}
 
                     {/* Actions */}
-                    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                    <div className="nebula-glass flex flex-col gap-3 rounded-3xl border border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
                         <Button type="button" variant="outline" onClick={onBack}>
                             Annuler
                         </Button>
                         <Button
                             type="submit"
                             disabled={isSaving}
-                            className="bg-primary text-white hover:bg-slate-800"
+                            className="gap-2"
                         >
                             {isSaving ? 'Enregistrement…' : 'Enregistrer les modifications'}
                             <Save className="h-4 w-4" />
@@ -482,7 +482,7 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
             <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                        <AlertDialogTitle className="flex items-center gap-2 text-red-200">
                             <AlertTriangle className="h-5 w-5" />
                             Régénérer l&apos;échéancier ?
                         </AlertDialogTitle>
@@ -494,11 +494,11 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                     </AlertDialogHeader>
 
                     <div className="space-y-3 pt-2">
-                        <div className="rounded-lg border border-yellow-200 bg-yellow-50/80 p-3">
-                            <p className="text-xs font-semibold text-yellow-900">
+                        <div className="rounded-xl border border-amber-400/25 bg-amber-500/10 p-3">
+                            <p className="text-xs font-semibold text-white">
                                 Conséquences :
                             </p>
-                            <ul className="mt-1 list-inside list-disc text-xs text-yellow-800">
+                            <ul className="mt-1 list-inside list-disc text-xs text-(--nebula-muted)">
                                 <li>Suppression de toutes les échéances existantes</li>
                                 <li>
                                     Création d&apos;un nouvel échéancier avec les nouveaux
@@ -510,7 +510,7 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                             </ul>
                         </div>
 
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-(--nebula-muted)">
                             Voulez-vous continuer et régénérer l&apos;échéancier ?
                         </p>
                     </div>
@@ -524,7 +524,7 @@ export function LoanEditCalculator({ loanId, originalMethod, onBack, onLoanUpdat
                         </Button>
                         <Button
                             onClick={handleConfirmRegeneration}
-                            className="bg-red-600 text-white hover:bg-red-700"
+                            variant="destructive"
                             disabled={isSaving}
                         >
                             {isSaving ? 'Régénération…' : "Régénérer l'échéancier"}

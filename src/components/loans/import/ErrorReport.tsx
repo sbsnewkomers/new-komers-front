@@ -47,16 +47,16 @@ export function ErrorReport({ errors, totalRows }: ErrorReportProps) {
     };
 
     return (
-        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm">
+        <div className="mt-6 rounded-3xl border border-red-500/30 bg-red-500/5 p-6 backdrop-blur-sm">
             <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
-                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/15">
+                    <AlertTriangle className="h-5 w-5 text-red-300" />
                 </div>
                 <div>
-                    <h4 className="text-base font-semibold text-red-900">
+                    <h4 className="text-base font-semibold text-white">
                         Rapport d&apos;erreurs
                     </h4>
-                    <p className="text-xs text-red-700">
+                    <p className="text-xs text-red-200/85">
                         {errorCount} ligne(s) contenant des erreurs ont été détectées.
                     </p>
                 </div>
@@ -64,36 +64,36 @@ export function ErrorReport({ errors, totalRows }: ErrorReportProps) {
 
             {/* Error Statistics */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 mb-4">
-                <div className="rounded-lg border border-red-100 bg-white p-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-red-600">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-red-200/80">
                         Total erreurs
                     </p>
-                    <p className="mt-0.5 text-sm font-medium text-slate-900">
+                    <p className="mt-0.5 text-sm font-medium text-white">
                         {errors.length}
                     </p>
                 </div>
-                <div className="rounded-lg border border-red-100 bg-white p-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-red-600">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-red-200/80">
                         Lignes affectées
                     </p>
-                    <p className="mt-0.5 text-sm font-medium text-slate-900">
+                    <p className="mt-0.5 text-sm font-medium text-white">
                         {errorCount}
                     </p>
                 </div>
-                <div className="rounded-lg border border-red-100 bg-white p-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-red-600">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-red-200/80">
                         Lignes valides
                     </p>
-                    <p className="mt-0.5 text-sm font-medium text-slate-900">
+                    <p className="mt-0.5 text-sm font-medium text-white">
                         {totalRows ? String(totalRows - errorCount) : 'N/A'}
                     </p>
                 </div>
             </div>
 
             {/* Error Details */}
-            <div className="rounded-lg border border-red-200 bg-white p-4">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-center justify-between mb-3">
-                    <h5 className="text-sm font-semibold text-red-900">
+                    <h5 className="text-sm font-semibold text-white">
                         {hasManyErrors
                             ? `Détail des erreurs (${MAX_DISPLAYED_ERRORS} premiers lignes)`
                             : 'Détail des erreurs'
@@ -101,8 +101,9 @@ export function ErrorReport({ errors, totalRows }: ErrorReportProps) {
                     </h5>
                     {hasManyErrors && (
                         <button
+                            type="button"
                             onClick={downloadErrorReport}
-                            className="flex items-center gap-2 px-3 py-1 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                            className="flex items-center gap-2 rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-1 text-xs text-red-100 transition-colors hover:bg-red-500/20"
                         >
                             <Download className="h-3 w-3" />
                             Télécharger tout
@@ -111,8 +112,8 @@ export function ErrorReport({ errors, totalRows }: ErrorReportProps) {
                 </div>
 
                 {hasManyErrors && (
-                    <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
-                        <p className="text-xs text-amber-800">
+                    <div className="mb-3 rounded-lg border border-amber-500/25 bg-amber-500/10 p-2">
+                        <p className="text-xs text-amber-100/90">
                             <FileText className="h-3 w-3 inline mr-1" />
                             Téléchargez le rapport complet pour voir toutes les erreurs.
                         </p>
@@ -123,17 +124,17 @@ export function ErrorReport({ errors, totalRows }: ErrorReportProps) {
                     {Array.from(displayedErrorRows).sort((a, b) => a - b).map(rowNumber => {
                         const rowErrors = displayedErrors.filter(error => error.rowNumber === rowNumber);
                         return (
-                            <div key={rowNumber} className="rounded-lg border border-red-100 bg-red-50 p-3">
+                            <div key={rowNumber} className="rounded-lg border border-red-400/20 bg-red-500/10 p-3">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <XCircle className="h-4 w-4 text-red-500" />
-                                    <span className="text-sm font-semibold text-red-900">
+                                    <XCircle className="h-4 w-4 text-red-300" />
+                                    <span className="text-sm font-semibold text-white">
                                         Ligne {rowNumber}
                                     </span>
                                 </div>
                                 <ul className="space-y-1">
                                     {rowErrors.map((error, index) => (
-                                        <li key={index} className="text-xs text-red-700 flex items-start gap-2">
-                                            <span className="text-red-400 mt-0.5">•</span>
+                                        <li key={index} className="text-xs text-red-100/90 flex items-start gap-2">
+                                            <span className="text-red-300/80 mt-0.5">•</span>
                                             <span>{error.errorMessage}</span>
                                         </li>
                                     ))}
