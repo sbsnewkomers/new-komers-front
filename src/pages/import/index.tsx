@@ -496,7 +496,7 @@ export default function ImportPage() {
       if (periodStart) formData.append('periodStart', periodStart);
       if (periodEnd)   formData.append('periodEnd', periodEnd);
 
-      // ─── MODIFIÉ : appel simple, résultat via WebSocket ───
+      // ─── MODIFIÉ : appel simple, résultat vie sse ───
       try {
         const formDataLog: Record<string, any> = {};
         formData.forEach((value, key) => {
