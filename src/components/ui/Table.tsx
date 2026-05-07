@@ -2,7 +2,7 @@ import * as React from "react";
 
 export function Table({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="w-full overflow-x-auto overscroll-x-contain">
+    <div className="w-full overflow-x-auto overscroll-x-contain rounded-3xl border border-white/10 bg-white/5">
       <table
         className={`w-full caption-bottom text-sm ${className ?? ""}`}
         {...props}
