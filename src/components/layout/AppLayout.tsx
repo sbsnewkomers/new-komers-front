@@ -153,7 +153,7 @@ export function AppLayout({
         <div className="flex gap-4">
       {/* Sidebar */}
 
-          <div className="hidden md:block w-[260px] sticky top-0 h-[calc(100vh-2rem)] nebula-glass p-5 shadow-lg! shadow-primary/20!">
+          <div className="hidden md:block w-[260px] sticky top-0 h-[calc(100vh-2rem)] nebula-glass-modal p-5 shadow-lg! shadow-primary/20!">
         <div className="flex h-full flex-col gap-2">
           <div className="flex items-center gap-3 px-1 py-2">
             <Link href="/" className="flex items-center gap-3">
@@ -333,7 +333,7 @@ export function AppLayout({
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          <div className="relative z-10 flex h-full w-[min(85vw,260px)] flex-col nebula-glass rounded-none border-r border-white/10">
+          <div className="relative z-10 flex h-full w-[min(85vw,260px)] flex-col nebula-glass-modal rounded-none border-r border-white/10">
             <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
               <Link
                 href="/"

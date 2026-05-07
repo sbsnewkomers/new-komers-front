@@ -3,7 +3,7 @@ import * as React from "react";
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`nebula-glass rounded-3xl p-0 ${className ?? ""}`}
+      className={`nebula-glass-modal rounded-3xl p-0 ${className ?? ""}`}
       {...props}
     />
   );

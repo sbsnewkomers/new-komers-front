@@ -40,8 +40,7 @@ export default function GlobalDotationsPage() {
     setViewMode('view');
   };
 
-  const handleSaveDotation = (dotation: GlobalDotation) => {
-    // Retourner à la liste et rafraîchir
+  const handleSaveDotation = () => {
     setViewMode('list');
     setRefreshTrigger(prev => prev + 1);
   };

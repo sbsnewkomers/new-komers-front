@@ -10,7 +10,7 @@ interface ManualEntryHeaderProps {
 
 export function ManualEntryHeader({ onBack }: ManualEntryHeaderProps) {
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="nebula-glass rounded-3xl border border-white/10 p-5">
             {onBack && (
                 <Button
                     variant="outline"
@@ -21,14 +21,14 @@ export function ManualEntryHeader({ onBack }: ManualEntryHeaderProps) {
                 </Button>
             )}
             <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
-                    <Edit className="h-5 w-5 text-purple-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
+                    <Edit className="h-5 w-5 text-(--nebula-gold-light)" />
                 </div>
                 <div>
-                    <h3 className="text-base font-semibold text-slate-900">
+                    <h3 className="text-base font-semibold text-white">
                         Saisie manuelle ou ajustement
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-(--nebula-muted)">
                         Pour les prêts complexes ou pour ajuster une échéance spécifique.
                     </p>
                 </div>

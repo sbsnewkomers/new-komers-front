@@ -63,16 +63,16 @@ export function PreviewStep({
     if (!importResult) {
         // Preview before import
         return (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="nebula-glass rounded-3xl border border-white/10 p-6">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-                        <FileText className="h-5 w-5 text-blue-600" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
+                        <FileText className="h-5 w-5 text-(--nebula-gold-light)" />
                     </div>
                     <div>
-                        <h3 className="text-base font-semibold text-slate-900">
+                        <h3 className="text-base font-semibold text-white">
                             Prévisualisation de l&apos;import
                         </h3>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-(--nebula-muted)">
                             Vérifiez les informations avant de finaliser l&apos;import.
                         </p>
                     </div>
@@ -107,12 +107,12 @@ export function PreviewStep({
                     ].map((stat) => (
                         <div
                             key={stat.label}
-                            className="rounded-lg border border-slate-100 bg-white p-3"
+                            className="rounded-xl border border-white/10 bg-white/5 p-3"
                         >
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-(--nebula-muted)">
                                 {stat.label}
                             </p>
-                            <p className="mt-0.5 text-sm font-medium text-slate-900 break-words">
+                            <p className="mt-0.5 text-sm font-medium text-white break-words">
                                 {stat.value}
                             </p>
                         </div>
@@ -123,7 +123,7 @@ export function PreviewStep({
 
                 <PreviewTable preview={preview} columnMapping={columnMapping} errors={allErrors} />
 
-                <div className="mt-6 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5 sm:flex-row sm:items-center sm:justify-between">
                     <Button variant="outline" onClick={onModifyMapping}>
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Retourner au mapping
@@ -131,7 +131,6 @@ export function PreviewStep({
                     <Button
                         onClick={onSaveImport}
                         disabled={columnMapping.length < requiredFields.length || isLoading || hasErrors}
-                        className={`${hasErrors ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary text-white hover:bg-slate-800'}`}
                     >
                         {isLoading ? 'Import…' : 'Sauvegarder l\'import'}
                         <CheckCircle className="h-4 w-4 ml-2" />
@@ -144,16 +143,16 @@ export function PreviewStep({
     // Results after successful import
     return (
         <>
-            <div className="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-sm">
+            <div className="nebula-glass rounded-3xl border border-emerald-500/25 bg-emerald-500/5 p-6">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
-                        <CheckCircle className="h-5 w-5 text-emerald-600" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15">
+                        <CheckCircle className="h-5 w-5 text-emerald-300" />
                     </div>
                     <div>
-                        <h3 className="text-base font-semibold text-emerald-900">
+                        <h3 className="text-base font-semibold text-white">
                             Import réussi
                         </h3>
-                        <p className="text-xs text-emerald-700">
+                        <p className="text-xs text-emerald-200/90">
                             L&apos;échéancier a été importé avec succès.
                         </p>
                     </div>
@@ -188,12 +187,12 @@ export function PreviewStep({
                     ].map((stat) => (
                         <div
                             key={stat.label}
-                            className="rounded-lg border border-emerald-100 bg-white p-3"
+                            className="rounded-xl border border-white/10 bg-white/5 p-3"
                         >
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-200/80">
                                 {stat.label}
                             </p>
-                            <p className="mt-0.5 text-sm font-medium text-slate-900 break-words">
+                            <p className="mt-0.5 text-sm font-medium text-white break-words">
                                 {stat.value}
                             </p>
                         </div>
@@ -201,14 +200,13 @@ export function PreviewStep({
                 </div>
             </div>
 
-            <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5 sm:flex-row sm:items-center sm:justify-between">
                 <Button variant="outline" onClick={onNewImport}>
                     Nouvel import
                 </Button>
                 {importResult && importResult.loanId && (
                     <Button
                         onClick={() => onViewLoan(importResult.loanId!)}
-                        className="bg-primary text-white hover:bg-slate-800"
                     >
                         Voir l&apos;emprunt
                         <ArrowRight className="h-4 w-4" />

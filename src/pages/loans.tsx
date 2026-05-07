@@ -43,7 +43,7 @@ export default function LoansPage() {
     const [editingLoanId, setEditingLoanId] = useState<string | null>(null);
 
     const { loans, isLoading, error, setError, setLoans, loadLoans } = useLoans();
-    const { selectedLoan, loanStats, loadLoanDetails, setSelectedLoan } = useLoanDetails();
+    const { selectedLoan, loanStats, loadLoanDetails } = useLoanDetails();
     const { deleteConfirmOpen, loanToDelete, confirmDelete, cancelDelete, closeDialog } = useDeleteConfirm();
     const { user } = usePermissionsContext();
 
@@ -173,7 +173,7 @@ export default function LoansPage() {
                         title="Gestion des emprunts"
                         subtitle="Suivez et gérez tous vos emprunts et échéanciers."
                         icon={
-                            <div className="rounded-xl bg-primary/10 p-2.5">
+                            <div className="nebula-glass rounded-2xl border border-white/10 p-2.5">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="24"
@@ -184,7 +184,7 @@ export default function LoansPage() {
                                     strokeWidth="2"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    className="lucide lucide-dollar-sign h-5 w-5 text-primary"
+                                    className="lucide lucide-dollar-sign h-5 w-5 text-(--nebula-gold-light)"
                                     aria-hidden="true"
                                 >
                                     <line x1="12" y1="1" x2="12" y2="23"></line>

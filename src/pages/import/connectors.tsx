@@ -71,12 +71,12 @@ export default function ImportConnectorsPage() {
       </Head>
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/import" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link href="/import" className="text-sm text-(--nebula-muted) hover:text-white transition-colors">
             ← Import
           </Link>
         </div>
-        <h1 className="text-xl font-semibold">Connecteurs</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-xl font-semibold text-white">Connecteurs</h1>
+        <p className="text-(--nebula-muted)">
           Configurez les connecteurs API pour synchroniser vos données.
         </p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -28,30 +28,30 @@ export function LoanInformationForm({
     nameValidationError,
 }: LoanInformationFormProps) {
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-1 text-sm font-semibold text-slate-900">
+        <div className="nebula-glass rounded-3xl border border-white/10 p-6">
+            <h3 className="mb-1 text-sm font-semibold text-white">
                 Informations sur l&apos;emprunt
             </h3>
-            <p className="mb-5 text-xs text-slate-500">
+            <p className="mb-5 text-xs text-(--nebula-muted)">
                 Renseignez les informations de base de votre emprunt.
             </p>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
                     <Label
                         htmlFor="loanName"
-                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)"
                     >
-                        Nom de l&apos;emprunt <span className="text-red-500">*</span>
+                        Nom de l&apos;emprunt <span className="text-red-400">*</span>
                     </Label>
                     <Input
                         id="loanName"
                         placeholder="ex: Prêt BNP Agence X"
                         value={loanName}
                         onChange={(e) => onLoanNameChange(e.target.value)}
-                        className={nameValidationError ? 'border-red-500' : ''}
+                        className={nameValidationError ? 'border-red-400' : ''}
                     />
                     {nameValidationError && (
-                        <p className="mt-1 text-xs text-red-600">
+                        <p className="mt-1 text-xs text-red-300">
                             {nameValidationError}
                         </p>
                     )}
@@ -59,9 +59,9 @@ export function LoanInformationForm({
                 <div>
                     <Label
                         htmlFor="entityType"
-                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)"
                     >
-                        Type d&apos;entité <span className="text-red-500">*</span>
+                        Type d&apos;entité <span className="text-red-400">*</span>
                     </Label>
                     <Select
                         value={selectedEntityType}
@@ -77,9 +77,9 @@ export function LoanInformationForm({
                 <div>
                     <Label
                         htmlFor="entityId"
-                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)"
                     >
-                        Entité <span className="text-red-500">*</span>
+                        Entité <span className="text-red-400">*</span>
                     </Label>
                     <Select
                         id="entityId"

@@ -13,10 +13,7 @@ type Method = {
     description: string;
     icon: typeof Calculator;
     badge: string;
-    accent: string;
-    ring: string;
-    iconBg: string;
-    iconColor: string;
+    recommended?: boolean;
 };
 
 const methods: Method[] = [
@@ -28,10 +25,7 @@ const methods: Method[] = [
             "Génère automatiquement un échéancier à partir des caractéristiques du prêt (capital, taux, durée).",
         icon: Calculator,
         badge: 'Recommandé',
-        accent: 'bg-blue-50 text-blue-700 border-blue-200',
-        ring: 'hover:border-blue-300 hover:shadow-md hover:shadow-blue-100/50',
-        iconBg: 'bg-blue-50',
-        iconColor: 'text-blue-600',
+        recommended: true,
     },
     {
         key: 'import',
@@ -41,10 +35,6 @@ const methods: Method[] = [
             'Importe un échéancier depuis un fichier Excel ou CSV déjà préparé dans votre tableur.',
         icon: FileSpreadsheet,
         badge: 'Format standard',
-        accent: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-        ring: 'hover:border-emerald-300 hover:shadow-md hover:shadow-emerald-100/50',
-        iconBg: 'bg-emerald-50',
-        iconColor: 'text-emerald-600',
     },
     {
         key: 'manual',
@@ -54,31 +44,29 @@ const methods: Method[] = [
             'Saisit manuellement chaque échéance ou ajuste un échéancier existant ligne par ligne.',
         icon: PenTool,
         badge: 'Personnalisé',
-        accent: 'bg-purple-50 text-purple-700 border-purple-200',
-        ring: 'hover:border-purple-300 hover:shadow-md hover:shadow-purple-100/50',
-        iconBg: 'bg-purple-50',
-        iconColor: 'text-purple-600',
     },
 ];
 
 export function LoanCreate({ onMethodSelect, onBack }: LoanCreateProps) {
     return (
         <div className="space-y-6">
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                {/* back button */}
+            <div className="nebula-glass rounded-3xl border border-white/10 p-6">
                 <div className="mb-6">
                     <button
                         type="button"
                         onClick={onBack}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors"
+                        className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
                     >
                         <ArrowLeft className="h-4 w-4" />
                     </button>
                 </div>
-                <h3 className="text-sm font-semibold text-slate-900">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)">
+                    § Choix de méthode
+                </p>
+                <h3 className="mt-2 text-lg font-semibold text-white">
                     Choisissez une méthode de création
                 </h3>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-(--nebula-muted)">
                     Sélectionnez la méthode qui correspond le mieux à votre besoin pour créer
                     votre échéancier d&apos;emprunt.
                 </p>
@@ -91,34 +79,33 @@ export function LoanCreate({ onMethodSelect, onBack }: LoanCreateProps) {
                                 key={m.key}
                                 type="button"
                                 onClick={() => onMethodSelect(m.key)}
-                                className={`group flex h-full flex-col rounded-xl border border-slate-200 bg-white p-5 text-left transition-all ${m.ring}`}
+                                className={[
+                                    'group flex h-full flex-col rounded-3xl border p-5 text-left transition-all',
+                                    m.recommended
+                                        ? 'border-white/25 bg-white/10 ring-1 ring-(--nebula-gold-light)/30 nebula-glow'
+                                        : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10',
+                                ].join(' ')}
                             >
                                 <div className="flex items-start justify-between">
-                                    <div
-                                        className={`flex h-11 w-11 items-center justify-center rounded-lg ${m.iconBg}`}
-                                    >
-                                        <Icon className={`h-5 w-5 ${m.iconColor}`} />
+                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                                        <Icon className="h-5 w-5 text-(--nebula-gold-light)" />
                                     </div>
-                                    <span
-                                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${m.accent}`}
-                                    >
+                                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-(--nebula-muted)">
                                         {m.badge}
                                     </span>
                                 </div>
 
                                 <div className="mt-4 flex-1">
-                                    <h4 className="text-sm font-semibold text-slate-900">
-                                        {m.title}
-                                    </h4>
-                                    <p className="mt-0.5 text-xs font-medium text-slate-500">
+                                    <h4 className="text-sm font-semibold text-white">{m.title}</h4>
+                                    <p className="mt-0.5 text-xs font-medium text-(--nebula-muted)">
                                         {m.subtitle}
                                     </p>
-                                    <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                                    <p className="mt-2 text-xs leading-relaxed text-(--nebula-muted)">
                                         {m.description}
                                     </p>
                                 </div>
 
-                                <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-slate-700 transition-colors group-hover:text-primary">
+                                <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-(--nebula-gold-light) transition-colors group-hover:text-white">
                                     Choisir cette méthode
                                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                                 </div>
@@ -128,25 +115,24 @@ export function LoanCreate({ onMethodSelect, onBack }: LoanCreateProps) {
                 </div>
             </div>
 
-            {/* Help */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5">
+            <div className="nebula-glass rounded-3xl border border-white/10 p-5">
                 <div className="flex items-start gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white ring-1 ring-slate-200">
-                        <Info className="h-4 w-4 text-slate-500" />
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                        <Info className="h-4 w-4 text-white/60" />
                     </div>
                     <div>
-                        <h4 className="text-sm font-semibold text-slate-900">Conseil de choix</h4>
-                        <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                        <h4 className="text-sm font-semibold text-white">Conseil de choix</h4>
+                        <ul className="mt-2 space-y-1 text-xs text-(--nebula-muted)">
                             <li>
-                                <strong className="text-slate-800">Calculatrice</strong> &middot;
+                                <strong className="text-white/90">Calculatrice</strong> &middot;
                                 Idéal pour les nouveaux prêts avec des paramètres standards.
                             </li>
                             <li>
-                                <strong className="text-slate-800">Import</strong> &middot; Parfait
+                                <strong className="text-white/90">Import</strong> &middot; Parfait
                                 si vous avez déjà un échéancier dans un tableur.
                             </li>
                             <li>
-                                <strong className="text-slate-800">Manuel</strong> &middot; Pour les
+                                <strong className="text-white/90">Manuel</strong> &middot; Pour les
                                 cas complexes ou des ajustements précis.
                             </li>
                         </ul>

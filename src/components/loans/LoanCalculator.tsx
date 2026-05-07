@@ -59,7 +59,7 @@ export function LoanCalculator({ onLoanCreated, onBack, entityType, entityId }: 
         try {
             const loanId = await confirmSaveLoan();
             onLoanCreated?.(loanId);
-        } catch (error) {
+        } catch {
             // Error is already handled in the hook
         }
     };
@@ -72,11 +72,11 @@ export function LoanCalculator({ onLoanCreated, onBack, entityType, entityId }: 
                 <AlertDialog open={true}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                            <AlertDialogTitle className="flex items-center gap-2 text-red-300">
                                 Erreur
                             </AlertDialogTitle>
                         </AlertDialogHeader>
-                        <AlertDialogDescription className="text-red-800">
+                        <AlertDialogDescription className="text-red-200/90">
                             {error}
                         </AlertDialogDescription>
                     </AlertDialogContent>

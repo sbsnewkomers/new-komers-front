@@ -62,8 +62,8 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated }: LoanEditProps) {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2 text-muted-foreground">Chargement du prêt...</span>
+                <Loader2 className="h-8 w-8 animate-spin text-(--nebula-gold-light)" />
+                <span className="ml-2 text-(--nebula-muted)">Chargement du prêt...</span>
             </div>
         );
     }
@@ -117,13 +117,13 @@ export function LoanEdit({ loanId, onBack, onLoanUpdated }: LoanEditProps) {
     // Handle loan not found
     if (!loan) {
         return (
-            <div className="rounded-xl border border-slate-200 bg-white p-12 shadow-sm">
+            <div className="nebula-glass rounded-3xl border border-white/10 p-12">
                 <div className="mx-auto max-w-md text-center">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-                        <AlertTriangle className="h-6 w-6 text-red-600" />
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5">
+                        <AlertTriangle className="h-6 w-6 text-white/60" />
                     </div>
-                    <p className="text-sm font-semibold text-slate-900">Emprunt non trouvé</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-white">Emprunt non trouvé</p>
+                    <p className="mt-1 text-xs text-white/60">
                         L&apos;emprunt demandé n&apos;existe pas ou a été supprimé.
                     </p>
                     <Button onClick={onBack} variant="outline" className="mt-4">

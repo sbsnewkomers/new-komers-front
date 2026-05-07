@@ -41,19 +41,12 @@ export default function AssetsPage() {
         <div>
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-primary/10 p-2.5">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-list h-5 w-5 text-primary" aria-hidden="true">
-                  <line x1="8" x2="21" y1="6" y2="6"></line>
-                  <line x1="8" x2="21" y1="12" y2="12"></line>
-                  <line x1="8" x2="21" y1="18" y2="18"></line>
-                  <line x1="3" x2="3.01" y1="6" y2="6"></line>
-                  <line x1="3" x2="3.01" y1="12" y2="12"></line>
-                  <line x1="3" x2="3.01" y1="18" y2="18"></line>
-                </svg>
+              <div className="rounded-xl bg-white/10 p-2.5">
+                <List className="h-5 w-5 text-(--nebula-gold-light)" aria-hidden />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-primary">Mode Détaillé - Gestion des actifs</h2>
-                <p className="text-sm text-slate-500">Gérez vos actifs et suivez leurs plans d&apos;amortissement</p>
+                <h2 className="text-xl font-bold text-white">Mode Détaillé - Gestion des actifs</h2>
+                <p className="text-sm text-(--nebula-muted)">Gérez vos actifs et suivez leurs plans d&apos;amortissement</p>
               </div>
             </div>
             <Button

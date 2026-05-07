@@ -107,7 +107,7 @@ export default function ImportEntriesPage() {
           actions={
             <Button
               variant="outline"
-              className="w-full gap-2 border-primary text-primary hover:border-primary! hover:bg-primary/10 sm:w-auto"
+              className="w-full gap-2 sm:w-auto"
               onClick={() => void router.push("/import")}
             >
               <ArrowLeft className="h-4 w-4" />
@@ -115,10 +115,10 @@ export default function ImportEntriesPage() {
             </Button>
           }
         >
-          <div className="flex min-w-0 items-center gap-2 text-sm">
+          <div className="flex min-w-0 items-center gap-2 text-sm text-(--nebula-muted)">
             Fichier:
             <span
-              className="max-w-full truncate rounded-lg border border-primary bg-primary/70 text-white! shadow-lg shadow-primary/50 px-3 py-2 text-sm font-medium sm:max-w-[420px]"
+              className="max-w-full truncate rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm font-medium text-white sm:max-w-[420px]"
               title={selectedFile || "-"}
             >
               {selectedFile || "-"}
@@ -127,8 +127,8 @@ export default function ImportEntriesPage() {
         </PageHeader>
 
         {!selectedFile ? (
-          <Card className="nebula-glass shadow-sm ring-1 ring-primary">
-            <CardContent className="py-10! text-center text-slate-500">
+          <Card className="nebula-glass border border-white/10">
+            <CardContent className="py-10! text-center text-(--nebula-muted)">
               Aucun fichier selectionne. Revenez sur la page d&apos;import et cliquez sur &quot;Voir ecritures&quot;.
             </CardContent>
           </Card>
@@ -171,16 +171,16 @@ export default function ImportEntriesPage() {
               </div>
             </div>
 
-            <Card className="nebula-glass drop-shadow-lg ring-1 ring-primary">
+            <Card className="nebula-glass border border-white/10">
               <CardContent className="p-5!">
                 <FilterBar
                   search={
                     <div className="relative">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--nebula-muted)" />
                       <Input
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
-                        className="pl-9 border-slate-200 bg-white shadow-sm focus-visible:ring-sky-400"
+                        className="pl-9 border-white/10 bg-white/5 focus-visible:ring-(--nebula-gold-light)"
                         placeholder="Rechercher par libelle, piece, compte, journal..."
                       />
                     </div>
@@ -205,56 +205,56 @@ export default function ImportEntriesPage() {
               </CardContent>
             </Card>
 
-            <Card className="overflow-hidden nebula-glass drop-shadow-lg ring-1 ring-primary">
+            <Card className="overflow-hidden nebula-glass border border-white/10">
               {error ? (
-                <CardContent className="py-10! text-center text-red-600">{error}</CardContent>
+                <CardContent className="py-10! text-center text-red-300">{error}</CardContent>
               ) : (
                 <>
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-primary/10 hover:bg-primary/10">
-                          <TableHead className="font-semibold text-primary">Date</TableHead>
-                          <TableHead className="font-semibold text-primary">N. ecriture</TableHead>
-                          <TableHead className="font-semibold text-primary">Libelle</TableHead>
-                          <TableHead className="font-semibold text-primary">Journal</TableHead>
-                          <TableHead className="font-semibold text-primary">Compte</TableHead>
-                          <TableHead className="font-semibold text-primary">Piece</TableHead>
-                          <TableHead className="text-right font-semibold text-emerald-700!">Debit</TableHead>
-                          <TableHead className="text-right font-semibold text-rose-700">Credit</TableHead>
+                        <TableRow className="border-white/10 bg-white/5 hover:bg-white/5">
+                          <TableHead className="font-semibold text-(--nebula-muted) border-white/10">Date</TableHead>
+                          <TableHead className="font-semibold text-(--nebula-muted) border-white/10">N. ecriture</TableHead>
+                          <TableHead className="font-semibold text-(--nebula-muted) border-white/10">Libelle</TableHead>
+                          <TableHead className="font-semibold text-(--nebula-muted) border-white/10">Journal</TableHead>
+                          <TableHead className="font-semibold text-(--nebula-muted) border-white/10">Compte</TableHead>
+                          <TableHead className="font-semibold text-(--nebula-muted) border-white/10">Piece</TableHead>
+                          <TableHead className="text-right font-semibold text-emerald-200 border-white/10">Debit</TableHead>
+                          <TableHead className="text-right font-semibold text-rose-200 border-white/10">Credit</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {loading ? (
-                          <TableRow>
-                            <TableCell colSpan={8} className="py-8 text-center text-primary">
+                          <TableRow className="border-white/10">
+                            <TableCell colSpan={8} className="py-8 text-center text-(--nebula-muted)">
                               Chargement des ecritures...
                             </TableCell>
                           </TableRow>
                         ) : items.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={8} className="py-8 text-center text-primary">
+                          <TableRow className="border-white/10">
+                            <TableCell colSpan={8} className="py-8 text-center text-(--nebula-muted)">
                               Aucune ecriture ne correspond a vos filtres.
                             </TableCell>
                           </TableRow>
                         ) : (
                           items.map((entry) => (
-                            <TableRow key={entry.id} className="hover:bg-primary/5">
-                              <TableCell>{formatDate(entry.writingDate)}</TableCell>
-                              <TableCell className="font-medium text-primary">{entry.writingNumber || "-"}</TableCell>
-                              <TableCell>{entry.writingLib || "-"}</TableCell>
-                              <TableCell>{entry.journalCode || "-"}</TableCell>
-                              <TableCell>
+                            <TableRow key={entry.id} className="border-white/10 hover:bg-white/5">
+                              <TableCell className="text-white">{formatDate(entry.writingDate)}</TableCell>
+                              <TableCell className="font-medium text-(--nebula-gold-light)">{entry.writingNumber || "-"}</TableCell>
+                              <TableCell className="text-white">{entry.writingLib || "-"}</TableCell>
+                              <TableCell className="text-white">{entry.journalCode || "-"}</TableCell>
+                              <TableCell className="text-white">
                                 <div className="flex flex-col">
                                   <span className="font-medium">{entry.accountNumber || "-"}</span>
-                                  <span className="text-xs">{entry.accountLib || "-"}</span>
+                                  <span className="text-xs text-(--nebula-muted)">{entry.accountLib || "-"}</span>
                                 </div>
                               </TableCell>
-                              <TableCell>{entry.pieceReference || "-"}</TableCell>
-                              <TableCell className="text-right font-semibold text-emerald-700">
+                              <TableCell className="text-white">{entry.pieceReference || "-"}</TableCell>
+                              <TableCell className="text-right font-semibold text-emerald-200">
                                 {entry.debit > 0 ? formatAmount(entry.debit) : "-"}
                               </TableCell>
-                              <TableCell className="text-right font-semibold text-rose-700">
+                              <TableCell className="text-right font-semibold text-rose-200">
                                 {entry.credit > 0 ? formatAmount(entry.credit) : "-"}
                               </TableCell>
                             </TableRow>
@@ -264,16 +264,16 @@ export default function ImportEntriesPage() {
                     </Table>
                   </div>
 
-                      <div className="border-t border-primary nebula-glass px-5 py-4">
+                  <div className="border-t border-white/10 px-5 py-4">
                     <div className="flex flex-col items-center justify-between gap-3 md:flex-row">
-                      <p className="text-sm text-primary">
+                      <p className="text-sm text-(--nebula-muted)">
                         {pagination.totalFilteredRows} ligne(s) trouvee(s) - page {pagination.page} / {pagination.totalPages}
                       </p>
                       <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-1 nebula-glass border-primary text-primary hover:border-primary! hover:bg-primary/10"
+                          className="gap-1"
                           disabled={pagination.page <= 1 || loading}
                           onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                         >
@@ -283,7 +283,7 @@ export default function ImportEntriesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-1 nebula-glass border-primary text-primary hover:border-primary! hover:bg-primary/10"
+                          className="gap-1"
                           disabled={pagination.page >= pagination.totalPages || loading}
                           onClick={() => setPage((prev) => Math.min(pagination.totalPages, prev + 1))}
                         >
