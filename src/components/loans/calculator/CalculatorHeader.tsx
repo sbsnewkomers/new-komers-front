@@ -18,7 +18,7 @@ export function CalculatorHeader({ currentStep, onBack }: CalculatorHeaderProps)
     ];
 
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="nebula-glass rounded-3xl border border-white/10 p-5">
             {onBack && (
                 <Button
                     variant="outline"
@@ -29,14 +29,14 @@ export function CalculatorHeader({ currentStep, onBack }: CalculatorHeaderProps)
                 </Button>
             )}
             <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-                    <Calculator className="h-5 w-5 text-blue-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
+                    <Calculator className="h-5 w-5 text-(--nebula-gold-light)" />
                 </div>
                 <div>
-                    <h3 className="text-base font-semibold text-slate-900">
+                    <h3 className="text-base font-semibold text-white">
                         Calculatrice d&apos;emprunt intégrée
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-(--nebula-muted)">
                         Générez un échéancier complet à partir des caractéristiques de votre
                         prêt.
                     </p>

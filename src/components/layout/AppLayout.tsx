@@ -153,8 +153,8 @@ export function AppLayout({
         <div className="flex gap-4">
       {/* Sidebar */}
 
-          <div className="hidden md:block w-[260px] sticky top-0 h-[calc(100vh-2rem)] nebula-glass p-5 shadow-lg! shadow-primary/20!">
-        <div className="flex h-full flex-col gap-2">
+          <div className="hidden md:block w-[260px] sticky top-0 h-[calc(100vh-2rem)] nebula-glass-modal p-5 shadow-lg! shadow-primary/20!">
+        <div className="flex h-full min-h-0 flex-col gap-2">
           <div className="flex items-center gap-3 px-1 py-2">
             <Link href="/" className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-(--nebula-gold-light) to-(--nebula-gold) text-white! nebula-glow">
@@ -199,7 +199,7 @@ export function AppLayout({
                 className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-all hover:bg-white/5 border border-white/10"
               >
                 <Avatar className="h-10 w-10 border border-white/10 bg-white/5 rounded-xl flex items-center justify-center">
-                    <User className="h-5 w-5 text-black" />
+                    <User className="h-5 w-5 text-primary" />
                 </Avatar>
 
                 <div className="flex flex-col overflow-hidden">
@@ -253,8 +253,8 @@ export function AppLayout({
       {/* Main */}
 
       <div className="flex min-w-0 flex-1 flex-col gap-4">
-        <header className="bg-slate-950 h-16 rounded-3xl sticky top-0 z-10 shadow-lg! shadow-primary/20!">
-              <div className="h-full w-full flex items-center rounded-2xl justify-between px-6 nebula-glass bg-linear-to-l! from-(--nebula-gold-light)/30 via-(--nebula-gold-light)/15 to-transparent">
+        <header className="h-16 rounded-3xl sticky top-0 z-10 shadow-lg! shadow-primary/20!">
+              <div className="h-full w-full flex items-center rounded-2xl justify-between px-6 nebula-glass-modal backdrop-blur-lg bg-linear-to-l! from-(--nebula-gold-light)/30 via-(--nebula-gold-light)/15 to-transparent">
             {/* Left: mobile menu button + breadcrumbs */}
 
             <div className="flex min-w-0 items-center gap-3">
@@ -333,7 +333,7 @@ export function AppLayout({
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          <div className="relative z-10 flex h-full w-[min(85vw,260px)] flex-col nebula-glass rounded-none border-r border-white/10">
+          <div className="relative z-10 flex h-full min-h-0 w-[min(85vw,260px)] flex-col nebula-glass-modal rounded-none border-r border-white/10">
             <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
               <Link
                 href="/"

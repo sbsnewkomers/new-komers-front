@@ -485,7 +485,7 @@ export default function UsersPage() {
   const isExpired = (inv: InvitationItem) => new Date(inv.expiresAt) < new Date();
 
   return (
-    <AppLayout title="User Management" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
+    <AppLayout title="Gestion des utilisateurs" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
       <Head><title>Gestion des utilisateurs</title></Head>
       <div className="space-y-3 md:space-y-6">
         <PageHeader

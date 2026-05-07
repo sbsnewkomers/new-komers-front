@@ -393,28 +393,28 @@ export function LoanImport({ onLoanImported, onBack, entityType, entityId }: Loa
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="nebula-glass nebula-blob rounded-3xl border border-white/10 p-5">
                 {/* Back button */}
                 {onBack && (
                     <div className="mb-4">
                         <button
                             type="button"
                             onClick={onBack}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors"
+                            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
                         >
                             <ArrowLeft className="h-4 w-4" />
                         </button>
                     </div>
                 )}
                 <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
-                        <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                        <FileSpreadsheet className="h-5 w-5 text-(--nebula-gold-light)" />
                     </div>
                     <div>
-                        <h3 className="text-base font-semibold text-slate-900">
+                        <h3 className="text-base font-semibold text-white">
                             Import d&apos;échéancier Excel / CSV
                         </h3>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-(--nebula-muted)">
                             Importez un échéancier existant depuis un fichier Excel ou CSV.
                         </p>
                     </div>
@@ -425,8 +425,8 @@ export function LoanImport({ onLoanImported, onBack, entityType, entityId }: Loa
             </div>
 
             {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                    <p className="text-sm text-red-800">{error}</p>
+                <div className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4">
+                    <p className="text-sm text-red-100">{error}</p>
                 </div>
             )}
 

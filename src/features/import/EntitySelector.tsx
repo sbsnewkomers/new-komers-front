@@ -63,10 +63,10 @@ export function EntitySelector({
         const allCompanies: Entity[] = [];
         const allBUs: BusinessUnit[] = [];
 
-        const collectCompany = (company: any) => {
+        const collectCompany = (company: { id: string; name: string; businessUnits?: Array<{ id: string; name: string; code?: string | null }> }) => {
           allCompanies.push({ id: company.id, name: company.name });
           for (const bu of company.businessUnits ?? []) {
-            allBUs.push({ id: bu.id, name: bu.name, code: bu.code });
+            allBUs.push({ id: bu.id, name: bu.name, code: bu.code ?? undefined });
           }
         };
 
@@ -139,22 +139,22 @@ export function EntitySelector({
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6 shadow-sm">
+    <div className="nebula-glass rounded-3xl border border-white/10 p-4 mb-6">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="rounded-lg bg-primary/10 p-1.5">
-          <Building className="h-4 w-4 text-primary" />
+        <div className="rounded-lg border border-white/10 bg-white/10 p-1.5">
+          <Building className="h-4 w-4 text-(--nebula-gold-light)" />
         </div>
-        <h3 className="text-sm font-semibold">
+        <h3 className="text-sm font-semibold text-white">
           Sélectionner l&apos;entité cible
         </h3>
         {!selectedEntityId && (
-          <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] border border-amber-400/30 bg-amber-500/15 text-amber-100 px-2 py-0.5 rounded-full">
             Obligatoire
           </span>
         )}
         {disabled && (
-          <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] border border-white/10 bg-white/10 text-(--nebula-muted) px-2 py-0.5 rounded-full">
             Lecture seule
           </span>
         )}
@@ -188,16 +188,16 @@ export function EntitySelector({
                   disabled={isDisabled}
                   className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all ${
                     isDisabled
-                      ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400'
+                      ? 'opacity-50 cursor-not-allowed bg-white/5 border-white/10 text-(--nebula-muted)'
                       : isActive
-                        ? 'bg-primary/10 border-primary text-primary font-medium ring-2 ring-primary/20 cursor-pointer'
-                        : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-100 cursor-pointer'
+                        ? 'bg-white/10 border-(--nebula-gold-light)/40 text-(--nebula-gold-light) font-medium ring-1 ring-(--nebula-gold-light)/25 cursor-pointer'
+                        : 'bg-white/5 border-white/10 text-(--nebula-muted) hover:bg-white/10 hover:text-white cursor-pointer'
                   }`}
                 >
                   {icon}
                   {label}
                   {isActive && (
-                    <span className="ml-1 text-xs text-primary/50">✕</span>
+                    <span className="ml-1 text-xs text-white/50">✕</span>
                   )}
                 </button>
               );
@@ -207,7 +207,7 @@ export function EntitySelector({
 
         {/* Entité spécifique */}
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1.5">
+          <label className="block text-xs font-medium text-(--nebula-muted) mb-1.5">
             {selectedEntityType === 'Company'
               ? 'Entreprise'
               : selectedEntityType === 'Group'
@@ -288,9 +288,9 @@ export function EntitySelector({
 
       {/* Entité sélectionnée — message de confirmation */}
       {selectedEntityId && selectedEntityType && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 p-2 rounded-lg">
-          <div className="rounded-full bg-emerald-100 p-0.5">
-            <Building className="h-3 w-3 text-emerald-600" />
+        <div className="mt-3 flex items-center gap-2 text-xs text-emerald-100 border border-emerald-400/25 bg-emerald-500/10 p-2 rounded-xl">
+          <div className="rounded-full border border-emerald-400/30 bg-emerald-500/15 p-0.5">
+            <Building className="h-3 w-3 text-emerald-200" />
           </div>
           <span>
             Les données seront importées pour{' '}
@@ -306,19 +306,19 @@ export function EntitySelector({
 
       {/* Checkbox includeDescendants — uniquement pour Group et Company */}
       {selectedEntityId && selectedEntityType && selectedEntityType !== 'BusinessUnit' && (
-        <div className="mt-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
           <input
             type="checkbox"
             id="includeDescendants"
             checked={includeDescendants}
             onChange={(e) => onIncludeDescendantsChange(e.target.checked)}
             disabled={disabled}
-            className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer"
+            className="h-4 w-4 rounded border-white/20 bg-white/5 text-(--nebula-gold-light) focus:ring-(--nebula-gold-light)/30 cursor-pointer"
           />
           <label
             htmlFor="includeDescendants"
             className={`text-xs font-medium cursor-pointer select-none ${
-              disabled ? 'text-slate-400' : 'text-slate-700'
+              disabled ? 'text-(--nebula-muted)' : 'text-white'
             }`}
           >
             {selectedEntityType === 'Group'
@@ -331,11 +331,11 @@ export function EntitySelector({
       {/* Avertissement + sélection de période si données existantes */}
       {selectedEntityId && selectedEntityType && hasData === true && (
         <div className="mt-3 space-y-3">
-          <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 p-3 rounded-lg">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" />
+          <div className="flex items-start gap-2 text-xs text-amber-100 border border-amber-400/25 bg-amber-500/10 p-3 rounded-xl">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-200" />
             <div>
-              <p className="font-semibold">Cette entité contient déjà des données comptables.</p>
-              <p className="mt-0.5 text-amber-600">
+              <p className="font-semibold text-white">Cette entité contient déjà des données comptables.</p>
+              <p className="mt-0.5 text-amber-100/90">
                 Sélectionnez la période à remplacer. Seules les écritures dans cette plage seront écrasées.
               </p>
             </div>
@@ -343,34 +343,34 @@ export function EntitySelector({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                Début de période <span className="text-rose-500">*</span>
+              <label className="block text-xs font-medium text-(--nebula-muted) mb-1.5">
+                Début de période <span className="text-rose-400">*</span>
               </label>
               <input
                 type="date"
                 value={periodStart}
                 onChange={(e) => onPeriodChange(e.target.value, periodEnd)}
-                className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary border-slate-300"
+                className="w-full px-3 py-2 text-sm rounded-xl border border-white/10 bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-(--nebula-gold-light)/40 focus:border-white/20"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                Fin de période <span className="text-rose-500">*</span>
+              <label className="block text-xs font-medium text-(--nebula-muted) mb-1.5">
+                Fin de période <span className="text-rose-400">*</span>
               </label>
               <input
                 type="date"
                 value={periodEnd}
                 min={periodStart}
                 onChange={(e) => onPeriodChange(periodStart, e.target.value)}
-                className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary border-slate-300"
+                className="w-full px-3 py-2 text-sm rounded-xl border border-white/10 bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-(--nebula-gold-light)/40 focus:border-white/20"
                 required
               />
             </div>
           </div>
 
           {periodStart && periodEnd && periodEnd < periodStart && (
-            <p className="text-xs text-rose-600 flex items-center gap-1">
+            <p className="text-xs text-rose-300 flex items-center gap-1">
               <AlertCircle className="h-3 w-3" />
               La date de fin doit être après la date de début.
             </p>
@@ -380,15 +380,15 @@ export function EntitySelector({
 
       {/* Spinner vérification données */}
       {isCheckingData && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
-          <div className="h-3 w-3 border border-slate-300 border-t-slate-600 rounded-full animate-spin" />
+        <div className="mt-3 flex items-center gap-2 text-xs text-(--nebula-muted)">
+          <div className="h-3 w-3 border-2 border-white/20 border-t-(--nebula-gold-light) rounded-full animate-spin" />
           Vérification des données existantes...
         </div>
       )}
 
       {/* Message si type sélectionné mais pas d'entité */}
       {!selectedEntityId && selectedEntityType && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-primary bg-primary/30 p-2 rounded-lg">
+        <div className="mt-3 flex items-center gap-2 text-xs text-amber-100 border border-amber-400/25 bg-amber-500/10 p-2 rounded-xl">
           <AlertCircle className="h-3 w-3" />
           <span>
             Veuillez sélectionner{' '}
@@ -403,7 +403,7 @@ export function EntitySelector({
 
       {/* Aucune entité accessible */}
       {!isLoading && groups.length === 0 && companies.length === 0 && businessUnits.length === 0 && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2 rounded-lg">
+        <div className="mt-3 flex items-center gap-2 text-xs text-(--nebula-muted) border border-white/10 bg-white/5 p-2 rounded-xl">
           <AlertCircle className="h-3 w-3" />
           <span>Aucune entité accessible dans votre périmètre.</span>
         </div>
@@ -411,7 +411,7 @@ export function EntitySelector({
 
       {/* Lecture seule END_USER */}
       {disabled && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2 rounded-lg">
+        <div className="mt-3 flex items-center gap-2 text-xs text-(--nebula-muted) border border-white/10 bg-white/5 p-2 rounded-xl">
           <AlertCircle className="h-3 w-3" />
           <span>Vous n&apos;avez pas les droits pour modifier la sélection.</span>
         </div>

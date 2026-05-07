@@ -215,7 +215,7 @@ export function AssetForm({ asset, entityType = EntityType.COMPANY, entityId = '
                 <option value={EntityType.BUSINESS_UNIT}>Unité de travail</option>
                 <option value={EntityType.GROUP}>Groupe</option>
               </Select>
-              {errors.entityType && <p className="text-sm text-red-600">{errors.entityType}</p>}
+              {errors.entityType && <p className="text-sm text-red-300">{errors.entityType}</p>}
             </div>
 
             {/* Entité spécifique */}
@@ -236,15 +236,15 @@ export function AssetForm({ asset, entityType = EntityType.COMPANY, entityId = '
                   </option>
                 ))}
               </Select>
-              {errors.entityId && <p className="text-sm text-red-600">{errors.entityId}</p>}
+              {errors.entityId && <p className="text-sm text-red-300">{errors.entityId}</p>}
               {!formData.entityType && (
-                <p className="text-sm text-gray-500">Veuillez d&apos;abord sélectionner un type d&apos;entité</p>
+                <p className="text-sm text-(--nebula-muted)">Veuillez d&apos;abord sélectionner un type d&apos;entité</p>
               )}
               {formData.entityType && !isLoadingEntities && availableEntities.length === 0 && (
-                <p className="text-sm text-gray-500">Aucune entité disponible pour ce type</p>
+                <p className="text-sm text-(--nebula-muted)">Aucune entité disponible pour ce type</p>
               )}
               {formData.entityType && availableEntities.length > 0 && (
-                <p className="text-sm text-gray-500">{availableEntities.length} entité(s) disponible(s)</p>
+                <p className="text-sm text-(--nebula-muted)">{availableEntities.length} entité(s) disponible(s)</p>
               )}
             </div>
 
@@ -257,7 +257,7 @@ export function AssetForm({ asset, entityType = EntityType.COMPANY, entityId = '
                 placeholder="Ex: Machine de production Z-45"
                 className={errors.name ? 'border-red-500' : ''}
               />
-              {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
+              {errors.name && <p className="text-sm text-red-300">{errors.name}</p>}
             </div>
 
             <div className="space-y-2">
@@ -272,7 +272,7 @@ export function AssetForm({ asset, entityType = EntityType.COMPANY, entityId = '
                 placeholder="10000"
                 className={errors.acquisitionAmount ? 'border-red-500' : ''}
               />
-              {errors.acquisitionAmount && <p className="text-sm text-red-600">{errors.acquisitionAmount}</p>}
+              {errors.acquisitionAmount && <p className="text-sm text-red-300">{errors.acquisitionAmount}</p>}
             </div>
 
             <div className="space-y-2">
@@ -284,7 +284,7 @@ export function AssetForm({ asset, entityType = EntityType.COMPANY, entityId = '
                 onChange={(e) => handleInputChange('acquisitionDate', e.target.value)}
                 className={errors.acquisitionDate ? 'border-red-500' : ''}
               />
-              {errors.acquisitionDate && <p className="text-sm text-red-600">{errors.acquisitionDate}</p>}
+              {errors.acquisitionDate && <p className="text-sm text-red-300">{errors.acquisitionDate}</p>}
             </div>
 
             <div className="space-y-2">
@@ -296,7 +296,7 @@ export function AssetForm({ asset, entityType = EntityType.COMPANY, entityId = '
                 onChange={(e) => handleInputChange('commissioningDate', e.target.value)}
                 className={errors.commissioningDate ? 'border-red-500' : ''}
               />
-              {errors.commissioningDate && <p className="text-sm text-red-600">{errors.commissioningDate}</p>}
+              {errors.commissioningDate && <p className="text-sm text-red-300">{errors.commissioningDate}</p>}
             </div>
 
             <div className="space-y-2">
@@ -310,7 +310,7 @@ export function AssetForm({ asset, entityType = EntityType.COMPANY, entityId = '
                 onChange={(e) => handleInputChange('amortizationDurationYears', parseInt(e.target.value) || 1)}
                 className={errors.amortizationDurationYears ? 'border-red-500' : ''}
               />
-              {errors.amortizationDurationYears && <p className="text-sm text-red-600">{errors.amortizationDurationYears}</p>}
+              {errors.amortizationDurationYears && <p className="text-sm text-red-300">{errors.amortizationDurationYears}</p>}
             </div>
 
             <div className="space-y-2">
@@ -335,7 +335,7 @@ export function AssetForm({ asset, entityType = EntityType.COMPANY, entityId = '
                 onChange={(e) => handleInputChange('residualValue', parseFloat(e.target.value) || 0)}
                 className={errors.residualValue ? 'border-red-500' : ''}
               />
-              {errors.residualValue && <p className="text-sm text-red-600">{errors.residualValue}</p>}
+              {errors.residualValue && <p className="text-sm text-red-300">{errors.residualValue}</p>}
             </div>
 
             {asset && (

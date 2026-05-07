@@ -164,7 +164,7 @@ export function DialogContent({
           ref={ref}
           role="dialog"
           aria-modal="true"
-          className={`relative z-50 flex w-full flex-col overflow-hidden rounded-t-2xl border border-white/10 nebula-glass shadow-2xl max-sm:max-h-[calc(100dvh-1rem)] sm:rounded-2xl sm:max-h-[88dvh] sm:w-full ${sizeClass} animate-in slide-in-from-bottom-4 sm:zoom-in-95 sm:slide-in-from-bottom-0 duration-200 ${className ?? ""}`}
+          className={`relative z-50 flex w-full flex-col overflow-hidden rounded-t-2xl border border-white/10 nebula-glass-modal shadow-2xl max-sm:max-h-[calc(100dvh-1rem)] sm:rounded-2xl sm:max-h-[88dvh] sm:w-full ${sizeClass} animate-in slide-in-from-bottom-4 sm:zoom-in-95 sm:slide-in-from-bottom-0 duration-200 ${className ?? ""}`}
           onClick={(e) => e.stopPropagation()}
         >
           {children}

@@ -23,11 +23,11 @@ export function LoanTermsForm({
     isLoading
 }: LoanTermsFormProps) {
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-1 text-sm font-semibold text-slate-900">
+        <div className="nebula-glass rounded-3xl border border-white/10 p-6">
+            <h3 className="mb-1 text-sm font-semibold text-white">
                 Modalités spécifiques
             </h3>
-            <p className="mb-5 text-xs text-slate-500">
+            <p className="mb-5 text-xs text-(--nebula-muted)">
                 Paramètres optionnels pour affiner votre échéancier.
             </p>
 
@@ -35,7 +35,7 @@ export function LoanTermsForm({
                 <div>
                     <Label
                         htmlFor="monthlyInsuranceCost"
-                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)"
                     >
                         Coût de l&apos;assurance mensuelle (EUR)
                     </Label>
@@ -54,7 +54,7 @@ export function LoanTermsForm({
                 <div>
                     <Label
                         htmlFor="deferralPeriodMonths"
-                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)"
                     >
                         Période de différé (mois)
                     </Label>
@@ -68,14 +68,14 @@ export function LoanTermsForm({
                             onInputChange('deferralPeriodMonths', e.target.value)
                         }
                     />
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-(--nebula-muted)">
                         Durant cette période, seuls les intérêts et l&apos;assurance sont
                         payés.
                     </p>
                 </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
+            <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-5">
                 <Button variant="outline" onClick={onBack}>
                     <ArrowLeft className="h-4 w-4" />
                     Précédent
@@ -83,7 +83,6 @@ export function LoanTermsForm({
                 <Button
                     onClick={onGenerateSchedule}
                     disabled={isLoading}
-                    className="bg-primary text-white hover:bg-slate-800"
                 >
                     {isLoading ? 'Génération…' : "Générer l'échéancier"}
                     <Calculator className="h-4 w-4" />

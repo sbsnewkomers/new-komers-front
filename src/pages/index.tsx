@@ -1,139 +1,245 @@
 import Head from "next/head";
 import Link from "next/link";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
+import * as React from "react";
 
 export default function LandingPage() {
   const { user, logout } = usePermissionsContext();
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [navScrolled, setNavScrolled] = React.useState(false);
+  const [contactSent, setContactSent] = React.useState(false);
+
+  React.useEffect(() => {
+    const onScroll = () => setNavScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  React.useEffect(() => {
+    if (!mobileOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen]);
 
   return (
-    <div className="landing min-h-screen selection:bg-[#64FFDA]/30">
+    <div className="landing min-h-screen selection:bg-(--accent)/20">
       <Head>
-        <title>NEWKOMERS | Pilotage Financier de Groupe</title>
-        <meta name="description" content="Centralisez vos flux, automatisez vos consolidations et pilotez votre trésorerie multi-entités." />
+        <title>Newkomers — La clarté financière absolue pour les holdings &amp; groupes</title>
+        <meta
+          name="description"
+          content="Newkomers est la plateforme financière de référence pour les holdings et groupes. Consolidation multi-filiale, projections, cash burn et bien plus."
+        />
       </Head>
 
-      <header className="fixed top-0 w-full z-50 glass-panel border-b border-border">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-(--accent) rounded-xl flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary font-bold">query_stats</span>
-            </div>
-            <span className="text-2xl font-bold tracking-tighter text-white">NEWKOMERS</span>
-          </Link>
-          <nav className="hidden lg:flex items-center gap-10">
-            <a className="text-sm font-medium text-(--text-muted) hover:text-(--accent) transition-colors" href="#features">Solutions</a>
-            <a className="text-sm font-medium text-(--text-muted) hover:text-(--accent) transition-colors" href="#social">Clientèle</a>
-            <a className="text-sm font-medium text-(--text-muted) hover:text-(--accent) transition-colors" href="#pricing">Tarification</a>
-            <a className="text-sm font-medium text-(--text-muted) hover:text-(--accent) transition-colors" href="#contact">Contact</a>
-          </nav>
-          <div className="flex items-center gap-6">
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 px-6 border-b transition-colors ${
+          navScrolled ? "bg-black/90" : "bg-black/70"
+        } backdrop-blur-xl border-white/10`}
+        aria-label="Navigation"
+      >
+        <div className="mx-auto grid h-16 max-w-6xl grid-cols-[auto_1fr_auto] items-center gap-6">
+          <a href="#hero" className="text-[15px] font-black tracking-[0.2em] text-white">
+            NEWKOMERS
+          </a>
+
+          <ul className="hidden items-center justify-center gap-7 text-[13px] font-medium text-(--text-muted) md:flex">
+            <li><a className="hover:text-(--accent) transition-colors" href="#hero">Accueil</a></li>
+            <li><a className="hover:text-(--accent) transition-colors" href="#social-proof">Clientèle</a></li>
+            <li><a className="hover:text-(--accent) transition-colors" href="#features">Solutions</a></li>
+            <li><a className="hover:text-(--accent) transition-colors" href="#pricing">Tarification</a></li>
+            <li><a className="hover:text-(--accent) transition-colors" href="#contact">Contact</a></li>
+          </ul>
+
+          <div className="flex items-center justify-end gap-3">
             {user ? (
               <>
-                <Link className="text-sm font-medium text-(--text-muted) hover:text-white transition-colors" href="/dashboard">Espace client</Link>
+                <Link
+                  className="hidden text-[13px] font-semibold text-(--text-muted) hover:text-white transition-colors sm:inline-flex"
+                  href="/dashboard"
+                >
+                  Espace client
+                </Link>
                 <button
                   type="button"
                   onClick={() => logout()}
-                  className="text-sm font-semibold bg-white text-primary px-6 py-2.5 rounded-full hover:bg-(--accent) transition-all"
+                  className="hidden rounded-full bg-white px-5 py-2 text-[13px] font-semibold text-black hover:bg-(--accent) transition-colors sm:inline-flex"
                 >
                   Déconnexion
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen((s) => !s)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white md:hidden"
+                  aria-label="Menu"
+                  aria-expanded={mobileOpen}
+                >
+                  <span className="sr-only">Menu</span>
+                  <div className="flex flex-col gap-1">
+                    <span className="h-0.5 w-5 rounded bg-white/80" />
+                    <span className="h-0.5 w-5 rounded bg-white/80" />
+                    <span className="h-0.5 w-5 rounded bg-white/80" />
+                  </div>
                 </button>
               </>
             ) : (
               <>
-                <Link className="text-sm font-medium text-(--text-muted) hover:text-white transition-colors" href="/login">Se connecter</Link>
-                <Link className="text-sm font-semibold bg-white text-primary px-6 py-2.5 rounded-full hover:bg-(--accent) transition-all" href="/login">
-                  Démarrer l&apos;essai
+                <Link
+                  className="hidden text-[13px] font-semibold text-(--text-muted) hover:text-white transition-colors sm:inline-flex"
+                  href="/login"
+                >
+                  Se connecter
                 </Link>
+                <Link
+                  className="hidden rounded-full border border-(--border-accent) px-5 py-2 text-[13px] font-semibold text-(--accent) hover:bg-(--accent) hover:text-black transition-colors sm:inline-flex"
+                  href="/login"
+                >
+                  Se connecter
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen((s) => !s)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white md:hidden"
+                  aria-label="Menu"
+                  aria-expanded={mobileOpen}
+                >
+                  <span className="sr-only">Menu</span>
+                  <div className="flex flex-col gap-1">
+                    <span className="h-0.5 w-5 rounded bg-white/80" />
+                    <span className="h-0.5 w-5 rounded bg-white/80" />
+                    <span className="h-0.5 w-5 rounded bg-white/80" />
+                  </div>
+                </button>
               </>
             )}
           </div>
         </div>
-      </header>
+
+        {mobileOpen ? (
+          <div className="md:hidden border-t border-white/10 py-5">
+            <ul className="flex flex-col gap-4 text-sm text-(--text-muted)">
+              <li><a className="hover:text-(--accent)" href="#hero" onClick={() => setMobileOpen(false)}>Accueil</a></li>
+              <li><a className="hover:text-(--accent)" href="#social-proof" onClick={() => setMobileOpen(false)}>Clientèle</a></li>
+              <li><a className="hover:text-(--accent)" href="#features" onClick={() => setMobileOpen(false)}>Solutions</a></li>
+              <li><a className="hover:text-(--accent)" href="#pricing" onClick={() => setMobileOpen(false)}>Tarification</a></li>
+              <li><a className="hover:text-(--accent)" href="#contact" onClick={() => setMobileOpen(false)}>Contact</a></li>
+              <li className="pt-3">
+                <Link
+                  href={user ? "/dashboard" : "/login"}
+                  className="inline-flex w-full items-center justify-center rounded-full bg-linear-to-br from-(--accent) to-[#8a6a32] px-5 py-2.5 text-[13px] font-semibold text-black"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {user ? "Espace client" : "Se connecter"}
+                </Link>
+              </li>
+            </ul>
+          </div>
+        ) : null}
+      </nav>
 
       <main className="relative overflow-hidden">
-        <section className="relative px-4 pt-44 pb-32 gradient-bg sm:px-6">
-          <div className="max-w-7xl mx-auto text-center">
-            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full glass-panel border-border mb-10">
-              <span className="flex h-2 w-2 rounded-full bg-(--accent)"></span>
-              <span className="text-xs font-semibold uppercase tracking-widest text-(--accent)">Standard de Reporting Financier 2.0</span>
+        <section id="hero" className="relative min-h-screen px-6 pt-28 pb-20 text-center">
+          <div className="pointer-events-none absolute -left-40 -top-20 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(212,176,106,0.18)_0%,transparent_70%)] blur-[120px]" />
+          <div className="pointer-events-none absolute -right-40 bottom-0 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(34,197,94,0.08)_0%,transparent_70%)] blur-[120px]" />
+
+          <div className="mx-auto max-w-4xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-(--text-muted)">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+              Découvrez The Frontier AI
             </div>
-            <h1 className="serif-heading text-5xl md:text-7xl font-bold text-white mb-8 max-w-5xl mx-auto leading-tight">
-              La clarté financière absolue pour les <span className="italic text-(--accent)">holdings & groupes</span>.
+
+            <h1 className="mt-7 text-balance text-[clamp(38px,6vw,68px)] font-black leading-[1.05] text-white">
+              La clarté financière<br />
+              <span className="bg-linear-to-r from-[#f0d060] via-(--accent) to-[#8a6a32] bg-clip-text text-transparent">
+                absolue pour
+              </span>
+              <br />
+              les holdings &amp; groupes.
             </h1>
-            <p className="text-xl text-(--text-muted) max-w-2xl mx-auto mb-12 leading-relaxed">
-              Centralisez vos flux, automatisez vos consolidations et pilotez votre trésorerie multi-entités depuis une interface conçue pour la haute performance.
+
+            <p className="mx-auto mt-6 max-w-2xl text-[17px] leading-relaxed text-(--text-muted)">
+              Consolidez, projetez et pilotez l&apos;ensemble de votre structure financière depuis une seule interface.
+              Conçu pour les groupes qui exigent la performance.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-5 mb-24">
-              <Link
-                href={user ? "/dashboard" : "/login"}
-                className="w-full sm:w-auto px-10 py-5 bg-(--accent) text-primary font-bold rounded-xl hover:scale-105 transition-all shadow-xl shadow-(--accent)/10 text-center"
-              >
-                Découvrir la plateforme
-              </Link>
+
+            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a
                 href="#contact"
-                className="w-full sm:w-auto px-10 py-5 glass-panel text-white font-bold rounded-xl hover:bg-white/5 transition-all text-center inline-block"
+                className="inline-flex items-center justify-center rounded-full bg-linear-to-br from-(--accent) to-[#8a6a32] px-7 py-3 text-sm font-semibold text-black shadow-[0_8px_30px_rgba(212,176,106,0.25)] hover:translate-y-[-1px] transition"
               >
-                Planifier une démo
+                Voir une démo
+              </a>
+              <a
+                href="#contact"
+                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/0 px-7 py-3 text-sm font-semibold text-white backdrop-blur hover:border-(--border-accent) hover:text-(--accent) transition"
+              >
+                Parler à un expert
               </a>
             </div>
-            <div className="relative max-w-6xl mx-auto group">
-              <div className="absolute -inset-4 bg-linear-to-tr from-(--accent)/20 to-indigo-500/20 rounded-[40px] blur-3xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
-              <div className="relative glass-panel rounded-[32px] p-2 border border-white/10 shadow-2xl overflow-hidden">
-                <div className="bg-primary rounded-[30px] overflow-hidden border border-white/5">
-                  <div className="h-14 border-b border-white/5 bg-primary-light flex items-center px-6 gap-4">
-                    <div className="flex gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
-                      <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-                      <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
+
+            {/* Dashboard mockup */}
+            <div className="mt-14">
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0e0e0e] shadow-[0_40px_80px_rgba(0,0,0,0.6)]">
+                <div className="flex items-center gap-3 border-b border-white/10 bg-black/40 px-4 py-3">
+                  <div className="flex gap-2">
+                    <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+                    <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
+                    <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+                  </div>
+                  <div className="flex-1 text-center text-[11px] text-(--text-dim)">
+                    Newkomers — Tableau de bord
+                  </div>
+                </div>
+
+                <div className="flex h-[220px]">
+                  <div className="flex w-12 flex-col items-center gap-2 border-r border-white/10 bg-black/30 py-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-(--accent) to-[#8a6a32] text-[10px] font-black text-black">
+                      NK
                     </div>
-                    <div className="flex-1 max-w-md mx-auto">
-                      <div className="bg-primary border border-white/5 rounded-lg h-7 flex items-center px-3 gap-2">
-                        <span className="material-symbols-outlined text-[14px] text-(--text-muted)">lock</span>
-                        <span className="text-[10px] text-(--text-muted) tracking-wide">newkomers.app/consolidated-dashboard</span>
-                      </div>
+                    <div className="mt-1 flex flex-col gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--accent)/15 text-(--accent)">▣</div>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg text-(--text-dim)">◈</div>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg text-(--text-dim)">◎</div>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg text-(--text-dim)">◑</div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-12 h-[600px]">
-                    <aside className="col-span-2 border-r border-white/5 p-6 space-y-8">
-                      <div className="space-y-4">
-                        <div className="h-2 w-20 bg-white/10 rounded"></div>
-                        <div className="h-2 w-24 bg-white/5 rounded"></div>
-                        <div className="h-2 w-16 bg-white/5 rounded"></div>
-                      </div>
-                      <div className="space-y-4 pt-10">
-                        <div className="h-2 w-full bg-(--accent)/20 rounded"></div>
-                        <div className="h-2 w-full bg-white/5 rounded"></div>
-                        <div className="h-2 w-full bg-white/5 rounded"></div>
-                      </div>
-                    </aside>
-                    <div className="col-span-10 p-8">
-                      <div className="grid grid-cols-3 gap-6 mb-8">
-                        <div className="h-32 bg-primary-light rounded-2xl border border-white/5 p-4">
-                          <div className="w-8 h-8 rounded bg-(--accent)/10 mb-4"></div>
-                          <div className="h-2 w-12 bg-white/20 rounded mb-2"></div>
-                          <div className="h-4 w-24 bg-white/40 rounded"></div>
+
+                  <div className="flex flex-1 flex-col gap-3 p-4 text-left">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[13px] font-semibold text-white">
+                        Pilotez <span className="text-(--accent)">votre univers</span>
+                      </span>
+                      <span className="text-[11px] text-(--text-dim)">financier en temps réel.</span>
+                      <span className="ml-auto rounded bg-(--accent) px-2 py-0.5 text-[9px] font-extrabold text-black">
+                        LIVE
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2">
+                      {[
+                        { v: "13", l: "Entités" },
+                        { v: "13", l: "Rapports" },
+                        { v: "+8.4%", l: "Croissance", accent: true },
+                        { v: "TST", l: "Groupe" },
+                      ].map((k) => (
+                        <div key={k.l} className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                          <div className={`text-[16px] font-extrabold ${k.accent ? "text-emerald-400" : "text-white"}`}>{k.v}</div>
+                          <div className="mt-0.5 text-[9px] uppercase tracking-wider text-(--text-dim)">{k.l}</div>
                         </div>
-                        <div className="h-32 bg-primary-light rounded-2xl border border-white/5 p-4">
-                          <div className="w-8 h-8 rounded bg-indigo-500/10 mb-4"></div>
-                          <div className="h-2 w-12 bg-white/20 rounded mb-2"></div>
-                          <div className="h-4 w-24 bg-white/40 rounded"></div>
-                        </div>
-                        <div className="h-32 bg-primary-light rounded-2xl border border-white/5 p-4">
-                          <div className="w-8 h-8 rounded bg-emerald-500/10 mb-4"></div>
-                          <div className="h-2 w-12 bg-white/20 rounded mb-2"></div>
-                          <div className="h-4 w-24 bg-white/40 rounded"></div>
-                        </div>
-                      </div>
-                      <div className="h-[340px] bg-primary-light rounded-2xl border border-white/5 relative overflow-hidden">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          alt="Analytics Preview"
-                          className="w-full h-full object-cover opacity-30 grayscale"
-                          src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhjFDm6TmezmaIBSrrlvOIoU11u9JnJx4ZKuP-Vl2wMG1RoSVY7XW2GryFDoi-nzYbj8QkaZ5YyCVMaXhmMq_vq7oqphzMB0xxkdHNY2_SZSPHTRYnnwa780pDRz3SRTXZZtxncqlYM2Ks_f5Lb0Fg46AeIIxAeSTzAoeT767A8Pysp8TqeYV89xZH6bNg5Bs9KZBk5m9Tgg9hNgy5Xf-zs8wzAbwnXCJ9RMOH-6KoOJohQP_KucaZvSV0O90pxHjtjzbLAQ2x9sOX"
+                      ))}
+                    </div>
+
+                    <div className="mt-1 flex flex-1 items-end gap-1.5">
+                      {[40, 65, 45, 80, 70, 55, 90].map((h, idx) => (
+                        <div
+                          key={idx}
+                          className={`w-full rounded-t ${idx === 4 ? "bg-linear-to-t from-[#8a6a32] to-(--accent)" : "bg-white/10"}`}
+                          style={{ height: `${h}%` }}
                         />
-                        <div className="absolute inset-0 bg-linear-to-t from-primary-light to-transparent"></div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -142,30 +248,37 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="py-24 border-y border-border bg-primary-light/30" id="social">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <div className="flex flex-col items-center gap-12">
-              <div className="flex items-center gap-4">
-                <div className="h-px w-12 bg-border"></div>
-                <span className="text-xs font-bold uppercase tracking-[0.3em] text-(--text-muted)">Approuvé par l&apos;élite financière</span>
-                <div className="h-px w-12 bg-border"></div>
-              </div>
-              <div className="flex flex-wrap justify-center items-center gap-16 md:gap-24 grayscale opacity-60">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-3xl">diamond</span>
-                  <span className="text-xl font-bold tracking-widest text-white">LUMINA</span>
+        <section id="social-proof" className="relative overflow-hidden py-20 text-center">
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="inline-flex items-center rounded-full border border-(--border-accent) bg-(--accent)/10 px-4 py-1.5 text-[11px] font-semibold tracking-[0.25em] text-(--accent) uppercase">
+              Ils nous font confiance
+            </div>
+            <h2 className="mt-6 text-balance text-[clamp(28px,4vw,42px)] font-extrabold leading-tight text-white">
+              La plateforme choisie par les équipes finance<br />
+              <span className="text-(--accent)">qui pilotent des groupes</span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-(--text-muted)">
+              Pensée pour les DAF et dirigeants qui veulent des chiffres fiables, en continu — sans friction, sans tableurs,
+              sans zones grises.
+            </p>
+
+            <div className="relative mt-10 overflow-hidden">
+              <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-32 bg-linear-to-r from-(--primary) to-transparent" />
+              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-32 bg-linear-to-l from-(--primary) to-transparent" />
+              <div className="landing-marquee-track">
+                <div className="flex items-center gap-16 px-10">
+                  {["DBA", "air labs", "fintech", "Ar Pro Software", "◎ HCP", "LaCaisse", "FBD"].map((l) => (
+                    <span key={`a-${l}`} className="whitespace-nowrap text-lg font-extrabold tracking-wider text-white/80 uppercase hover:text-(--accent) transition-colors">
+                      {l}
+                    </span>
+                  ))}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-3xl">token</span>
-                  <span className="text-xl font-bold tracking-widest text-white">ARCANE</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-3xl">layers</span>
-                  <span className="text-xl font-bold tracking-widest text-white">STRATOS</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-3xl">grid_view</span>
-                  <span className="text-xl font-bold tracking-widest text-white">NEXUS</span>
+                <div className="flex items-center gap-16 px-10" aria-hidden>
+                  {["DBA", "air labs", "fintech", "Ar Pro Software", "◎ HCP", "LaCaisse", "FBD"].map((l) => (
+                    <span key={`b-${l}`} className="whitespace-nowrap text-lg font-extrabold tracking-wider text-white/80 uppercase hover:text-(--accent) transition-colors">
+                      {l}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
@@ -369,89 +482,144 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-32 sm:px-6" id="contact">
-          <div className="relative bg-linear-to-br from-indigo-900 to-primary rounded-[40px] p-12 md:p-24 text-center overflow-hidden border border-white/10 shadow-2xl">
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-(--accent)/10 blur-[100px] rounded-full"></div>
-            <div className="relative z-10">
-              <h2 className="serif-heading text-4xl md:text-6xl font-bold text-white mb-8">
-                Reprenez le contrôle de votre récit financier.
-              </h2>
-              <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                <Link href={user ? "/dashboard" : "/login"} className="px-12 py-5 bg-white text-primary font-bold rounded-2xl hover:bg-(--accent) transition-all inline-block">
-                  Déployer NEWKOMERS
-                </Link>
-                <a href="#contact" className="px-12 py-5 glass-panel text-white font-bold rounded-2xl border border-white/10 hover:bg-white/5 transition-all inline-block">
-                  Parler à un conseiller
-                </a>
-              </div>
-              <div className="mt-12 flex items-center justify-center gap-8 opacity-40 text-xs font-semibold tracking-widest text-white uppercase flex-wrap">
-                <span className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">verified_user</span>
-                  RGPD Compliant
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">encrypted</span>
-                  AES-256 Encryption
-                </span>
-              </div>
+        <section id="contact" className="relative overflow-hidden py-24 px-6 text-center">
+          <div className="pointer-events-none absolute left-1/2 top-0 h-[360px] w-[560px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(212,176,106,0.10)_0%,transparent_70%)] blur-[80px]" />
+          <div className="mx-auto max-w-2xl">
+            <div className="inline-flex items-center rounded-full border border-(--border-accent) bg-(--accent)/10 px-4 py-1.5 text-[11px] font-semibold tracking-[0.25em] text-(--accent) uppercase">
+              Contact
             </div>
+            <h2 className="mt-6 text-balance text-[clamp(28px,4vw,42px)] font-extrabold leading-tight text-white">
+              Contactez nous via<br /><span className="text-(--accent)">ce formulaire</span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-[16px] leading-relaxed text-(--text-muted)">
+              Remplissez ce formulaire et un expert Newkomers vous recontactera dans les 24 heures pour discuter de votre projet.
+            </p>
+
+            <form
+              className="mt-10 text-left"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setContactSent(true);
+                window.setTimeout(() => setContactSent(false), 4000);
+              }}
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] text-(--text-muted)" htmlFor="contact-fname">Prénom</label>
+                  <input
+                    id="contact-fname"
+                    placeholder="Jean"
+                    className="h-11 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-(--text-dim) focus:outline-none focus:ring-2 focus:ring-(--accent)/40"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] text-(--text-muted)" htmlFor="contact-lname">Nom</label>
+                  <input
+                    id="contact-lname"
+                    placeholder="Dupont"
+                    className="h-11 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-(--text-dim) focus:outline-none focus:ring-2 focus:ring-(--accent)/40"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] text-(--text-muted)" htmlFor="contact-email">Email professionnel</label>
+                  <input
+                    id="contact-email"
+                    type="email"
+                    placeholder="jean@holding.fr"
+                    className="h-11 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-(--text-dim) focus:outline-none focus:ring-2 focus:ring-(--accent)/40"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] text-(--text-muted)" htmlFor="contact-company">Société / Groupe</label>
+                  <input
+                    id="contact-company"
+                    placeholder="Groupe XYZ"
+                    className="h-11 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-(--text-dim) focus:outline-none focus:ring-2 focus:ring-(--accent)/40"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-2">
+                <label className="text-[13px] text-(--text-muted)" htmlFor="contact-message">Votre message</label>
+                <textarea
+                  id="contact-message"
+                  rows={4}
+                  placeholder="Décrivez votre structure et vos besoins..."
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-(--text-dim) focus:outline-none focus:ring-2 focus:ring-(--accent)/40"
+                />
+              </div>
+
+              <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-start">
+                <button
+                  type="submit"
+                  disabled={contactSent}
+                  className={`inline-flex items-center justify-center rounded-full px-7 py-3 text-sm font-semibold transition ${
+                    contactSent
+                      ? "bg-linear-to-br from-emerald-400 to-emerald-600 text-black"
+                      : "bg-linear-to-br from-(--accent) to-[#8a6a32] text-black hover:translate-y-[-1px]"
+                  } disabled:opacity-80`}
+                >
+                  {contactSent ? "✓ Demande envoyée !" : "Envoyer ma demande"}
+                </button>
+                <p className="text-[11px] leading-relaxed text-(--text-dim)">
+                  * En soumettant ce formulaire, vous acceptez notre politique de confidentialité et notre utilisation éthique des données financières.
+                </p>
+              </div>
+            </form>
           </div>
         </section>
       </main>
 
-      <footer className="bg-primary border-t border-border pt-24 pb-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-16 mb-24">
-            <div className="col-span-2">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-8 h-8 bg-(--accent) rounded-lg flex items-center justify-center">
-                  <span className="material-symbols-outlined text-primary text-sm font-bold">query_stats</span>
-                </div>
-                <span className="text-xl font-bold tracking-tight text-white">NEWKOMERS</span>
+      <footer className="border-t border-white/10 bg-black/70 px-6 py-14">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-10 md:grid-cols-[1fr_2fr]">
+            <div>
+              <div className="text-[15px] font-black tracking-[0.2em] text-white">NEWKOMERS</div>
+              <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-(--text-dim)">
+                La plateforme financière de référence pour les holdings et groupes d&apos;entreprises exigeants.
+              </p>
+            </div>
+
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              <div>
+                <h4 className="text-xs font-bold tracking-widest text-(--text-muted) uppercase">Produit</h4>
+                <ul className="mt-4 space-y-2 text-[13px] text-(--text-dim)">
+                  <li><a className="hover:text-(--accent) transition-colors" href="#features">Fonctionnalités</a></li>
+                  <li><a className="hover:text-(--accent) transition-colors" href="#pricing">Tarifs</a></li>
+                  <li><a className="hover:text-(--accent) transition-colors" href="#hero">Roadmap</a></li>
+                  <li><a className="hover:text-(--accent) transition-colors" href="#hero">Changelog</a></li>
+                </ul>
               </div>
-              <p className="text-(--text-muted) max-w-xs mb-8 leading-relaxed">
-                Plateforme SaaS premium de pilotage financier, certifiée par les directions financières de groupes européens.
-              </p>
-              <p className="text-(--text-muted) text-xs flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm text-(--accent)">lock</span>
-                Sécurisé par chiffrement AES-256
-              </p>
-            </div>
-            <div>
-              <h5 className="font-bold text-white mb-6 uppercase tracking-widest text-xs">Produit</h5>
-              <ul className="space-y-4 text-sm text-(--text-muted)">
-                <li><a className="hover:text-(--accent) transition-colors" href="#features">Consolidation</a></li>
-                <li><a className="hover:text-(--accent) transition-colors" href="#features">Reporting Automatique</a></li>
-                <li><a className="hover:text-(--accent) transition-colors" href="#features">Cash Burn Engine</a></li>
-                <li><a className="hover:text-(--accent) transition-colors" href="#contact">Sécurité</a></li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="font-bold text-white mb-6 uppercase tracking-widest text-xs">Légal</h5>
-              <ul className="space-y-4 text-sm text-(--text-muted)">
-                <li><a className="hover:text-(--accent) transition-colors" href="#">Confidentialité</a></li>
-                <li><a className="hover:text-(--accent) transition-colors" href="#">Mentions Légales</a></li>
-                <li><a className="hover:text-(--accent) transition-colors" href="#">CGU / CGV</a></li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="font-bold text-white mb-6 uppercase tracking-widest text-xs">Support</h5>
-              <ul className="space-y-4 text-sm text-(--text-muted)">
-                <li><a className="hover:text-(--accent) transition-colors" href="#contact">Centre d&apos;aide</a></li>
-                <li><a className="hover:text-(--accent) transition-colors" href="#">API Documentation</a></li>
-                <li><a className="hover:text-(--accent) transition-colors" href="#contact">Contact</a></li>
-              </ul>
+              <div>
+                <h4 className="text-xs font-bold tracking-widest text-(--text-muted) uppercase">Société</h4>
+                <ul className="mt-4 space-y-2 text-[13px] text-(--text-dim)">
+                  <li><a className="hover:text-(--accent) transition-colors" href="#hero">À propos</a></li>
+                  <li><a className="hover:text-(--accent) transition-colors" href="#hero">Blog</a></li>
+                  <li><a className="hover:text-(--accent) transition-colors" href="#hero">Carrières</a></li>
+                  <li><a className="hover:text-(--accent) transition-colors" href="#hero">Presse</a></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-xs font-bold tracking-widest text-(--text-muted) uppercase">Contact</h4>
+                <ul className="mt-4 space-y-2 text-[13px] text-(--text-dim)">
+                  <li><a className="hover:text-(--accent) transition-colors" href="#contact">Nous écrire</a></li>
+                  <li><a className="hover:text-(--accent) transition-colors" href="#contact">Support</a></li>
+                  <li><a className="hover:text-(--accent) transition-colors" href="#contact">Partenaires</a></li>
+                  <li><a className="hover:text-(--accent) transition-colors" href="#contact">Démo</a></li>
+                </ul>
+              </div>
             </div>
           </div>
-          <div className="pt-12 border-t border-border flex flex-col md:flex-row justify-between items-center gap-8">
-            <p className="text-(--text-muted) text-xs">
-              © {new Date().getFullYear()} NEWKOMERS SAS. Made for high-performance finance teams.
-            </p>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 text-xs text-emerald-400">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                Systèmes Opérationnels
-              </div>
+
+          <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-(--text-dim) md:flex-row md:items-center md:justify-between">
+            <span>© {new Date().getFullYear()} Newkomers. Tous droits réservés.</span>
+            <div className="flex gap-6">
+              <a className="hover:text-(--accent) transition-colors" href="#hero">Mentions légales</a>
+              <a className="hover:text-(--accent) transition-colors" href="#hero">Confidentialité</a>
+              <a className="hover:text-(--accent) transition-colors" href="#hero">CGU</a>
             </div>
           </div>
         </div>

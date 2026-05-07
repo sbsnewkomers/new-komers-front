@@ -44,7 +44,7 @@ export const APP_NAV_MAIN_ITEMS: readonly AppNavItem[] = [
   {
     type: "link",
     href: "/dashboard",
-    label: "Dashboard",
+    label: "Tableau de bord",
     icon: LayoutDashboard,
   },
   {
@@ -56,7 +56,7 @@ export const APP_NAV_MAIN_ITEMS: readonly AppNavItem[] = [
   {
     type: "link",
     href: "/shareholders",
-    label: "Shareholders",
+    label: "Actionnaires",
     icon: Users,
     roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
   },
@@ -86,7 +86,7 @@ export const APP_NAV_MAIN_ITEMS: readonly AppNavItem[] = [
   {
     type: "link",
     href: "/audit",
-    label: "Audit",
+    label: "Journal d'audit",
     icon: ScrollText,
     roles: ["SUPER_ADMIN", "ADMIN"],
   },
@@ -96,7 +96,7 @@ export const APP_NAV_FOOTER_ITEMS: readonly AppNavLinkItem[] = [
   {
     type: "link",
     href: "/users",
-    label: "Users",
+    label: "Utilisateurs",
     icon: Users,
     roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "HEAD_MANAGER"],
   },

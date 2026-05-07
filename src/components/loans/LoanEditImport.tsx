@@ -90,8 +90,8 @@ export function LoanEditImport({ loanId, onBack, onLoanUpdated }: LoanEditImport
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2 text-muted-foreground">Chargement du prêt...</span>
+                <Loader2 className="h-8 w-8 animate-spin text-(--nebula-gold-light)" />
+                <span className="ml-2 text-(--nebula-muted)">Chargement du prêt...</span>
             </div>
         );
     }
@@ -99,10 +99,10 @@ export function LoanEditImport({ loanId, onBack, onLoanUpdated }: LoanEditImport
     if (error) {
         return (
             <div className="space-y-4">
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                    <div className="flex items-center">
-                        <AlertTriangle className="h-4 w-4 text-red-600 mr-2" />
-                        <p className="text-red-800">{error}</p>
+                <div className="nebula-glass rounded-2xl border border-red-400/30 bg-red-500/10 p-4">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-red-300" />
+                        <p className="text-sm text-red-100">{error}</p>
                     </div>
                 </div>
                 <Button onClick={onBack} variant="outline">
@@ -116,10 +116,10 @@ export function LoanEditImport({ loanId, onBack, onLoanUpdated }: LoanEditImport
     if (!loan) {
         return (
             <div className="space-y-4">
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                    <div className="flex items-center">
-                        <AlertTriangle className="h-4 w-4 text-red-600 mr-2" />
-                        <p className="text-red-800">Prêt non trouvé</p>
+                <div className="nebula-glass rounded-2xl border border-red-400/30 bg-red-500/10 p-4">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-red-300" />
+                        <p className="text-sm text-red-100">Prêt non trouvé</p>
                     </div>
                 </div>
                 <Button onClick={onBack} variant="outline">
@@ -133,25 +133,25 @@ export function LoanEditImport({ loanId, onBack, onLoanUpdated }: LoanEditImport
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="nebula-glass nebula-blob flex flex-col gap-4 rounded-3xl border border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                     <button
                         type="button"
                         onClick={onBack}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                         aria-label="Retour"
                     >
                         <ArrowLeft className="h-4 w-4" />
                     </button>
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
-                            <FileSpreadsheet className="h-5 w-5 text-green-600" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                            <FileSpreadsheet className="h-5 w-5 text-(--nebula-gold-light)" />
                         </div>
                         <div>
-                            <h3 className="text-base font-semibold text-slate-900">
+                            <h3 className="text-base font-semibold text-white">
                                 Modification par import
                             </h3>
-                            <p className="text-xs text-slate-500">{loan.name}</p>
+                            <p className="text-xs text-(--nebula-muted)">{loan.name}</p>
                         </div>
                     </div>
                 </div>
@@ -161,14 +161,14 @@ export function LoanEditImport({ loanId, onBack, onLoanUpdated }: LoanEditImport
             <StepIndicator currentStep={currentStep} steps={steps} />
 
             {/* Warning about import modification */}
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                <div className="flex items-start">
-                    <AlertTriangle className="h-4 w-4 text-amber-600 mr-2 mt-0.5" />
+            <div className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-4">
+                <div className="flex items-start gap-2">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" />
                     <div>
-                        <p className="text-amber-900 text-sm font-medium">
+                        <p className="text-sm font-medium text-white">
                             Attention : Modification par import
                         </p>
-                        <p className="text-amber-700 text-xs mt-1">
+                        <p className="mt-1 text-xs text-(--nebula-muted)">
                             Vous allez remplacer l&apos;échéancier existant par un nouvel échéancier importé depuis un fichier.
                             Cette action est irréversible.
                         </p>

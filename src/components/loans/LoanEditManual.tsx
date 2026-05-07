@@ -71,8 +71,8 @@ export function LoanEditManual({ loanId, onBack, onLoanUpdated }: LoanEditManual
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2 text-muted-foreground">Chargement du prêt...</span>
+                <Loader2 className="h-8 w-8 animate-spin text-(--nebula-gold-light)" />
+                <span className="ml-2 text-(--nebula-muted)">Chargement du prêt...</span>
             </div>
         );
     }
@@ -80,10 +80,10 @@ export function LoanEditManual({ loanId, onBack, onLoanUpdated }: LoanEditManual
     if (error) {
         return (
             <div className="space-y-4">
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                    <div className="flex items-center">
-                        <AlertTriangle className="h-4 w-4 text-red-600 mr-2" />
-                        <p className="text-red-800">{error}</p>
+                <div className="nebula-glass rounded-2xl border border-red-400/30 bg-red-500/10 p-4">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-red-300" />
+                        <p className="text-sm text-red-100">{error}</p>
                     </div>
                 </div>
                 <Button onClick={onBack} variant="outline">
@@ -97,10 +97,10 @@ export function LoanEditManual({ loanId, onBack, onLoanUpdated }: LoanEditManual
     if (!loan) {
         return (
             <div className="space-y-4">
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                    <div className="flex items-center">
-                        <AlertTriangle className="h-4 w-4 text-red-600 mr-2" />
-                        <p className="text-red-800">Prêt non trouvé</p>
+                <div className="nebula-glass rounded-2xl border border-red-400/30 bg-red-500/10 p-4">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-red-300" />
+                        <p className="text-sm text-red-100">Prêt non trouvé</p>
                     </div>
                 </div>
                 <Button onClick={onBack} variant="outline">
@@ -114,25 +114,25 @@ export function LoanEditManual({ loanId, onBack, onLoanUpdated }: LoanEditManual
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="nebula-glass nebula-blob flex flex-col gap-4 rounded-3xl border border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                     <button
                         type="button"
                         onClick={onBack}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                         aria-label="Retour"
                     >
                         <ArrowLeft className="h-4 w-4" />
                     </button>
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-                            <Pencil className="h-5 w-5 text-blue-600" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                            <Pencil className="h-5 w-5 text-(--nebula-gold-light)" />
                         </div>
                         <div>
-                            <h3 className="text-base font-semibold text-slate-900">
+                            <h3 className="text-base font-semibold text-white">
                                 Modification manuelle
                             </h3>
-                            <p className="text-xs text-slate-500">{loan?.name}</p>
+                            <p className="text-xs text-(--nebula-muted)">{loan?.name}</p>
                         </div>
                     </div>
                 </div>
@@ -140,10 +140,10 @@ export function LoanEditManual({ loanId, onBack, onLoanUpdated }: LoanEditManual
 
             {/* Warning for paid installments */}
             {hasPaidInstallments && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                    <div className="flex items-start">
-                        <AlertTriangle className="h-4 w-4 text-red-600 mr-2 mt-0.5" />
-                        <p className="text-red-800 text-sm">
+                <div className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4">
+                    <div className="flex items-start gap-2">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />
+                        <p className="text-sm text-red-100">
                             Ce prêt contient déjà des échéances payées. Vous ne pouvez pas modifier les échéances existantes,
                             uniquement les informations générales du prêt.
                         </p>
@@ -180,21 +180,20 @@ export function LoanEditManual({ loanId, onBack, onLoanUpdated }: LoanEditManual
 
                     {/* Confirmation checkbox for existing installments */}
                     {hasExistingInstallments && (
-                        <div className="flex items-start space-x-3 p-4 border border-amber-200/50 rounded-xl bg-gradient-to-r from-amber-50/50 to-orange-50/50 backdrop-blur-sm shadow-sm">
+                        <div className="flex items-start gap-3 rounded-2xl border border-amber-400/25 bg-amber-500/10 p-4">
                             <div className="mt-0.5">
                                 <Checkbox
                                     id="confirm-regeneration"
                                     checked={confirmRegeneration}
                                     onCheckedChange={(checked) => setConfirmRegeneration(checked as boolean)}
                                     disabled={isSaving}
-                                    className="border-amber-300 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
                                 />
                             </div>
                             <div className="flex-1">
-                                <Label htmlFor="confirm-regeneration" className="text-sm font-semibold text-amber-900 leading-tight cursor-pointer">
+                                <Label htmlFor="confirm-regeneration" className="cursor-pointer text-sm font-semibold leading-tight text-white">
                                     Je confirme vouloir remplacer toutes les échéances existantes par les nouvelles échéances
                                 </Label>
-                                <p className="text-xs text-amber-700/80 mt-1 font-normal">
+                                <p className="mt-1 text-xs font-normal text-(--nebula-muted)">
                                     Cette action est irréversible et remplacera toutes les échéances actuelles
                                 </p>
                             </div>

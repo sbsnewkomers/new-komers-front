@@ -28,52 +28,54 @@ export function LoanStats({ overviewStats }: LoanStatsProps) {
                     {
                         label: 'Total',
                         value: stats.total,
-                        color: 'text-slate-900',
-                        bg: 'bg-linear-to-l from-slate-200 to-white ring-1 ring-slate-100',
                         icon: TrendingUp,
                     },
                     {
                         label: 'Actifs',
                         value: stats.active,
-                        color: 'text-emerald-700',
-                        bg: 'bg-linear-to-l from-green-200 to-white ring-1 ring-green-100',
+                        color: 'emerald-700',
                         icon: CheckCircle2,
                     },
                     {
                         label: 'Capital total',
                         value: formatCurrencyEUR(stats.principal, { maximumFractionDigits: 0, fallback: "0 €" }),
-                        color: 'text-blue-700',
-                        bg: 'bg-linear-to-l from-blue-200 to-white ring-1 ring-blue-100',
+                        color: 'blue-700',
                         icon: Wallet,
                     },
                     {
                         label: 'Taux moyen',
                         value: formatPercent(stats.rate, { decimals: 2 }),
-                        color: 'text-amber-700',
-                        bg: 'bg-linear-to-l from-yellow-200 to-white ring-1 ring-yellow-100',
+                        color: 'amber-700',
                         icon: Percent,
                     },
                 ] as const
-            ).map((s) => {
+            ).map((s: { label: string; value: number | string; color?: string; icon: React.ElementType }) => {
                 const Icon = s.icon;
                 return (
                     <div
-                        key={s.label}
-                        className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}
+                      key={s.label}
+                      className={`nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden`}
                     >
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <p
-                                    className={`text-xs font-bold uppercase tracking-wider ${s.color}`}
-                                >
-                                    {s.label}
-                                </p>
-                                <p className={`mt-1 text-2xl font-bold ${s.color}`}>
-                                    {s.value}
-                                </p>
-                            </div>
-                            <Icon className={`h-5 w-5 ${s.color} opacity-60`} />
-                        </div>
+											<div className="flex items-start justify-between">
+												<p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+													§ {s.label}
+												</p>
+												<Icon
+													className={[
+														"h-5 w-5 opacity-60",
+														s.color ? `text-${s.color}` : "text-white/50",
+													].join(" ")}
+												/>
+											</div>
+											<p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
+												{s.value}
+											</p>
+											{s.color ? (
+												<div
+													aria-hidden
+													className={`pointer-events-none absolute -bottom-10 -right-40 w-full h-full rounded-full bg-${s.color} blur-3xl`}
+												/>
+											) : null}
                     </div>
                 );
             })}

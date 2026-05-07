@@ -150,7 +150,7 @@ export default function EditAssetPage() {
         <div className="container mx-auto py-6">
           <div className="flex items-center justify-center">
             <div className="text-center">
-              <p className="text-gray-600">Chargement de l&apos;actif...</p>
+              <p className="text-(--nebula-muted)">Chargement de l&apos;actif...</p>
             </div>
           </div>
         </div>
@@ -164,7 +164,7 @@ export default function EditAssetPage() {
         <div className="container mx-auto py-6">
           <div className="flex items-center justify-center">
             <div className="text-center">
-              <p className="text-gray-600">Actif non trouve</p>
+              <p className="text-(--nebula-muted)">Actif non trouve</p>
             </div>
           </div>
         </div>
@@ -190,12 +190,12 @@ export default function EditAssetPage() {
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
-              <AlertTriangle className="h-5 w-5 text-orange-600" />
+            <AlertDialogTitle className="flex items-center gap-2 text-amber-200">
+              <AlertTriangle className="h-5 w-5 text-amber-300" />
               Confirmation de modification
             </AlertDialogTitle>
             <AlertDialogDescription className="whitespace-pre-line">
-              Attention : La modification de ces champs va régénérer entièrement le plan d'amortissement.
+              Attention : La modification de ces champs va régénérer entièrement le plan d&apos;amortissement.
               Voulez-vous continuer ?
             </AlertDialogDescription>
           </AlertDialogHeader>

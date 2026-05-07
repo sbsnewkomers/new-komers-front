@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/Button';
-import { ArrowRight, Building, Calculator, List, TrendingUp } from 'lucide-react';
+import { ArrowRight, Calculator, List, TrendingUp } from 'lucide-react';
 
 export default function DotationsPage() {
   const router = useRouter();
@@ -24,17 +24,12 @@ export default function DotationsPage() {
         {/* Header */}
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="rounded-xl bg-primary/10 p-2.5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calculator h-5 w-5 text-primary" aria-hidden="true">
-                <rect width="18" height="12" x="3" y="8" rx="2"></rect>
-                <path d="M8 8V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"></path>
-                <path d="M12 4v.01"></path>
-                <rect x="8" y="12" width="8" height="4" rx="1"></rect>
-              </svg>
+            <div className="rounded-xl bg-white/10 p-2.5">
+              <Calculator className="h-5 w-5 text-(--nebula-gold-light)" aria-hidden />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-primary">Gestion des dotations</h2>
-              <p className="text-sm text-slate-500">Choisissez votre mode de gestion des amortissements</p>
+              <h2 className="text-xl font-bold text-white">Gestion des dotations</h2>
+              <p className="text-sm text-(--nebula-muted)">Choisissez votre mode de gestion des amortissements</p>
             </div>
           </div>
         </div>
@@ -43,70 +38,53 @@ export default function DotationsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
 
           {/* Mode Détaillé */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg transition-all duration-300 overflow-hidden group">
+          <div className="nebula-glass rounded-3xl border border-white/10 overflow-hidden transition-colors duration-300 hover:border-white/20 group">
             <div className="p-6">
-              {/* Header Card */}
               <div className="flex items-start gap-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                  <List className="h-6 w-6 text-blue-700" />
+                <div className="w-12 h-12 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                  <List className="h-6 w-6 text-(--nebula-gold-light)" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-slate-900 mb-1">Mode Détaillé</h3>
-                  <p className="text-slate-600 text-sm font-medium">Gestion individuelle des actifs</p>
+                  <h3 className="text-xl font-bold text-white mb-1">Mode Détaillé</h3>
+                  <p className="text-(--nebula-muted) text-sm font-medium">Gestion individuelle des actifs</p>
                 </div>
               </div>
 
-              {/* Description */}
               <div className="mb-4">
-                <p className="text-slate-700 leading-relaxed text-sm mb-4">
+                <p className="text-white/90 leading-relaxed text-sm mb-4">
                   Gérez chaque actif individuellement avec ses caractéristiques propres,
                   ses plans d&apos;amortissement et son suivi détaillé.
                 </p>
 
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-                  <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2 text-base">
-                    <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="h-3 w-3 text-white" />
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <h4 className="font-semibold text-white mb-3 flex items-center gap-2 text-base">
+                    <div className="w-6 h-6 rounded-lg border border-white/10 bg-white/10 flex items-center justify-center">
+                      <TrendingUp className="h-3 w-3 text-(--nebula-gold-light)" />
                     </div>
                     Fonctionnalités clés
                   </h4>
                   <div className="grid gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-600 rounded-full flex-shrink-0 mt-0.5"></div>
-                      <div>
-                        <div className="font-medium text-slate-800 text-sm">Détail par actif</div>
-                        <div className="text-xs text-slate-600">Nom, montant, durée et caractéristiques</div>
+                    {[
+                      { title: 'Détail par actif', sub: 'Nom, montant, durée et caractéristiques' },
+                      { title: 'Plans personnalisés', sub: 'Amortissements individuels par bien' },
+                      { title: 'Méthodes flexibles', sub: 'Linéaire, dégressif et personnalisé' },
+                      { title: 'Suivi précis', sub: 'Historique et état de chaque bien' },
+                    ].map((item) => (
+                      <div key={item.title} className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-0.5 bg-(--nebula-gold-light)" />
+                        <div>
+                          <div className="font-medium text-white text-sm">{item.title}</div>
+                          <div className="text-xs text-(--nebula-muted)">{item.sub}</div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-600 rounded-full flex-shrink-0 mt-0.5"></div>
-                      <div>
-                        <div className="font-medium text-slate-800 text-sm">Plans personnalisés</div>
-                        <div className="text-xs text-slate-600">Amortissements individuels par bien</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-600 rounded-full flex-shrink-0 mt-0.5"></div>
-                      <div>
-                        <div className="font-medium text-slate-800 text-sm">Méthodes flexibles</div>
-                        <div className="text-xs text-slate-600">Linéaire, dégressif et personnalisé</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-600 rounded-full flex-shrink-0 mt-0.5"></div>
-                      <div>
-                        <div className="font-medium text-slate-800 text-sm">Suivi précis</div>
-                        <div className="text-xs text-slate-600">Historique et état de chaque bien</div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              {/* Action Button */}
               <Button
                 onClick={handleModeDetailed}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-300 py-3 text-sm font-semibold"
+                className="w-full"
                 size="lg"
               >
                 Accéder au Mode Détaillé
@@ -116,70 +94,53 @@ export default function DotationsPage() {
           </div>
 
           {/* Mode Global */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg transition-all duration-300 overflow-hidden group">
+          <div className="nebula-glass rounded-3xl border border-white/10 overflow-hidden transition-colors duration-300 hover:border-emerald-400/20 group">
             <div className="p-6">
-              {/* Header Card */}
               <div className="flex items-start gap-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                  <Calculator className="h-6 w-6 text-emerald-700" />
+                <div className="w-12 h-12 rounded-xl border border-emerald-400/25 bg-emerald-500/10 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                  <Calculator className="h-6 w-6 text-emerald-500" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-slate-900 mb-1">Mode Global</h3>
-                  <p className="text-slate-600 text-sm font-medium">Gestion simplifiée</p>
+                  <h3 className="text-xl font-bold text-white mb-1">Mode Global</h3>
+                  <p className="text-(--nebula-muted) text-sm font-medium">Gestion simplifiée</p>
                 </div>
               </div>
 
-              {/* Description */}
               <div className="mb-4">
-                <p className="text-slate-700 leading-relaxed text-sm mb-4">
+                <p className="text-white/90 leading-relaxed text-sm mb-4">
                   Saisissez directement les montants globaux des dotations par année,
                   tel qu&apos;ils apparaissent dans vos documents comptables.
                 </p>
 
-                <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-100">
-                  <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2 text-base">
-                    <div className="w-6 h-6 bg-emerald-600 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="h-3 w-3 text-white" />
+                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/5 p-4">
+                  <h4 className="font-semibold text-white mb-3 flex items-center gap-2 text-base">
+                    <div className="w-6 h-6 rounded-lg border border-emerald-400/30 bg-emerald-500/15 flex items-center justify-center">
+                      <TrendingUp className="h-3 w-3 text-emerald-500" />
                     </div>
                     Fonctionnalités clés
                   </h4>
                   <div className="grid gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full flex-shrink-0 mt-0.5"></div>
-                      <div>
-                        <div className="font-medium text-slate-800 text-sm">Montants globaux</div>
-                        <div className="text-xs text-slate-600">Saisie annuelle simplifiée</div>
+                    {[
+                      { title: 'Montants globaux', sub: 'Saisie annuelle simplifiée' },
+                      { title: 'Répartition automatique', sub: 'Calcul mensuel automatique' },
+                      { title: 'Vue d\'ensemble', sub: 'Synthèse rapide et claire' },
+                      { title: 'Reporting direct', sub: 'Export comptable immédiat' },
+                    ].map((item) => (
+                      <div key={item.title} className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-0.5 bg-emerald-300/80" />
+                        <div>
+                          <div className="font-medium text-white text-sm">{item.title}</div>
+                          <div className="text-xs text-(--nebula-muted)">{item.sub}</div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full flex-shrink-0 mt-0.5"></div>
-                      <div>
-                        <div className="font-medium text-slate-800 text-sm">Répartition automatique</div>
-                        <div className="text-xs text-slate-600">Calcul mensuel automatique</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full flex-shrink-0 mt-0.5"></div>
-                      <div>
-                        <div className="font-medium text-slate-800 text-sm">Vue d&apos;ensemble</div>
-                        <div className="text-xs text-slate-600">Synthèse rapide et claire</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full flex-shrink-0 mt-0.5"></div>
-                      <div>
-                        <div className="font-medium text-slate-800 text-sm">Reporting direct</div>
-                        <div className="text-xs text-slate-600">Export comptable immédiat</div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              {/* Action Button */}
               <Button
                 onClick={handleModeGlobal}
-                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-md hover:shadow-lg transition-all duration-300 py-3 text-sm font-semibold"
+                className="w-full"
                 size="lg"
               >
                 Accéder au Mode Global

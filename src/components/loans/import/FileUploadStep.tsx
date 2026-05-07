@@ -50,11 +50,11 @@ export function FileUploadStep({
     return (
         <div className="space-y-6">
             {/* Templates */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">
+            <div className="nebula-glass rounded-3xl border border-white/10 p-6">
+                <h3 className="mb-1 text-sm font-semibold text-white">
                     Télécharger un modèle
                 </h3>
-                <p className="mb-5 text-xs text-slate-500">
+                <p className="mb-5 text-xs text-(--nebula-muted)">
                     Utilisez un modèle pré-configuré pour préparer votre fichier.
                 </p>
 
@@ -62,7 +62,7 @@ export function FileUploadStep({
                     <div className="flex items-center gap-4">
                         <Label
                             htmlFor="formatSelect"
-                            className="text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap"
+                            className="whitespace-nowrap text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                         >
                             Format
                         </Label>
@@ -101,11 +101,11 @@ export function FileUploadStep({
             </div>
 
             {/* Loan info + upload */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">
+            <div className="nebula-glass rounded-3xl border border-white/10 p-6">
+                <h3 className="mb-1 text-sm font-semibold text-white">
                     Informations sur l&apos;emprunt
                 </h3>
-                <p className="mb-5 text-xs text-slate-500">
+                <p className="mb-5 text-xs text-(--nebula-muted)">
                     Renseignez les informations de base et importez votre fichier.
                 </p>
 
@@ -113,7 +113,7 @@ export function FileUploadStep({
                     <div>
                         <Label
                             htmlFor="loanName"
-                            className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                            className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                         >
                             Nom de l&apos;emprunt <span className="text-red-500">*</span>
                         </Label>
@@ -133,7 +133,7 @@ export function FileUploadStep({
                     <div>
                         <Label
                             htmlFor="entityType"
-                            className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                            className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                         >
                             Type d&apos;entité <span className="text-red-500">*</span>
                         </Label>
@@ -151,7 +151,7 @@ export function FileUploadStep({
                     <div>
                         <Label
                             htmlFor="entityId"
-                            className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                            className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                         >
                             Entité <span className="text-red-500">*</span>
                         </Label>
@@ -172,15 +172,15 @@ export function FileUploadStep({
                     <div>
                         <Label
                             htmlFor="fileInput"
-                            className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+                            className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-(--nebula-muted)"
                         >
                             Fichier Excel / CSV <span className="text-red-500">*</span>
                         </Label>
                         <label
                             htmlFor="fileInput"
-                            className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50/60 px-3 py-2 text-sm text-slate-600 transition hover:border-slate-400 hover:bg-slate-50"
+                            className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/5 px-3 py-2 text-sm text-white/80 transition hover:border-white/30 hover:bg-white/10"
                         >
-                            <UploadCloud className="h-4 w-4 text-slate-500" />
+                            <UploadCloud className="h-4 w-4 text-white/50" />
                             <span className="truncate">
                                 {selectedFile
                                     ? selectedFile.name
@@ -204,7 +204,7 @@ export function FileUploadStep({
                     </div>
                 </div>
 
-                <div className="mt-6 flex justify-end border-t border-slate-100 pt-5">
+                <div className="mt-6 flex justify-end border-t border-white/10 pt-5">
                     <Button
                         onClick={onGoToNextStep}
                         disabled={
@@ -214,16 +214,15 @@ export function FileUploadStep({
                             !selectedEntityType ||
                             !selectedEntityId
                         }
-                        className="bg-primary text-white hover:bg-slate-800"
                     >
                         {isLoading ? 'Chargement…' : 'Suivant'}
                     </Button>
                 </div>
 
-                <div className="mt-5 flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50/60 p-4">
-                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-                    <p className="text-xs text-blue-800">
-                        <strong>Conseil :</strong> Utilisez des noms de colonnes standards
+                <div className="mt-5 flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-(--nebula-gold-light)" />
+                    <p className="text-xs text-(--nebula-muted)">
+                        <strong className="text-white/90">Conseil :</strong> Utilisez des noms de colonnes standards
                         comme «&nbsp;Date&nbsp;», «&nbsp;Capital&nbsp;»,
                         «&nbsp;Intérêts&nbsp;», «&nbsp;Assurance&nbsp;» pour un mapping
                         automatique.
