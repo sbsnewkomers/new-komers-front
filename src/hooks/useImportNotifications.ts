@@ -1,6 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
-import type { Socket } from 'socket.io-client';
 
 interface ImportNotificationPayload {
   severity: 'success' | 'error' | 'info' | 'warning';
@@ -45,8 +43,6 @@ export function useImportNotifications(
   userId: string | undefined,
   onNotification: (payload: ImportNotificationPayload) => void,
 ) {
-  const socketRef = useRef<Socket | null>(null);
-  // ✅ Toujours garder la dernière version du callback sans recréer le socket
   const onNotificationRef = useRef(onNotification);
   useEffect(() => {
     onNotificationRef.current = onNotification;
@@ -55,40 +51,40 @@ export function useImportNotifications(
   useEffect(() => {
     if (!userId) return;
 
-    // ✅ Séparer la base URL du path API
-    // Ex: NEXT_PUBLIC_API_BASE_URL = "http://localhost:3001/api"
-    // → on prend juste l'origine "http://localhost:3001"
     const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
-    const socketUrl = apiUrl.replace(/\/api\/?$/, ''); // retire le "/api" si présent
+    const url = `${apiUrl}/notifications/stream?userId=${userId}`;
 
-    const socket = io(`${socketUrl}/notifications`, {
-      query: { userId },
-      transports: ['websocket', 'polling'], // ✅ polling en fallback
-    });
+    let es: EventSource;
+    let retryTimeout: ReturnType<typeof setTimeout>;
 
-    socketRef.current = socket;
+    const connect = () => {
+      es = new EventSource(url);
 
-    // Debug temporaire — retire une fois que ça marche
-    socket.on('connect', () => {
-      console.log('[WS] Connecté au namespace /notifications, userId:', userId);
-    });
+      es.onopen = () => console.log('[SSE] Connecté, userId:', userId);
 
-    socket.on('connect_error', (err) => {
-      console.error('[WS] Erreur de connexion:', err.message);
-    });
+      es.onmessage = (event) => {
+        try {
+          const payload: ImportNotificationPayload = JSON.parse(event.data);
+          if (payload.type === 'import') {
+            onNotificationRef.current(payload);
+          }
+        } catch (err) {
+          console.error('[SSE] Erreur parsing:', err);
+        }
+      };
 
-    socket.on('notification', (payload: ImportNotificationPayload) => {
-      console.log('[WS] RAW:', JSON.stringify(payload)); // ← JSON.stringify force l'affichage
-      console.log('[WS] type:', payload?.type);
-      console.log('[WS] severity:', payload?.severity);
-      if (payload.type === 'import') {
-        onNotificationRef.current(payload); // toujours la dernière callback
-      }
-    });
+      es.onerror = () => {
+        console.error('[SSE] Erreur — reconnexion dans 3s');
+        es.close();
+        retryTimeout = setTimeout(connect, 3000);
+      };
+    };
+
+    connect();
 
     return () => {
-      socket.disconnect();
-      socketRef.current = null;
+      es?.close();
+      clearTimeout(retryTimeout);
     };
-  }, [userId]); // userId seulement, le callback est géré via le ref
+  }, [userId]);
 }
