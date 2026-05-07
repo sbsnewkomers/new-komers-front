@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
+import { Eye, X, ChevronRight } from "lucide-react";
 import {
   downloadStructureTemplate,
   executeStructureImport,
@@ -16,6 +17,60 @@ import {
 } from "@/lib/structureImportApi";
 import { getWorkspaces, Workspace } from "@/lib/workspaceApi";
 import { Download, Upload } from "lucide-react";
+// Mettez à jour TEMPLATE_SHEETS avec les nouvelles colonnes
+const TEMPLATE_SHEETS = [
+      {
+        id: "groups",
+        label: "1. Groupes",
+        desc: "Un groupe peut contenir plusieurs entreprises.",
+        cols: [
+          { name: "Nom du groupe", key: "name", req: true, type: "Texte", note: "Unique" },
+          { name: "Début exercice (DD-MM)", key: "fiscal_year_start", req: true, type: "Date", note: "ex: 01-01" },
+          { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
+          { name: "Activité", key: "mainActivity", req: true, type: "Texte", note: "" },
+          { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
+          { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
+          { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 15/06/2010" },
+        ],
+        example: { name: "Groupe Alpha", fiscal_year_start: "01-01", siret: "12345678901234", mainActivity: "Secteur Technologique", country: "France", entity_code: "GRP-ALPHA", registrationDate: "15/06/2010" },
+      },
+      {
+        id: "companies",
+        label: "2. Entreprises",
+        desc: "Rattachées à un groupe (optionnel). Taille : SMALL / MEDIUM / LARGE.",
+        cols: [
+          { name: "Nom entreprise", key: "name", req: true, type: "Texte", note: "Unique" },
+          { name: "Début exercice (DD-MM)", key: "fiscal_year_start", req: true, type: "Date", note: "ex: 01-01" },
+          { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
+          { name: "Adresse", key: "address", req: false, type: "Texte", note: "" },
+          { name: "Code APE", key: "ape_code", req: true, type: "Texte", note: "ex: 6201Z" },
+          { name: "Activité", key: "main_activity", req: true, type: "Texte", note: "" },
+          { name: "Taille", key: "size", req: false, type: "Enum", note: "SMALL / MEDIUM / LARGE" },
+          { name: "Modèle", key: "model", req: false, type: "Enum", note: "HOLDING / SUBSIDIARY" },
+          { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
+          { name: "Nom du groupe", key: "group_name", req: false, type: "Référence", note: "Doit exister dans onglet 1" },
+          { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
+          { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 01/03/2015" },
+        ],
+        example: { name: "Alpha Digital SAS", fiscal_year_start: "01-01", siret: "98765432100012", address: "15 Rue de la Paix", ape_code: "6201Z", main_activity: "Édition de logiciels", size: "MEDIUM", model: "SUBSIDIARY", country: "France", group_name: "Groupe Alpha", entity_code: "ENT-ALPHA", registrationDate: "01/03/2015" },
+      },
+      {
+        id: "bu",
+        label: "3. Business Units",
+        desc: "Liées à une entreprise existante dans l'onglet 2.",
+        cols: [
+          { name: "Nom business unit", key: "name", req: true, type: "Texte", note: "Unique par entreprise" },
+          { name: "Nom entreprise", key: "company_name", req: true, type: "Référence", note: "Doit exister dans onglet 2" },
+          { name: "Code BU", key: "code", req: true, type: "Texte", note: "ex: BU-FINANCE" },
+          { name: "Activité", key: "activity", req: false, type: "Texte", note: "" },
+          { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
+          { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
+          { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
+          { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 20/09/2018" },
+        ],
+        example: { name: "Finance Alpha", company_name: "Alpha Digital SAS", code: "BU-FINANCE", activity: "Gestion Comptable", siret: "98765432100012", country: "France", entity_code: "BU-FIN-ALPHA", registrationDate: "20/09/2018" },
+      },
+    ] as const;
 
 export default function StructureImportUploadPage() {
   const { accessToken, user } = usePermissionsContext();
@@ -30,6 +85,7 @@ export default function StructureImportUploadPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>("");
   const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
+  const [showTemplatePreview, setShowTemplatePreview] = useState(false);
 
   // Check if user is super admin or admin
   const canSelectWorkspace = user?.role === "SUPER_ADMIN" || user?.role === "ADMIN";
@@ -249,7 +305,15 @@ const handleExecute = async () => {
               entreprises et business units.
             </p>
           </div>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowTemplatePreview(true)}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Aperçu du modèle
+            </Button>
             <Button
               type="button"
               variant="default"
@@ -440,7 +504,143 @@ const handleExecute = async () => {
             </div>
           </div>
         )}
+        {/* ── Modal aperçu template ── */}   
+        {showTemplatePreview && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={() => setShowTemplatePreview(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+                <div>
+                  <h2 className="text-base font-semibold text-slate-900">Aperçu du modèle Excel</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    3 onglets à remplir — respectez l'ordre des colonnes et les valeurs autorisées.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowTemplatePreview(false)}
+                  className="p-2 rounded-lg hover:bg-slate-100 text-slate-500"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <TemplatePreviewTabs
+                sheets={TEMPLATE_SHEETS}
+                onDownload={handleDownloadTemplate}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
+  );
+}
+// ── Composant TemplatePreviewTabs  ──
+function TemplatePreviewTabs({
+  sheets,
+  onDownload,
+}: {
+  sheets: typeof TEMPLATE_SHEETS;
+  onDownload: () => void;
+}) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const sheet = sheets[activeIdx];
+
+  return (
+    <>
+      {/* Tab bar */}
+      <div className="flex gap-2 px-6 pt-4 pb-0 border-b border-slate-200 bg-slate-50">
+        {sheets.map((s, i) => (
+          <button
+            key={s.id}
+            onClick={() => setActiveIdx(i)}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg border border-b-0 transition-colors ${
+              i === activeIdx
+                ? "bg-white border-slate-200 text-slate-900 -mb-px"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-auto p-6 space-y-4">
+        <p className="text-sm text-muted-foreground">{sheet.desc}</p>
+
+        <div className="rounded-xl border border-slate-200 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-4 py-2.5 text-left font-medium text-slate-500 text-xs w-8">#</th>
+                <th className="px-4 py-2.5 text-left font-medium text-slate-500 text-xs">Colonne Excel</th>
+                <th className="px-4 py-2.5 text-left font-medium text-slate-500 text-xs">Champ</th>
+                <th className="px-4 py-2.5 text-left font-medium text-slate-500 text-xs">Type</th>
+                <th className="px-4 py-2.5 text-left font-medium text-slate-500 text-xs">Note</th>
+                <th className="px-4 py-2.5 text-left font-medium text-slate-500 text-xs">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sheet.cols.map((col, i) => (
+                <tr key={col.key} className="border-b border-slate-100 hover:bg-slate-50/50">
+                  <td className="px-4 py-2.5 text-xs text-slate-400 font-mono">{i + 1}</td>
+                  <td className="px-4 py-2.5 font-medium text-slate-800">{col.name}</td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{col.key}</td>
+                  <td className="px-4 py-2.5 text-slate-600">{col.type}</td>
+                  <td className="px-4 py-2.5 text-xs text-slate-400">{col.note || "—"}</td>
+                  <td className="px-4 py-2.5">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      col.req
+                        ? "bg-rose-50 text-rose-700"
+                        : "bg-slate-100 text-slate-500"
+                    }`}>
+                      {col.req ? "Requis" : "Facultatif"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {/* Exemple row */}
+              <tr className="bg-slate-50/60">
+                <td className="px-4 py-2.5 text-xs text-slate-400 font-medium">ex.</td>
+                {sheet.cols.map((col) => (
+                  <td key={col.key} className="px-4 py-2.5 text-xs text-slate-400 italic">
+                    {(sheet.example as Record<string, string>)[col.key] ?? "—"}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-rose-400 inline-block" />
+            Champ requis — l'import échoue si absent
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-slate-300 inline-block" />
+            Facultatif
+          </span>
+          <span className="ml-auto italic">Dernière ligne = exemple de données</span>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+        <p className="text-xs text-slate-400">
+          Respectez l'ordre des onglets : Groupes → Entreprises → Business Units
+        </p>
+        <Button onClick={onDownload} size="sm">
+          <Download className="h-4 w-4 mr-2" />
+          Télécharger le modèle
+        </Button>
+      </div>
+    </>
   );
 }

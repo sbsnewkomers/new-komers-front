@@ -77,7 +77,7 @@ export interface SavedMapping {
   name: string;
   rules: Record<string, string>;
   entityId?: string;
-  entityType?: 'Group' | 'Company';
+  entityType?: 'Group' | 'Company'| 'BusinessUnit';
   createdAt: string;
   updatedAt: string;   
   workspaceId?: string | null;  
@@ -88,5 +88,5 @@ export type MappingPayload = {
   name: string;
   rules: Record<string, string>;
   entityId?: string;
-  entityType?: 'Group' | 'Company';
+  entityType?: 'Group' | 'Company'| 'BusinessUnit';
 };

@@ -16,6 +16,7 @@ interface UploadZoneProps {
   onDragLeave: (e: React.DragEvent) => void;
   onFileInput: (e: React.ChangeEvent<HTMLInputElement>, type: "excel") => void;
   disabled?: boolean;
+  fileName?: string; 
 }
 
 export function UploadZone({
@@ -30,7 +31,8 @@ export function UploadZone({
   onDragOver,
   onDragLeave,
   onFileInput,
-  disabled = false, // ← ajoute ici
+  disabled = false, 
+  fileName,
 }: UploadZoneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,7 +72,31 @@ export function UploadZone({
           />
         </div>
         <h3 className="text-base font-semibold text-slate-700 mb-1">{title}</h3>
-        <p className="text-sm text-slate-500 mb-1">{subtitle}</p>
+
+        {fileName ? (
+          <div className="flex items-center gap-2 mb-3 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200">
+            <FileUp className="h-4 w-4 text-emerald-600 shrink-0" />
+            <span className="text-xs font-medium text-emerald-700 truncate max-w-[200px]" title={fileName}>
+              {fileName}
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                  fileInputRef.current.click();
+                }
+              }}
+              className="text-xs text-emerald-600 hover:text-emerald-800 underline shrink-0"
+            >
+              Changer
+            </button>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500 mb-1">{subtitle}</p>
+        )}
+
         <p className="text-xs text-slate-400 mb-5">
           Formats supportés : <span className="font-medium">{formats}</span>
         </p>
