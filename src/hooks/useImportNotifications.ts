@@ -83,8 +83,7 @@ export function useImportNotifications(
     connect();
 
     return () => {
-      es?.close();
-      clearTimeout(retryTimeout);
+     
     };
   }, [userId]);
 }

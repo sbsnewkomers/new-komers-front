@@ -87,12 +87,12 @@ export default function LandingPage() {
               </>
             ) : (
               <>
-                <Link
+                {/* <Link
                   className="hidden text-[13px] font-semibold text-(--text-muted) hover:text-white transition-colors sm:inline-flex"
                   href="/login"
                 >
                   Se connecter
-                </Link>
+                </Link> */}
                 <Link
                   className="hidden rounded-full border border-(--border-accent) px-5 py-2 text-[13px] font-semibold text-(--accent) hover:bg-(--accent) hover:text-black transition-colors sm:inline-flex"
                   href="/login"
