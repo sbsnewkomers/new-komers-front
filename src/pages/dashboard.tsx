@@ -269,7 +269,7 @@ export default function DashboardPage() {
 
   return (
     <AppLayout
-      title="Dashboard"
+      title="Tableau de bord"
       companies={companyList}
       selectedCompanyId={selectedCompanyId}
       onCompanyChange={() => { }}

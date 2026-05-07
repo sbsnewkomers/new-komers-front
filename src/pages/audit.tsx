@@ -376,7 +376,7 @@ export default function AuditPage() {
   }
 
   return (
-    <AppLayout title="Audit" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
+    <AppLayout title="Journal d'audit" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
       <Head>
         <title>Journal d&apos;audit</title>
       </Head>
