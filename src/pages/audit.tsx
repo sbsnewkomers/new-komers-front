@@ -393,7 +393,7 @@ export default function AuditPage() {
             </div>
             <div>
               <h2 className="text-xl font-bold text-primary">Journal d&apos;audit</h2>
-              <p className="text-sm text-slate-500">Historique complet des actions sur la plateforme.</p>
+              <p className="text-sm text-(--nebula-muted)">Historique complet des actions sur la plateforme.</p>
             </div>
           </div>
 
@@ -401,7 +401,7 @@ export default function AuditPage() {
           <div className="flex w-full items-center gap-3 sm:w-auto">
             <Button
               variant="outline"
-              className="h-9 w-full gap-2 border-slate-200 text-slate-700 sm:w-auto"
+              className="h-9 w-full gap-2 sm:w-auto"
               onClick={handleExportCsv}
               >
               <Download className="h-4 w-4" />
@@ -652,8 +652,8 @@ export default function AuditPage() {
 
               {/* Pagination (backend-level) */}
               {totalPages > 1 && (
-                <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs text-slate-500">
+                <div className="flex flex-col gap-3 border-t border-white/10 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs text-(--nebula-muted)">
                     {stats.total} log{stats.total > 1 ? "s" : ""} &mdash; page {page}/{totalPages}
                   </p>
                   <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
@@ -661,7 +661,7 @@ export default function AuditPage() {
                       type="button"
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-30"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-white/45 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
@@ -716,14 +716,14 @@ export default function AuditPage() {
                         });
                       })()}
                     </div>
-                    <span className="text-xs font-medium text-slate-500 sm:hidden">
+                    <span className="text-xs font-medium text-(--nebula-muted) sm:hidden">
                       {page}/{totalPages}
                     </span>
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-30"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-white/45 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>
@@ -743,9 +743,9 @@ export default function AuditPage() {
         >
           <DialogContent size="2xl">
             <DialogHeader>
-              <DialogTitle>Détail audit</DialogTitle>
+              <DialogTitle className="text-base font-semibold">Détail audit</DialogTitle>
               {selectedEntry && (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-(--nebula-muted)">
                   {formatTime(selectedEntry.timestamp)} · {selectedEntry.user.email}
                 </p>
               )}
@@ -753,42 +753,42 @@ export default function AuditPage() {
 
             <DialogBody className="space-y-4">
               {!selectedLog || !selectedEntry ? (
-                <div className="text-sm text-slate-600">Aucun détail disponible.</div>
+                <div className="text-sm text-(--nebula-muted)">Aucun détail disponible.</div>
               ) : (
                 <>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="rounded-lg border border-slate-200 bg-white p-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Action</p>
-                      <p className="mt-1 text-sm text-slate-900">
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider">Action</p>
+                      <p className="mt-1 text-sm text-white">
                         {actionConfig[selectedEntry.action]?.label ?? selectedEntry.action}
                       </p>
-                      <p className="mt-1 text-xs text-slate-500">{categoryLabels[selectedEntry.category]}</p>
+                      <p className="mt-1 text-xs text-(--nebula-muted)">{categoryLabels[selectedEntry.category]}</p>
                     </div>
-                    <div className="rounded-lg border border-slate-200 bg-white p-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Statut</p>
-                      <p className="mt-1 text-sm text-slate-900">
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider">Statut</p>
+                      <p className="mt-1 text-sm text-white">
                         {selectedEntry.status === "success" ? "Succès" : "Échec"}
                       </p>
-                      <p className="mt-1 text-xs text-slate-500">IP: {selectedEntry.ip || "—"}</p>
+                      <p className="mt-1 text-xs text-(--nebula-muted)">IP: {selectedEntry.ip || "—"}</p>
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Ressource</p>
-                    <p className="mt-1 text-sm text-slate-900">{selectedEntry.resource || "—"}</p>
-                    <p className="mt-1 text-xs text-slate-500">{selectedEntry.detail || "—"}</p>
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider">Ressource</p>
+                    <p className="mt-1 text-sm text-white">{selectedEntry.resource || "—"}</p>
+                    <p className="mt-1 text-xs text-(--nebula-muted)">{selectedEntry.detail || "—"}</p>
                   </div>
 
                   {toKeyValueDetails(selectedLog.details).length > 0 && (
-                    <div className="rounded-lg border border-slate-200 bg-white p-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Détails</p>
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider">Détails</p>
                       <dl className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                         {toKeyValueDetails(selectedLog.details).map((row) => (
-                          <div key={row.key} className="rounded-md bg-slate-50 px-3 py-2">
-                            <dt className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                          <div key={row.key} className="rounded-md bg-white/5 px-3 py-2 ring-1 ring-white/10">
+                            <dt className="text-[10px] font-semibold uppercase tracking-wider text-(--nebula-muted)">
                               {row.key}
                             </dt>
-                            <dd className="mt-0.5 text-xs text-slate-800 wrap-break-word">
+                            <dd className="mt-0.5 text-xs wrap-break-word">
                               {row.value}
                             </dd>
                           </div>
