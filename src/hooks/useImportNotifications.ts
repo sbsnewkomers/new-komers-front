@@ -54,31 +54,36 @@ export function useImportNotifications(
     const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
     const url = `${apiUrl}/notifications/stream?userId=${userId}`;
 
-    const es = new EventSource(url);
+    let es: EventSource;
+    let retryTimeout: ReturnType<typeof setTimeout>;
 
-    es.onopen = () => {
-      console.log('[SSE] Connecté, userId:', userId);
-    };
+    const connect = () => {
+      es = new EventSource(url);
 
-    es.onmessage = (event) => {
-      try {
-        const payload: ImportNotificationPayload = JSON.parse(event.data);
-        console.log('[SSE] Reçu:', payload);
-        if (payload.type === 'import') {
-          onNotificationRef.current(payload);
+      es.onopen = () => console.log('[SSE] Connecté, userId:', userId);
+
+      es.onmessage = (event) => {
+        try {
+          const payload: ImportNotificationPayload = JSON.parse(event.data);
+          if (payload.type === 'import') {
+            onNotificationRef.current(payload);
+          }
+        } catch (err) {
+          console.error('[SSE] Erreur parsing:', err);
         }
-      } catch (err) {
-        console.error('[SSE] Erreur parsing:', err);
-      }
+      };
+
+      es.onerror = () => {
+        console.error('[SSE] Erreur — reconnexion dans 3s');
+        es.close();
+        retryTimeout = setTimeout(connect, 3000);
+      };
     };
 
-    es.onerror = () => {
-      console.error('[SSE] Erreur de connexion — reconnexion auto dans 3s');
-      // EventSource se reconnecte automatiquement, pas besoin de gérer manuellement
-    };
+    connect();
 
     return () => {
-      es.close();
+     
     };
   }, [userId]);
 }
