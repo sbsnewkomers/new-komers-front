@@ -468,6 +468,17 @@ body.nebula-light {
   color: var(--nebula-gold) !important;
 }
 
+/* Fix debit and credit colors in light mode */
+.nebula-light .text-emerald-200 {
+  color: #059669 !important;
+  /* emerald-600 for better contrast */
+}
+
+.nebula-light .text-rose-200 {
+  color: #dc2626 !important;
+  /* rose-600 for better contrast */
+}
+
 /* =============================================================================
    Landing page (NEWKOMERS marketing) – scoped
    ============================================================================= */

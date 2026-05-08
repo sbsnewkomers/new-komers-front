@@ -96,7 +96,7 @@ export const APP_NAV_FOOTER_ITEMS: readonly AppNavLinkItem[] = [
   {
     type: "link",
     href: "/users",
-    label: "Utilisateurs",
+    label: "Utilisateurs & Invitations",
     icon: Users,
     roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "HEAD_MANAGER"],
   },
