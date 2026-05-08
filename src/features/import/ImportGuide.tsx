@@ -176,25 +176,25 @@ const STEPS = [
     icon: Upload,
     label: "Déposez votre fichier",
     detail: "Glissez-déposez ou cliquez pour importer un fichier Excel, CSV ou TXT.",
-    color: "text-sky-200",
-    bg: "bg-sky-500/10",
-    border: "border-sky-400/25",
+    color: "text-yellow-500",
+    bg: "bg-yellow-500/10",
+    border: "border-yellow-400/25",
   },
   {
     icon: Wand2,
     label: "Configurez le mapping",
     detail: "Associez chaque colonne de votre fichier au champ de base correspondant. Sauvegardez le mapping pour le réutiliser.",
-    color: "text-violet-200",
-    bg: "bg-violet-500/10",
-    border: "border-violet-400/25",
+    color: "text-yellow-500",
+    bg: "bg-yellow-500/10",
+    border: "border-yellow-400/25",
   },
   {
     icon: CheckCircle2,
     label: "Importez vos données",
     detail: "Les données sont validées, archivées et intégrées automatiquement par exercice fiscal.",
-    color: "text-emerald-200",
-    bg: "bg-emerald-500/10",
-    border: "border-emerald-400/25",
+    color: "text-yellow-500",
+    bg: "bg-yellow-500/10",
+    border: "border-yellow-400/25",
   },
 ];
 
@@ -213,9 +213,9 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  string: "border-sky-400/30 bg-sky-500/15 text-sky-100",
-  number: "border-amber-400/30 bg-amber-500/15 text-amber-100",
-  date: "border-violet-400/30 bg-violet-500/15 text-violet-100",
+  string: "border-sky-800 bg-sky-700 text-white dark:border-sky-400/30 dark:bg-sky-500/15 dark:text-sky-100",
+  number: "border-amber-800 bg-amber-700 text-white dark:border-amber-400/30 dark:bg-amber-500/15 dark:text-amber-100",
+  date: "border-violet-800 bg-violet-700 text-white dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-violet-100",
 };
 
 // ─── Sous-composants ──────────────────────────────────────────────────────────
@@ -247,9 +247,8 @@ function SectionHeader({
         <p className="text-xs text-(--nebula-muted)">{subtitle}</p>
       </div>
       <ChevronDown
-        className={`h-4 w-4 shrink-0 text-(--nebula-muted) transition-transform duration-200 ${
-          open ? "rotate-180" : ""
-        }`}
+        className={`h-4 w-4 shrink-0 text-(--nebula-muted) transition-transform duration-200 ${open ? "rotate-180" : ""
+          }`}
       />
     </button>
   );
@@ -268,7 +267,7 @@ function FieldRow({ field }: { field: FieldInfo }) {
           {TYPE_LABELS[field.type]}
         </span>
         {field.required ? (
-          <span className="inline-flex items-center gap-0.5 rounded-full border border-rose-400/30 bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-medium text-rose-100">
+          <span className="inline-flex items-center gap-0.5 rounded-full border border-red-800 bg-red-700 px-1.5 py-0.5 text-[10px] font-medium text-white dark:border-red-400/30 dark:bg-red-500/15 dark:text-red-100">
             <CheckCircle2 className="h-2.5 w-2.5" />
             Requis
           </span>
@@ -343,11 +342,11 @@ export function ImportGuide() {
               ))}
             </div>
 
-            <div className="mt-4 rounded-xl border border-amber-400/25 bg-amber-500/10 p-3">
+            <div className="mt-4 rounded-xl border-border bg-card p-3">
               <div className="flex items-start gap-2">
-                <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-200" />
-                <p className="text-xs text-amber-100/95">
-                  <span className="font-semibold">Bon à savoir : </span>
+                <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-yellow-600 dark:text-yellow-400" />
+                <p className="text-xs text-foreground">
+                  <span className="font-semibold text-foreground">Bon à savoir : </span>
                   Si l&apos;entité cible contient déjà des données, un message de confirmation vous sera présenté avant tout remplacement. Les données précédentes sont archivées et peuvent être restaurées depuis l&apos;historique.
                 </p>
               </div>
@@ -370,7 +369,7 @@ export function ImportGuide() {
             {/* Requis */}
             <div>
               <div className="mb-2 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full border border-rose-400/30 bg-rose-500/15 px-2 py-0.5 text-[11px] font-semibold text-rose-100">
+                <span className="inline-flex items-center gap-1 rounded-full border border-red-800 bg-red-700 px-2 py-0.5 text-[11px] font-semibold text-white dark:border-red-400/30 dark:bg-red-500/15 dark:text-red-100">
                   <CheckCircle2 className="h-3 w-3" />
                   Champs obligatoires
                 </span>
@@ -399,12 +398,20 @@ export function ImportGuide() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-sky-400/25 bg-sky-500/10 p-3">
+            <div className="rounded-xl border border-sky-300 bg-sky-100 p-3 dark:border-sky-600 dark:bg-sky-800">
               <div className="flex items-start gap-2">
-                <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-200" />
-                <p className="text-xs text-sky-100/95">
+                <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-black dark:text-white" />
+                <p className="text-xs text-black dark:text-white">
                   <span className="font-semibold">Format des dates : </span>
-                  Toutes les dates doivent être au format <code className="rounded border border-white/10 bg-white/10 px-1 font-mono text-[11px] text-white">AAAAMMJJ</code> (ex : <code className="rounded border border-white/10 bg-white/10 px-1 font-mono text-[11px] text-white">20240131</code> pour le 31 janvier 2024).
+                  Toutes les dates doivent être au format{" "}
+                  <code className="rounded border border-sky-400 bg-sky-200 px-1 font-mono text-[11px] text-black dark:border-sky-600/30 dark:bg-sky-800/50 dark:text-white">
+                    AAAAMMJJ
+                  </code>{" "}
+                  (ex :{" "}
+                  <code className="rounded border border-sky-400 bg-sky-200 px-1 font-mono text-[11px] text-black dark:border-sky-600/30 dark:bg-sky-800/50 dark:text-white">
+                    20240131
+                  </code>{" "}
+                  pour le 31 janvier 2024).
                 </p>
               </div>
             </div>
