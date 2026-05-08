@@ -18,11 +18,11 @@ export default function DotationsPage() {
   };
 
   return (
-    <AppLayout title="Gestion des Dotations">
+    <AppLayout title="Dotations">
       <div className="space-y-6">
 
         <PageHeader
-          title="Gestion des dotations"
+          title="Dotations"
           subtitle="Suivez et gérez tous vos dotations et amortissements."
           icon={
             <div className="nebula-glass rounded-2xl border border-white/10 p-2.5">
