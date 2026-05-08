@@ -143,16 +143,16 @@ export function PreviewStep({
     // Results after successful import
     return (
         <>
-            <div className="nebula-glass rounded-3xl border border-emerald-500/25 bg-emerald-500/5 p-6">
+            <div className="nebula-glass rounded-3xl border border-amber-500/25 bg-amber-500/5 p-6">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15">
-                        <CheckCircle className="h-5 w-5 text-emerald-300" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15">
+                        <CheckCircle className="h-5 w-5 text-amber-300" />
                     </div>
                     <div>
                         <h3 className="text-base font-semibold text-white">
                             Import réussi
                         </h3>
-                        <p className="text-xs text-emerald-200/90">
+                        <p className="text-xs text-amber-700">
                             L&apos;échéancier a été importé avec succès.
                         </p>
                     </div>
@@ -189,7 +189,7 @@ export function PreviewStep({
                             key={stat.label}
                             className="rounded-xl border border-white/10 bg-white/5 p-3"
                         >
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-200/80">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-700">
                                 {stat.label}
                             </p>
                             <p className="mt-0.5 text-sm font-medium text-white break-words">

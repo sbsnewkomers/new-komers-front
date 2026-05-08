@@ -1,16 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
-import { Pencil, Trash2, Eye, Plus } from 'lucide-react';
+import { Badge, type BadgeVariant } from '@/components/ui/Badge';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/DropdownMenu';
+import { Pencil, Trash2, Eye, Plus, MoreHorizontal, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { assetsApi } from '@/lib/assetsApi';
 import { Asset, AssetStatus, AmortizationType, EntityType } from '@/types/asset.types';
 import { usePermissions } from '@/permissions/usePermissions';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
 import { formatCurrencyEUR, formatDateFR } from '@/lib/format';
+import { usePermissionsContext } from '@/permissions/PermissionsProvider';
 
 // Utility functions
 const formatCurrency = (amount: number) => formatCurrencyEUR(amount, { fallback: "0,00 €" });
@@ -26,10 +32,16 @@ interface AssetListProps {
   refreshTrigger?: number;
 }
 
-const statusColors = {
-  [AssetStatus.ACTIVE]: 'border border-emerald-400/30 bg-emerald-500/15 text-emerald-100',
-  [AssetStatus.FULLY_AMORTIZED]: 'border border-sky-400/30 bg-sky-500/15 text-sky-100',
-  [AssetStatus.DISPOSED]: 'border border-red-400/30 bg-red-500/15 text-red-100',
+const statusVariant: Record<string, BadgeVariant> = {
+  [AssetStatus.ACTIVE]: 'success',
+  [AssetStatus.FULLY_AMORTIZED]: 'info',
+  [AssetStatus.DISPOSED]: 'danger',
+};
+
+const statusLabel: Record<string, string> = {
+  [AssetStatus.ACTIVE]: 'Actif',
+  [AssetStatus.FULLY_AMORTIZED]: 'Totalement amorti',
+  [AssetStatus.DISPOSED]: 'Cédé',
 };
 
 const amortizationTypeLabels = {
@@ -48,8 +60,17 @@ export function AssetList({
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { role } = usePermissions();
+  const { user } = usePermissionsContext();
+  const canManage = user?.role !== 'END_USER';
   const { deleteConfirmOpen, loanToDelete, confirmDelete, cancelDelete, closeDialog } = useDeleteConfirm();
+  const itemsPerPage = 10;
+
+  const totalPages = Math.ceil(assets.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentAssets = assets.slice(startIndex, endIndex);
 
   useEffect(() => {
     let isMounted = true;
@@ -103,126 +124,264 @@ export function AssetList({
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-(--nebula-gold-light)" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="nebula-glass rounded-3xl border border-white/10 overflow-hidden">
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-white/70" />
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-red-300 text-center">{error}</div>
-        </CardContent>
-      </Card>
+      <div className="nebula-glass rounded-3xl border border-white/10 p-6">
+        <div className="text-red-300 text-center">{error}</div>
+      </div>
     );
   }
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Actifs</CardTitle>
-          {onCreate && (role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'MANAGER' || role === 'HEAD_MANAGER') && (
-            <Button onClick={onCreate} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Nouvel actif
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {assets.length === 0 ? (
-            <div className="text-center py-8 text-(--nebula-muted)">
-              Aucun actif trouvé pour cette entité.
+      {/* Header with create button */}
+      {canManage && onCreate && (
+        <div className="flex justify-end">
+          <Button
+            onClick={onCreate}
+            className="h-10 gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Nouvel actif
+          </Button>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="nebula-glass rounded-3xl border border-white/10 overflow-hidden">
+        {assets.length === 0 ? (
+          <div className="py-16 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5">
+              <FileText className="h-6 w-6 text-white/30" />
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/10 hover:bg-white/5">
-                  <TableHead className="text-(--nebula-muted) border-white/10">Nom</TableHead>
-                  <TableHead className="text-(--nebula-muted) border-white/10">Montant d&apos;acquisition</TableHead>
-                  <TableHead className="text-(--nebula-muted) border-white/10">Date d&apos;acquisition</TableHead>
-                  <TableHead className="text-(--nebula-muted) border-white/10">Durée d&apos;amortissement</TableHead>
-                  <TableHead className="text-(--nebula-muted) border-white/10">Type d&apos;amortissement</TableHead>
-                  <TableHead className="text-(--nebula-muted) border-white/10">Statut</TableHead>
-                  <TableHead className="text-(--nebula-muted) border-white/10">Valeur nette comptable actuelle</TableHead>
-                  <TableHead className="text-(--nebula-muted) border-white/10">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {assets.map((asset) => {
-                  const currentYear = new Date().getFullYear();
-                  const sortedSchedules = asset.amortizationSchedules?.sort((a, b) => a.year - b.year) || [];
+            <h3 className="text-sm font-medium text-white">
+              Aucun actif trouvé
+            </h3>
+            <p className="mt-1 text-sm text-(--nebula-muted)">
+              Créez votre premier actif.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Pagination info */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 sm:px-6">
+              <p className="text-sm text-(--nebula-muted)">
+                Affichage de {startIndex + 1}-{Math.min(endIndex, assets.length)} sur {assets.length} actif{assets.length > 1 ? 's' : ''}
+              </p>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center justify-center w-8 h-8 rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <span className="px-3 py-1 text-sm text-(--nebula-muted)">
+                    Page {currentPage} sur {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center justify-center w-8 h-8 rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
 
-                  const netBookValue = sortedSchedules.find(s => s.year === currentYear)?.netBookValue ||
-                    sortedSchedules[sortedSchedules.length - 1]?.netBookValue ||
-                    asset.acquisitionAmount;
+            {/* Grid Table */}
+            <div className="overflow-x-auto">
+              <div className="min-w-[1000px]">
+                <div className="grid grid-cols-[1.5fr_0.8fr_0.8fr_0.6fr_0.8fr_0.8fr_0.8fr_80px] gap-4 border-b border-white/10 bg-white/5 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-(--nebula-muted) sm:px-6">
+                  <div>Actif</div>
+                  <div className="text-right">Montant d&apos;acquisition</div>
+                  <div>Date d&apos;acquisition</div>
+                  <div className="text-right">Durée</div>
+                  <div>Type d&apos;amortissement</div>
+                  <div>Statut</div>
+                  <div className="text-right">Valeur nette</div>
+                  <div className="text-right">Actions</div>
+                </div>
 
-                  return (
-                    <TableRow key={asset.id} className="border-white/10">
-                      <TableCell className="font-medium text-white">
-                        <div>
-                          <div>{asset.name}</div>
+                <div className="divide-y divide-white/10">
+                  {currentAssets.map((asset) => {
+                    const currentYear = new Date().getFullYear();
+                    const sortedSchedules = asset.amortizationSchedules?.sort((a, b) => a.year - b.year) || [];
+
+                    const netBookValue = sortedSchedules.find(s => s.year === currentYear)?.netBookValue ||
+                      sortedSchedules[sortedSchedules.length - 1]?.netBookValue ||
+                      asset.acquisitionAmount;
+
+                    return (
+                      <div
+                        key={asset.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => onView?.(asset)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") onView?.(asset);
+                        }}
+                        className="group grid cursor-pointer grid-cols-[1.5fr_0.8fr_0.8fr_0.6fr_0.8fr_0.8fr_0.8fr_80px] items-center gap-4 px-4 py-3 transition-colors hover:bg-white/5 sm:px-6"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-white">
+                            {asset.name}
+                          </p>
                           {asset.description && (
-                            <div className="text-sm text-(--nebula-muted)">{asset.description}</div>
+                            <p className="truncate text-xs text-(--nebula-muted)">{asset.description}</p>
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-white">{formatCurrency(asset.acquisitionAmount)}</TableCell>
-                      <TableCell className="text-white">{formatDate(asset.acquisitionDate)}</TableCell>
-                      <TableCell className="text-white">{asset.amortizationDurationYears} ans</TableCell>
-                      <TableCell className="text-white">
-                        {amortizationTypeLabels[asset.amortizationType]}
-                      </TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[asset.status]}`}>
-                          {asset.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-white">{formatCurrency(netBookValue)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {onView && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onView(asset)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {onEdit && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onEdit(asset)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => confirmDelete(asset.id)}
-                            className="text-red-300 hover:text-red-200"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+
+                        <div className="text-right text-sm font-medium text-white">
+                          {formatCurrency(asset.acquisitionAmount)}
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+
+                        <div className="text-sm text-white">
+                          {formatDate(asset.acquisitionDate)}
+                        </div>
+
+                        <div className="text-right text-sm text-(--nebula-muted)">
+                          {asset.amortizationDurationYears} ans
+                        </div>
+
+                        <div className="text-sm text-white">
+                          {amortizationTypeLabels[asset.amortizationType]}
+                        </div>
+
+                        <div>
+                          <Badge variant={statusVariant[asset.status] ?? "neutral"}>
+                            {statusLabel[asset.status] ?? asset.status}
+                          </Badge>
+                        </div>
+
+                        <div className="text-right text-sm font-medium text-white">
+                          {formatCurrency(netBookValue)}
+                        </div>
+
+                        <div className="flex justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={(e) => e.stopPropagation()}
+                                className="flex h-8 w-8 items-center justify-center rounded-lg text-white/60 opacity-100 transition-colors hover:bg-white/10 hover:text-(--nebula-gold-light) md:opacity-0 md:group-hover:opacity-100"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => onView?.(asset)}>
+                                <Eye className="mr-2 h-4 w-4" /> Voir
+                              </DropdownMenuItem>
+                              {canManage && onEdit && (
+                                <DropdownMenuItem onClick={() => onEdit(asset)}>
+                                  <Pencil className="mr-2 h-4 w-4" /> Modifier
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => confirmDelete(asset.id)}
+                                className="text-red-300 focus:bg-white/10 focus:text-red-200"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> Supprimer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Pagination controls at bottom */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-white/10 sm:px-6">
+                <p className="text-sm text-(--nebula-muted)">
+                  {assets.length} actif{assets.length > 1 ? 's' : ''} au total
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-sm border border-white/10 rounded-lg bg-white/5 transition-colors hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Première
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center justify-center w-8 h-8 rounded-lg border border-white/10 bg-white/5 transition-colors hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+
+                  {/* Page numbers */}
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum: number;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`w-8 h-8 rounded-md text-sm font-medium transition-colors ${currentPage === pageNum
+                            ? 'bg-white/15 text-white'
+                            : 'border border-white/10 bg-white/5  hover:bg-white/10'
+                            }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center justify-center w-8 h-8 rounded-lg border border-white/10 bg-white/5 transition-colors hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 text-sm border border-white/10 rounded-lg bg-white/5 transition-colors hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Dernière
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmDialog

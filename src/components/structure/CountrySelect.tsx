@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { COUNTRIES } from '@/lib/countriesData';
+import { Input } from '@/components/ui/Input';
 
 interface CountrySelectProps {
   value?: string;
@@ -45,30 +46,30 @@ export function CountrySelect({
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           disabled={disabled}
-          className="w-full flex items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+          className="flex h-10 w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm outline-none transition-colors hover:border-white/15 focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light) disabled:pointer-events-none disabled:opacity-50"
         >
-          <span className={!value ? "text-gray-500" : "text-gray-900"}>
+          <span className={`min-w-0 flex-1 truncate ${!value ? "text-muted-foreground" : "text-foreground"}`}>
             {selectedCountry ? `${selectedCountry.label} (${selectedCountry.code})` : placeholder}
           </span>
-          <ChevronDown className="h-4 w-4 text-gray-400" />
+          <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
         </button>
-        
+
         {isOpen && (
-          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
-            <div className="p-2">
-              <input
+          <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-white/10 bg-popover backdrop-blur-xl text-popover-foreground shadow-xl">
+            <div className="border-b border-white/10 bg-white/5 p-2">
+              <Input
                 type="text"
                 placeholder="Rechercher un pays..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 autoFocus
+                className="h-9"
               />
             </div>
-            
+
             <div className="max-h-64 overflow-y-auto">
               {filteredCountries.length === 0 ? (
-                <div className="p-3 text-sm text-gray-500 text-center">
+                <div className="p-3 text-center text-sm text-muted-foreground">
                   Aucun pays trouvé
                 </div>
               ) : (
@@ -77,18 +78,20 @@ export function CountrySelect({
                     key={country.value}
                     type="button"
                     onClick={() => handleSelect(country.value)}
-                    className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center space-x-2 ${
-                      value === country.value ? "bg-blue-50 text-blue-700" : "text-gray-900"
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 ${
+                      value === country.value
+                        ? "bg-muted/80 text-(--nebula-gold-light)"
+                        : "text-popover-foreground"
                     }`}
                   >
                     <Check
-                      className={`h-4 w-4 flex-shrink-0 ${
-                        value === country.value ? "text-blue-600" : "text-transparent"
+                      className={`h-4 w-4 shrink-0 ${
+                        value === country.value ? "text-(--nebula-gold-light)" : "text-transparent"
                       }`}
                     />
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                       <div className="truncate">{country.label}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         Code: {country.code}
                       </div>
                     </div>

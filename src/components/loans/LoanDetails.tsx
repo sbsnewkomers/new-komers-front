@@ -37,13 +37,13 @@ interface LoanDetailsProps {
 }
 
 const formatCurrency = (amount: number | null | undefined) =>
-  formatCurrencyEUR(amount, { maximumFractionDigits: 0, fallback: "0 €" });
+    formatCurrencyEUR(amount, { maximumFractionDigits: 0, fallback: "0 €" });
 
 const formatCurrencyPrecise = (amount: number | null | undefined) =>
-  formatCurrencyEUR(amount, { minimumFractionDigits: 2, maximumFractionDigits: 2, fallback: "0,00 €" });
+    formatCurrencyEUR(amount, { minimumFractionDigits: 2, maximumFractionDigits: 2, fallback: "0,00 €" });
 
 const formatPercentage = (value: number | null | undefined) =>
-  value == null ? "0%" : formatPercent(Math.round(value), { decimals: 0, fallback: "0%" });
+    value == null ? "0%" : formatPercent(Math.round(value), { decimals: 0, fallback: "0%" });
 
 const formatDate = (dateString: string) => formatDateFR(dateString, { fallback: "-" });
 
@@ -615,133 +615,133 @@ export function LoanDetails({
                         </div>
                     </div>
                     <div className="max-h-[520px] overflow-auto">
-                      <div className="min-w-[1100px]">
-                        <div className="sticky top-0 z-10 grid grid-cols-[52px_70px_130px_140px_1fr_1fr_1fr_1fr_1fr_140px_170px] items-center gap-3 border-b border-white/10 bg-white/5 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-(--nebula-muted) sm:px-6">
-                          <div className="flex items-center justify-center">
-                            {canManage ? (
-                              <Checkbox
-                                checked={
-                                  selectedInstallments.size > 0 &&
-                                  loan.installments!.every(
-                                    (inst) => inst.isPaid || selectedInstallments.has(inst.id),
-                                  )
-                                }
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedInstallments(
-                                      new Set(
-                                        loan
-                                          .installments!.filter((inst) => !inst.isPaid)
-                                          .map((inst) => inst.id),
-                                      ),
-                                    );
-                                  } else {
-                                    setSelectedInstallments(new Set());
-                                  }
-                                }}
-                                aria-label="Sélectionner toutes les échéances non payées"
-                              />
-                            ) : null}
-                          </div>
-                          <div>N°</div>
-                          <div>Date</div>
-                          <div>Date paiement</div>
-                          <div className="text-right">Capital</div>
-                          <div className="text-right">Intérêts</div>
-                          <div className="text-right">Assurance</div>
-                          <div className="text-right">Total</div>
-                          <div className="text-right">Restant dû</div>
-                          <div>Statut</div>
-                          <div className="text-right">Actions</div>
-                        </div>
-
-                        <div className="divide-y divide-white/10">
-                          {[...loan.installments]
-                            .sort((a, b) => a.installmentNumber - b.installmentNumber)
-                            .map((inst) => {
-                              const st = getInstallmentStatusDisplay(inst.status);
-                              const isLoadingThis = loading === inst.id;
-                              return (
-                                <div
-                                  key={inst.id}
-                                  className="grid grid-cols-[52px_70px_130px_140px_1fr_1fr_1fr_1fr_1fr_140px_170px] items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5 sm:px-6"
-                                >
-                                  <div className="flex items-center justify-center">
+                        <div className="min-w-[1100px]">
+                            <div className="sticky top-0 z-10 grid grid-cols-[52px_70px_130px_140px_1fr_1fr_1fr_1fr_1fr_140px_170px] items-center gap-3 border-b border-white/10 bg-white/5 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-(--nebula-muted) sm:px-6">
+                                <div className="flex items-center justify-center">
                                     {canManage ? (
-                                      <Checkbox
-                                        checked={selectedInstallments.has(inst.id)}
-                                        onCheckedChange={() => handleToggleSelection(inst.id)}
-                                        disabled={inst.isPaid}
-                                        aria-label={`Sélectionner l'échéance ${inst.installmentNumber}`}
-                                      />
+                                        <Checkbox
+                                            checked={
+                                                selectedInstallments.size > 0 &&
+                                                loan.installments!.every(
+                                                    (inst) => inst.isPaid || selectedInstallments.has(inst.id),
+                                                )
+                                            }
+                                            onCheckedChange={(checked) => {
+                                                if (checked) {
+                                                    setSelectedInstallments(
+                                                        new Set(
+                                                            loan
+                                                                .installments!.filter((inst) => !inst.isPaid)
+                                                                .map((inst) => inst.id),
+                                                        ),
+                                                    );
+                                                } else {
+                                                    setSelectedInstallments(new Set());
+                                                }
+                                            }}
+                                            aria-label="Sélectionner toutes les échéances non payées"
+                                        />
                                     ) : null}
-                                  </div>
-
-                                  <div className="text-sm font-medium text-white">
-                                    {inst.installmentNumber}
-                                  </div>
-                                  <div className="text-sm text-(--nebula-muted)">
-                                    {formatDate(inst.dueDate)}
-                                  </div>
-                                  <div className="text-sm text-(--nebula-muted)">
-                                    {inst.paymentDate ? formatDate(inst.paymentDate) : '-'}
-                                  </div>
-                                  <div className="text-right text-sm text-white/85">
-                                    {formatCurrencyPrecise(inst.principalPayment)}
-                                  </div>
-                                  <div className="text-right text-sm text-white/85">
-                                    {formatCurrencyPrecise(inst.interestPayment)}
-                                  </div>
-                                  <div className="text-right text-sm text-white/85">
-                                    {formatCurrencyPrecise(inst.insurancePayment)}
-                                  </div>
-                                  <div className="text-right text-sm font-semibold text-white">
-                                    {formatCurrencyPrecise(inst.totalPayment)}
-                                  </div>
-                                  <div className="text-right text-sm text-(--nebula-muted)">
-                                    {formatCurrencyPrecise(inst.remainingBalance)}
-                                  </div>
-                                  <div>
-                                    <Badge variant={st.variant}>{st.text}</Badge>
-                                  </div>
-                                  <div className="flex justify-end">
-                                    {canManage ? (
-                                      !inst.isPaid ? (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleMarkAsPaid(inst.id)}
-                                          disabled={isLoadingThis}
-                                          className="inline-flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-white/80 transition-colors hover:bg-white/10 disabled:opacity-60"
-                                        >
-                                          {isLoadingThis ? (
-                                            <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
-                                          ) : (
-                                            <Check className="h-3.5 w-3.5 text-emerald-300" />
-                                          )}
-                                          Marquer payé
-                                        </button>
-                                      ) : (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleUnmarkAsPaid(inst.id)}
-                                          disabled={isLoadingThis}
-                                          className="inline-flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-white/80 transition-colors hover:bg-white/10 disabled:opacity-60"
-                                        >
-                                          {isLoadingThis ? (
-                                            <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
-                                          ) : (
-                                            <X className="h-3.5 w-3.5 text-red-300" />
-                                          )}
-                                          Annuler
-                                        </button>
-                                      )
-                                    ) : null}
-                                  </div>
                                 </div>
-                              );
-                            })}
+                                <div>N°</div>
+                                <div>Date</div>
+                                <div>Date paiement</div>
+                                <div className="text-right">Capital</div>
+                                <div className="text-right">Intérêts</div>
+                                <div className="text-right">Assurance</div>
+                                <div className="text-right">Total</div>
+                                <div className="text-right">Restant dû</div>
+                                <div>Statut</div>
+                                <div className="text-right">Actions</div>
+                            </div>
+
+                            <div className="divide-y divide-white/10">
+                                {[...loan.installments]
+                                    .sort((a, b) => a.installmentNumber - b.installmentNumber)
+                                    .map((inst) => {
+                                        const st = getInstallmentStatusDisplay(inst.status);
+                                        const isLoadingThis = loading === inst.id;
+                                        return (
+                                            <div
+                                                key={inst.id}
+                                                className="grid grid-cols-[52px_70px_130px_140px_1fr_1fr_1fr_1fr_1fr_140px_170px] items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5 sm:px-6"
+                                            >
+                                                <div className="flex items-center justify-center">
+                                                    {canManage ? (
+                                                        <Checkbox
+                                                            checked={selectedInstallments.has(inst.id)}
+                                                            onCheckedChange={() => handleToggleSelection(inst.id)}
+                                                            disabled={inst.isPaid}
+                                                            aria-label={`Sélectionner l'échéance ${inst.installmentNumber}`}
+                                                        />
+                                                    ) : null}
+                                                </div>
+
+                                                <div className="text-sm font-medium text-white">
+                                                    {inst.installmentNumber}
+                                                </div>
+                                                <div className="text-sm text-(--nebula-muted)">
+                                                    {formatDate(inst.dueDate)}
+                                                </div>
+                                                <div className="text-sm text-(--nebula-muted)">
+                                                    {inst.paymentDate ? formatDate(inst.paymentDate) : '-'}
+                                                </div>
+                                                <div className="text-right text-sm nebula-value-text">
+                                                    {formatCurrencyPrecise(inst.principalPayment)}
+                                                </div>
+                                                <div className="text-right text-sm nebula-value-text">
+                                                    {formatCurrencyPrecise(inst.interestPayment)}
+                                                </div>
+                                                <div className="text-right text-sm nebula-value-text">
+                                                    {formatCurrencyPrecise(inst.insurancePayment)}
+                                                </div>
+                                                <div className="text-right text-sm font-semibold text-white">
+                                                    {formatCurrencyPrecise(inst.totalPayment)}
+                                                </div>
+                                                <div className="text-right text-sm text-(--nebula-muted)">
+                                                    {formatCurrencyPrecise(inst.remainingBalance)}
+                                                </div>
+                                                <div>
+                                                    <Badge variant={st.variant}>{st.text}</Badge>
+                                                </div>
+                                                <div className="flex justify-end">
+                                                    {canManage ? (
+                                                        !inst.isPaid ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleMarkAsPaid(inst.id)}
+                                                                disabled={isLoadingThis}
+                                                                className="inline-flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-white/80 transition-colors hover:bg-white/10 disabled:opacity-60"
+                                                            >
+                                                                {isLoadingThis ? (
+                                                                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+                                                                ) : (
+                                                                    <Check className="h-3.5 w-3.5 text-emerald-300" />
+                                                                )}
+                                                                Marquer payé
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleUnmarkAsPaid(inst.id)}
+                                                                disabled={isLoadingThis}
+                                                                className="inline-flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-white/80 transition-colors hover:bg-white/10 disabled:opacity-60"
+                                                            >
+                                                                {isLoadingThis ? (
+                                                                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+                                                                ) : (
+                                                                    <X className="h-3.5 w-3.5 text-red-300" />
+                                                                )}
+                                                                Annuler
+                                                            </button>
+                                                        )
+                                                    ) : null}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
                         </div>
-                      </div>
                     </div>
                 </div>
             )}

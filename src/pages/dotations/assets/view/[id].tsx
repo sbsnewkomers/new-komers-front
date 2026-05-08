@@ -252,7 +252,7 @@ export default function ViewAssetPage() {
                 </div>
                 <p className="text-base font-semibold text-white">
                   {asset.status === 'ACTIVE' ? 'Actif' :
-                    asset.status === 'FULLY_AMORTIZED' ? 'Totalement amorti' : 'C&eacute;d&eacute;'}
+                    asset.status === 'FULLY_AMORTIZED' ? 'Totalement amorti' : 'Cédé'}
                 </p>
               </div>
 
@@ -292,8 +292,8 @@ export default function ViewAssetPage() {
         <div className="nebula-glass rounded-3xl border border-white/10 overflow-hidden">
           <div className="p-5">
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-9 h-9 rounded-xl border border-emerald-400/25 bg-emerald-500/10 flex items-center justify-center">
-                <TrendingUp className="h-4 w-4 text-emerald-200" />
+              <div className="w-9 h-9 rounded-xl border border-(--nebula-gold-light)/25 bg-(--nebula-gold-light)/10 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-(--nebula-gold-light)" />
               </div>
               <h2 className="text-lg font-bold text-white">Plan d&apos;amortissement</h2>
             </div>
