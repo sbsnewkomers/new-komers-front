@@ -1,56 +1,49 @@
 import { useEffect, useRef } from 'react';
-import Ably, { Message } from 'ably';
-import { ImportMetadata } from '@/features/types/notifications';
+import { apiFetch } from '@/lib/apiClient';
 
 export interface ImportNotificationPayload {
+  id: string;
   severity: 'success' | 'error' | 'info' | 'warning';
   type: string;
   title: string;
   message: string;
-  metadata?: ImportMetadata;
-}
-
-let globalAbly: Ably.Realtime | null = null;
-
-function getAbly(): Ably.Realtime {
-  if (!globalAbly) {
-    globalAbly = new Ably.Realtime(process.env.NEXT_PUBLIC_ABLY_KEY!);
-  }
-  return globalAbly;
+  metadata?: any;
+  createdAt: string;
+  isRead: boolean;
 }
 
 export function useImportNotifications(
   userId: string | undefined,
   onNotification: (payload: ImportNotificationPayload) => void,
 ) {
-  const onNotificationRef = useRef(onNotification);
-
-  useEffect(() => {
-    onNotificationRef.current = onNotification;
-  });
+  const lastSeenIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
 
-    const ably = getAbly();
-    const channel = ably.channels.get(`user-${userId}`);
+    const poll = async () => {
+      try {
+        const notifications = await apiFetch<ImportNotificationPayload[]>('/notifications', {
+          method: 'GET',
+          snackbar: { showError: false, showSuccess: false },
+        });
 
-    const handler = (message: Message) => {
-      const payload = message.data as ImportNotificationPayload;
-      console.log('[Ably] reçu:', payload.type, payload.severity);
-      if (payload.type === 'import') {
-        onNotificationRef.current(payload);
+        const newOnes = notifications.filter(
+          (n) => !n.isRead && n.type === 'import' && n.id !== lastSeenIdRef.current
+        );
+
+        if (newOnes.length > 0) {
+          lastSeenIdRef.current = newOnes[0].id;
+          // On rafraîchit juste l'historique, pas de modale
+          newOnes.forEach((n) => onNotification(n));
+        }
+      } catch {
+        // silencieux
       }
     };
 
-    channel.subscribe('notification', handler);
-
-    channel.once('attached', () => {
-      console.log('[Ably] ✅ Canal souscrit:', `user-${userId}`);
-    });
-
-    return () => {
-      channel.unsubscribe('notification', handler);
-    };
+    poll();
+    const interval = setInterval(poll, 5000);
+    return () => clearInterval(interval);
   }, [userId]);
 }
