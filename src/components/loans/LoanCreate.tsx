@@ -105,7 +105,7 @@ export function LoanCreate({ onMethodSelect, onBack }: LoanCreateProps) {
                                     </p>
                                 </div>
 
-                                <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-(--nebula-gold-light) transition-colors group-hover:text-white">
+                                <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-(--nebula-gold-light) transition-colors group-hover:text-[var(--foreground)]">
                                     Choisir cette méthode
                                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                                 </div>
