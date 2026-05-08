@@ -25,7 +25,7 @@ import { Basic_COLUMNS } from "@/features/import/constants";
 import { ImportHistoryRow, ImportProgress, ValidationError, SavedMapping, MappingPayload } from "@/features/import/types";
 import { useRouter } from 'next/navigation';
 import { ImportGuide } from '@/features/import/ImportGuide';
-import { useImportNotifications } from '@/hooks/useImportNotifications';
+import { useImportNotifications, ImportNotificationPayload } from '@/hooks/useImportNotifications';
 import { ImportSuccessModal } from '@/features/import/ImportSuccessModal';
 
 function decodeBuffer(buffer: ArrayBuffer): string {
@@ -84,6 +84,8 @@ export default function ImportPage() {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [successTitle, setSuccessTitle] = useState("");
+  const selectedEntityIdRef = useRef(selectedEntityId);
+  const selectedEntityTypeRef = useRef(selectedEntityType);
   const [successDetails, setSuccessDetails] = useState<{
     totalProcessed?: number;
     skippedLines?: number;
@@ -113,80 +115,13 @@ export default function ImportPage() {
   const isManager = currentUser?.role === 'MANAGER';
   const [includeDescendants, setIncludeDescendants] = useState(false);
   const isImportingRef = useRef(false);
-  useImportNotifications(currentUser?.id, async (payload) => {
-    console.log('[IMPORT PAGE] callback appelée, payload:', JSON.stringify(payload));
+  useEffect(() => {
+  selectedEntityIdRef.current = selectedEntityId;
+  }, [selectedEntityId]);
 
-    if (payload.severity === 'error') {
-      const errors = payload.metadata?.errors;
-
-      if (Array.isArray(errors) && errors.length > 0) {
-        // Le backend renvoie des objets GenericValidationError
-        // On normalise quelle que soit la structure
-        const mappedErrors: ValidationError[] = errors.map((e: any) => ({
-          line: e.line ?? 0,
-          column: e.column ?? 'N/A',
-          value: e.value ?? '',
-          reason: e.reason ?? e.message ?? 'Erreur inconnue',
-          message: e.reason ?? e.message ?? 'Erreur inconnue',
-        }));
-        setValidationErrors(mappedErrors);
-      } else {
-        // Pas de détail d'erreurs → on affiche le message général
-        setValidationErrors([{
-          line: 0,
-          column: 'N/A',
-          value: '',
-          reason: payload.message,
-          message: payload.message,
-        }]);
-      }
-
-      setValidationModalOpen(true);
-      fetchHistory();
-      setHistoryOpen(true);
-    }
-
-    if (payload.severity === 'success') {
-      const meta = payload.metadata;
-      setSuccessTitle(payload.title);
-      setSuccessDetails({
-        totalProcessed: meta?.totalProcessed,
-        skippedLines: meta?.skippedDescendantLines,
-        newFiscalYearsCount: meta?.newFiscalYearsCount,
-        fiscalYears: meta?.fiscalYears?.map((fy) => ({
-          entityName: fy.entityName,
-          entityType: fy.entityType,
-          calendarYear: fy.calendarYear,
-          startDate: fy.startDate,
-          endDate: fy.endDate,
-          isNew: fy.isNew,
-          linesCount: fy.linesCount,
-        })),
-        dataImports: meta?.dataImports?.map((di) => ({
-          entityName: di.entityName,
-          entityType: di.entityType,
-          linesCount: di.linesCount,
-        })),
-      });
-      setSuccessModalOpen(true);
-      fetchHistory();
-      setHistoryOpen(true);
-      if (selectedEntityId && selectedEntityType) {
-        try {
-          const response = await apiFetch<{ hasData: boolean }>(
-            `/generic-import/entityType/${selectedEntityId}/has-data?entityType=${selectedEntityType}`,
-            { snackbar: { showSuccess: false, showError: false } }
-          );
-          setHasData(response.hasData);
-        } catch {
-          setHasData(null);
-        }
-      }
-    }
-  });
-
-
-
+  useEffect(() => {
+    selectedEntityTypeRef.current = selectedEntityType;
+  }, [selectedEntityType]);
   const fetchHistory = useCallback(async () => {
     try {
       const data = await apiFetch<any[]>("/generic-import/history", {
@@ -212,6 +147,81 @@ export default function ImportPage() {
       console.error("Erreur load history:", err);
     }
   }, []);
+
+  
+     
+  const handleImportNotification = useCallback(async (payload: ImportNotificationPayload) => {
+  console.log('[IMPORT PAGE] Notification reçue:', payload.severity);
+
+  if (payload.severity === 'error') {
+    const errors = payload.metadata?.errors;
+    if (Array.isArray(errors) && errors.length > 0) {
+      const mappedErrors: ValidationError[] = errors.map((e: any) => ({
+        line: e.line ?? 0,
+        column: e.column ?? 'N/A',
+        value: e.value ?? '',
+        reason: e.reason ?? e.message ?? 'Erreur inconnue',
+        message: e.reason ?? e.message ?? 'Erreur inconnue',
+      }));
+      setValidationErrors(mappedErrors);
+    } else {
+      setValidationErrors([{
+        line: 0, column: 'N/A', value: '',
+        reason: payload.message,
+        message: payload.message,
+      }]);
+    }
+    setValidationModalOpen(true);
+    fetchHistory();
+    setHistoryOpen(true);
+  }
+
+  if (payload.severity === 'success') {
+    const meta = payload.metadata;
+    setSuccessTitle(payload.title);
+    setSuccessDetails({
+      totalProcessed: meta?.totalProcessed,
+      skippedLines: meta?.skippedDescendantLines,
+      newFiscalYearsCount: meta?.newFiscalYearsCount,
+      fiscalYears: meta?.fiscalYears?.map((fy) => ({
+        entityName: fy.entityName,
+        entityType: fy.entityType,
+        calendarYear: fy.calendarYear,
+        startDate: fy.startDate,
+        endDate: fy.endDate,
+        isNew: fy.isNew,
+        linesCount: fy.linesCount,
+      })),
+      dataImports: meta?.dataImports?.map((di) => ({
+        entityName: di.entityName,
+        entityType: di.entityType,
+        linesCount: di.linesCount,
+      })),
+    });
+    setSuccessModalOpen(true);
+    fetchHistory();
+    setHistoryOpen(true);
+
+    // Utilise les refs pour avoir les valeurs fraîches
+    const currentEntityId = selectedEntityIdRef.current;
+    const currentEntityType = selectedEntityTypeRef.current;
+    if (currentEntityId && currentEntityType) {
+      try {
+        const response = await apiFetch<{ hasData: boolean }>(
+          `/generic-import/entityType/${currentEntityId}/has-data?entityType=${currentEntityType}`,
+          { snackbar: { showSuccess: false, showError: false } }
+        );
+        setHasData(response.hasData);
+      } catch {
+        setHasData(null);
+      }
+    }
+  }
+}, [fetchHistory]);
+
+useImportNotifications(currentUser?.id, handleImportNotification);
+  
+
 
   useEffect(() => {
     companies.fetchList();
