@@ -19,58 +19,58 @@ import { getWorkspaces, Workspace } from "@/lib/workspaceApi";
 import { Download, Upload } from "lucide-react";
 // Mettez à jour TEMPLATE_SHEETS avec les nouvelles colonnes
 const TEMPLATE_SHEETS = [
-      {
-        id: "groups",
-        label: "1. Groupes",
-        desc: "Un groupe peut contenir plusieurs entreprises.",
-        cols: [
-          { name: "Nom du groupe", key: "name", req: true, type: "Texte", note: "Unique" },
-          { name: "Début exercice (DD-MM)", key: "fiscal_year_start", req: true, type: "Date", note: "ex: 01-01" },
-          { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
-          { name: "Activité", key: "mainActivity", req: true, type: "Texte", note: "" },
-          { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
-          { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
-          { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 15/06/2010" },
-        ],
-        example: { name: "Groupe Alpha", fiscal_year_start: "01-01", siret: "12345678901234", mainActivity: "Secteur Technologique", country: "France", entity_code: "GRP-ALPHA", registrationDate: "15/06/2010" },
-      },
-      {
-        id: "companies",
-        label: "2. Entreprises",
-        desc: "Rattachées à un groupe (optionnel). Taille : SMALL / MEDIUM / LARGE.",
-        cols: [
-          { name: "Nom entreprise", key: "name", req: true, type: "Texte", note: "Unique" },
-          { name: "Début exercice (DD-MM)", key: "fiscal_year_start", req: true, type: "Date", note: "ex: 01-01" },
-          { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
-          { name: "Adresse", key: "address", req: false, type: "Texte", note: "" },
-          { name: "Code APE", key: "ape_code", req: true, type: "Texte", note: "ex: 6201Z" },
-          { name: "Activité", key: "main_activity", req: true, type: "Texte", note: "" },
-          { name: "Taille", key: "size", req: false, type: "Enum", note: "SMALL / MEDIUM / LARGE" },
-          { name: "Modèle", key: "model", req: false, type: "Enum", note: "HOLDING / SUBSIDIARY" },
-          { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
-          { name: "Nom du groupe", key: "group_name", req: false, type: "Référence", note: "Doit exister dans onglet 1" },
-          { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
-          { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 01/03/2015" },
-        ],
-        example: { name: "Alpha Digital SAS", fiscal_year_start: "01-01", siret: "98765432100012", address: "15 Rue de la Paix", ape_code: "6201Z", main_activity: "Édition de logiciels", size: "MEDIUM", model: "SUBSIDIARY", country: "France", group_name: "Groupe Alpha", entity_code: "ENT-ALPHA", registrationDate: "01/03/2015" },
-      },
-      {
-        id: "bu",
-        label: "3. Business Units",
-        desc: "Liées à une entreprise existante dans l'onglet 2.",
-        cols: [
-          { name: "Nom business unit", key: "name", req: true, type: "Texte", note: "Unique par entreprise" },
-          { name: "Nom entreprise", key: "company_name", req: true, type: "Référence", note: "Doit exister dans onglet 2" },
-          { name: "Code BU", key: "code", req: true, type: "Texte", note: "ex: BU-FINANCE" },
-          { name: "Activité", key: "activity", req: false, type: "Texte", note: "" },
-          { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
-          { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
-          { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
-          { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 20/09/2018" },
-        ],
-        example: { name: "Finance Alpha", company_name: "Alpha Digital SAS", code: "BU-FINANCE", activity: "Gestion Comptable", siret: "98765432100012", country: "France", entity_code: "BU-FIN-ALPHA", registrationDate: "20/09/2018" },
-      },
-    ] as const;
+  {
+    id: "groups",
+    label: "1. Groupes",
+    desc: "Un groupe peut contenir plusieurs entreprises.",
+    cols: [
+      { name: "Nom du groupe", key: "name", req: true, type: "Texte", note: "Unique" },
+      { name: "Début exercice (DD-MM)", key: "fiscal_year_start", req: true, type: "Date", note: "ex: 01-01" },
+      { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
+      { name: "Activité", key: "mainActivity", req: true, type: "Texte", note: "" },
+      { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
+      { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
+      { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 15/06/2010" },
+    ],
+    example: { name: "Groupe Alpha", fiscal_year_start: "01-01", siret: "12345678901234", mainActivity: "Secteur Technologique", country: "France", entity_code: "GRP-ALPHA", registrationDate: "15/06/2010" },
+  },
+  {
+    id: "companies",
+    label: "2. Entreprises",
+    desc: "Rattachées à un groupe (optionnel). Taille : SMALL / MEDIUM / LARGE.",
+    cols: [
+      { name: "Nom entreprise", key: "name", req: true, type: "Texte", note: "Unique" },
+      { name: "Début exercice (DD-MM)", key: "fiscal_year_start", req: true, type: "Date", note: "ex: 01-01" },
+      { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
+      { name: "Adresse", key: "address", req: false, type: "Texte", note: "" },
+      { name: "Code APE", key: "ape_code", req: true, type: "Texte", note: "ex: 6201Z" },
+      { name: "Activité", key: "main_activity", req: true, type: "Texte", note: "" },
+      { name: "Taille", key: "size", req: false, type: "Enum", note: "SMALL / MEDIUM / LARGE" },
+      { name: "Modèle", key: "model", req: false, type: "Enum", note: "HOLDING / SUBSIDIARY" },
+      { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
+      { name: "Nom du groupe", key: "group_name", req: false, type: "Référence", note: "Doit exister dans onglet 1" },
+      { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
+      { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 01/03/2015" },
+    ],
+    example: { name: "Alpha Digital SAS", fiscal_year_start: "01-01", siret: "98765432100012", address: "15 Rue de la Paix", ape_code: "6201Z", main_activity: "Édition de logiciels", size: "MEDIUM", model: "SUBSIDIARY", country: "France", group_name: "Groupe Alpha", entity_code: "ENT-ALPHA", registrationDate: "01/03/2015" },
+  },
+  {
+    id: "bu",
+    label: "3. Business Units",
+    desc: "Liées à une entreprise existante dans l'onglet 2.",
+    cols: [
+      { name: "Nom business unit", key: "name", req: true, type: "Texte", note: "Unique par entreprise" },
+      { name: "Nom entreprise", key: "company_name", req: true, type: "Référence", note: "Doit exister dans onglet 2" },
+      { name: "Code BU", key: "code", req: true, type: "Texte", note: "ex: BU-FINANCE" },
+      { name: "Activité", key: "activity", req: false, type: "Texte", note: "" },
+      { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
+      { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
+      { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
+      { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 20/09/2018" },
+    ],
+    example: { name: "Finance Alpha", company_name: "Alpha Digital SAS", code: "BU-FINANCE", activity: "Gestion Comptable", siret: "98765432100012", country: "France", entity_code: "BU-FIN-ALPHA", registrationDate: "20/09/2018" },
+  },
+] as const;
 
 export default function StructureImportUploadPage() {
   const { accessToken, user } = usePermissionsContext();
@@ -170,13 +170,13 @@ export default function StructureImportUploadPage() {
 
   const handleValidate = async () => {
     if (!file) return;
-    
+
     // Validate workspace selection for super admin and admin
     if (canSelectWorkspace && !selectedWorkspaceId) {
       setError("Veuillez sélectionner un workspace avant de valider le fichier.");
       return;
     }
-    
+
     try {
       setIsValidating(true);
       setError(null);
@@ -202,66 +202,66 @@ export default function StructureImportUploadPage() {
     }
   };
 
-const handleExecute = async () => {
-  if (!file) return;
-  
-  if (canSelectWorkspace && !selectedWorkspaceId) {
-    setError("Veuillez sélectionner un workspace avant de lancer l'import.");
-    return;
-  }
-  
-  try {
-    setIsExecuting(true);
-    setError(null);
-    const workspaceId = canSelectWorkspace ? selectedWorkspaceId : undefined;
-    const rep = await executeStructureImport(file, accessToken, workspaceId);
-    
-    // La réponse est { success, message, data: { created: { ... } } }
-    const result =
-      (rep as { data?: ImportExecuteResult | null } | null | undefined)?.data ??
-      rep;
-    if (result && result.created) {
-      setExecuteResult(result);
-    } else {
-      setError("Réponse inattendue du serveur.");
+  const handleExecute = async () => {
+    if (!file) return;
+
+    if (canSelectWorkspace && !selectedWorkspaceId) {
+      setError("Veuillez sélectionner un workspace avant de lancer l'import.");
+      return;
     }
-  } catch (err: unknown) {
-    const details =
-      err && typeof err === "object" && "details" in err
-        ? (err as { details?: { originalResponse?: unknown } }).details
-            ?.originalResponse
-        : undefined;
-    
-    if (
-      details &&
-      typeof details === "object" &&
-      "errors" in details &&
-      "summary" in details
-    ) {
-      setReport({
-        summary: (details as { summary: ImportReport["summary"] }).summary,
-        errors: (details as { errors: ImportReport["errors"] }).errors,
-      });
-      setError("L'import a échoué : des erreurs de validation ont été détectées.");
-    } else {
-      const msg =
+
+    try {
+      setIsExecuting(true);
+      setError(null);
+      const workspaceId = canSelectWorkspace ? selectedWorkspaceId : undefined;
+      const rep = await executeStructureImport(file, accessToken, workspaceId);
+
+      // La réponse est { success, message, data: { created: { ... } } }
+      const result =
+        (rep as { data?: ImportExecuteResult | null } | null | undefined)?.data ??
+        rep;
+      if (result && result.created) {
+        setExecuteResult(result);
+      } else {
+        setError("Réponse inattendue du serveur.");
+      }
+    } catch (err: unknown) {
+      const details =
         err && typeof err === "object" && "details" in err
-          ? String(
+          ? (err as { details?: { originalResponse?: unknown } }).details
+            ?.originalResponse
+          : undefined;
+
+      if (
+        details &&
+        typeof details === "object" &&
+        "errors" in details &&
+        "summary" in details
+      ) {
+        setReport({
+          summary: (details as { summary: ImportReport["summary"] }).summary,
+          errors: (details as { errors: ImportReport["errors"] }).errors,
+        });
+        setError("L'import a échoué : des erreurs de validation ont été détectées.");
+      } else {
+        const msg =
+          err && typeof err === "object" && "details" in err
+            ? String(
               (err as { details?: { message?: unknown } }).details?.message ??
-                "",
+              "",
             )
-          : err instanceof Error
-            ? err.message
-            : "";
-      setError(msg || "Erreur lors de l'import.");
+            : err instanceof Error
+              ? err.message
+              : "";
+        setError(msg || "Erreur lors de l'import.");
+      }
+
+      setExecuteResult(null);
+    } finally {
+      setIsExecuting(false);
     }
-    
-    setExecuteResult(null);
-  } finally {
-    setIsExecuting(false);
-  }
-};
-    
+  };
+
 
   const hasNoErrors = report && report.errors.length === 0;
 
@@ -270,7 +270,7 @@ const handleExecute = async () => {
       title="Structure"
       companies={[]}
       selectedCompanyId=""
-      onCompanyChange={() => {}}
+      onCompanyChange={() => { }}
     >
       <Head>
         <title>Import structure — Fichier Excel</title>
@@ -319,7 +319,7 @@ const handleExecute = async () => {
               variant="default"
               onClick={handleDownloadTemplate}
             >
-              <Download className="h-5 w-5 text-white" />
+              <Download className="h-5 w-5" style={{ color: 'white' }} />
               Télécharger le modèle Excel
             </Button>
           </div>
@@ -364,8 +364,8 @@ const handleExecute = async () => {
           className={
             "nebula-glass nebula-blob rounded-3xl border-2 border-dashed p-12 text-center " +
             (dragOver
-              ? "border-(--nebula-gold-light) bg-white/10"
-              : "border-white/15 bg-white/5")
+              ? "border-(--nebula-gold-light) bg-white/10 dark:bg-white/10"
+              : "border-gray-300 dark:border-white/15 bg-gray-50 dark:bg-white/5")
           }
         >
           <input
@@ -377,9 +377,9 @@ const handleExecute = async () => {
           />
           <label htmlFor="file-upload" className="cursor-pointer">
             {file ? (
-              <p className="font-medium text-white font-mono">{file.name}</p>
+              <p className="font-medium text-[var(--nebula-ink)] font-mono">{file.name}</p>
             ) : (
-              <p className="text-(--nebula-muted)">
+              <p className="text-gray-600 dark:text-(--nebula-muted)">
                 Glissez-déposez un fichier Excel (.xlsx) ici ou cliquez pour
                 parcourir.
               </p>
@@ -408,16 +408,16 @@ const handleExecute = async () => {
         </div>
 
         {executeResult && executeResult.created && (
-        <div className="nebula-glass nebula-blob rounded-3xl p-6 text-sm">
-          <p className="font-semibold mb-1 text-white">Import terminé avec succès.</p>
-          <p>
-            Groupes créés : <strong>{executeResult.created.groups}</strong>,{" "}
-            Entreprises créées :{" "}
-            <strong>{executeResult.created.companies}</strong>, Business units
-            créées : <strong>{executeResult.created.businessUnits}</strong>.
-          </p>
-        </div>
-      )}
+          <div className="nebula-glass nebula-blob rounded-3xl p-6 text-sm">
+            <p className="font-semibold mb-1 text-white">Import terminé avec succès.</p>
+            <p>
+              Groupes créés : <strong>{executeResult.created.groups}</strong>,{" "}
+              Entreprises créées :{" "}
+              <strong>{executeResult.created.companies}</strong>, Business units
+              créées : <strong>{executeResult.created.businessUnits}</strong>.
+            </p>
+          </div>
+        )}
 
         {report && (
           <div className="space-y-4">
@@ -504,7 +504,7 @@ const handleExecute = async () => {
             </div>
           </div>
         )}
-        {/* ── Modal aperçu template ── */}   
+        {/* ── Modal aperçu template ── */}
         {showTemplatePreview && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
@@ -558,11 +558,10 @@ function TemplatePreviewTabs({
           <button
             key={s.id}
             onClick={() => setActiveIdx(i)}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg border border-b-0 transition-colors ${
-              i === activeIdx
-                ? "bg-white border-slate-200 text-slate-900 -mb-px"
-                : "border-transparent text-slate-500 hover:text-slate-700"
-            }`}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg border border-b-0 transition-colors ${i === activeIdx
+              ? "bg-white border-slate-200 text-slate-900 -mb-px"
+              : "border-transparent text-slate-500 hover:text-slate-700"
+              }`}
           >
             {s.label}
           </button>
@@ -594,11 +593,10 @@ function TemplatePreviewTabs({
                   <td className="px-4 py-2.5 text-slate-600">{col.type}</td>
                   <td className="px-4 py-2.5 text-xs text-slate-400">{col.note || "—"}</td>
                   <td className="px-4 py-2.5">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      col.req
-                        ? "bg-rose-50 text-rose-700"
-                        : "bg-slate-100 text-slate-500"
-                    }`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${col.req
+                      ? "bg-rose-50 text-rose-700"
+                      : "bg-slate-100 text-slate-500"
+                      }`}>
                       {col.req ? "Requis" : "Facultatif"}
                     </span>
                   </td>
