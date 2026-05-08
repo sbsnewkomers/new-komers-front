@@ -251,19 +251,19 @@ const NODE_TYPE_META: Record<
 > = {
   workspace: {
     label: "Espace de travail",
-    gradient: "from-purple-500 to-purple-600",
-    soft: "bg-purple-500/15",
-    text: "text-purple-200",
-    ring: "ring-purple-400/30",
+    gradient: "from-(--nebula-gold-light) to-(--nebula-gold-deep)",
+    soft: "bg-(--nebula-gold)/15",
+    text: "text-(--nebula-gold-light)",
+    ring: "ring-(--nebula-gold-light)/30",
     Icon: Building2,
     description: "Container principal regroupant plusieurs groupes et entreprises.",
   },
   group: {
     label: "Groupe",
-    gradient: "from-blue-500 to-blue-600",
-    soft: "bg-sky-500/15",
-    text: "text-sky-200",
-    ring: "ring-sky-400/30",
+    gradient: "from-(--nebula-gold-light) to-(--nebula-gold-deep)",
+    soft: "bg-(--nebula-gold)/15",
+    text: "text-(--nebula-gold-light)",
+    ring: "ring-(--nebula-gold-light)/30",
     Icon: Layers,
     description: "Entité juridique mère regroupant plusieurs entreprises.",
   },
@@ -278,10 +278,10 @@ const NODE_TYPE_META: Record<
   },
   bu: {
     label: "Business Unit",
-    gradient: "from-emerald-500 to-emerald-600",
-    soft: "bg-emerald-500/15",
-    text: "text-emerald-200",
-    ring: "ring-emerald-400/30",
+    gradient: "from-(--nebula-gold-light) to-(--nebula-gold-deep)",
+    soft: "bg-(--nebula-gold)/15",
+    text: "text-(--nebula-gold-light)",
+    ring: "ring-(--nebula-gold-light)/30",
     Icon: Briefcase,
     description: "Unité d'activité spécialisée au sein d'une entreprise.",
   },
@@ -2392,7 +2392,7 @@ export default function StructurePage() {
                             }
                             className="gap-2"
                           >
-                            <Building className="h-4 w-4 text-white/90" />
+                            <Building className="h-4 w-4 text-(--nebula-gold-light)" />
                             Entreprise
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -2643,7 +2643,7 @@ export default function StructurePage() {
                                 className="cursor-pointer rounded p-0.5 transition-colors hover:bg-white/10 mr-1"
                               >
                                 <Play
-                                  className={`h-3 w-3 fill-white/55 text-white/45 transition-transform ${expandedCompanyIds.has(node.id)
+                                  className={`h-3 w-3 fill-white/55 text-white/45 transition-transform nebula-light:fill-[var(--nebula-gold)]! nebula-light:text-[var(--nebula-gold)]! ${expandedCompanyIds.has(node.id)
                                     ? "rotate-90"
                                     : ""
                                     }`}
@@ -3444,7 +3444,7 @@ export default function StructurePage() {
                     </div>
                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
                       <div
-                        className="h-full rounded-full bg-linear-to-r from-emerald-400 to-emerald-500 transition-all"
+                        className="h-full rounded-full bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) transition-all"
                         style={{
                           width: `${Math.max(0, Math.min(100, editCompany.completionPercentage))}%`,
                         }}
