@@ -488,15 +488,15 @@ export function GlobalDotationForm({
 
             <div className="rounded-2xl border border-sky-400/25 bg-sky-500/10 p-4">
 
-              <h3 className="font-semibold text-white mb-2">Résumé automatique</h3>
+              <h3 className="font-semibold mb-2" style={{ color: "var(--nebula-ink)" }}>Résumé automatique</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
 
                 <div>
 
-                  <span className="text-(--nebula-muted)">Montant total annuel:</span>
+                  <span style={{ color: "var(--nebula-muted)" }}>Montant total annuel:</span>
 
-                  <span className="ml-2 font-bold text-sky-100">
+                  <span className="ml-2 font-bold" style={{ color: "var(--nebula-ink)" }}>
 
                     {formatCurrency(formData.totalAmount)}
 
@@ -506,9 +506,9 @@ export function GlobalDotationForm({
 
                 <div>
 
-                  <span className="text-(--nebula-muted)">Montant mensuel (réparti):</span>
+                  <span style={{ color: "var(--nebula-muted)" }}>Montant mensuel (réparti):</span>
 
-                  <span className="ml-2 font-bold text-sky-100">
+                  <span className="ml-2 font-bold" style={{ color: "var(--nebula-ink)" }}>
 
                     {formatCurrency(formData.totalAmount / 12)}
 
@@ -518,7 +518,7 @@ export function GlobalDotationForm({
 
               </div>
 
-              <p className="text-xs text-sky-200/90 mt-2">
+              <p className="text-xs mt-2" style={{ color: "var(--nebula-muted)" }}>
 
                 Le système répartira automatiquement ce montant sur 12 mois pour les calculs périodiques.
 
