@@ -211,7 +211,6 @@ export function AppLayout({
                           {user?.role?.replace("_", " ") || "----"}
                         </span>
                       </div>
-                      <span className="ml-auto inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
                     </button>
 
                     {userMenuOpen && (
@@ -225,7 +224,7 @@ export function AppLayout({
                             void router.push("/profile");
                           }}
                         >
-                          Mon Profil
+                          Profil
                         </button>
 
                         <button
