@@ -438,25 +438,25 @@ export function ImportGuide() {
               {[
                 {
                   icon: Save,
-                  color: "text-emerald-200",
-                  bg: "bg-emerald-500/10",
-                  border: "border-emerald-400/25",
+                  color: "text-yellow-500",
+                  bg: "bg-yellow-500/10",
+                  border: "border-yellow-400/25",
                   title: "Enregistrer",
                   desc: "Après avoir configuré votre mapping, cliquez sur « Enregistrer » pour le sauvegarder sous un nom.",
                 },
                 {
                   icon: RefreshCw,
-                  color: "text-violet-200",
-                  bg: "bg-violet-500/10",
-                  border: "border-violet-400/25",
+                  color: "text-yellow-500",
+                  bg: "bg-yellow-500/10",
+                  border: "border-yellow-400/25",
                   title: "Réutiliser",
                   desc: "Au prochain import, sélectionnez un modèle existant depuis le modal de sélection — aucune reconfiguration nécessaire.",
                 },
                 {
                   icon: Layers,
-                  color: "text-sky-200",
-                  bg: "bg-sky-500/10",
-                  border: "border-sky-400/25",
+                  color: "text-yellow-500",
+                  bg: "bg-yellow-500/10",
+                  border: "border-yellow-400/25",
                   title: "Portée",
                   desc: "Un mapping peut être global (visible par tous) ou local à un workspace (visible seulement par les membres).",
                 },
@@ -474,7 +474,7 @@ export function ImportGuide() {
               ))}
             </div>
 
-            <div className="rounded-xl border border-violet-400/25 bg-violet-500/10 p-3">
+            <div className="rounded-xl border border-sky-300 bg-sky-100 p-3 dark:border-sky-600 dark:bg-sky-800">
               <div className="flex items-start gap-2">
                 <Wand2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-200" />
                 <p className="text-xs text-violet-100/95">

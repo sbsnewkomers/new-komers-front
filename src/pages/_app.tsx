@@ -39,7 +39,7 @@ function AuthBootstrapGate({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen nebula-grid-bg flex items-center justify-center">
         <div className="nebula-glass rounded-3xl p-8 text-center">
           <div className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted) mb-3">
-            § Initialisation
+            Initialisation
           </div>
           <p className="text-sm font-semibold text-white">
             Chargement de votre session...
