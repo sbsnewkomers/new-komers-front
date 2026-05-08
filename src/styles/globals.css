@@ -226,22 +226,22 @@ input:disabled {
 
 /* ----- LIGHT MODE — classe .nebula-light sur la racine ----- */
 .nebula-light {
-  --nebula-bg: #fafaf7;
-  --nebula-ink: #0a0a0a;
-  --nebula-muted: #6b6b66;
+  --nebula-bg: #f8f8f8;
+  --nebula-ink: #000000;
+  --nebula-muted: #333333;
 
   --background: var(--nebula-bg);
   --foreground: var(--nebula-ink);
-  --muted: rgba(10, 10, 10, 0.06);
+  --muted: rgba(0, 0, 0, 0.08);
   --muted-foreground: var(--nebula-muted);
-  --border: rgba(10, 10, 10, 0.08);
-  --input: rgba(10, 10, 10, 0.1);
+  --border: rgba(0, 0, 0, 0.35);
+  --input: rgba(0, 0, 0, 0.4);
   --ring: var(--nebula-gold);
   --primary: var(--nebula-gold);
   --primary-foreground: #fff;
-  --card: rgba(255, 255, 255, 0.7);
+  --card: rgba(255, 255, 255, 0.98);
   --card-foreground: var(--nebula-ink);
-  --popover: rgba(255, 255, 255, 0.85);
+  --popover: rgba(255, 255, 255, 1);
   --popover-foreground: var(--nebula-ink);
 }
 
@@ -252,8 +252,9 @@ input:disabled {
 /* Light dropdown background */
 .nebula-light select,
 .nebula-light option {
-  background-color: rgba(255, 255, 255, 0.92);
+  background-color: rgba(255, 255, 255, 0.98);
   color: var(--nebula-ink);
+  border: 1px solid rgba(0, 0, 0, 0.4);
 }
 
 .nebula-light body,
@@ -272,21 +273,21 @@ body.nebula-light {
 }
 
 .nebula-light .nebula-glass {
-  background: white;
-  border: 1px solid rgba(10, 10, 10, 0.08);
-  box-shadow: 0 8px 32px -12px rgba(184, 146, 74, 0.18);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 32px -12px rgba(0, 0, 0, 0.2);
 }
 
 .nebula-light .nebula-glass-modal {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(10, 10, 10, 0.1);
-  box-shadow: 0 12px 36px -16px rgba(10, 10, 10, 0.12);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  box-shadow: 0 12px 36px -16px rgba(0, 0, 0, 0.3);
 }
 
 .nebula-light .nebula-grid-bg {
   background-image:
-    linear-gradient(rgba(10, 10, 10, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(10, 10, 10, 0.05) 1px, transparent 1px);
+    linear-gradient(rgba(0, 0, 0, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.15) 1px, transparent 1px);
 }
 
 /* Tailwind utility overrides in light mode */
@@ -459,6 +460,12 @@ body.nebula-light {
 
 .nebula-light .nebula-warning-icon {
   color: rgb(140, 80, 20);
+}
+
+/* Fix Play icon color in light mode */
+.nebula-light .lucide-play {
+  fill: var(--nebula-gold) !important;
+  color: var(--nebula-gold) !important;
 }
 
 /* =============================================================================
