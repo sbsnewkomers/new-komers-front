@@ -95,14 +95,14 @@ export function AmortizationScheduleDisplay({ asset, schedules }: AmortizationSc
                       <TableRow
                         key={schedule.id}
                         className={
-                          isCurrentYear ? 'bg-sky-500/10 border-white/10 font-semibold' :
+                          isCurrentYear ? 'bg-(--nebula-gold-light)/10 border-white/10 font-semibold' :
                             isFutureYear ? 'text-white/40 border-white/10' : 'border-white/10'
                         }
                       >
                         <TableCell className="text-white">
                           {schedule.year}
                           {isCurrentYear && (
-                            <span className="ml-2 text-xs border border-sky-400/30 bg-sky-500/15 text-sky-100 px-2 py-1 rounded-lg">
+                            <span className="ml-2 text-xs border border-(--nebula-gold-light)/30 bg-(--nebula-gold-light)/15 text-(--nebula-gold-light) px-2 py-1 rounded-lg">
                               Année en cours
                             </span>
                           )}
@@ -120,11 +120,11 @@ export function AmortizationScheduleDisplay({ asset, schedules }: AmortizationSc
                         <TableCell className="text-white">{formatCurrency(schedule.netBookValue)}</TableCell>
                         <TableCell>
                           {schedule.isProrata ? (
-                            <span className="text-xs border border-amber-400/30 bg-amber-500/15 text-amber-100 px-2 py-1 rounded-lg">
+                            <span className="text-xs border border-amber-400/30 bg-amber-500/15 text-amber-100 dark:text-amber-300 px-2 py-1 rounded-lg">
                               Oui ({schedule.monthsUsed} mois)
                             </span>
                           ) : (
-                            <span className="text-white/40">Non</span>
+                            <span className="text-white/40 dark:text-gray-400">Non</span>
                           )}
                         </TableCell>
                       </TableRow>
@@ -147,13 +147,13 @@ export function AmortizationScheduleDisplay({ asset, schedules }: AmortizationSc
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <p className="text-sm text-(--nebula-muted)">Total des dotations prévues</p>
-                <p className="text-2xl font-bold text-emerald-200">
+                <p className="text-2xl font-bold text-(--nebula-gold-light)">
                   {isLoadingTotal ? 'Chargement...' : formatCurrency(totalDotations)}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-(--nebula-muted)">Dotation pour l&apos;année {currentYear}</p>
-                <p className="text-2xl font-bold text-sky-200">
+                <p className="text-2xl font-bold text-(--nebula-gold-light)">
                   {formatCurrency(
                     sortedSchedules.find(s => s.year === currentYear)?.annualAmortizationAmount || 0
                   )}
@@ -161,7 +161,7 @@ export function AmortizationScheduleDisplay({ asset, schedules }: AmortizationSc
               </div>
               <div>
                 <p className="text-sm text-(--nebula-muted)">Valeur nette comptable actuelle</p>
-                <p className="text-2xl font-bold text-violet-200">
+                <p className="text-2xl font-bold text-(--nebula-gold-light)">
                   {formatCurrency(
                     sortedSchedules.find(s => s.year === currentYear)?.netBookValue ||
                     sortedSchedules[sortedSchedules.length - 1]?.netBookValue ||
