@@ -1,58 +1,22 @@
 import { useEffect, useRef } from 'react';
-import Pusher, { Channel } from 'pusher-js';
+import Ably, { Message } from 'ably';
+import { ImportMetadata } from '@/features/types/notifications';
 
 export interface ImportNotificationPayload {
   severity: 'success' | 'error' | 'info' | 'warning';
   type: string;
   title: string;
   message: string;
-  metadata?: {
-    errors?: any[];
-    importId?: string;
-    totalProcessed?: number;
-    skippedDescendantLines?: number;
-    newFiscalYearsCount?: number;
-    existingFiscalYearsCount?: number;
-    rootEntityId?: string;
-    rootEntityType?: string;
-    rootEntityName?: string;
-    fiscalYears?: {
-      fiscalYearId: string;
-      entityId: string;
-      entityType: string;
-      entityName: string | null;
-      entityCode: string | null;
-      calendarYear: number;
-      startDate: string;
-      endDate: string;
-      isNew: boolean;
-      linesCount: number;
-    }[];
-    dataImports?: {
-      dataImportId: string;
-      entityId: string;
-      entityType: string;
-      entityName: string | null;
-      linesCount: number;
-    }[];
-  };
+  metadata?: ImportMetadata;
 }
 
-// Singleton global — survit aux re-renders et aux navigations
-let globalPusher: Pusher | null = null;
+let globalAbly: Ably.Realtime | null = null;
 
-function getPusher(): Pusher {
-  if (
-    !globalPusher ||
-    globalPusher.connection.state === 'disconnected' ||
-    globalPusher.connection.state === 'failed'
-  ) {
-    globalPusher?.disconnect();
-    globalPusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
-      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-    });
+function getAbly(): Ably.Realtime {
+  if (!globalAbly) {
+    globalAbly = new Ably.Realtime(process.env.NEXT_PUBLIC_ABLY_KEY!);
   }
-  return globalPusher;
+  return globalAbly;
 }
 
 export function useImportNotifications(
@@ -61,8 +25,6 @@ export function useImportNotifications(
 ) {
   const onNotificationRef = useRef(onNotification);
 
-  // Sans tableau de dépendances → se met à jour à chaque render
-  // garantit que le ref pointe toujours vers la closure la plus fraîche
   useEffect(() => {
     onNotificationRef.current = onNotification;
   });
@@ -70,30 +32,25 @@ export function useImportNotifications(
   useEffect(() => {
     if (!userId) return;
 
-    const pusher = getPusher();
-    const channelName = `user-${userId}`;
-    const channel: Channel = pusher.subscribe(channelName);
+    const ably = getAbly();
+    const channel = ably.channels.get(`user-${userId}`);
 
-    const handler = (payload: ImportNotificationPayload) => {
-      console.log('[Pusher] reçu:', payload.type, payload.severity);
+    const handler = (message: Message) => {
+      const payload = message.data as ImportNotificationPayload;
+      console.log('[Ably] reçu:', payload.type, payload.severity);
       if (payload.type === 'import') {
         onNotificationRef.current(payload);
       }
     };
 
-    channel.bind('notification', handler);
+    channel.subscribe('notification', handler);
 
-    channel.bind('pusher:subscription_succeeded', () => {
-      console.log('[Pusher] ✅ Canal souscrit:', channelName);
-    });
-
-    channel.bind('pusher:subscription_error', (err: any) => {
-      console.error('[Pusher] ❌ Erreur:', err);
+    channel.once('attached', () => {
+      console.log('[Ably] ✅ Canal souscrit:', `user-${userId}`);
     });
 
     return () => {
-      // Retire seulement ce handler, ne déconnecte PAS le singleton
-      channel.unbind('notification', handler);
+      channel.unsubscribe('notification', handler);
     };
   }, [userId]);
 }

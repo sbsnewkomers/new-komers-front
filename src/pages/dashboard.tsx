@@ -296,7 +296,7 @@ export default function DashboardPage() {
           <Button
             onClick={() => setAddModalOpen(true)}
             className="bg-primary text-white! hover:bg-slate-800"
-            >
+          >
             Ajouter un widget
           </Button>
         </div>
@@ -635,7 +635,7 @@ export default function DashboardPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium" style={{ color: "#d4b06a" }}>
                 Indicateur
               </label>
               <Select
@@ -651,7 +651,7 @@ export default function DashboardPage() {
               </Select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium" style={{ color: "#d4b06a" }}>
                 Type de graphique
               </label>
               <Select
@@ -665,7 +665,7 @@ export default function DashboardPage() {
               </Select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium" style={{ color: "#d4b06a" }}>
                 Périmètre
               </label>
               <Select
@@ -740,32 +740,32 @@ function DrillDownDialog({
           <DialogTitle>Détail des données</DialogTitle>
         </DialogHeader>
         <DialogBody>
-        <div className="overflow-auto rounded-lg border border-slate-200">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              {table.getHeaderGroups().map((hg) => (
-                <tr key={hg.id} className="bg-slate-50">
-                  {hg.headers.map((h) => (
-                    <th key={h.id} className="border-b border-slate-200 px-4 py-3 text-left font-semibold text-slate-700">
-                      {flexRender(h.column.columnDef.header, h.getContext())}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3 text-slate-700">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+          <div className="overflow-auto rounded-lg border" style={{ borderColor: "var(--border)" }}>
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                {table.getHeaderGroups().map((hg) => (
+                  <tr key={hg.id} style={{ backgroundColor: "var(--muted)" }}>
+                    {hg.headers.map((h) => (
+                      <th key={h.id} className="border-b px-4 py-3 text-left font-semibold" style={{ color: "var(--nebula-ink)", borderColor: "var(--border)" }}>
+                        {flexRender(h.column.columnDef.header, h.getContext())}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {table.getRowModel().rows.map((row) => (
+                  <tr key={row.id} className="border-b last:border-0" style={{ borderColor: "var(--border)" }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--muted)"} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}>
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="px-4 py-3" style={{ color: "var(--nebula-ink)" }}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
