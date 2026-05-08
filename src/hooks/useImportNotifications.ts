@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import Pusher from 'pusher-js';
 
 interface ImportNotificationPayload {
   severity: 'success' | 'error' | 'info' | 'warning';
@@ -6,9 +7,7 @@ interface ImportNotificationPayload {
   title: string;
   message: string;
   metadata?: {
-    // erreurs
     errors?: any[];
-    // succès
     importId?: string;
     totalProcessed?: number;
     skippedDescendantLines?: number;
@@ -52,38 +51,27 @@ export function useImportNotifications(
     if (!userId) return;
 
     const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
-    const url = `${apiUrl}/notifications/stream?userId=${userId}`;
 
-    let es: EventSource;
-    let retryTimeout: ReturnType<typeof setTimeout>;
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    });
 
-    const connect = () => {
-      es = new EventSource(url);
+    const channel = pusher.subscribe(`user-${userId}`);
 
-      es.onopen = () => console.log('[SSE] Connecté, userId:', userId);
+    channel.bind('notification', (payload: ImportNotificationPayload) => {
+      if (payload.type === 'import') {
+        onNotificationRef.current(payload);
+      }
+    });
 
-      es.onmessage = (event) => {
-        try {
-          const payload: ImportNotificationPayload = JSON.parse(event.data);
-          if (payload.type === 'import') {
-            onNotificationRef.current(payload);
-          }
-        } catch (err) {
-          console.error('[SSE] Erreur parsing:', err);
-        }
-      };
-
-      es.onerror = () => {
-        console.error('[SSE] Erreur — reconnexion dans 3s');
-        es.close();
-        retryTimeout = setTimeout(connect, 3000);
-      };
-    };
-
-    connect();
+    channel.bind('pusher:subscription_error', (err: any) => {
+      console.error('[Pusher] Erreur subscription:', err);
+    });
 
     return () => {
-     
+      channel.unbind_all();
+      pusher.unsubscribe(`user-${userId}`);
+      pusher.disconnect();
     };
   }, [userId]);
 }
