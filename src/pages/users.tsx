@@ -179,16 +179,16 @@ export default function UsersPage() {
   const { canImpersonateUser, impersonate } = useImpersonation();
   const [impersonateLoadingId, setImpersonateLoadingId] = useState<string | null>(null);
   const handleImpersonate = async (targetUser: UserItem) => {
-  setImpersonateLoadingId(targetUser.id);
-  try {
-    await impersonate(targetUser.id);
-    // Les tokens et user dans le contexte sont maintenant ceux de la cible
-    router.push("/dashboard");
-  } catch {
-    // apiFetch gère déjà l'erreur via snackbar
-  } finally {
-    setImpersonateLoadingId(null);
-  }
+    setImpersonateLoadingId(targetUser.id);
+    try {
+      await impersonate(targetUser.id);
+      // Les tokens et user dans le contexte sont maintenant ceux de la cible
+      router.push("/dashboard");
+    } catch {
+      // apiFetch gère déjà l'erreur via snackbar
+    } finally {
+      setImpersonateLoadingId(null);
+    }
   };
 
   // ── Data loading ──
@@ -485,7 +485,7 @@ export default function UsersPage() {
   const isExpired = (inv: InvitationItem) => new Date(inv.expiresAt) < new Date();
 
   return (
-    <AppLayout title="Gestion des utilisateurs" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
+    <AppLayout title="Utilisateurs & Invitations" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
       <Head><title>Gestion des utilisateurs</title></Head>
       <div className="space-y-3 md:space-y-6">
         <PageHeader
@@ -695,7 +695,7 @@ export default function UsersPage() {
                                           >
                                             <Trash2 className="mr-2 h-4 w-4" /> Supprimer
                                           </DropdownMenuItem>
-                                          
+
                                         )}
                                       </>
                                     )}

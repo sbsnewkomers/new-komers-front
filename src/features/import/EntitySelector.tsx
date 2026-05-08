@@ -187,10 +187,10 @@ export function EntitySelector({
                   }}
                   disabled={isDisabled}
                   className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all ${isDisabled
-                      ? 'opacity-50 cursor-not-allowed bg-white/5 border-white/10 text-(--nebula-muted)'
-                      : isActive
-                        ? 'bg-white/10 border-(--nebula-gold-light)/40 text-(--nebula-gold-light) font-medium ring-1 ring-(--nebula-gold-light)/25 cursor-pointer'
-                        : 'bg-white/5 border-white/10 text-(--nebula-muted) hover:bg-white/10 hover:text-white cursor-pointer'
+                    ? 'opacity-50 cursor-not-allowed bg-white/5 border-white/10 text-(--nebula-muted)'
+                    : isActive
+                      ? 'bg-white/10 border-(--nebula-gold-light)/40 text-(--nebula-gold-light) font-medium ring-1 ring-(--nebula-gold-light)/25 cursor-pointer'
+                      : 'bg-white/5 border-white/10 text-(--nebula-muted) hover:bg-white/10 hover:text-white cursor-pointer'
                     }`}
                 >
                   {icon}
@@ -386,8 +386,18 @@ export function EntitySelector({
 
       {/* Message si type sélectionné mais pas d'entité */}
       {!selectedEntityId && selectedEntityType && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-amber-100 border border-amber-400/25 bg-amber-500/10 p-2 rounded-xl">
-          <AlertCircle className="h-3 w-3" />
+        <div
+          className="mt-3 flex items-center gap-2 text-xs p-2 rounded-xl border"
+          style={{
+            backgroundColor: 'rgb(254, 243, 199)', // amber-100
+            color: 'rgb(120, 53, 15)', // amber-900
+            borderColor: 'rgb(251, 191, 36)' // amber-400
+          }}
+        >
+          <AlertCircle
+            className="h-3 w-3"
+            style={{ color: 'rgb(180, 83, 9)' }} // amber-700
+          />
           <span>
             Veuillez sélectionner{' '}
             {selectedEntityType === 'Company'
