@@ -27,6 +27,7 @@ import { useRouter } from 'next/navigation';
 import { ImportGuide } from '@/features/import/ImportGuide';
 import { useImportNotifications, ImportNotificationPayload } from '@/hooks/useImportNotifications';
 import { ImportSuccessModal } from '@/features/import/ImportSuccessModal';
+import { ImportMetadata } from '@/features/types/notifications';
 
 function decodeBuffer(buffer: ArrayBuffer): string {
   const uint8Array = new Uint8Array(buffer);
@@ -109,7 +110,7 @@ export default function ImportPage() {
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [hasData, setHasData] = useState<boolean | null>(null);
-  const { user: currentUser } = usePermissionsContext();
+  const { user: currentUser, accessToken } = usePermissionsContext();
   const isAdmin = currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN';
   const isEndUser = currentUser?.role === 'END_USER';
   const isManager = currentUser?.role === 'MANAGER';
@@ -177,7 +178,7 @@ export default function ImportPage() {
   }
 
   if (payload.severity === 'success') {
-    const meta = payload.metadata;
+    const meta = payload.metadata as ImportMetadata;
     setSuccessTitle(payload.title);
     setSuccessDetails({
       totalProcessed: meta?.totalProcessed,
@@ -220,6 +221,7 @@ export default function ImportPage() {
 }, [fetchHistory]);
 
 useImportNotifications(currentUser?.id, handleImportNotification);
+
   
 
 
