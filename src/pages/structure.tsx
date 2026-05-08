@@ -252,36 +252,36 @@ const NODE_TYPE_META: Record<
   workspace: {
     label: "Espace de travail",
     gradient: "from-purple-500 to-purple-600",
-    soft: "bg-purple-50",
-    text: "text-purple-700",
-    ring: "ring-purple-200",
+    soft: "bg-purple-500/15",
+    text: "text-purple-200",
+    ring: "ring-purple-400/30",
     Icon: Building2,
     description: "Container principal regroupant plusieurs groupes et entreprises.",
   },
   group: {
     label: "Groupe",
     gradient: "from-blue-500 to-blue-600",
-    soft: "bg-blue-50",
-    text: "text-blue-700",
-    ring: "ring-blue-200",
+    soft: "bg-sky-500/15",
+    text: "text-sky-200",
+    ring: "ring-sky-400/30",
     Icon: Layers,
     description: "Entité juridique mère regroupant plusieurs entreprises.",
   },
   company: {
     label: "Entreprise",
-    gradient: "from-slate-600 to-slate-700",
-    soft: "bg-slate-100",
-    text: "text-slate-700",
-    ring: "ring-slate-200",
+    gradient: "from-(--nebula-gold-light) to-(--nebula-gold-deep)",
+    soft: "bg-white/10",
+    text: "text-(--nebula-gold-light)",
+    ring: "ring-(--nebula-gold-light)/25",
     Icon: Building,
     description: "Société opérationnelle rattachée à un groupe.",
   },
   bu: {
     label: "Business Unit",
     gradient: "from-emerald-500 to-emerald-600",
-    soft: "bg-emerald-50",
-    text: "text-emerald-700",
-    ring: "ring-emerald-200",
+    soft: "bg-emerald-500/15",
+    text: "text-emerald-200",
+    ring: "ring-emerald-400/30",
     Icon: Briefcase,
     description: "Unité d'activité spécialisée au sein d'une entreprise.",
   },
@@ -311,7 +311,7 @@ function DetailLogoPreview({
           : `${baseUrl}/uploads/${normalized}`;
   return (
     <div
-      className="relative shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+      className="relative shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-sm"
       style={{ width: size, height: size }}
     >
       <Image
@@ -343,7 +343,7 @@ function DetailHero({
   const meta = NODE_TYPE_META[type];
   const Icon = meta.Icon;
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <section className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
       <div className={`h-1.5 w-full bg-linear-to-r ${meta.gradient}`} />
       <div className="flex items-start gap-4 p-4 sm:p-5">
         {logo ? (
@@ -362,10 +362,10 @@ function DetailHero({
             <Icon className="h-3 w-3" />
             {meta.label}
           </div>
-          <h2 className="mt-1.5 wrap-break-word text-xl font-semibold tracking-tight text-slate-900 sm:text-[22px]">
+          <h2 className="mt-1.5 wrap-break-word text-xl font-semibold tracking-tight text-white sm:text-[22px]">
             {name && name.trim().length > 0 ? name : "Sans nom"}
           </h2>
-          <p className="mt-1 text-xs text-slate-500 sm:text-sm">{meta.description}</p>
+          <p className="mt-1 text-xs text-(--nebula-muted) sm:text-sm">{meta.description}</p>
           {pills && (
             <div className="mt-3 flex flex-wrap gap-1.5">{pills}</div>
           )}
@@ -386,9 +386,9 @@ function DetailPill({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700 ${mono ? "font-mono tracking-tight" : ""}`}
+      className={`inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white/90 ${mono ? "font-mono tracking-tight" : ""}`}
     >
-      {Icon && <Icon className="h-3 w-3 text-slate-400" />}
+      {Icon && <Icon className="h-3 w-3 text-(--nebula-muted)" />}
       {children}
     </span>
   );
@@ -408,16 +408,16 @@ function DetailSection({
   action?: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <header className="flex items-start justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-4 py-2.5">
+    <section className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
+      <header className="flex items-start justify-between gap-3 border-b border-white/10 bg-white/5 px-4 py-2.5">
         <div className="flex min-w-0 items-start gap-2.5">
-          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white ring-1 ring-slate-200">
-            <Icon className="h-3.5 w-3.5 text-slate-600" />
+          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/10 ring-1 ring-white/10">
+            <Icon className="h-3.5 w-3.5 text-(--nebula-muted)" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+            <h3 className="text-sm font-semibold text-white">{title}</h3>
             {description && (
-              <p className="text-[11px] leading-snug text-slate-500">
+              <p className="text-[11px] leading-snug text-(--nebula-muted)">
                 {description}
               </p>
             )}
@@ -469,17 +469,17 @@ function ReadField({
     (typeof value === "string" && value.trim() === "");
   return (
     <div className={`min-w-0 ${full ? "sm:col-span-2" : ""}`}>
-      <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+      <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-(--nebula-muted)">
         {Icon && <Icon className="h-3 w-3" />}
         {label}
       </dt>
       <dd
-        className={`mt-1 wrap-break-word text-sm ${display ? "italic text-slate-400" : "font-medium text-slate-900"} ${mono && !display ? "font-mono tracking-tight" : ""}`}
+        className={`mt-1 wrap-break-word text-sm ${display ? "italic text-white/45" : "font-medium text-white"} ${mono && !display ? "font-mono tracking-tight" : ""}`}
       >
         {display ? "Non renseigné" : value}
       </dd>
       {hint && !display && (
-        <p className="mt-0.5 text-[11px] leading-snug text-slate-400">{hint}</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-white/45">{hint}</p>
       )}
     </div>
   );
@@ -2289,7 +2289,7 @@ export default function StructurePage() {
                   ? "Structure des workspaces"
                   : tree?.workspaces?.[0]?.name || "Structure des workspaces"}
               </h2>
-              <p className="text-sm text-slate-500">Gérez la structure hiérarchique de votre workspace et pilotez l&apos;ensemble de vos entités.</p>
+              <p className="text-sm text-(--nebula-muted)">Gérez la structure hiérarchique de votre workspace et pilotez l&apos;ensemble de vos entités.</p>
             </div>
           </div>
         </div>
@@ -2297,11 +2297,11 @@ export default function StructurePage() {
         {/* Search and Actions */}
         <div className="flex gap-1 items-center">
           <div className="relative w-full sm:w-auto">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
             <Input
               type="search"
               placeholder="Rechercher..."
-              className="h-9 w-full rounded-lg border-slate-200 pl-9 text-sm sm:w-[260px]"
+              className="h-9 w-full rounded-lg border-white/10 pl-9 text-sm sm:w-[260px]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -2323,7 +2323,7 @@ export default function StructurePage() {
               user?.role === "MANAGER") && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button className="bg-primary text-white! hover:bg-slate-800">
+                    <Button className="bg-primary text-white! hover:bg-primary/90">
                       <Plus className="size-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -2333,7 +2333,7 @@ export default function StructurePage() {
                         onClick={() => setAddworkspaceOpen(true)}
                         className="gap-2"
                       >
-                        <Layers className="h-4 w-4 text-purple-600" />
+                        <Layers className="h-4 w-4 text-(--nebula-gold-light)" />
                         Workspace
                       </DropdownMenuItem>
                     )}
@@ -2357,7 +2357,7 @@ export default function StructurePage() {
                             }
                             className="gap-2"
                           >
-                            <Building2 className="h-4 w-4 text-blue-600" />
+                            <Building2 className="h-4 w-4 text-(--nebula-gold-light)" />
                             Groupe
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -2392,7 +2392,7 @@ export default function StructurePage() {
                             }
                             className="gap-2"
                           >
-                            <Building className="h-4 w-4 text-slate-700" />
+                            <Building className="h-4 w-4 text-white/90" />
                             Entreprise
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -2409,7 +2409,7 @@ export default function StructurePage() {
                             }
                             className="gap-2"
                           >
-                            <Briefcase className="h-4 w-4 text-emerald-600" />
+                            <Briefcase className="h-4 w-4 text-(--nebula-gold-light)" />
                             Business Unit
                           </DropdownMenuItem>
                         </>
@@ -2432,18 +2432,18 @@ export default function StructurePage() {
           )}
           {treeLoading && !treeRows.length ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <div className="h-12 w-12 animate-spin rounded-full border-3 border-slate-200 border-t-primary mb-4"></div>
-              <p className="text-slate-500 font-medium">
+              <div className="h-12 w-12 animate-spin rounded-full border-3 border-white/10 border-t-primary mb-4"></div>
+              <p className="text-(--nebula-muted) font-medium">
                 Chargement de la structure...
               </p>
             </div>
           ) : treeRows.length === 0 ? (
             <>
               <div className="flex flex-col items-center justify-center py-16 px-6">
-                <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
                   {searchQuery.trim() ? (
                     <svg
-                      className="h-8 w-8 text-slate-400"
+                      className="h-8 w-8 text-white/45"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -2456,15 +2456,15 @@ export default function StructurePage() {
                       />
                     </svg>
                   ) : (
-                    <Folder className="h-8 w-8 text-slate-400" />
+                    <Folder className="h-8 w-8 text-white/45" />
                   )}
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                <h3 className="text-lg font-semibold text-white mb-2">
                   {searchQuery.trim()
                     ? "Aucun résultat trouvé"
                     : "Aucune structure trouvée"}
                 </h3>
-                <p className="text-slate-500 text-center max-w-md mb-6">
+                <p className="text-(--nebula-muted) text-center max-w-md mb-6">
                   {searchQuery.trim()
                     ? `Aucun groupe, entreprise ou business unit ne correspond à "${searchQuery}". Essayez avec d'autres termes.`
                     : "Commencez par créer un groupe ou une entreprise pour organiser votre structure."}
@@ -2640,10 +2640,10 @@ export default function StructurePage() {
                                   e.stopPropagation();
                                   toggleExpand(node.id);
                                 }}
-                                className="cursor-pointer rounded p-0.5 transition-colors hover:bg-slate-200 mr-1"
+                                className="cursor-pointer rounded p-0.5 transition-colors hover:bg-white/10 mr-1"
                               >
                                 <Play
-                                  className={`h-3 w-3 fill-slate-500 text-slate-400 transition-transform ${expandedCompanyIds.has(node.id)
+                                  className={`h-3 w-3 fill-white/55 text-white/45 transition-transform ${expandedCompanyIds.has(node.id)
                                     ? "rotate-90"
                                     : ""
                                     }`}
@@ -2651,7 +2651,7 @@ export default function StructurePage() {
                               </div>
                             ) : (
                               node.type === "company" && (
-                                <div className="w-5 fill-slate-500 text-slate-400" />
+                                <div className="w-5 fill-white/55 text-white/45" />
                               )
                             )}
                             <Icon
@@ -2677,18 +2677,18 @@ export default function StructurePage() {
                           <div>
                             {completion !== null && (
                               <div className="flex items-center gap-2">
-                                <div className="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
+                                <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden">
                                   <div
                                     className={`h-1.5 rounded-full transition-all duration-500 ${completion === 100
                                       ? "bg-green-500"
                                       : completion >= 50
                                         ? "bg-amber-400"
-                                        : "bg-slate-300"
+                                        : "bg-white/25"
                                       }`}
                                     style={{ width: `${completion}%` }}
                                   />
                                 </div>
-                                <span className="text-[10px] tabular-nums text-slate-400 font-medium">
+                                <span className="text-[10px] tabular-nums text-white/45 font-medium">
                                   {completion}%
                                 </span>
                               </div>
@@ -2705,7 +2705,7 @@ export default function StructurePage() {
                                   <button
                                     type="button"
                                     onClick={(e) => e.stopPropagation()}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 opacity-100 transition-all hover:bg-white hover:text-primary hover:shadow-md md:opacity-0 md:group-hover/row:opacity-100"
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-(--nebula-muted) opacity-100 transition-all hover:bg-white/10 hover:text-primary hover:shadow-md md:opacity-0 md:group-hover/row:opacity-100"
                                   >
                                     <MoreHorizontal className="h-4 w-4" />
                                   </button>
@@ -2843,7 +2843,7 @@ export default function StructurePage() {
                                   <button
                                     type="button"
                                     onClick={(e) => e.stopPropagation()}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 opacity-100 transition-all hover:bg-white hover:text-primary hover:shadow-sm md:opacity-0 md:group-hover/row:opacity-100"
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-(--nebula-muted) opacity-100 transition-all hover:bg-white/10 hover:text-primary hover:shadow-sm md:opacity-0 md:group-hover/row:opacity-100"
                                   >
                                     <MoreHorizontal className="h-4 w-4" />
                                   </button>
@@ -2897,13 +2897,13 @@ export default function StructurePage() {
                   })}
                   {treeRows.length === 0 && !treeLoading && (
                     <li className="py-16 text-center">
-                      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50">
-                        <Building2 className="h-6 w-6 text-slate-300" />
+                      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5">
+                        <Building2 className="h-6 w-6 text-white/35" />
                       </div>
                       <h3 className="text-sm font-medium text-primary">
                         Aucune structure
                       </h3>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-(--nebula-muted)">
                         Commencez par créer votre première entreprise.
                       </p>
                     </li>
@@ -2934,7 +2934,7 @@ export default function StructurePage() {
                     </>
                   )}
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="text-(--nebula-muted)">
                   {editing
                     ? "Mettez à jour les informations ci-dessous puis enregistrez vos modifications."
                     : "Vue détaillée des informations rattachées à cette entité."}
@@ -3034,7 +3034,7 @@ export default function StructurePage() {
                       />
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                             Email de contact
                           </label>
                           <Input
@@ -3057,7 +3057,7 @@ export default function StructurePage() {
                           )}
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                             Téléphone de contact
                           </label>
                           <PhoneInput
@@ -3138,12 +3138,12 @@ export default function StructurePage() {
                         alt="Logo"
                         size={72}
                       />
-                      <p className="truncate text-xs text-slate-500">
+                      <p className="truncate text-xs text-(--nebula-muted)">
                         {editworkspace.logo}
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-slate-400">
+                    <p className="text-sm italic text-white/45">
                       Aucun logo renseigné
                     </p>
                   )}
@@ -3248,13 +3248,13 @@ export default function StructurePage() {
                         }
                       />
                       <div>
-                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                           Activité principale
                         </label>
                         <Input
                           value={editGroup.mainActivity}
                           readOnly
-                          className="bg-slate-50 cursor-not-allowed"
+                          className="bg-white/5 cursor-not-allowed"
                           placeholder="—"
                         />
                       </div>
@@ -3298,7 +3298,7 @@ export default function StructurePage() {
                   {editing ? (
                     <DetailGrid>
                       <div>
-                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                           Début d&apos;exercice
                         </label>
                         <Input
@@ -3378,12 +3378,12 @@ export default function StructurePage() {
                         alt="Logo"
                         size={72}
                       />
-                      <p className="truncate text-xs text-slate-500">
+                      <p className="truncate text-xs text-(--nebula-muted)">
                         {editGroup.logo}
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-slate-400">
+                    <p className="text-sm italic text-white/45">
                       Aucun logo renseigné
                     </p>
                   )}
@@ -3426,23 +3426,23 @@ export default function StructurePage() {
 
                 {/* Completion progress (view only) */}
                 {!editing && (
-                  <section className="overflow-hidden rounded-xl border border-slate-200 bg-white p-4">
+                  <section className="overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <h4 className="text-sm font-semibold text-slate-900">
+                        <h4 className="text-sm font-semibold text-white">
                           Complétion du profil
                         </h4>
-                        <p className="text-[11px] leading-snug text-slate-500">
+                        <p className="text-[11px] leading-snug text-(--nebula-muted)">
                           Pourcentage d&apos;informations renseignées sur cette
                           entreprise.
                         </p>
                       </div>
-                      <span className="text-xl font-semibold tabular-nums text-slate-900">
+                      <span className="text-xl font-semibold tabular-nums text-white">
                         {Math.round(editCompany.completionPercentage)}
-                        <span className="text-sm text-slate-400">%</span>
+                        <span className="text-sm text-white/45">%</span>
                       </span>
                     </div>
-                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
                       <div
                         className="h-full rounded-full bg-linear-to-r from-emerald-400 to-emerald-500 transition-all"
                         style={{
@@ -3534,7 +3534,7 @@ export default function StructurePage() {
                         />
                       </DetailGrid>
                       <div>
-                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                           Code APE
                         </label>
                         <ApeCodeSelect
@@ -3708,12 +3708,12 @@ export default function StructurePage() {
                         alt="Logo"
                         size={72}
                       />
-                      <p className="truncate text-xs text-slate-500">
+                      <p className="truncate text-xs text-(--nebula-muted)">
                         {editCompany.logo}
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-slate-400">
+                    <p className="text-sm italic text-white/45">
                       Aucun logo renseigné
                     </p>
                   )}
@@ -3726,22 +3726,22 @@ export default function StructurePage() {
                       title={`Business Units (${(busByCompany[selectedNode.id] ?? []).length})`}
                       description="Unités d'activité rattachées à cette entreprise."
                     >
-                      <ul className="divide-y divide-slate-100">
+                      <ul className="divide-y divide-white/10">
                         {(busByCompany[selectedNode.id] ?? []).map((b) => (
                           <li
                             key={b.id}
                             className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
                           >
                             <div className="flex min-w-0 items-center gap-2.5">
-                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-50 ring-1 ring-emerald-100">
-                                <Briefcase className="h-3.5 w-3.5 text-emerald-600" />
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/10 ring-1 ring-white/10">
+                                <Briefcase className="h-3.5 w-3.5 text-(--nebula-gold-light)" />
                               </div>
-                              <span className="truncate text-sm font-medium text-slate-900">
+                              <span className="truncate text-sm font-medium text-white">
                                 {b.name}
                               </span>
                             </div>
                             {b.code && (
-                              <span className="shrink-0 rounded-md bg-slate-50 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 ring-1 ring-slate-200">
+                              <span className="shrink-0 rounded-md bg-white/5 px-1.5 py-0.5 font-mono text-[11px] text-(--nebula-muted) ring-1 ring-white/15">
                                 {b.code}
                               </span>
                             )}
@@ -3795,7 +3795,7 @@ export default function StructurePage() {
                         }
                       />
                       <div>
-                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                           Code APE
                         </label>
                         <ApeCodeSelect
@@ -3812,13 +3812,13 @@ export default function StructurePage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                           Activité
                         </label>
                         <Input
                           value={editBU.activity}
                           readOnly
-                          className="bg-slate-50"
+                          className="bg-white/5"
                           placeholder="Activité principale"
                         />
                       </div>
@@ -3913,12 +3913,12 @@ export default function StructurePage() {
                         alt="Logo"
                         size={72}
                       />
-                      <p className="truncate text-xs text-slate-500">
+                      <p className="truncate text-xs text-(--nebula-muted)">
                         {editBU.logo}
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-slate-400">
+                    <p className="text-sm italic text-white/45">
                       Aucun logo renseigné
                     </p>
                   )}
@@ -4089,9 +4089,13 @@ export default function StructurePage() {
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer <strong>{selectedNode?.name}</strong> ? Cette action est irréversible.
+            <AlertDialogTitle className="text-white">
+              Confirmer la suppression
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-(--nebula-muted)">
+              Êtes-vous sûr de vouloir supprimer{" "}
+              <strong className="font-semibold text-white">{selectedNode?.name}</strong> ?{" "}
+              Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -4115,15 +4119,15 @@ export default function StructurePage() {
       <Dialog open={ficheOpen} onOpenChange={setFicheOpen}>
         <DialogContent size="7xl">
           <DialogHeader className="gap-1 pb-3">
-            <DialogTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-(--nebula-gold-light)" />
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
+              <Building2 className="h-5 w-5 shrink-0 text-(--nebula-gold-light)" />
               <span className="min-w-0 truncate">
                 {ficheCompany?.name ??
                   allTreeCompanies.find((x) => x.id === ficheCompanyId)?.name ??
                   "Fiche entreprise"}
               </span>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-(--nebula-muted)">
               Vue complète de l’entreprise (informations, business units, actionnaires et
               données extracomptables).
             </DialogDescription>
@@ -4304,12 +4308,12 @@ export default function StructurePage() {
                         {ficheCompany.logo ? (
                           <div className="flex items-center gap-3">
                             <DetailLogoPreview logo={ficheCompany.logo} alt="Logo" size={72} />
-                            <p className="truncate text-xs text-slate-500">
+                            <p className="truncate text-xs text-(--nebula-muted)">
                               {ficheCompany.logo}
                             </p>
                           </div>
                         ) : (
-                          <p className="text-sm italic text-slate-400">
+                          <p className="text-sm italic text-white/45">
                             Aucun logo renseigné
                           </p>
                         )}
@@ -4317,12 +4321,12 @@ export default function StructurePage() {
                     </div>
                   </TabsContent>
                   <TabsContent value="business-units" className="mt-0">
-                    <div className="rounded-xl border border-slate-200 bg-white p-2">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-2">
                       <ul className="space-y-2">
                         {bus.map((b) => (
                           <li
                             key={b.id}
-                            className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 transition-colors hover:bg-slate-50"
+                            className="flex cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 transition-colors hover:bg-white/10"
                             onClick={() => {
                               setFicheOpen(false);
                               openDetail({
@@ -4338,17 +4342,17 @@ export default function StructurePage() {
                               {b.name}
                             </span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-slate-500">
+                              <span className="text-sm text-(--nebula-muted)">
                                 {b.code}
                                 {b.code && b.siret ? " — " : ""}
                                 {b.siret}
                               </span>
-                              <span className="text-slate-400">›</span>
+                              <span className="text-white/45">›</span>
                             </div>
                           </li>
                         ))}
                         {bus.length === 0 && (
-                          <li className="py-4 text-center text-slate-400">
+                          <li className="py-4 text-center text-white/45">
                             Aucune business unit.
                           </li>
                         )}
@@ -4356,9 +4360,9 @@ export default function StructurePage() {
                     </div>
                   </TabsContent>
                   <TabsContent value="actionnaires" className="mt-0">
-                    <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-3">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-slate-800">
+                        <p className="text-sm font-semibold text-white">
                           Actionnaires de cette entreprise
                         </p>
                         {(user?.role === "SUPER_ADMIN" ||
@@ -4387,11 +4391,11 @@ export default function StructurePage() {
                           )}
                       </div>
                       {ficheShareholdersLoading ? (
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-white/45">
                           Chargement des actionnaires...
                         </p>
                       ) : ficheShareholders.length === 0 ? (
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-white/45">
                           Aucun actionnaire lié à cette entreprise.
                         </p>
                       ) : (
@@ -4408,17 +4412,17 @@ export default function StructurePage() {
                             return (
                               <li
                                 key={s.id}
-                                className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2"
+                                className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2"
                               >
                                 <div className="flex flex-col">
                                   <span className="font-medium text-primary">
                                     {ownerLabel}
                                   </span>
-                                  <span className="text-[11px] text-slate-400">
+                                  <span className="text-[11px] text-white/45">
                                     {ownerTypeLabel(s.ownerType)}
                                   </span>
                                 </div>
-                                <div className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                                <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-xs font-medium text-(--nebula-gold-light)">
                                   <span>{s.percentage}%</span>
                                 </div>
                               </li>
@@ -4432,7 +4436,7 @@ export default function StructurePage() {
                     <div className="space-y-6">
                       {ficheCompanyDataLoading ? (
                         <div className="flex items-center justify-center py-8">
-                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-primary" />
                         </div>
                       ) : (
                         <>
@@ -4462,50 +4466,50 @@ export default function StructurePage() {
       <Dialog open={ficheGroupOpen} onOpenChange={setFicheGroupOpen}>
         <DialogContent size="7xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Layers className="h-5 w-5 text-blue-500" />
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
+              <Layers className="h-5 w-5 shrink-0 text-(--nebula-gold-light)" />
               {ficheGroup?.name ??
                 groupList.find((x) => x.id === ficheGroupId)?.name ??
                 "Fiche groupe"}
             </DialogTitle>
           </DialogHeader>
-          <DialogBody className="px-3 sm:px-5">
+          <DialogBody className="bg-transparent px-3 py-4 sm:px-5">
             {(() => {
               if (!ficheGroup) {
                 return (
                   <div className="flex items-center justify-center py-8">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-primary" />
                   </div>
                 );
               }
               const groupCompanies = allTreeCompanies.filter(c => c.groupId === ficheGroup.id);
               return (
                 <Tabs value={ficheGroupTab} onValueChange={setFicheGroupTab} className="space-y-3">
-                  <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-lg bg-slate-100 p-1">
+                  <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-white/5 p-1">
                     <TabsTrigger value="informations">Informations</TabsTrigger>
                     <TabsTrigger value="entreprises">Entreprises</TabsTrigger>
                     <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
                   </TabsList>
                   <TabsContent value="informations" className="mt-0">
-                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                       <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                        <dt className="text-slate-500">SIRET</dt>
+                        <dt className="text-(--nebula-muted)">SIRET</dt>
                         <dd className="font-medium text-primary">
                           {ficheGroup.siret || "—"}
                         </dd>
-                        <dt className="text-slate-500">SIREN</dt>
+                        <dt className="text-(--nebula-muted)">SIREN</dt>
                         <dd className="font-medium text-primary">
                           {ficheGroup.siret
                             ? ficheGroup.siret.substring(0, 9)
                             : "—"}
                         </dd>
-                        <dt className="text-slate-500">Début d&apos;exercice</dt>
+                        <dt className="text-(--nebula-muted)">Début d&apos;exercice</dt>
                         <dd className="font-medium text-primary">
                           {formatMonthDayForDisplay(ficheGroup.fiscal_year_start)}
                         </dd>
                         {ficheGroup.ape_code && (
                           <>
-                            <dt className="text-slate-500">Code APE</dt>
+                            <dt className="text-(--nebula-muted)">Code APE</dt>
                             <dd className="font-medium text-primary">
                               {ficheGroup.ape_code}
                             </dd>
@@ -4513,7 +4517,7 @@ export default function StructurePage() {
                         )}
                         {ficheGroup.mainActivity && (
                           <>
-                            <dt className="text-slate-500">
+                            <dt className="text-(--nebula-muted)">
                               Activité principale
                             </dt>
                             <dd className="font-medium text-primary">
@@ -4523,7 +4527,7 @@ export default function StructurePage() {
                         )}
                         {ficheGroup.country && (
                           <>
-                            <dt className="text-slate-500">Pays</dt>
+                            <dt className="text-(--nebula-muted)">Pays</dt>
                             <dd className="font-medium text-primary">
                               {ficheGroup.country}
                             </dd>
@@ -4533,12 +4537,12 @@ export default function StructurePage() {
                     </div>
                   </TabsContent>
                   <TabsContent value="entreprises" className="mt-0">
-                    <div className="rounded-xl border border-slate-200 bg-white p-2">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-2">
                       <ul className="space-y-2">
                         {groupCompanies.map((company) => (
                           <li
                             key={company.id}
-                            className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 transition-colors hover:bg-slate-50"
+                            className="flex cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 transition-colors hover:bg-white/10"
                             onClick={() => {
                               setFicheGroupOpen(false);
                               openFiche(company.id);
@@ -4548,15 +4552,15 @@ export default function StructurePage() {
                               {company.name}
                             </span>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-slate-500">
+                              <span className="text-sm text-(--nebula-muted)">
                                 {company.siret}
                               </span>
-                              <span className="text-slate-400">›</span>
+                              <span className="text-white/45">›</span>
                             </div>
                           </li>
                         ))}
                         {groupCompanies.length === 0 && (
-                          <li className="py-4 text-center text-slate-400">
+                          <li className="py-4 text-center text-white/45">
                             Aucune entreprise dans ce groupe.
                           </li>
                         )}
@@ -4567,7 +4571,7 @@ export default function StructurePage() {
                     <div className="space-y-6">
                       {ficheGroupDataLoading ? (
                         <div className="flex items-center justify-center py-8">
-                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-primary" />
                         </div>
                       ) : (
                         <>
@@ -4597,48 +4601,48 @@ export default function StructurePage() {
       <Dialog open={ficheBUOpen} onOpenChange={setFicheBUOpen}>
         <DialogContent size="7xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Briefcase className="h-5 w-5 text-blue-500" />
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
+              <Briefcase className="h-5 w-5 shrink-0 text-(--nebula-gold-light)" />
               {ficheBU?.name || `BU ${ficheBU?.code ?? ""}` || "Fiche BU"}
             </DialogTitle>
           </DialogHeader>
-          <DialogBody className="px-3 sm:px-5">
+          <DialogBody className="bg-transparent px-3 py-4 sm:px-5">
             {(() => {
               if (!ficheBU) {
                 return (
                   <div className="flex items-center justify-center py-8">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-primary" />
                   </div>
                 );
               }
               return (
                 <Tabs value={ficheBUTab} onValueChange={setFicheBUTab} className="space-y-3">
-                  <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-lg bg-slate-100 p-1">
+                  <TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-white/5 p-1">
                     <TabsTrigger value="informations">Informations</TabsTrigger>
                     <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
                   </TabsList>
                   <TabsContent value="informations" className="mt-0">
-                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                       <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                        <dt className="text-slate-500">Code</dt>
+                        <dt className="text-(--nebula-muted)">Code</dt>
                         <dd className="font-medium text-primary">
                           {ficheBU.code || "—"}
                         </dd>
-                        <dt className="text-slate-500">SIRET</dt>
+                        <dt className="text-(--nebula-muted)">SIRET</dt>
                         <dd className="font-medium text-primary">
                           {ficheBU.siret || "—"}
                         </dd>
-                        <dt className="text-slate-500">Activité</dt>
+                        <dt className="text-(--nebula-muted)">Activité</dt>
                         <dd className="font-medium text-primary">
                           {ficheBU.activity || "—"}
                         </dd>
-                        <dt className="text-slate-500">Pays</dt>
+                        <dt className="text-(--nebula-muted)">Pays</dt>
                         <dd className="font-medium text-primary">
                           {ficheBU.country || "—"}
                         </dd>
                         {ficheBU.company_id && (
                           <>
-                            <dt className="text-slate-500">Entreprise</dt>
+                            <dt className="text-(--nebula-muted)">Entreprise</dt>
                             <dd className="font-medium text-primary">
                               {allTreeCompanies.find(c => c.id === ficheBU.company_id)?.name || ficheBU.company_id}
                             </dd>
@@ -4651,7 +4655,7 @@ export default function StructurePage() {
                     <div className="space-y-6">
                       {ficheBUDataLoading ? (
                         <div className="flex items-center justify-center py-8">
-                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-primary" />
                         </div>
                       ) : (
                         <>
@@ -4681,14 +4685,14 @@ export default function StructurePage() {
       <Dialog open={addGroupOpen} onOpenChange={setAddGroupOpen}>
         <DialogContent size="md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Folder className="h-5 w-5 text-blue-500" />
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
+              <Folder className="h-5 w-5 shrink-0 text-(--nebula-gold-light)" />
               Nouveau Groupe
             </DialogTitle>
           </DialogHeader>
           <DialogBody className="space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Workspace *
               </label>
               <Select
@@ -4707,7 +4711,7 @@ export default function StructurePage() {
               </Select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Nom *
               </label>
               <Input
@@ -4719,7 +4723,7 @@ export default function StructurePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Code APE *
               </label>
               <ApeCodeSelect
@@ -4733,7 +4737,7 @@ export default function StructurePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Activité principale
               </label>
               <Input
@@ -4746,11 +4750,11 @@ export default function StructurePage() {
                 }
                 placeholder="Activité principale"
                 readOnly
-                className="bg-gray-50 cursor-not-allowed"
+                className="bg-white/5 cursor-not-allowed"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 SIRET *
               </label>
               <SiretInput
@@ -4761,7 +4765,7 @@ export default function StructurePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Logo
               </label>
               <FileUpload
@@ -4779,7 +4783,7 @@ export default function StructurePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Pays *
               </label>
               <CountrySelect
@@ -4793,7 +4797,7 @@ export default function StructurePage() {
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   Début exercice *
                 </label>
                 <Input
@@ -4810,7 +4814,7 @@ export default function StructurePage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   Dernier exercice clos
                 </label>
                 <Input
@@ -4856,14 +4860,14 @@ export default function StructurePage() {
       <Dialog open={addBUStandaloneOpen} onOpenChange={setAddBUStandaloneOpen}>
         <DialogContent size="md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-slate-500" />
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
+              <Package className="h-5 w-5 shrink-0 text-(--nebula-gold-light)" />
               Nouvelle Business Unit
             </DialogTitle>
           </DialogHeader>
           <DialogBody className="space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Entreprise *
               </label>
               <Select
@@ -4881,7 +4885,7 @@ export default function StructurePage() {
               </Select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Nom *
               </label>
               <Input
@@ -4896,7 +4900,7 @@ export default function StructurePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Code APE *
               </label>
               <ApeCodeSelect
@@ -4916,7 +4920,7 @@ export default function StructurePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Activité principale
               </label>
               <Input
@@ -4929,11 +4933,11 @@ export default function StructurePage() {
                   }))
                 }
                 readOnly
-                className="bg-gray-50 cursor-not-allowed"
+                className="bg-white/5 cursor-not-allowed"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 SIRET *
               </label>
               <SiretInput
@@ -4944,7 +4948,7 @@ export default function StructurePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Pays *
               </label>
               <CountrySelect
@@ -4985,20 +4989,20 @@ export default function StructurePage() {
       <Dialog open={addCompanyOpen} onOpenChange={setAddCompanyOpen}>
         <DialogContent size="2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-slate-700" />
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
+              <Building2 className="h-5 w-5 shrink-0 text-(--nebula-gold-light)" />
               Ajouter une entreprise
             </DialogTitle>
           </DialogHeader>
           {addCompanyGroupId ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-(--nebula-muted)">
               Dans le groupe :{" "}
-              <strong>
+              <strong className="font-semibold text-white">
                 {groupList.find((g) => g.id === addCompanyGroupId)?.name || "Groupe inconnu"}
               </strong>
             </p>
           ) : (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-(--nebula-muted)">
               Sélectionnez un groupe pour rattacher cette entreprise
             </p>
           )}
@@ -5006,7 +5010,7 @@ export default function StructurePage() {
             {/* Champ de sélection du groupe - seulement en mode standalone */}
             {!addCompanyGroupId && (
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   Groupe *
                 </label>
                 <Select
@@ -5030,7 +5034,7 @@ export default function StructurePage() {
               </div>
             )}
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Nom *
               </label>
               <Input
@@ -5046,7 +5050,7 @@ export default function StructurePage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   SIRET *
                 </label>
                 <SiretInput
@@ -5057,7 +5061,7 @@ export default function StructurePage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   Code APE *
                 </label>
                 <ApeCodeSelect
@@ -5073,7 +5077,7 @@ export default function StructurePage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Activité principale
               </label>
               <Input
@@ -5081,12 +5085,12 @@ export default function StructurePage() {
                 value={addCompanyForm.main_activity}
                 onChange={(e) => setAddCompanyForm((f) => ({ ...f, main_activity: e.target.value }))}
                 readOnly
-                className="bg-gray-50 cursor-not-allowed"
+                className="bg-white/5 cursor-not-allowed"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Adresse
               </label>
               <Textarea
@@ -5099,7 +5103,7 @@ export default function StructurePage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Pays *
               </label>
               <CountrySelect
@@ -5113,7 +5117,7 @@ export default function StructurePage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   Taille
                 </label>
                 <Select
@@ -5129,7 +5133,7 @@ export default function StructurePage() {
                 </Select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   Modèle
                 </label>
                 <Select
@@ -5146,7 +5150,7 @@ export default function StructurePage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Logo
               </label>
               <FileUpload
@@ -5166,7 +5170,7 @@ export default function StructurePage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   Début exercice *
                 </label>
                 <Input
@@ -5183,7 +5187,7 @@ export default function StructurePage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   Dernier exercice clos
                 </label>
                 <Input
@@ -5229,20 +5233,20 @@ export default function StructurePage() {
       <Dialog open={addBUOpen} onOpenChange={setAddBUOpen}>
         <DialogContent size="md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-slate-500" />
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
+              <Package className="h-5 w-5 shrink-0 text-(--nebula-gold-light)" />
               Ajouter une Business Unit
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-(--nebula-muted)">
             Dans l&apos;entreprise :{" "}
-            <strong>
+            <strong className="font-semibold text-white">
               {allTreeCompanies.find((c) => c.id === addBUCompanyId)?.name}
             </strong>
           </p>
           <DialogBody className="space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Nom *
               </label>
               <Input
@@ -5254,7 +5258,7 @@ export default function StructurePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Code APE *
               </label>
               <ApeCodeSelect
@@ -5264,7 +5268,7 @@ export default function StructurePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Activité principale
               </label>
               <Input
@@ -5272,11 +5276,11 @@ export default function StructurePage() {
                 value={addBUForm.activity}
                 onChange={(e) => setAddBUForm((f) => ({ ...f, activity: e.target.value }))}
                 readOnly
-                className="bg-gray-50 cursor-not-allowed"
+                className="bg-white/5 cursor-not-allowed"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 SIRET *
               </label>
               <SiretInput
@@ -5287,7 +5291,7 @@ export default function StructurePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Pays *
               </label>
               <CountrySelect
@@ -5299,7 +5303,7 @@ export default function StructurePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Logo
               </label>
               <FileUpload
@@ -5344,14 +5348,14 @@ export default function StructurePage() {
       <Dialog open={addworkspaceOpen} onOpenChange={setAddworkspaceOpen}>
         <DialogContent size="md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-purple-600" />
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
+              <Building2 className="h-5 w-5 shrink-0 text-(--nebula-gold-light)" />
               Créer l&apos;workspace
             </DialogTitle>
           </DialogHeader>
           <DialogBody className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-white/90">
                 Nom *
               </label>
               <Input
@@ -5363,7 +5367,7 @@ export default function StructurePage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-white/90">
                 Description
               </label>
               <Textarea
@@ -5379,7 +5383,7 @@ export default function StructurePage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-white/90">
                 Logo
               </label>
               <div className="space-y-2">
@@ -5396,14 +5400,14 @@ export default function StructurePage() {
                       alt="Aperçu du logo"
                       width={80}
                       height={80}
-                      className="object-cover rounded-lg border border-slate-200"
+                      className="object-cover rounded-lg border border-white/10"
                     />
                   </div>
                 )}
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-white/90">
                 Adresse
               </label>
               <Input
@@ -5415,7 +5419,7 @@ export default function StructurePage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-white/90">
                 Email de contact
               </label>
               <Input
@@ -5430,7 +5434,7 @@ export default function StructurePage() {
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-white/90">
                 Téléphone de contact
               </label>
               <PhoneInput
@@ -5488,17 +5492,17 @@ function EmpruntsSection({
   const total = emprunts.reduce((sum, e) => sum + e.amount, 0);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900">
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-white">
         <TrendingDown className="h-4 w-4 text-red-600" />
         Emprunts
       </h3>
       {emprunts.length === 0 ? (
-        <p className="py-4 text-center text-sm text-slate-500">{emptyMessage}</p>
+        <p className="py-4 text-center text-sm text-(--nebula-muted)">{emptyMessage}</p>
       ) : (
         <div className="space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <span className="text-sm font-medium text-slate-700">Total des emprunts</span>
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <span className="text-sm font-medium text-white/90">Total des emprunts</span>
             <span className="text-base font-semibold text-red-600">
               -{total.toLocaleString("fr-FR")} €
             </span>
@@ -5508,15 +5512,15 @@ function EmpruntsSection({
               <button
                 key={emprunt.id}
                 type="button"
-                className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left transition-colors hover:bg-slate-100"
+                className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left transition-colors hover:bg-white/10"
                 onClick={() => onLoanClick(emprunt.id)}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-slate-900">Emprunt</p>
+                  <p className="font-medium text-white">Emprunt</p>
                   {emprunt.description && (
-                    <p className="mt-1 truncate text-sm text-slate-500">{emprunt.description}</p>
+                    <p className="mt-1 truncate text-sm text-(--nebula-muted)">{emprunt.description}</p>
                   )}
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-white/45">
                     {new Date(emprunt.date).toLocaleDateString("fr-FR")}
                     {emprunt.duration_months && (
                       <span className="ml-2">• {emprunt.duration_months} mois</span>
@@ -5570,7 +5574,7 @@ function Field({
 
   return (
     <div>
-      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
         {label}
       </label>
       {editing ? (
@@ -5604,7 +5608,7 @@ function FieldCountry({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
         {label}
       </label>
       {editing ? (
@@ -5633,7 +5637,7 @@ function FieldTextarea({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
         {label}
       </label>
       {editing ? (
