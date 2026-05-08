@@ -167,10 +167,10 @@ export default function LoansPage() {
                 <title>Gestion des emprunts</title>
             </Head>
 
-            <AppLayout title="Gestion des emprunts">
+            <AppLayout title="Emprunts">
                 <div className="space-y-3 md:space-y-6">
                     <PageHeader
-                        title="Gestion des emprunts"
+                        title="Emprunts"
                         subtitle="Suivez et gérez tous vos emprunts et échéanciers."
                         icon={
                             <div className="nebula-glass rounded-2xl border border-white/10 p-2.5">

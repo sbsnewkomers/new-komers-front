@@ -149,7 +149,7 @@ export function EntitySelector({
           Sélectionner l&apos;entité cible
         </h3>
         {!selectedEntityId && (
-          <span className="text-[10px] border border-amber-400/30 bg-amber-500/15 text-amber-100 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] border border-amber-400/30 bg-amber-500/15 text-foreground px-2 py-0.5 rounded-full">
             Obligatoire
           </span>
         )}
@@ -186,13 +186,12 @@ export function EntitySelector({
                     }
                   }}
                   disabled={isDisabled}
-                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all ${
-                    isDisabled
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all ${isDisabled
                       ? 'opacity-50 cursor-not-allowed bg-white/5 border-white/10 text-(--nebula-muted)'
                       : isActive
                         ? 'bg-white/10 border-(--nebula-gold-light)/40 text-(--nebula-gold-light) font-medium ring-1 ring-(--nebula-gold-light)/25 cursor-pointer'
                         : 'bg-white/5 border-white/10 text-(--nebula-muted) hover:bg-white/10 hover:text-white cursor-pointer'
-                  }`}
+                    }`}
                 >
                   {icon}
                   {label}
@@ -317,9 +316,8 @@ export function EntitySelector({
           />
           <label
             htmlFor="includeDescendants"
-            className={`text-xs font-medium cursor-pointer select-none ${
-              disabled ? 'text-(--nebula-muted)' : 'text-white'
-            }`}
+            className={`text-xs font-medium cursor-pointer select-none ${disabled ? 'text-(--nebula-muted)' : 'text-white'
+              }`}
           >
             {selectedEntityType === 'Group'
               ? 'Importer aussi pour tous les descendants (Entreprises et Business Units du groupe)'

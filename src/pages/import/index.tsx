@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Head from "next/head";
 import { useCompanies } from "@/hooks";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { PageHeader } from "@/components/patterns/PageHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
 import { Sheet, Plug, ArrowRight, FileUp, Settings } from "lucide-react";
@@ -29,7 +30,7 @@ import { ImportSuccessModal } from '@/features/import/ImportSuccessModal';
 
 function decodeBuffer(buffer: ArrayBuffer): string {
   const uint8Array = new Uint8Array(buffer);
-  
+
   // Log les premiers octets pour voir l'encodage réel
   console.log("PREMIERS OCTETS:", Array.from(uint8Array.slice(0, 50)).map(b => b.toString(16).padStart(2, '0')).join(' '));
 
@@ -113,78 +114,78 @@ export default function ImportPage() {
   const [includeDescendants, setIncludeDescendants] = useState(false);
   const isImportingRef = useRef(false);
   useImportNotifications(currentUser?.id, async (payload) => {
-  console.log('[IMPORT PAGE] callback appelée, payload:', JSON.stringify(payload));
+    console.log('[IMPORT PAGE] callback appelée, payload:', JSON.stringify(payload));
 
-  if (payload.severity === 'error') {
-    const errors = payload.metadata?.errors;
+    if (payload.severity === 'error') {
+      const errors = payload.metadata?.errors;
 
-    if (Array.isArray(errors) && errors.length > 0) {
-      // Le backend renvoie des objets GenericValidationError
-      // On normalise quelle que soit la structure
-      const mappedErrors: ValidationError[] = errors.map((e: any) => ({
-        line: e.line ?? 0,
-        column: e.column ?? 'N/A',
-        value: e.value ?? '',
-        reason: e.reason ?? e.message ?? 'Erreur inconnue',
-        message: e.reason ?? e.message ?? 'Erreur inconnue',
-      }));
-      setValidationErrors(mappedErrors);
-    } else {
-      // Pas de détail d'erreurs → on affiche le message général
-      setValidationErrors([{
-        line: 0,
-        column: 'N/A',
-        value: '',
-        reason: payload.message,
-        message: payload.message,
-      }]);
+      if (Array.isArray(errors) && errors.length > 0) {
+        // Le backend renvoie des objets GenericValidationError
+        // On normalise quelle que soit la structure
+        const mappedErrors: ValidationError[] = errors.map((e: any) => ({
+          line: e.line ?? 0,
+          column: e.column ?? 'N/A',
+          value: e.value ?? '',
+          reason: e.reason ?? e.message ?? 'Erreur inconnue',
+          message: e.reason ?? e.message ?? 'Erreur inconnue',
+        }));
+        setValidationErrors(mappedErrors);
+      } else {
+        // Pas de détail d'erreurs → on affiche le message général
+        setValidationErrors([{
+          line: 0,
+          column: 'N/A',
+          value: '',
+          reason: payload.message,
+          message: payload.message,
+        }]);
+      }
+
+      setValidationModalOpen(true);
+      fetchHistory();
+      setHistoryOpen(true);
     }
 
-    setValidationModalOpen(true);
-    fetchHistory();
-    setHistoryOpen(true);
-  }
-
-  if (payload.severity === 'success') {
-  const meta = payload.metadata;
-  setSuccessTitle(payload.title);
-  setSuccessDetails({
-    totalProcessed: meta?.totalProcessed,
-    skippedLines: meta?.skippedDescendantLines,
-    newFiscalYearsCount: meta?.newFiscalYearsCount,
-    fiscalYears: meta?.fiscalYears?.map((fy) => ({
-      entityName: fy.entityName,
-      entityType: fy.entityType,
-      calendarYear: fy.calendarYear,
-      startDate: fy.startDate,
-      endDate: fy.endDate,
-      isNew: fy.isNew,
-      linesCount: fy.linesCount,
-    })),
-    dataImports: meta?.dataImports?.map((di) => ({
-      entityName: di.entityName,
-      entityType: di.entityType,
-      linesCount: di.linesCount,
-    })),
+    if (payload.severity === 'success') {
+      const meta = payload.metadata;
+      setSuccessTitle(payload.title);
+      setSuccessDetails({
+        totalProcessed: meta?.totalProcessed,
+        skippedLines: meta?.skippedDescendantLines,
+        newFiscalYearsCount: meta?.newFiscalYearsCount,
+        fiscalYears: meta?.fiscalYears?.map((fy) => ({
+          entityName: fy.entityName,
+          entityType: fy.entityType,
+          calendarYear: fy.calendarYear,
+          startDate: fy.startDate,
+          endDate: fy.endDate,
+          isNew: fy.isNew,
+          linesCount: fy.linesCount,
+        })),
+        dataImports: meta?.dataImports?.map((di) => ({
+          entityName: di.entityName,
+          entityType: di.entityType,
+          linesCount: di.linesCount,
+        })),
+      });
+      setSuccessModalOpen(true);
+      fetchHistory();
+      setHistoryOpen(true);
+      if (selectedEntityId && selectedEntityType) {
+        try {
+          const response = await apiFetch<{ hasData: boolean }>(
+            `/generic-import/entityType/${selectedEntityId}/has-data?entityType=${selectedEntityType}`,
+            { snackbar: { showSuccess: false, showError: false } }
+          );
+          setHasData(response.hasData);
+        } catch {
+          setHasData(null);
+        }
+      }
+    }
   });
-  setSuccessModalOpen(true);
-  fetchHistory();
-  setHistoryOpen(true);
-  if (selectedEntityId && selectedEntityType) {
-    try {
-      const response = await apiFetch<{ hasData: boolean }>(
-        `/generic-import/entityType/${selectedEntityId}/has-data?entityType=${selectedEntityType}`,
-        { snackbar: { showSuccess: false, showError: false } }
-      );
-      setHasData(response.hasData);
-    } catch {
-      setHasData(null);
-    }
-  }
-}
-});
-  
-  
+
+
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -238,170 +239,170 @@ export default function ImportPage() {
   };
 
   const handleFileUpload = (file: File) => {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const data = new Uint8Array(e.target?.result as ArrayBuffer);
-    const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-    if (json.length > 0) {
-      const headers = json[0] as string[];
-      setCsvHeaders(headers);
-      const initialMapping: Record<string, string> = {};
-      headers.forEach((h) => {
-        const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
-        initialMapping[h] = match ? match.name : "";
-      });
-      setMapping(initialMapping);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-};
-  const handleDrop = useCallback((e: React.DragEvent, type: "excel") => {
-  e.preventDefault();
-  setDragOver(false);
-  const f = e.dataTransfer.files[0];
-  if (!f) return;
-
-  setCsvFile(null);
-  setCsvHeaders([]);
-  setMapping({});
-
-  const isCsv = f.name.endsWith(".csv");
-  const isExcel = f.name.endsWith(".xlsx") || f.name.endsWith(".xls");
-  const isTxt = f.name.endsWith(".txt");
-
-  if (type === "excel" && !isCsv && !isExcel && !isTxt) return;
-
-  if (type === "excel") {
-    setCsvFile(f);
     const reader = new FileReader();
-
-    reader.onload = (event) => {
-      let headers: string[] = [];
-
-      if (isExcel) {
-        // Pour les fichiers binaire .xlsx ou .xls, SheetJS gère très bien tout seul
-        const data = new Uint8Array(event.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-        headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
-      } else {
-        // POUR LE CSV / TXT : On gère l'encodage NOUS-MÊMES
-        const buffer = event.target?.result as ArrayBuffer;
-        const text = decodeBuffer(buffer); // Utilise la fonction améliorée ci-dessus
-        
-        // On passe le texte décodé à SheetJS au lieu du buffer brut
-        const workbook = XLSX.read(text, { type: "string" }); 
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-        headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
-      }
-
-      setCsvHeaders(headers);
-
-      let initialMapping: Record<string, string> = {};
-
-      if (selectedSavedMapping) {
-        headers.forEach((h) => {
-          if (selectedSavedMapping.rules[h]) {
-            initialMapping[h] = selectedSavedMapping.rules[h];
-          } else {
-            const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
-            initialMapping[h] = match ? match.name : "";
-          }
-        });
-        setSelectedSavedMapping(null);
-      } else {
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target?.result as ArrayBuffer);
+      const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      if (json.length > 0) {
+        const headers = json[0] as string[];
+        setCsvHeaders(headers);
+        const initialMapping: Record<string, string> = {};
         headers.forEach((h) => {
           const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
           initialMapping[h] = match ? match.name : "";
         });
+        setMapping(initialMapping);
       }
-
-      setMapping(initialMapping);
-      setMappingOpen(true);
     };
+    reader.readAsArrayBuffer(file);
+  };
+  const handleDrop = useCallback((e: React.DragEvent, type: "excel") => {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files[0];
+    if (!f) return;
 
-    // FIX : toujours lire en ArrayBuffer (plus readAsText)
-    reader.readAsArrayBuffer(f);
-  }
-}, [selectedSavedMapping]);
+    setCsvFile(null);
+    setCsvHeaders([]);
+    setMapping({});
+
+    const isCsv = f.name.endsWith(".csv");
+    const isExcel = f.name.endsWith(".xlsx") || f.name.endsWith(".xls");
+    const isTxt = f.name.endsWith(".txt");
+
+    if (type === "excel" && !isCsv && !isExcel && !isTxt) return;
+
+    if (type === "excel") {
+      setCsvFile(f);
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        let headers: string[] = [];
+
+        if (isExcel) {
+          // Pour les fichiers binaire .xlsx ou .xls, SheetJS gère très bien tout seul
+          const data = new Uint8Array(event.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
+        } else {
+          // POUR LE CSV / TXT : On gère l'encodage NOUS-MÊMES
+          const buffer = event.target?.result as ArrayBuffer;
+          const text = decodeBuffer(buffer); // Utilise la fonction améliorée ci-dessus
+
+          // On passe le texte décodé à SheetJS au lieu du buffer brut
+          const workbook = XLSX.read(text, { type: "string" });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
+        }
+
+        setCsvHeaders(headers);
+
+        let initialMapping: Record<string, string> = {};
+
+        if (selectedSavedMapping) {
+          headers.forEach((h) => {
+            if (selectedSavedMapping.rules[h]) {
+              initialMapping[h] = selectedSavedMapping.rules[h];
+            } else {
+              const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+              initialMapping[h] = match ? match.name : "";
+            }
+          });
+          setSelectedSavedMapping(null);
+        } else {
+          headers.forEach((h) => {
+            const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+            initialMapping[h] = match ? match.name : "";
+          });
+        }
+
+        setMapping(initialMapping);
+        setMappingOpen(true);
+      };
+
+      // FIX : toujours lire en ArrayBuffer (plus readAsText)
+      reader.readAsArrayBuffer(f);
+    }
+  }, [selectedSavedMapping]);
 
   const parseHeaders = (file: File): Promise<string[]> => {
-  return new Promise((resolve) => {
-    const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (isExcel) {
-        const data = new Uint8Array(event.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        resolve((json[0] as string[]) || []);
-      } else {
-        // FIX ENCODAGE : détecter UTF-8 vs Windows-1252
-        const buffer = event.target?.result as ArrayBuffer;
-        const text = decodeBuffer(buffer);
-        resolve(text.split("\n")[0].split(/[,\t;|]/).map((h) => h.trim().replace(/^"|"$/g, "")));
-      }
-    };
-    // FIX : toujours lire en ArrayBuffer
-    reader.readAsArrayBuffer(file);
-  });
-};
+    return new Promise((resolve) => {
+      const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (isExcel) {
+          const data = new Uint8Array(event.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          resolve((json[0] as string[]) || []);
+        } else {
+          // FIX ENCODAGE : détecter UTF-8 vs Windows-1252
+          const buffer = event.target?.result as ArrayBuffer;
+          const text = decodeBuffer(buffer);
+          resolve(text.split("\n")[0].split(/[,\t;|]/).map((h) => h.trim().replace(/^"|"$/g, "")));
+        }
+      };
+      // FIX : toujours lire en ArrayBuffer
+      reader.readAsArrayBuffer(file);
+    });
+  };
 
   const handleEntityChange = async (
-  entityId: string,
-  entityType: 'Group' | 'Company' | 'BusinessUnit'
-) => {
-  // Reset complet si entityId vide (reclique sur le même type ou changement de type)
-  if (!entityId) {
-    setSelectedEntityId(null);
-    setSelectedEntityType(selectedEntityType === entityType ? null : entityType);
+    entityId: string,
+    entityType: 'Group' | 'Company' | 'BusinessUnit'
+  ) => {
+    // Reset complet si entityId vide (reclique sur le même type ou changement de type)
+    if (!entityId) {
+      setSelectedEntityId(null);
+      setSelectedEntityType(selectedEntityType === entityType ? null : entityType);
+      setWorkspaceId(null);
+      setPeriodStart('');
+      setPeriodEnd('');
+      setHasData(null);
+      setIncludeDescendants(false);
+      return;
+    }
+
+    // Sélection normale d'une entité
+    setSelectedEntityId(entityId);
+    setSelectedEntityType(entityType);
     setWorkspaceId(null);
     setPeriodStart('');
     setPeriodEnd('');
     setHasData(null);
     setIncludeDescendants(false);
-    return;
-  }
 
-  // Sélection normale d'une entité
-  setSelectedEntityId(entityId);
-  setSelectedEntityType(entityType);
-  setWorkspaceId(null);
-  setPeriodStart('');
-  setPeriodEnd('');
-  setHasData(null);
-  setIncludeDescendants(false);
-
-  try {
-    if (entityType === 'Company') {
-      const company = await apiFetch<{ workspace_id: string }>(
-        `/companies/${entityId}`,
-        { snackbar: { showSuccess: false, showError: false } }
-      );
-      setWorkspaceId(company.workspace_id ?? null);
-    } else if (entityType === 'Group') {
-      const group = await apiFetch<{ workspace_id: string }>(
-        `/groups/${entityId}`,
-        { snackbar: { showSuccess: false, showError: false } }
-      );
-      setWorkspaceId(group.workspace_id ?? null);
-    } else if (entityType === 'BusinessUnit') {
-      const bu = await apiFetch<{ workspace_id: string }>(
-        `/business-units/${entityId}`,
-        { snackbar: { showSuccess: false, showError: false } }
-      );
-      setWorkspaceId(bu.workspace_id ?? null);
+    try {
+      if (entityType === 'Company') {
+        const company = await apiFetch<{ workspace_id: string }>(
+          `/companies/${entityId}`,
+          { snackbar: { showSuccess: false, showError: false } }
+        );
+        setWorkspaceId(company.workspace_id ?? null);
+      } else if (entityType === 'Group') {
+        const group = await apiFetch<{ workspace_id: string }>(
+          `/groups/${entityId}`,
+          { snackbar: { showSuccess: false, showError: false } }
+        );
+        setWorkspaceId(group.workspace_id ?? null);
+      } else if (entityType === 'BusinessUnit') {
+        const bu = await apiFetch<{ workspace_id: string }>(
+          `/business-units/${entityId}`,
+          { snackbar: { showSuccess: false, showError: false } }
+        );
+        setWorkspaceId(bu.workspace_id ?? null);
+      }
+    } catch {
+      setWorkspaceId(null);
     }
-  } catch {
-    setWorkspaceId(null);
-  }
-};
+  };
 
   const performImport = async (
     existingMappingId?: string,
@@ -494,7 +495,7 @@ export default function ImportPage() {
         entityType === 'BusinessUnit' ? 'false' : String(includeDescendants)
       );
       if (periodStart) formData.append('periodStart', periodStart);
-      if (periodEnd)   formData.append('periodEnd', periodEnd);
+      if (periodEnd) formData.append('periodEnd', periodEnd);
 
       // ─── MODIFIÉ : appel simple, résultat vie sse ───
       try {
@@ -658,7 +659,7 @@ export default function ImportPage() {
       // --- 1. Vérification granulaire des pré-requis ---
       if (!fileToUse || !entityId || !entityType) {
         let errorMessage = "";
-        
+
         if (!fileToUse && (!entityId || !entityType)) {
           errorMessage = "Veuillez sélectionner une entité et un fichier avant d'importer.";
         } else if (!fileToUse) {
@@ -667,15 +668,15 @@ export default function ImportPage() {
           errorMessage = "Veuillez sélectionner une entité avant d'importer.";
         }
         setValidationErrors([{
-        line: 0,
-        column: 'N/A',
-        value: '',
-        reason: errorMessage,
-        message: errorMessage
-      }]);
-      setValidationModalOpen(true);
-      return;
-    }
+          line: 0,
+          column: 'N/A',
+          value: '',
+          reason: errorMessage,
+          message: errorMessage
+        }]);
+        setValidationModalOpen(true);
+        return;
+      }
       const newMapping: Record<string, string> = {};
       csvHeaders.forEach((h) => {
         newMapping[h] = savedMapping.rules[h] ??
@@ -725,48 +726,48 @@ export default function ImportPage() {
   };
 
   const handleConfirmReplace = async () => {
-  if (!csvFile) {
-    setValidationErrors([{
-      line: 0, column: 'N/A', value: '',
-      reason: "Veuillez d'abord sélectionner un fichier.",
-      message: "Veuillez d'abord sélectionner un fichier."
-    }]);
-    setValidationModalOpen(true);
-    return;
-  }
+    if (!csvFile) {
+      setValidationErrors([{
+        line: 0, column: 'N/A', value: '',
+        reason: "Veuillez d'abord sélectionner un fichier.",
+        message: "Veuillez d'abord sélectionner un fichier."
+      }]);
+      setValidationModalOpen(true);
+      return;
+    }
 
-  if (!selectedEntityId || !selectedEntityType) {
-    setValidationErrors([{
-      line: 0, column: 'N/A', value: '',
-      reason: "Veuillez sélectionner une entité avant d'importer.",
-      message: "Veuillez sélectionner une entité avant d'importer."
-    }]);
-    setValidationModalOpen(true);
-    return;
-  }
+    if (!selectedEntityId || !selectedEntityType) {
+      setValidationErrors([{
+        line: 0, column: 'N/A', value: '',
+        reason: "Veuillez sélectionner une entité avant d'importer.",
+        message: "Veuillez sélectionner une entité avant d'importer."
+      }]);
+      setValidationModalOpen(true);
+      return;
+    }
 
-  // ← PLUS de checkEntityHasData ici, on fait confiance au state hasData
-  // Si hasData est true et période non renseignée, performImport le bloquera
-  await performImport();
-};
+    // ← PLUS de checkEntityHasData ici, on fait confiance au state hasData
+    // Si hasData est true et période non renseignée, performImport le bloquera
+    await performImport();
+  };
 
   const handleImport = () => {
-  if (hasData === true && (!periodStart || !periodEnd)) {
-    setValidationErrors([{
-      line: 0, column: 'N/A', value: '',
-      reason: "Cette entité a des données existantes. Veuillez sélectionner une période de remplacement avant d'importer.",
-      message: "Période de remplacement obligatoire."
-    }]);
-    setValidationModalOpen(true);
-    return;
-  }
-  setMappingOpen(false);
-  handleConfirmReplace();
-};
+    if (hasData === true && (!periodStart || !periodEnd)) {
+      setValidationErrors([{
+        line: 0, column: 'N/A', value: '',
+        reason: "Cette entité a des données existantes. Veuillez sélectionner une période de remplacement avant d'importer.",
+        message: "Période de remplacement obligatoire."
+      }]);
+      setValidationModalOpen(true);
+      return;
+    }
+    setMappingOpen(false);
+    handleConfirmReplace();
+  };
 
   return (
     <AppLayout
-      title="Import"
+      title="Import des données comptables"
       companies={companyList}
       selectedCompanyId={selectedCompanyId}
       onCompanyChange={setSelectedCompanyId}
@@ -775,32 +776,28 @@ export default function ImportPage() {
         <title>Import</title>
       </Head>
       <ImportSuccessModal
-  open={successModalOpen}
-  onOpenChange={setSuccessModalOpen}
-  title={successTitle}
-  totalProcessed={successDetails?.totalProcessed}
-  skippedLines={successDetails?.skippedLines}
-  newFiscalYearsCount={successDetails?.newFiscalYearsCount}
-  fiscalYears={successDetails?.fiscalYears}
-  dataImports={successDetails?.dataImports}
-  simpleMessage={successSimpleMessage}
-/>
+        open={successModalOpen}
+        onOpenChange={setSuccessModalOpen}
+        title={successTitle}
+        totalProcessed={successDetails?.totalProcessed}
+        skippedLines={successDetails?.skippedLines}
+        newFiscalYearsCount={successDetails?.newFiscalYearsCount}
+        fiscalYears={successDetails?.fiscalYears}
+        dataImports={successDetails?.dataImports}
+        simpleMessage={successSimpleMessage}
+      />
 
       <div className="space-y-8">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="rounded-xl bg-white/10 p-2.5">
+        <PageHeader
+          title="Import des données comptables"
+          subtitle="Importez vos fichiers comptables en toute sécurité"
+          icon={
+            <div className="nebula-glass rounded-2xl border border-white/10 p-2.5">
               <FileUp className="h-5 w-5 text-(--nebula-gold-light)" />
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">Importer des données</h2>
-              <p className="text-sm text-(--nebula-muted)">
-                Importez vos fichiers comptables en toute sécurité
-              </p>
-            </div>
-          </div>
-        </div>
-        <ImportGuide /> 
+          }
+        />
+        <ImportGuide />
 
         <EntitySelector
           selectedEntityId={selectedEntityId}
@@ -812,19 +809,19 @@ export default function ImportPage() {
           onPeriodChange={(start, end) => { setPeriodStart(start); setPeriodEnd(end); }}
           hasData={hasData}
           onHasDataChange={setHasData}
-          includeDescendants={includeDescendants}           
-          onIncludeDescendantsChange={setIncludeDescendants} 
+          includeDescendants={includeDescendants}
+          onIncludeDescendantsChange={setIncludeDescendants}
         />
-        
+
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <TabsList className="h-auto w-full gap-1 rounded-xl border border-white/10 bg-white/5 p-1.5 sm:h-12 sm:w-auto">
-              <TabsTrigger value="excel" className="gap-2 flex-1 rounded-lg border border-transparent px-4 py-2 text-(--nebula-muted) hover:bg-white/5 hover:text-white [&[aria-selected=true]]:border-white/10 [&[aria-selected=true]]:bg-white/10 [&[aria-selected=true]]:text-white [&[aria-selected=true]]:shadow-none">
+              <TabsTrigger value="excel" className="gap-2 flex-1 rounded-lg border border-transparent px-4 py-2 text-foreground hover:bg-muted hover:text-foreground [&[aria-selected=true]]:border-border [&[aria-selected=true]]:bg-muted [&[aria-selected=true]]:text-foreground [&[aria-selected=true]]:shadow-none">
                 <Sheet className="h-4 w-4" />
                 Excel / CSV
               </TabsTrigger>
-              <TabsTrigger value="api" className="gap-2 flex-1 rounded-lg border border-transparent px-4 py-2 text-(--nebula-muted) hover:bg-white/5 hover:text-white [&[aria-selected=true]]:border-white/10 [&[aria-selected=true]]:bg-white/10 [&[aria-selected=true]]:text-white [&[aria-selected=true]]:shadow-none">
+              <TabsTrigger value="api" className="gap-2 flex-1 rounded-lg border border-transparent px-4 py-2 text-foreground hover:bg-muted hover:text-foreground [&[aria-selected=true]]:border-border [&[aria-selected=true]]:bg-muted [&[aria-selected=true]]:text-foreground [&[aria-selected=true]]:shadow-none">
                 <Plug className="h-4 w-4" />
                 API
               </TabsTrigger>
@@ -902,25 +899,25 @@ export default function ImportPage() {
         periodStart={periodStart}
         periodEnd={periodEnd}
         onSaveSuccess={(title, message) => {
-        setSuccessTitle(title);
-        setSuccessDetails(null);
-        setSuccessSimpleMessage(message);
-        setSuccessModalOpen(true);
-      }}
-      onSaveError={(message) => {
-        setValidationErrors([{
-          line: 0, column: 'N/A', value: '',
-          reason: message,
-          message,
-        }]);
-        setValidationModalOpen(true);
-      }}
-      onDeleteSuccess={(mappingName) => {
-        setSuccessTitle("Mapping supprimé ✅");
-        setSuccessDetails(null);
-        setSuccessSimpleMessage(`Le mapping « ${mappingName} » a été supprimé avec succès.`);
-        setSuccessModalOpen(true);
-      }}
+          setSuccessTitle(title);
+          setSuccessDetails(null);
+          setSuccessSimpleMessage(message);
+          setSuccessModalOpen(true);
+        }}
+        onSaveError={(message) => {
+          setValidationErrors([{
+            line: 0, column: 'N/A', value: '',
+            reason: message,
+            message,
+          }]);
+          setValidationModalOpen(true);
+        }}
+        onDeleteSuccess={(mappingName) => {
+          setSuccessTitle("Mapping supprimé ✅");
+          setSuccessDetails(null);
+          setSuccessSimpleMessage(`Le mapping « ${mappingName} » a été supprimé avec succès.`);
+          setSuccessModalOpen(true);
+        }}
       />
 
       <SavedMappingModal
