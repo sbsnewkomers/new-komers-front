@@ -254,17 +254,17 @@ export default function ShareholdersPage() {
                             {s.ownerType === "USER" ? <Users className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-medium">{ownerLabel}</span>
+                            <span className="font-medium text-foreground">{ownerLabel}</span>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-600">
+                        <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-foreground">
                           {ownerTypeLabel(s.ownerType)}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                        <div className="inline-flex items-center gap-1 rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
                           {/* <Percent className="h-3 w-3" /> */}
                           <span>{s.percentage}%</span>
                         </div>
@@ -272,12 +272,12 @@ export default function ShareholdersPage() {
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
                           {(s.companies ?? []).length === 0 && (
-                            <span className="text-xs text-slate-400">Aucune entreprise liée</span>
+                            <span className="text-xs text-muted-foreground">Aucune entreprise liée</span>
                           )}
                           {(s.companies ?? []).map((c) => (
                             <span
                               key={c.id}
-                              className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+                              className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground"
                             >
                               {c.name ?? c.id}
                             </span>
@@ -291,7 +291,7 @@ export default function ShareholdersPage() {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-slate-900"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
                               onClick={() => openEdit(s)}
                             >
                               <Pencil className="h-4 w-4" />
@@ -341,7 +341,7 @@ export default function ShareholdersPage() {
             <DialogTitle>Supprimer l&apos;actionnaire</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-foreground">
               Êtes-vous sûr de vouloir supprimer cet actionnaire ? Cette action est irréversible.
             </p>
           </DialogBody>
