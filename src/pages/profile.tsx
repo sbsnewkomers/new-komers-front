@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { PageHeader } from "@/components/patterns/PageHeader";
 import { User, Mail, Shield, Edit2, Save, X, UserCircle, Lock, Eye, EyeOff } from "lucide-react";
 import { updateProfile, updatePassword } from "@/lib/profileApi";
 
@@ -174,7 +175,7 @@ export default function ProfilePage() {
   // Loading state
   if (!user) {
     return (
-      <AppLayout title="Mon Profil">
+      <AppLayout title="Profil">
         <div className="flex min-h-screen items-center justify-center">
           <div className="text-center">
             <p className="text-muted-foreground">Chargement du profil...</p>
@@ -185,23 +186,20 @@ export default function ProfilePage() {
   }
 
   return (
-    <AppLayout title="Mon Profil" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
+    <AppLayout title="Profil" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
       <Head>
-        <title>Mon Profil</title>
+        <title>Profil</title>
       </Head>
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="rounded-xl border border-white/10 bg-white/10 p-2.5">
+        <PageHeader
+          title="Profil"
+          subtitle="Gérez vos informations personnelles et votre mot de passe."
+          icon={
+            <div className="nebula-glass rounded-2xl border border-white/10 p-2.5">
               <UserCircle className="h-5 w-5 text-(--nebula-gold-light)" />
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">Profil</h2>
-              <p className="text-sm text-(--nebula-muted)">Gérez vos informations personnelles et votre mot de passe.</p>
-            </div>
-          </div>
-        </div>
+          }
+        />
 
         <div className="rounded-3xl border border-white/10 nebula-glass-modal overflow-hidden">
           {/* Profile Card - Header + Personal Information */}
@@ -209,11 +207,8 @@ export default function ProfilePage() {
             <div className="flex flex-col lg:flex-row gap-8 w-full">
               {/* Profile Header Section */}
               <div className="flex flex-col items-center lg:items-start gap-4 lg:gap-6 shrink-0">
-                <div className="relative">
-                  <div className="w-24 h-24 rounded-full flex items-center justify-center border border-(--nebula-gold-light)/30 bg-white/10 text-(--nebula-gold-light)">
-                    <UserCircle className="w-14 h-14 text-(--nebula-gold-light)" />
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-400 rounded-full border-2 border-black/40 shadow-[0_0_10px_rgba(52,211,153,0.6)]"></div>
+                <div className="w-24 h-24 rounded-full flex items-center justify-center border border-(--nebula-gold-light)/30 bg-white/10 text-(--nebula-gold-light)">
+                  <UserCircle className="w-14 h-14 text-(--nebula-gold-light)" />
                 </div>
                 <div className="text-center lg:text-left space-y-3">
                   <h1 className="text-2xl font-bold text-white">
@@ -229,10 +224,6 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2 px-3 py-1.5 border border-white/10 bg-white/10 rounded-full">
                       <Shield className="w-4 h-4 text-(--nebula-gold-light)" />
                       <span className="text-sm font-medium text-(--nebula-gold-light)">{formatRole(user.role)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-(--nebula-muted)">
-                      <User className="w-4 h-4 text-(--nebula-muted)" />
-                      <span className="text-sm">@{user.email?.split('@')[0] || "user"}</span>
                     </div>
                   </div>
                 </div>
@@ -252,19 +243,6 @@ export default function ProfilePage() {
 
                 {isEditing ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Adresse email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 w-4 h-4 text-(--nebula-muted)" />
-                        <Input
-                          id="email"
-                          type="email"
-                          value={user.email}
-                          disabled
-                          className="pl-10 border-white/10 bg-white/5 text-white placeholder:text-(--nebula-muted)"
-                        />
-                      </div>
-                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="firstName">Prénom</Label>
                       <Input
@@ -286,12 +264,6 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label>Adresse email</Label>
-                      <div className="px-3 py-2 border border-white/10 bg-white/5 rounded-xl text-sm text-white">
-                        {user.email}
-                      </div>
-                    </div>
                     <div className="space-y-2">
                       <Label>Prénom</Label>
                       <div className="px-3 py-2 border border-white/10 bg-white/5 rounded-xl text-sm text-white">
