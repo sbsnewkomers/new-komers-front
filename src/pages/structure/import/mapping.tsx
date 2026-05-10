@@ -11,7 +11,6 @@ import { Select } from "@/components/ui/Select";
 const DB_FIELDS = [
   "name",
   "fiscal_year_start",
-  "fiscal_year_end",
   "siret",
   "address",
   "group_id",

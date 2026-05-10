@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
@@ -77,24 +78,24 @@ function SearchableSelect({
   return (
     <div ref={ref} className="relative">
       <div
-        className="flex h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm transition-colors hover:border-slate-300"
+        className="flex h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm transition-colors hover:border-border"
         onClick={() => setOpen(true)}
       >
         {icon}
         {selected ? (
-          <span className="flex-1 truncate text-slate-900">
+          <span className="flex-1 truncate text-foreground">
             {selected.label}
             {selected.secondary && (
-              <span className="ml-1 text-slate-400">{selected.secondary}</span>
+              <span className="ml-1 text-muted-foreground">{selected.secondary}</span>
             )}
           </span>
         ) : (
-          <span className="flex-1 truncate text-slate-400">{placeholder}</span>
+          <span className="flex-1 truncate text-muted-foreground">{placeholder}</span>
         )}
         {value && (
           <button
             type="button"
-            className="shrink-0 rounded p-0.5 text-slate-400 hover:text-slate-700"
+            className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
             onClick={(e) => {
               e.stopPropagation();
               onChange("");
@@ -106,8 +107,8 @@ function SearchableSelect({
       </div>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-52 overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
-          <div className="sticky top-0 border-b border-slate-100 bg-white p-2">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-52 overflow-auto rounded-lg border border-border bg-popover shadow-lg">
+          <div className="sticky top-0 border-b border-border bg-popover p-2">
             <Input
               autoFocus
               type="search"
@@ -126,9 +127,8 @@ function SearchableSelect({
             <button
               key={o.id}
               type="button"
-              className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-slate-50 ${
-                o.id === value ? "bg-slate-50 font-medium text-slate-900" : "text-slate-700"
-              }`}
+              className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-muted ${o.id === value ? "bg-muted font-medium text-foreground" : "text-foreground"
+                }`}
               onClick={() => {
                 onChange(o.id);
                 setOpen(false);
@@ -138,7 +138,7 @@ function SearchableSelect({
               <span className="flex-1 truncate">
                 {o.label}
                 {o.secondary && (
-                  <span className="ml-1 text-slate-400">{o.secondary}</span>
+                  <span className="ml-1 text-muted-foreground">{o.secondary}</span>
                 )}
               </span>
               {o.id === value && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
@@ -223,27 +223,26 @@ export function ShareholderFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !saving && onOpenChange(v)}>
-      <DialogContent className="max-w-lg">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>
             {title ?? (isEditing ? "Modifier l'actionnaire" : "Nouvel actionnaire")}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-1">
+        <DialogBody className="space-y-5">
           {/* Owner type toggle */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-sm font-medium text-foreground">
               Type d&apos;actionnaire
             </label>
             <div className="flex gap-2">
               <button
                 type="button"
-                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${
-                  ownerType === "USER"
-                    ? "border-slate-900 bg-slate-900 text-white shadow-sm"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                }`}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${ownerType === "USER"
+                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                  : "border-input bg-background text-muted-foreground hover:border-border hover:bg-muted"
+                  }`}
                 onClick={() => {
                   setOwnerType("USER");
                   setOwnerId("");
@@ -254,11 +253,10 @@ export function ShareholderFormDialog({
               </button>
               <button
                 type="button"
-                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${
-                  ownerType === "COMPANY"
-                    ? "border-slate-900 bg-slate-900 text-white shadow-sm"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                }`}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${ownerType === "COMPANY"
+                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                  : "border-input bg-background text-muted-foreground hover:border-border hover:bg-muted"
+                  }`}
                 onClick={() => {
                   setOwnerType("COMPANY");
                   setOwnerId("");
@@ -272,7 +270,7 @@ export function ShareholderFormDialog({
 
           {/* Owner searchable select */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-sm font-medium text-foreground">
               {ownerType === "USER" ? "Utilisateur" : "Entreprise actionnaire"}
             </label>
             <SearchableSelect
@@ -296,7 +294,7 @@ export function ShareholderFormDialog({
 
           {/* Percentage */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-sm font-medium text-foreground">
               Pourcentage de détention
             </label>
             <div className="flex items-center gap-2">
@@ -325,10 +323,10 @@ export function ShareholderFormDialog({
           {/* Linked companies */}
           {!lockedCompanyId && (
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-foreground">
                 Entreprises liées
                 {selectedCompanyIds.length > 0 && (
-                  <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-900 text-[10px] font-bold text-white">
+                  <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                     {selectedCompanyIds.length}
                   </span>
                 )}
@@ -342,7 +340,7 @@ export function ShareholderFormDialog({
                   onChange={(e) => setCompanySearch(e.target.value)}
                 />
               )}
-              <div className="max-h-40 overflow-auto rounded-lg border border-slate-200 bg-white">
+              <div className="max-h-40 overflow-auto rounded-lg border border-border bg-card">
                 {filteredCompanies.length === 0 && (
                   <div className="px-3 py-4 text-center text-xs text-slate-400">
                     Aucune entreprise disponible.
@@ -354,22 +352,20 @@ export function ShareholderFormDialog({
                     <button
                       key={c.id}
                       type="button"
-                      className={`flex w-full items-center gap-2.5 border-b border-slate-50 px-3 py-2 text-left text-sm transition-colors last:border-0 hover:bg-slate-50 ${
-                        checked ? "bg-slate-50/80" : ""
-                      }`}
+                      className={`flex w-full items-center gap-2.5 border-b border-border px-3 py-2 text-left text-sm transition-colors last:border-0 hover:bg-muted ${checked ? "bg-muted" : ""
+                        }`}
                       onClick={() => toggleCompany(c.id)}
                     >
                       <div
-                        className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded border transition-colors ${
-                          checked
-                            ? "border-slate-900 bg-slate-900 text-white"
-                            : "border-slate-300 bg-white"
-                        }`}
+                        className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded border transition-colors ${checked
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-input bg-background"
+                          }`}
                       >
                         {checked && <Check className="h-3 w-3" />}
                       </div>
                       <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                      <span className={checked ? "font-medium text-slate-900" : "text-slate-700"}>
+                      <span className={checked ? "font-medium text-foreground" : "text-muted-foreground"}>
                         {c.name}
                       </span>
                     </button>
@@ -378,13 +374,14 @@ export function ShareholderFormDialog({
               </div>
             </div>
           )}
-        </div>
+        </DialogBody>
 
-        <DialogFooter className="mt-2 gap-2">
+        <DialogFooter>
           <Button
             type="button"
             variant="ghost"
             onClick={() => !saving && onOpenChange(false)}
+            className="w-full sm:w-auto"
           >
             Annuler
           </Button>
@@ -392,7 +389,7 @@ export function ShareholderFormDialog({
             type="button"
             onClick={handleSubmit}
             disabled={saving || !isValid}
-            className="min-w-[120px]"
+            className="min-w-[120px] w-full sm:w-auto"
           >
             {saving
               ? "Enregistrement..."

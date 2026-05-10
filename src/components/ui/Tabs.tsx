@@ -9,20 +9,24 @@ type TabsContextValue = {
 
 const TabsContext = React.createContext<TabsContextValue | null>(null);
 
+// Ajout de React.HTMLAttributes<HTMLDivElement> pour accepter className et d'autres props
 export function Tabs({
   value,
   onValueChange,
   defaultValue,
   children,
+  className, // On récupère className ici
+  ...props    // On récupère le reste des props (id, style, etc.)
 }: {
   value?: string;
   onValueChange?: (v: string) => void;
   defaultValue?: string;
   children: React.ReactNode;
-}) {
+} & React.HTMLAttributes<HTMLDivElement>) { // On étend les types ici
   const [internalValue, setInternalValue] = React.useState(defaultValue ?? "");
   const isControlled = value !== undefined;
   const current = isControlled ? value : internalValue;
+  
   const setValue = React.useCallback(
     (v: string) => {
       if (!isControlled) setInternalValue(v);
@@ -30,9 +34,13 @@ export function Tabs({
     },
     [isControlled, onValueChange]
   );
+
   return (
     <TabsContext.Provider value={{ value: current, setValue }}>
-      {children}
+      {/* On applique le className et les props sur un wrapper div */}
+      <div className={className} {...props}>
+        {children}
+      </div>
     </TabsContext.Provider>
   );
 }

@@ -4,6 +4,7 @@ export type TreeBU = {
   id: string;
   name: string;
   code: string;
+  country: string;
 };
 
 export type TreeCompany = {
@@ -20,7 +21,27 @@ export type TreeGroup = {
   companies: TreeCompany[];
 };
 
+export type Treeworkspace = {
+  id: string;
+  name: string;
+  description?: string;
+  logo?: string;
+  address?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  manager_id?: string;
+  manager?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email: string;
+  } | null;
+  groups: TreeGroup[];
+  standaloneCompanies: TreeCompany[];
+};
+
 export type StructureTree = {
+  workspaces?: Treeworkspace[];
   groups?: TreeGroup[];
   standaloneCompanies?: TreeCompany[];
 };

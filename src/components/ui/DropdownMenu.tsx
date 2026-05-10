@@ -1,18 +1,55 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
+
+function mergeRefs<T>(
+  refs: Array<React.Ref<T> | undefined>,
+): React.RefCallback<T> {
+  return (value) => {
+    for (const ref of refs) {
+      if (!ref) continue;
+      if (typeof ref === "function") ref(value);
+      else (ref as React.MutableRefObject<T | null>).current = value;
+    }
+  };
+}
 
 type DropdownMenuContextValue = {
   open: boolean;
   setOpen: (v: boolean) => void;
+  triggerElement: HTMLElement | null;
+  setTriggerElement: (el: HTMLElement | null) => void;
 };
 
-const DropdownMenuContext = React.createContext<DropdownMenuContextValue | null>(null);
+const DropdownMenuContext = React.createContext<DropdownMenuContextValue | null>(
+  null,
+);
 
 export function DropdownMenu({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
+  const [triggerElement, setTriggerElement] = React.useState<HTMLElement | null>(
+    null,
+  );
+
+  React.useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
   return (
-    <DropdownMenuContext.Provider value={{ open, setOpen }}>
+    <DropdownMenuContext.Provider
+      value={{
+        open,
+        setOpen,
+        triggerElement,
+        setTriggerElement,
+      }}
+    >
       <div className="relative inline-block">{children}</div>
     </DropdownMenuContext.Provider>
   );
@@ -34,13 +71,27 @@ export function DropdownMenuTrigger({
     ctx.setOpen(!ctx.open);
   };
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void; className?: string }>, {
-      onClick: handleClick,
-      className: [className, (children as React.ReactElement & { props: { className?: string } }).props?.className].filter(Boolean).join(" "),
+    const child = children as React.ReactElement<{
+      onClick?: (e: React.MouseEvent) => void;
+      className?: string;
+      ref?: React.Ref<HTMLElement>;
+    }>;
+    return React.cloneElement(child, {
+      ref: mergeRefs([child.props.ref, (el: HTMLElement | null) => ctx.setTriggerElement(el)]),
+      onClick: (e: React.MouseEvent) => {
+        child.props.onClick?.(e);
+        handleClick(e);
+      },
+      className: [className, child.props?.className].filter(Boolean).join(" "),
     });
   }
   return (
-    <button type="button" onClick={handleClick} className={className}>
+    <button
+      type="button"
+      ref={(el) => ctx.setTriggerElement(el)}
+      onClick={handleClick}
+      className={className}
+    >
       {children}
     </button>
   );
@@ -56,28 +107,90 @@ export function DropdownMenuContent({
   align?: "start" | "end";
 }) {
   const ctx = React.useContext(DropdownMenuContext);
-  const ref = React.useRef<HTMLDivElement>(null);
+  const open = ctx?.open ?? false;
+  const setOpen = ctx?.setOpen;
+  const triggerEl = ctx?.triggerElement;
+
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const [portalStyle, setPortalStyle] = React.useState<React.CSSProperties | null>(
+    null,
+  );
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) ctx?.setOpen(false);
+    setMounted(true);
+  }, []);
+
+  const updatePosition = React.useCallback(() => {
+    const trigger = triggerEl ?? null;
+    if (!trigger || typeof window === "undefined") return;
+    const rect = trigger.getBoundingClientRect();
+    const gap = 4;
+    const top = rect.bottom + gap;
+    if (align === "end") {
+      setPortalStyle({
+        position: "fixed",
+        top,
+        left: rect.right,
+        transform: "translateX(-100%)",
+        zIndex: 300,
+        minWidth: Math.max(rect.width, 128),
+      });
+    } else {
+      setPortalStyle({
+        position: "fixed",
+        top,
+        left: rect.left,
+        zIndex: 300,
+        minWidth: Math.max(rect.width, 128),
+      });
     }
-    if (ctx?.open) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [ctx?.open]);
+  }, [triggerEl, align]);
 
-  if (!ctx?.open) return null;
+  React.useLayoutEffect(() => {
+    if (!open) {
+      setPortalStyle(null);
+      return;
+    }
+    updatePosition();
+  }, [open, updatePosition]);
 
-  const alignClass = align === "end" ? "right-0" : "left-0";
+  React.useLayoutEffect(() => {
+    if (!open) return;
+    const onScrollOrResize = () => updatePosition();
+    window.addEventListener("scroll", onScrollOrResize, true);
+    window.addEventListener("resize", onScrollOrResize);
+    return () => {
+      window.removeEventListener("scroll", onScrollOrResize, true);
+      window.removeEventListener("resize", onScrollOrResize);
+    };
+  }, [open, updatePosition]);
 
-  return (
+  React.useEffect(() => {
+    if (!open || !setOpen) return;
+    function handlePointerDown(e: MouseEvent) {
+      const t = e.target as Node;
+      if (menuRef.current?.contains(t)) return;
+      if (triggerEl?.contains(t)) return;
+      setOpen?.(false);
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [open, setOpen, triggerEl]);
+
+  if (!open || !mounted || !portalStyle) return null;
+
+  const content = (
     <div
-      ref={ref}
-      className={`absolute z-50 mt-1 min-w-[8rem] rounded-md border border-border bg-background p-1 shadow-lg ${alignClass} ${className ?? ""}`}
+      ref={menuRef}
+      style={portalStyle}
+      className={`rounded-md border border-border bg-background p-1 text-popover-foreground shadow-lg ${className ?? ""}`}
     >
       {children}
     </div>
   );
+
+  return createPortal(content, document.body);
 }
 
 export function DropdownMenuItem({

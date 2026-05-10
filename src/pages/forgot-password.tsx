@@ -1,11 +1,11 @@
 import { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { apiFetch } from "@/lib/apiClient";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
 
       setSuccessMessage("Si cet email est enregistré, vous recevrez un lien de réinitialisation.");
       setEmail("");
-    } catch (error) {
+    } catch {
       // Même en cas d'erreur, on montre un message générique pour la sécurité
       setSuccessMessage("Si cet email est enregistré, vous recevrez un lien de réinitialisation.");
       setEmail("");
@@ -47,91 +47,95 @@ export default function ForgotPasswordPage() {
       <Head>
         <title>Mot de passe oublié - NewKomers</title>
       </Head>
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#F8FAFC] px-4 font-sans text-slate-900">
+      <div className="min-h-screen nebula-grid-bg flex flex-col items-center justify-center px-4 py-10">
         {/* Logo */}
-        <div className="mb-8 text-center">
-          <h1 className="text-xl font-bold tracking-widest text-slate-700">
-            NEWKOMERS
+        <div className="mb-6 text-center">
+          <h1 className="text-3xl font-bold leading-[1.05] tracking-tight">
+            <span className="nebula-grad-text">NEWKOMERS</span>
           </h1>
         </div>
 
         {/* Card */}
-        <div className="w-full max-w-[400px] rounded-2xl bg-white p-8 shadow-sm border border-slate-100">
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-semibold text-slate-900">Mot de passe oublié</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Entrez votre email pour recevoir un lien de réinitialisation
-            </p>
-          </div>
+        <div className="w-full max-w-[400px] nebula-glass nebula-blob rounded-3xl p-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 h-full w-full rounded-full bg-(--nebula-gold)/25 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-full w-full rounded-full bg-(--nebula-gold-light)/20 blur-3xl" />
 
-          {errorMessage && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
-              {errorMessage}
+          <div className="relative">
+            <div className="mb-6 text-center">
+              <h2 className="text-2xl font-semibold text-white">Mot de passe oublié</h2>
+              <p className="mt-2 text-sm text-white">
+                Entrez votre email pour recevoir un lien de réinitialisation
+              </p>
             </div>
-          )}
 
-          {successMessage && (
-            <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-xs text-green-800">
-              {successMessage}
-            </div>
-          )}
+            {errorMessage && (
+              <div className="mb-4 nebula-glass rounded-2xl px-4 py-3 text-xs text-white border border-white/15">
+                {errorMessage}
+              </div>
+            )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-slate-700"
+            {successMessage && (
+              <div className="mb-4 nebula-glass rounded-2xl px-4 py-3 text-xs text-emerald-400 border border-emerald-500/20">
+                {successMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label
+                  htmlFor="email"
+                  className="block text-[10px] uppercase tracking-[0.2em] text-white"
+                >
+                  § Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  placeholder="nom@entreprise.fr"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={loading || !email}
+                className="w-full"
               >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
-                placeholder="nom@entreprise.fr"
-              />
+                {loading ? "Envoi en cours..." : "Envoyer le lien"}
+              </Button>
+            </form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-white/10" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-transparent px-2 text-(--nebula-muted)">
+                  Ou
+                </span>
+              </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading || !email}
-              className="w-full rounded-lg bg-[#1e293b] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
-            >
-              {loading ? "Envoi en cours..." : "Envoyer le lien"}
-            </button>
-          </form>
-
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-slate-200" />
+            <div className="text-center">
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[13px] font-semibold h-10 w-full transition-colors"
+              >
+                Retour à la connexion
+              </Link>
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-slate-400">
-                Ou
-              </span>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-1 w-full"
-            >
-              Retour à la connexion
-            </Link>
           </div>
         </div>
 
         {/* Footer Links */}
-        <div className="mt-8 text-center text-sm text-slate-500">
+        <div className="mt-4 text-center text-sm text-(--nebula-muted)">
           Pas encore de compte ?{" "}
           <Link
             href="/register"
-            className="font-medium text-[#1e293b] hover:underline"
+            className="font-medium text-white hover:text-(--nebula-gold-light) transition-colors"
           >
             Inscription
           </Link>

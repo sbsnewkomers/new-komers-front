@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/Dialog";
 import { Select } from "@/components/ui/Select";
@@ -30,10 +31,10 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
 } from "recharts";
-import { Building2, TrendingUp, Euro, Activity, Calendar } from "lucide-react";
+import { Building2, Euro, Activity, Calendar } from "lucide-react";
 
 type WidgetType = "kpi" | "chart";
 type Widget = {
@@ -68,6 +69,50 @@ const DEMO_CHART_DATA = [
   { name: "Juin", value: 700 },
 ];
 
+const MONTH_DAY_REGEX = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])$/;
+const LEGACY_MONTH_DAY_REGEX = /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
+
+const parseMonthDay = (value: string): { month: number; day: number } | null => {
+  const normalized = LEGACY_MONTH_DAY_REGEX.test(value)
+    ? `${value.split("-")[1]}-${value.split("-")[0]}`
+    : value;
+
+  if (!MONTH_DAY_REGEX.test(normalized)) return null;
+  const [dayPart, monthPart] = normalized.split("-");
+  const day = Number(dayPart);
+  const month = Number(monthPart);
+  const probe = new Date(Date.UTC(2000, month - 1, day));
+  if (probe.getUTCMonth() + 1 !== month || probe.getUTCDate() !== day) return null;
+  return { month, day };
+};
+
+const getFiscalBoundsForYear = (
+  fiscalYearStart: string,
+  year: number,
+): { start: Date; end: Date } | null => {
+  const parsed = parseMonthDay(fiscalYearStart);
+  if (!parsed) return null;
+
+  const start = new Date(year, parsed.month - 1, parsed.day);
+  const end = new Date(start);
+  end.setFullYear(end.getFullYear() + 1);
+  end.setDate(end.getDate() - 1);
+  return { start, end };
+};
+
+const isFiscalYearActiveToday = (fiscalYearStart: string, today: Date): boolean => {
+  const currentYearBounds = getFiscalBoundsForYear(fiscalYearStart, today.getFullYear());
+  if (!currentYearBounds) return false;
+
+  const activeBounds =
+    today < currentYearBounds.start
+      ? getFiscalBoundsForYear(fiscalYearStart, today.getFullYear() - 1)
+      : currentYearBounds;
+
+  if (!activeBounds) return false;
+  return today >= activeBounds.start && today <= activeBounds.end;
+};
+
 export default function DashboardPage() {
   const { user, isAuthReady } = usePermissionsContext();
   const companies = useCompanies();
@@ -85,7 +130,8 @@ export default function DashboardPage() {
   React.useEffect(() => {
     if (!isAuthReady || !user) return;
     void companies.fetchList();
-  }, [isAuthReady, user, companies.fetchList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthReady, user]);
 
   // Simulate initial loading then rely on real data
   React.useEffect(() => {
@@ -93,20 +139,14 @@ export default function DashboardPage() {
     return () => clearTimeout(t);
   }, []);
 
-  // Initialize default widgets with real data once companies are loaded
-  React.useEffect(() => {
-    if (companies.loading) return;
+  const defaultWidgets = React.useMemo<Widget[]>(() => {
+    if (companies.loading) return [];
     const list = companies.list ?? [];
-    if (!list.length) return;
-    if (widgets.length > 0 || chartWidgets.length > 0) return;
 
     const today = new Date();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const activeFiscalYears = list.filter((c: any) => {
-      if (!c.fiscal_year_start || !c.fiscal_year_end) return false;
-      const start = new Date(c.fiscal_year_start);
-      const end = new Date(c.fiscal_year_end);
-      return start <= today && end >= today;
+    const activeFiscalYears = list.filter((c) => {
+      if (!c.fiscal_year_start) return false;
+      return isFiscalYearActiveToday(c.fiscal_year_start, today);
     }).length;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,76 +156,55 @@ export default function DashboardPage() {
       return db - da;
     })[0];
 
-    const byYearMap = new Map<string, number>();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    list.forEach((c: any) => {
-      if (!c.fiscal_year_start) return;
-      const year = new Date(c.fiscal_year_start).getFullYear().toString();
-      byYearMap.set(year, (byYearMap.get(year) ?? 0) + 1);
-    });
-    const byYearData = Array.from(byYearMap.entries())
-      .sort(([a], [b]) => Number(a) - Number(b))
-      .map(([year, count]) => ({ name: year, value: count }));
+    return [
+      {
+        id: "k-total-companies",
+        type: "kpi",
+        title: "ENTREPRISES",
+        value: list.length.toString(),
+        description: "Total périmètre",
+        trend: "+1 ce mois",
+        trendUp: true,
+        icon: Building2,
+      },
+      {
+        id: "k-active-fiscal",
+        type: "kpi",
+        title: "EXERCICES EN COURS",
+        value: activeFiscalYears.toString(),
+        description: "Clôture prochaine",
+        trend: "Stable",
+        trendUp: true,
+        icon: Calendar,
+      },
+      latestCompany && {
+        id: "k-latest-company",
+        type: "kpi",
+        title: "DERNIÈRE CRÉATION",
+        value: latestCompany.name ?? "—",
+        description: latestCompany.siret ? `SIRET ${latestCompany.siret}` : "",
+        icon: Activity,
+      },
+    ].filter(Boolean) as Widget[];
+  }, [companies.loading, companies.list]);
 
-    setWidgets(
-      [
-        {
-          id: "k-total-companies",
-          type: "kpi",
-          title: "ENTREPRISES",
-          value: list.length.toString(),
-          description: "Total périmètre",
-          trend: "+1 ce mois",
-          trendUp: true,
-          icon: Building2,
-        },
-        {
-          id: "k-active-fiscal",
-          type: "kpi",
-          title: "EXERCICES EN COURS",
-          value: activeFiscalYears.toString(),
-          description: "Clôture prochaine",
-          trend: "Stable",
-          trendUp: true,
-          icon: Calendar,
-        },
-        latestCompany && {
-          id: "k-latest-company",
-          type: "kpi",
-          title: "DERNIÈRE CRÉATION",
-          value: latestCompany.name ?? "—",
-          description: latestCompany.siret
-            ? `SIRET ${latestCompany.siret}`
-            : "",
-          icon: Activity,
-        },
-        {
-          id: "k-latest-company",
-          type: "kpi",
-          title: "DERNIÈRE CRÉATION",
-          value: latestCompany.name ?? "—",
-          description: latestCompany.siret
-            ? `SIRET ${latestCompany.siret}`
-            : "",
-          icon: Activity,
-        },
-      ].filter(Boolean) as Widget[],
-    );
+  // Keep chart visuals/data static (not DB/API-driven)
+  const defaultChartWidgets = React.useMemo<Widget[]>(
+    () => [
+      {
+        id: "c-static-demo",
+        type: "chart",
+        title: "Évolution (démo)",
+        chartType: "bar",
+        data: DEMO_CHART_DATA,
+      },
+    ],
+    [],
+  );
 
-    if (byYearData.length) {
-      setChartWidgets([
-        {
-          id: "c-companies-by-year",
-          type: "chart",
-          title: "Entreprises par année d'exercice",
-          chartType: "bar",
-          data: byYearData,
-        },
-      ]);
-    }
-  }, [companies.loading, companies.list, widgets.length, chartWidgets.length]);
-
-  const allWidgets = [...widgets, ...chartWidgets];
+  const effectiveWidgets = widgets.length ? widgets : defaultWidgets;
+  const effectiveChartWidgets = chartWidgets.length ? chartWidgets : defaultChartWidgets;
+  const allWidgets = [...effectiveWidgets, ...effectiveChartWidgets];
   const isEmpty = allWidgets.length === 0 && !loading;
   const companyList = companies.list ?? [];
   const selectedCompanyId = "";
@@ -231,19 +250,37 @@ export default function DashboardPage() {
 
   return (
     <AppLayout
-      title="Dashboard"
+      title="Tableau de bord"
       companies={companyList}
       selectedCompanyId={selectedCompanyId}
-      onCompanyChange={() => {}}
+      onCompanyChange={() => { }}
     >
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-primary">Vue d&apos;ensemble</h2>
-        <Button
-          onClick={() => setAddModalOpen(true)}
-          className="bg-primary text-white hover:bg-slate-800"
-        >
-          Ajouter un widget
-        </Button>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="rounded-xl bg-primary/10 p-2.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-layout-dashboard h-5 w-5 text-primary" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-primary">Vue d&apos;ensemble</h2>
+            <p className="text-sm text-slate-500">Tableau de bord avec indicateurs clés et widgets personnalisables.</p>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setAddModalOpen(true)}
+            className="bg-primary text-white! hover:bg-slate-800"
+          >
+            Ajouter un widget
+          </Button>
+        </div>
       </div>
 
       {loading && (
@@ -282,26 +319,26 @@ export default function DashboardPage() {
       {!loading && !isEmpty && (
         <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {widgets.map((w) => (
+            {effectiveWidgets.map((w) => (
               <Card
                 key={w.id}
-                className="relative overflow-hidden transition-all hover:shadow-md bg-white"
+                className="relative overflow-hidden nebula-blob"
               >
                 <CardContent className="p-6!">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <p className="text-xs font-semibold uppercase tracking-wider">
                         {w.title}
                       </p>
-                      <div className="text-2xl font-bold text-primary mt-2">
+                      <div className="text-xl font-bold text-primary mt-2">
                         {w.value}
                       </div>
                     </div>
-                    <div className="rounded-full bg-slate-50 p-2.5">
+                    <div className="rounded-full bg-primary p-2.5">
                       {w.icon ? (
-                        <w.icon className="h-5 w-5 text-slate-700" />
+                        <w.icon className="h-5 w-5 text-white!" />
                       ) : (
-                        <Activity className="h-5 w-5 text-slate-700" />
+                        <Activity className="h-5 w-5 text-white!" />
                       )}
                     </div>
                   </div>
@@ -325,103 +362,81 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-            {chartWidgets.map((w) => (
+            {effectiveChartWidgets.map((w) => (
               <>
-                <Card key={w.id} className="flex flex-col bg-white">
-                  <div className="border-b border-slate-100 px-6 py-4">
-                    <h3 className="font-semibold text-primary">{w.title}</h3>
+                <Card key={`${w.id}-primary`} className="flex flex-col nebula-blob overflow-hidden">
+                  <div className="border-b border-white/10 bg-white/5 px-6 py-4">
+                    <h3 className="font-semibold text-white">{w.title}</h3>
                   </div>
                   <CardContent className="flex-1 p-6!">
                     <div className="h-[300px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        {w.chartType === "line" ? (
-                          <LineChart
-                            data={w.data?.map((d, i) => ({ ...d, value: i !== 2 ? d.value : d.value - (25 * i)  })) ?? []}
-                            margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-                          >
-                            <CartesianGrid
-                              strokeDasharray="3 3"
-                              vertical={false}
-                              stroke="#e2e8f0"
-                            />
-                            <XAxis
-                              dataKey="name"
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 12 }}
-                              dy={10}
-                            />
-                            <YAxis
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 12 }}
-                            />
-                            <Tooltip
-                              contentStyle={{
-                                borderRadius: "8px",
-                                border: "none",
-                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                              }}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="value"
-                              stroke="#0f172a"
-                              strokeWidth={3}
-                              dot={{
-                                fill: "#0f172a",
-                                strokeWidth: 2,
-                                r: 4,
-                                stroke: "#fff",
-                              }}
-                              activeDot={{ r: 6, strokeWidth: 0 }}
-                            />
-                          </LineChart>
-                        ) : (
-                          <BarChart
-                            data={w.data?.map((d, i) => ({ ...d, value: i === 2 ? d.value : d.value - ((25 * (i+1)) * d.value/100) })) ?? []}
-                            margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-                          >
-                            <CartesianGrid
-                              strokeDasharray="3 3"
-                              vertical={false}
-                              stroke="#e2e8f0"
-                            />
-                            <XAxis
-                              dataKey="name"
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 12 }}
-                              dy={10}
-                            />
-                            <YAxis
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 12 }}
-                            />
-                            <Tooltip
-                              cursor={{ fill: "#f1f5f9" }}
-                              contentStyle={{
-                                borderRadius: "8px",
-                                border: "none",
-                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                              }}
-                            />
-                            <Bar
-                              dataKey="value"
-                              fill="#2967bc"
-                              radius={[4, 4, 0, 0]}
-                              barSize={40}
-                            />
-                          </BarChart>
-                        )}
+                        <AreaChart
+                          data={
+                            w.data?.map((d) => ({ ...d })) ?? []
+                          }
+                          margin={{ top: 10, right: 20, bottom: 5, left: 0 }}
+                        >
+                          <defs>
+                            <linearGradient id={`${w.id}-goldFill`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#d4b06a" stopOpacity={0.35} />
+                              <stop offset="55%" stopColor="#b8924a" stopOpacity={0.16} />
+                              <stop offset="100%" stopColor="#000000" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.08)" />
+                          <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: "rgba(154,143,120,0.9)", fontSize: 12 }}
+                            dy={10}
+                          />
+                          <YAxis
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: "rgba(154,143,120,0.9)", fontSize: 12 }}
+                          />
+                          <Tooltip
+                            cursor={{ stroke: "rgba(255,255,255,0.08)" }}
+                            contentStyle={{
+                              borderRadius: "14px",
+                              border: "1px solid rgba(255,255,255,0.12)",
+                              background: "rgba(10,10,10,0.9)",
+                              color: "rgba(245,236,215,0.95)",
+                              boxShadow: "0 18px 50px -18px rgba(0,0,0,0.65)",
+                            }}
+                          />
+
+                          {/* Soft glow under the line */}
+                          <Area
+                            type="monotone"
+                            dataKey="value"
+                            stroke="rgba(212,176,106,0.35)"
+                            strokeWidth={8}
+                            fill="none"
+                            dot={false}
+                            activeDot={false}
+                          />
+                          {/* Main line + gradient fill */}
+                          <Area
+                            type="monotone"
+                            dataKey="value"
+                            stroke="#d4b06a"
+                            strokeWidth={3}
+                            fill={`url(#${w.id}-goldFill)`}
+                            dot={false}
+                            activeDot={{ r: 5, fill: "#d4b06a", stroke: "rgba(10,10,10,0.9)", strokeWidth: 2 }}
+                          />
+                        </AreaChart>
                       </ResponsiveContainer>
                     </div>
                     <div className="mt-4 flex justify-end">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-xs text-slate-500 hover:text-primary"
+                        className="text-xs text-(--nebula-muted) hover:text-white"
                         onClick={() => setDrillDownOpen(true)}
                       >
                         Voir le détail →
@@ -429,89 +444,110 @@ export default function DashboardPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card key={w.id} className="flex flex-col bg-white">
-                  <div className="border-b border-slate-100 px-6 py-4">
-                    <h3 className="font-semibold text-primary">{w.title}</h3>
+                <Card key={`${w.id}-secondary`} className="flex flex-col nebula-blob overflow-hidden">
+                  <div className="border-b border-white/10 bg-white/5 px-6 py-4">
+                    <h3 className="font-semibold text-white">{w.title}</h3>
                   </div>
                   <CardContent className="flex-1 p-6!">
                     <div className="h-[300px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         {w.chartType === "line" ? (
-                          <LineChart
+                          <AreaChart
                             data={w.data?.map((d, i) => ({ ...d, value: i % 2 === 0 ? d.value : d.value * 2 })) ?? []}
-                            margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                            margin={{ top: 10, right: 20, bottom: 5, left: 0 }}
                           >
-                            <CartesianGrid
-                              strokeDasharray="3 3"
-                              vertical={false}
-                              stroke="#e2e8f0"
-                            />
+                            <defs>
+                              <linearGradient id={`${w.id}-goldFill2`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#d4b06a" stopOpacity={0.28} />
+                                <stop offset="55%" stopColor="#b8924a" stopOpacity={0.12} />
+                                <stop offset="100%" stopColor="#000000" stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.08)" />
                             <XAxis
                               dataKey="name"
                               axisLine={false}
                               tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 12 }}
+                              tick={{ fill: "rgba(154,143,120,0.9)", fontSize: 12 }}
                               dy={10}
                             />
                             <YAxis
                               axisLine={false}
                               tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 12 }}
+                              tick={{ fill: "rgba(154,143,120,0.9)", fontSize: 12 }}
                             />
                             <Tooltip
+                              cursor={{ stroke: "rgba(255,255,255,0.08)" }}
                               contentStyle={{
-                                borderRadius: "8px",
-                                border: "none",
-                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                                borderRadius: "14px",
+                                border: "1px solid rgba(255,255,255,0.12)",
+                                background: "rgba(10,10,10,0.9)",
+                                color: "rgba(245,236,215,0.95)",
+                                boxShadow: "0 18px 50px -18px rgba(0,0,0,0.65)",
                               }}
                             />
-                            <Line
+
+                            {/* Soft glow under the line */}
+                            <Area
                               type="monotone"
                               dataKey="value"
-                              stroke="#0f172a"
-                              strokeWidth={3}
-                              dot={{
-                                fill: "#0f172a",
-                                strokeWidth: 2,
-                                r: 4,
-                                stroke: "#fff",
-                              }}
-                              activeDot={{ r: 6, strokeWidth: 0 }}
+                              stroke="rgba(212,176,106,0.30)"
+                              strokeWidth={8}
+                              fill="none"
+                              dot={false}
+                              activeDot={false}
                             />
-                          </LineChart>
+                            {/* Main line + gradient fill */}
+                            <Area
+                              type="monotone"
+                              dataKey="value"
+                              stroke="#d4b06a"
+                              strokeWidth={3}
+                              fill={`url(#${w.id}-goldFill2)`}
+                              dot={false}
+                              activeDot={{ r: 5, fill: "#d4b06a", stroke: "rgba(10,10,10,0.9)", strokeWidth: 2 }}
+                            />
+                          </AreaChart>
                         ) : (
                           <BarChart
                             data={w.data?.map((d, i) => ({ ...d, value: i % 2 === 0 ? d.value : d.value * 2 })) ?? []}
                             margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
                           >
-                            <CartesianGrid
-                              strokeDasharray="3 3"
-                              vertical={false}
-                              stroke="#e2e8f0"
-                            />
+                            <defs>
+                              <linearGradient id={`${w.id}-barGold`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#d4b06a" stopOpacity={0.95} />
+                                <stop offset="65%" stopColor="#b8924a" stopOpacity={0.75} />
+                                <stop offset="100%" stopColor="#8a6a32" stopOpacity={0.65} />
+                              </linearGradient>
+                            </defs>
+
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.08)" />
                             <XAxis
                               dataKey="name"
                               axisLine={false}
                               tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 12 }}
+                              tick={{ fill: "rgba(154,143,120,0.9)", fontSize: 12 }}
                               dy={10}
                             />
                             <YAxis
                               axisLine={false}
                               tickLine={false}
-                              tick={{ fill: "#64748b", fontSize: 12 }}
+                              tick={{ fill: "rgba(154,143,120,0.9)", fontSize: 12 }}
                             />
                             <Tooltip
-                              cursor={{ fill: "#f1f5f9" }}
+                              cursor={{ fill: "rgba(255,255,255,0.06)" }}
                               contentStyle={{
-                                borderRadius: "8px",
-                                border: "none",
-                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                                borderRadius: "14px",
+                                border: "1px solid rgba(255,255,255,0.12)",
+                                background: "rgba(10,10,10,0.9)",
+                                color: "rgba(245,236,215,0.95)",
+                                boxShadow: "0 18px 50px -18px rgba(0,0,0,0.65)",
                               }}
                             />
                             <Bar
                               dataKey="value"
-                              fill="#2967bc"
+                              fill={`url(#${w.id}-barGold)`}
                               radius={[4, 4, 0, 0]}
                               barSize={40}
                             />
@@ -523,7 +559,7 @@ export default function DashboardPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-xs text-slate-500 hover:text-primary"
+                        className="text-xs text-(--nebula-muted) hover:text-white"
                         onClick={() => setDrillDownOpen(true)}
                       >
                         Voir le détail →
@@ -580,7 +616,7 @@ export default function DashboardPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium" style={{ color: "#d4b06a" }}>
                 Indicateur
               </label>
               <Select
@@ -596,7 +632,7 @@ export default function DashboardPage() {
               </Select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium" style={{ color: "#d4b06a" }}>
                 Type de graphique
               </label>
               <Select
@@ -610,7 +646,7 @@ export default function DashboardPage() {
               </Select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium" style={{ color: "#d4b06a" }}>
                 Périmètre
               </label>
               <Select
@@ -680,36 +716,38 @@ function DrillDownDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl" onClose={() => onOpenChange(false)}>
+      <DialogContent size="2xl" onClose={() => onOpenChange(false)}>
         <DialogHeader>
           <DialogTitle>Détail des données</DialogTitle>
         </DialogHeader>
-        <div className="overflow-auto rounded-lg border border-slate-200">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              {table.getHeaderGroups().map((hg) => (
-                <tr key={hg.id} className="bg-slate-50">
-                  {hg.headers.map((h) => (
-                    <th key={h.id} className="border-b border-slate-200 px-4 py-3 text-left font-semibold text-slate-700">
-                      {flexRender(h.column.columnDef.header, h.getContext())}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3 text-slate-700">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DialogBody>
+          <div className="overflow-auto rounded-lg border" style={{ borderColor: "var(--border)" }}>
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                {table.getHeaderGroups().map((hg) => (
+                  <tr key={hg.id} style={{ backgroundColor: "var(--muted)" }}>
+                    {hg.headers.map((h) => (
+                      <th key={h.id} className="border-b px-4 py-3 text-left font-semibold" style={{ color: "var(--nebula-ink)", borderColor: "var(--border)" }}>
+                        {flexRender(h.column.columnDef.header, h.getContext())}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {table.getRowModel().rows.map((row) => (
+                  <tr key={row.id} className="border-b last:border-0" style={{ borderColor: "var(--border)" }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--muted)"} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}>
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="px-4 py-3" style={{ color: "var(--nebula-ink)" }}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
         </DialogFooter>

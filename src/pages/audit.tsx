@@ -9,6 +9,14 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import {
+  Dialog,
+  DialogContent,
+  DialogBody,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/Dialog";
+import {
   Search,
   Download,
   Filter,
@@ -36,7 +44,8 @@ type AuditActionUi =
   | "EXPORT"
   | "VIEW"
   | "INVITE"
-  | "PERMISSION_CHANGE";
+  | "PERMISSION_CHANGE"
+  | "GENERATE";
 
 type AuditCategory = "AUTH" | "ENTITY" | "USER" | "IMPORT" | "PERMISSION" | "REPORTING";
 
@@ -63,6 +72,7 @@ const actionConfig: Record<AuditActionUi, { label: string; icon: typeof Plus; co
   VIEW: { label: "Consultation", icon: Eye, color: "text-slate-500 bg-slate-50" },
   INVITE: { label: "Invitation", icon: Users, color: "text-amber-600 bg-amber-50" },
   PERMISSION_CHANGE: { label: "Permission", icon: Shield, color: "text-purple-600 bg-purple-50" },
+  GENERATE: { label: "Génération", icon: Plus, color: "text-green-600 bg-green-50" },
 };
 
 const categoryLabels: Record<AuditCategory, string> = {
@@ -142,6 +152,41 @@ function summarizeDetails(details: unknown): string {
   return "";
 }
 
+function formatDetailsValue(v: unknown): string {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "string") return v || "—";
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (Array.isArray(v)) return `[${v.length}]`;
+  if (typeof v === "object") return "{…}";
+  return String(v);
+}
+
+function toKeyValueDetails(details: unknown): Array<{ key: string; value: string }> {
+  if (!details || typeof details !== "object" || Array.isArray(details)) return [];
+  const d = details as Record<string, unknown>;
+  const preferredOrder = [
+    "message",
+    "reason",
+    "email",
+    "role",
+    "name",
+    "code",
+    "ownerType",
+    "ownerId",
+    "percentage",
+    "companyId",
+    "companyIds",
+    "updatedFields",
+    "changes",
+  ];
+
+  const keys = Array.from(new Set([...preferredOrder, ...Object.keys(d)]))
+    .filter((k) => d[k] !== undefined)
+    .slice(0, 14);
+
+  return keys.map((key) => ({ key, value: formatDetailsValue(d[key]) }));
+}
+
 function mapBackendActionToUi(action: string): AuditActionUi {
   const a = action.toUpperCase();
   if (a === "LOGIN" || a === "LOGIN_FAILED") return "LOGIN";
@@ -149,7 +194,9 @@ function mapBackendActionToUi(action: string): AuditActionUi {
   if (a.startsWith("INVITATION_") || a.includes("INVITATION")) return "INVITE";
   if (a.includes("PERMISSION") || a === "UNAUTHORIZED_ACTION") return "PERMISSION_CHANGE";
   if (a.includes("IMPORT")) return "IMPORT";
+  if (a === "GENERIC_FILE_UPLOADED") return "IMPORT";
   if (a.endsWith("_CREATED")) return "CREATE";
+  if (a === "INSTALLMENTS_GENERATED") return "GENERATE";
   if (
     a.endsWith("_UPDATED") ||
     a.endsWith("_SCOPE_CHANGED") ||
@@ -226,6 +273,8 @@ export default function AuditPage() {
   const [statusFilter, setStatusFilter] = useState<"" | "success" | "failure">("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<AuditLogDto | null>(null);
 
   useEffect(() => {
     if (!isAuthReady) return;
@@ -268,6 +317,8 @@ export default function AuditPage() {
   }, [loadLogs, page]);
 
   const uiEntries = useMemo(() => logs.map(mapLogToEntry), [logs]);
+  const logsById = useMemo(() => new Map(logs.map((l) => [l.id, l])), [logs]);
+  const selectedEntry = useMemo(() => (selectedLog ? mapLogToEntry(selectedLog) : null), [selectedLog]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -325,27 +376,38 @@ export default function AuditPage() {
   }
 
   return (
-    <AppLayout title="Audit" companies={[]} selectedCompanyId="" onCompanyChange={() => {}}>
+    <AppLayout title="Journal d'audit" companies={[]} selectedCompanyId="" onCompanyChange={() => { }}>
       <Head>
         <title>Journal d&apos;audit</title>
       </Head>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Journal d&apos;audit</h2>
-            <p className="text-sm text-slate-500">
-              Historique complet des actions sur la plateforme.
-            </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="mb-1 flex items-center gap-3">
+            <div className="rounded-xl bg-primary/10 p-2.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-history h-5 w-5 text-primary" aria-hidden="true">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+                <path d="M12 7v5l4 2"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-primary">Journal d&apos;audit</h2>
+              <p className="text-sm text-(--nebula-muted)">Historique complet des actions sur la plateforme.</p>
+            </div>
           </div>
-          <Button
-            variant="outline"
-            className="h-9 gap-2 border-slate-200 text-slate-700"
-            onClick={handleExportCsv}
-          >
-            <Download className="h-4 w-4" />
-            Exporter CSV
-          </Button>
+
+          {/* Actions */}
+          <div className="flex w-full items-center gap-3 sm:w-auto">
+            <Button
+              variant="outline"
+              className="h-9 w-full gap-2 sm:w-auto"
+              onClick={handleExportCsv}
+              >
+              <Download className="h-4 w-4" />
+              Exporter CSV
+            </Button>
+          </div>
         </div>
 
         {/* Error message */}
@@ -358,31 +420,42 @@ export default function AuditPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
-            { label: "Total", value: stats.total, color: "text-slate-900", bg: "bg-white" },
-            { label: "Aujourd’hui", value: stats.today, color: "text-blue-700", bg: "bg-blue-50" },
-            { label: "Échecs", value: stats.failures, color: "text-red-600", bg: "bg-red-50" },
-            { label: "Utilisateurs", value: stats.users, color: "text-emerald-700", bg: "bg-emerald-50" },
+            { label: "Total", value: stats.total },
+            { label: "Aujourd’hui", value: stats.today },
+            { label: "Utilisateurs", value: stats.users },
+            { label: "Échecs", value: stats.failures },
           ].map((s) => (
-            <div key={s.label} className={`rounded-xl border border-slate-200 p-4 ${s.bg}`}>
-              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                {s.label}
+            <div
+              key={s.label}
+              className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden"
+            >
+              <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
+                § {s.label}
               </p>
-              <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
+              <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
+                {s.value}
+              </p>
+              {s.label === "Échecs" ? (
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-10 -right-10 w-full h-full rounded-full bg-red-500 blur-3xl"
+                />
+              ) : null}
             </div>
           ))}
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px] max-w-xs">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <div className="nebula-glass nebula-blob rounded-3xl p-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="relative min-w-0 flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
             <Input
               placeholder="Rechercher..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
               }}
-              className="h-9 pl-10 border-slate-200 bg-white"
+              className="h-9 pl-10"
             />
           </div>
           <Select
@@ -390,7 +463,7 @@ export default function AuditPage() {
             onValueChange={(v) => {
               setCategoryFilter(v as AuditCategory | "");
             }}
-            className="h-9 flex-1 border-slate-200 bg-white text-sm"
+            className="h-9 w-full text-sm sm:flex-1"
           >
             <option value="">Toutes catégories</option>
             {(Object.keys(categoryLabels) as AuditCategory[]).map((c) => (
@@ -404,7 +477,7 @@ export default function AuditPage() {
             onValueChange={(v) => {
               setActionFilter(v as AuditActionUi | "");
             }}
-            className="h-9 flex-1 border-slate-200 bg-white text-sm"
+            className="h-9 w-full text-sm sm:flex-1"
           >
             <option value="">Toutes actions</option>
             {(Object.keys(actionConfig) as AuditActionUi[]).map((a) => (
@@ -418,25 +491,25 @@ export default function AuditPage() {
             onValueChange={(v) => {
               setStatusFilter(v as "" | "success" | "failure");
             }}
-            className="h-9 flex-1 border-slate-200 bg-white text-sm"
+            className="h-9 w-full text-sm sm:flex-1"
           >
             <option value="">Tous statuts</option>
             <option value="success">Succès</option>
             <option value="failure">Échec</option>
           </Select>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[1fr_auto_1fr] sm:items-center">
             <Input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="h-9 w-[150px] border-slate-200 bg-white text-sm"
+              className="h-9 w-full min-w-[150px] text-sm"
             />
-            <span className="text-xs text-slate-400">à</span>
+            <span className="text-xs text-white/50 sm:text-center">à</span>
             <Input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="h-9 w-[150px] border-slate-200 bg-white text-sm"
+              className="h-9 w-full min-w-[150px] text-sm"
             />
           </div>
           {(search || actionFilter || categoryFilter || statusFilter) && (
@@ -450,7 +523,7 @@ export default function AuditPage() {
                 setStartDate("");
                 setEndDate("");
               }}
-              className="text-xs font-medium text-slate-500 hover:text-slate-900 underline"
+              className="h-9 px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-(--nebula-muted) hover:text-white text-xs font-semibold"
             >
               Réinitialiser
             </button>
@@ -458,56 +531,74 @@ export default function AuditPage() {
         </div>
 
         {/* Table */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="nebula-glass rounded-3xl overflow-hidden border border-white/10">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-(--nebula-gold-light)" />
             </div>
           ) : (
             <>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/50">
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    <tr className="border-b border-white/10 bg-white/5">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">
                         Date
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">
                         Utilisateur
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">
                         Action
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">
                         Détail
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">
                         IP
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-(--nebula-muted)">
                         Statut
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-white/10">
                     {filtered.map((entry) => {
                       const cfg = actionConfig[entry.action];
                       const Icon = cfg.icon;
                       return (
-                        <tr key={entry.id} className="transition-colors hover:bg-slate-50/50">
-                          <td className="whitespace-nowrap px-5 py-3 text-xs text-slate-500">
+                        <tr
+                          key={entry.id}
+                          role="button"
+                          tabIndex={0}
+                          className="cursor-pointer transition-colors hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)"
+                          onClick={() => {
+                            const log = logsById.get(entry.id) ?? null;
+                            setSelectedLog(log);
+                            setDetailOpen(true);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key !== "Enter" && e.key !== " ") return;
+                            e.preventDefault();
+                            const log = logsById.get(entry.id) ?? null;
+                            setSelectedLog(log);
+                            setDetailOpen(true);
+                          }}
+                          aria-label="Voir le détail de l'audit"
+                        >
+                          <td className="whitespace-nowrap px-5 py-3 text-xs text-(--nebula-muted) font-mono">
                             {formatTime(entry.timestamp)}
                           </td>
                           <td className="px-5 py-3">
                             <div className="flex items-center gap-2">
-                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-600">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 border border-white/15 text-[10px] font-semibold text-white">
                                 {entry.user.name[0]?.toUpperCase() || "?"}
                               </div>
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-medium text-slate-900">
+                                <p className="truncate text-sm font-medium text-white">
                                   {entry.user.name}
                                 </p>
-                                <p className="truncate text-[10px] text-slate-400">
+                                <p className="truncate text-[10px] text-(--nebula-muted)">
                                   {entry.user.email}
                                 </p>
                               </div>
@@ -515,26 +606,26 @@ export default function AuditPage() {
                           </td>
                           <td className="px-5 py-3">
                             <span
-                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${cfg.color}`}
+                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] bg-white/10 border border-white/15 text-white"
                             >
-                              <Icon className="h-3 w-3" />
+                              <Icon className="h-3 w-3 text-(--nebula-gold-light)" />
                               {cfg.label}
                             </span>
                           </td>
                           <td className="max-w-xs px-5 py-3">
-                            <p className="truncate text-sm text-slate-700">{entry.detail || "—"}</p>
-                            <p className="text-[10px] text-slate-400">{entry.resource}</p>
+                            <p className="truncate text-sm text-white">{entry.detail || "—"}</p>
+                            <p className="text-[10px] text-(--nebula-muted)">{entry.resource}</p>
                           </td>
-                          <td className="whitespace-nowrap px-5 py-3 font-mono text-xs text-slate-400">
+                          <td className="whitespace-nowrap px-5 py-3 font-mono text-xs text-(--nebula-muted)">
                             {entry.ip || "—"}
                           </td>
                           <td className="px-5 py-3">
                             {entry.status === "success" ? (
-                              <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                              <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white">
                                 Succès
                               </span>
                             ) : (
-                              <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600">
+                              <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white">
                                 Échec
                               </span>
                             )}
@@ -545,11 +636,11 @@ export default function AuditPage() {
                     {!loading && filtered.length === 0 && (
                       <tr>
                         <td colSpan={6} className="py-12 text-center">
-                          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-50">
-                            <Filter className="h-5 w-5 text-slate-300" />
+                          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10">
+                            <Filter className="h-5 w-5 text-white/40" />
                           </div>
-                          <p className="text-sm font-medium text-slate-900">Aucun résultat</p>
-                          <p className="mt-1 text-xs text-slate-500">
+                          <p className="text-sm font-medium text-white">Aucun résultat</p>
+                          <p className="mt-1 text-xs text-(--nebula-muted)">
                             Modifiez vos filtres pour voir plus d&apos;entrées.
                           </p>
                         </td>
@@ -561,36 +652,78 @@ export default function AuditPage() {
 
               {/* Pagination (backend-level) */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
-                  <p className="text-xs text-slate-500">
+                <div className="flex flex-col gap-3 border-t border-white/10 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs text-(--nebula-muted)">
                     {stats.total} log{stats.total > 1 ? "s" : ""} &mdash; page {page}/{totalPages}
                   </p>
-                  <div className="flex items-center gap-1">
+                  <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-30"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-white/45 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setPage(p)}
-                        className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition ${
-                          p === page ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    ))}
+                    <div className="hidden items-center gap-1 sm:flex">
+                      {(() => {
+                        const windowSize = 1; // pages shown on each side of current
+                        const pages = Array.from(
+                          new Set([
+                            1,
+                            totalPages,
+                            page - 1,
+                            page,
+                            page + 1,
+                            ...Array.from({ length: windowSize * 2 + 1 }, (_, i) => page - windowSize + i),
+                          ].filter((p) => p >= 1 && p <= totalPages)),
+                        ).sort((a, b) => a - b);
+
+                        const items: Array<{ kind: "page"; value: number } | { kind: "gap"; key: string }> = [];
+                        for (let i = 0; i < pages.length; i++) {
+                          const p = pages[i];
+                          const prev = pages[i - 1];
+                          if (i > 0 && prev !== undefined && p - prev > 1) {
+                            items.push({ kind: "gap", key: `gap-${prev}-${p}` });
+                          }
+                          items.push({ kind: "page", value: p });
+                        }
+
+                        return items.map((it) => {
+                          if (it.kind === "gap") {
+                            return (
+                              <span key={it.key} className="px-2 text-xs text-white/50">
+                                …
+                              </span>
+                            );
+                          }
+                          const p = it.value;
+                          const active = p === page;
+                          return (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => setPage(p)}
+                              className={`flex h-8 w-8 items-center justify-center rounded-xl text-sm font-medium transition ${
+                                active
+                                  ? "bg-white/10 border border-white/20 text-white"
+                                  : "bg-white/5 border border-white/10 text-(--nebula-muted) hover:bg-white/10 hover:text-white"
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          );
+                        });
+                      })()}
+                    </div>
+                    <span className="text-xs font-medium text-(--nebula-muted) sm:hidden">
+                      {page}/{totalPages}
+                    </span>
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-30"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-white/45 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>
@@ -600,6 +733,87 @@ export default function AuditPage() {
             </>
           )}
         </div>
+
+        <Dialog
+          open={detailOpen}
+          onOpenChange={(open) => {
+            setDetailOpen(open);
+            if (!open) setSelectedLog(null);
+          }}
+        >
+          <DialogContent size="2xl">
+            <DialogHeader>
+              <DialogTitle className="text-base font-semibold">Détail audit</DialogTitle>
+              {selectedEntry && (
+                <p className="text-xs text-(--nebula-muted)">
+                  {formatTime(selectedEntry.timestamp)} · {selectedEntry.user.email}
+                </p>
+              )}
+            </DialogHeader>
+
+            <DialogBody className="space-y-4">
+              {!selectedLog || !selectedEntry ? (
+                <div className="text-sm text-(--nebula-muted)">Aucun détail disponible.</div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider">Action</p>
+                      <p className="mt-1 text-sm text-white">
+                        {actionConfig[selectedEntry.action]?.label ?? selectedEntry.action}
+                      </p>
+                      <p className="mt-1 text-xs text-(--nebula-muted)">{categoryLabels[selectedEntry.category]}</p>
+                    </div>
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider">Statut</p>
+                      <p className="mt-1 text-sm text-white">
+                        {selectedEntry.status === "success" ? "Succès" : "Échec"}
+                      </p>
+                      <p className="mt-1 text-xs text-(--nebula-muted)">IP: {selectedEntry.ip || "—"}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider">Ressource</p>
+                    <p className="mt-1 text-sm text-white">{selectedEntry.resource || "—"}</p>
+                    <p className="mt-1 text-xs text-(--nebula-muted)">{selectedEntry.detail || "—"}</p>
+                  </div>
+
+                  {toKeyValueDetails(selectedLog.details).length > 0 && (
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider">Détails</p>
+                      <dl className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {toKeyValueDetails(selectedLog.details).map((row) => (
+                          <div key={row.key} className="rounded-md bg-white/5 px-3 py-2 ring-1 ring-white/10">
+                            <dt className="text-[10px] font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                              {row.key}
+                            </dt>
+                            <dd className="mt-0.5 text-xs wrap-break-word">
+                              {row.value}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  )}
+                </>
+              )}
+            </DialogBody>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                className="h-9"
+                onClick={() => {
+                  setDetailOpen(false);
+                  setSelectedLog(null);
+                }}
+              >
+                Fermer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );

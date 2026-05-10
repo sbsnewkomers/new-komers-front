@@ -1,6 +1,6 @@
 import { apiFetch } from "@/lib/apiClient";
 
-export type UserRole = "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "END_USER";
+export type UserRole = "SUPER_ADMIN" | "ADMIN" | "HEAD_MANAGER" | "MANAGER" | "END_USER";
 export type UserStatus = "PENDING" | "ACTIVE" | "SUSPENDED";
 
 export type UserItem = {
@@ -50,13 +50,14 @@ export async function deleteUser(id: string): Promise<void> {
   });
 }
 
-export const ALL_ROLES: UserRole[] = ["SUPER_ADMIN", "ADMIN", "MANAGER", "END_USER"];
+export const ALL_ROLES: UserRole[] = ["SUPER_ADMIN", "ADMIN", "HEAD_MANAGER", "MANAGER", "END_USER"];
 export const ALL_STATUSES: UserStatus[] = ["PENDING", "ACTIVE", "SUSPENDED"];
 
 export function roleLabel(r: UserRole): string {
   const labels: Record<UserRole, string> = {
     SUPER_ADMIN: "Super Admin",
     ADMIN: "Admin",
+    HEAD_MANAGER: "Head Manager",
     MANAGER: "Manager",
     END_USER: "Utilisateur",
   };
