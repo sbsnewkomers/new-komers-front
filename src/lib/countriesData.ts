@@ -68,11 +68,20 @@ export function loadCountries(): Country[] {
 
 // Fonction pour formater les pays pour le composant CountrySelect
 export function formatCountriesForSelect(countries: Country[]): CountryOption[] {
-  return countries.map(item => ({
-    value: item.isoAlpha2,
-    label: item.name,
-    code: item.isoAlpha2
-  }));
+  let displayNames: Intl.DisplayNames | null = null;
+  try {
+    displayNames = new Intl.DisplayNames(['fr'], { type: 'region' });
+  } catch {
+    // Fallback si non supporté
+  }
+
+  return countries
+    .map(item => ({
+      value: item.isoAlpha2,
+      label: displayNames ? (displayNames.of(item.isoAlpha2) ?? item.name) : item.name,
+      code: item.isoAlpha2,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
 }
 
 // Export des pays formatés pour utilisation directe
