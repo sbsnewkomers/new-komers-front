@@ -341,6 +341,17 @@ export default function ImportPage() {
       setWorkspaceId(null);
     }
   };
+  const recheckEntityData = useCallback(async (entityId: string, entityType: string) => {
+  try {
+    const response = await apiFetch<{ hasData: boolean }>(
+      `/generic-import/entityType/${entityId}/has-data?entityType=${entityType}`,
+      { snackbar: { showSuccess: false, showError: false } }
+    );
+    setHasData(response.hasData);
+  } catch {
+    // silencieux
+  }
+}, []);
 
   const performImport = async (
     existingMappingId?: string,
@@ -452,11 +463,21 @@ export default function ImportPage() {
         setSuccessSimpleMessage("Votre fichier est en cours de traitement. Un email vous sera envoyé dès que ce sera terminé.");
         setSuccessModalOpen(true);
         // Réinitialisation du formulaire — succès/erreurs métier arrivent via WebSocket
+        // APRÈS
         setCsvFile(null);
         setCsvHeaders([]);
         setConfirmReplaceOpen(false);
         setConfirmReplaceInput("");
         setPendingMappingId(null);
+
+        await fetchHistory();
+        await recheckEntityData(entityId, entityType); // ← rafraîchit hasData immédiatement
+
+        // Recheck différé pour rattraper la fin du job BullMQ
+        setTimeout(async () => {
+          await fetchHistory();
+          await recheckEntityData(entityId, entityType);
+        }, 5000);
       } catch (apiError: unknown) {
         // Erreurs HTTP immédiates uniquement (réseau, auth, 400 du controller...)
         if (apiError instanceof ApiError) {
