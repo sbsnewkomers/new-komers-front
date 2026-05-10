@@ -287,9 +287,20 @@ export function EntitySelector({
 
       {/* Entité sélectionnée — message de confirmation */}
       {selectedEntityId && selectedEntityType && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-emerald-100 border border-emerald-400/25 bg-emerald-500/10 p-2 rounded-xl">
-          <div className="rounded-full border border-emerald-400/30 bg-emerald-500/15 p-0.5">
-            <Building className="h-3 w-3 text-emerald-200" />
+        <div className="
+          mt-3 flex items-center gap-2 text-xs
+          text-emerald-900
+          border border-emerald-400
+          bg-emerald-100
+          p-2 rounded-xl
+        ">
+          <div className="
+            rounded-full
+            bg-white dark:bg-emerald-500/10
+            border border-emerald-400
+            p-1.5
+          ">
+            <Building className="h-4 w-4 text-emerald-400 dark:text-black" />
           </div>
           <span>
             Les données seront importées pour{' '}
@@ -298,7 +309,9 @@ export function EntitySelector({
               : selectedEntityType === 'Group'
                 ? 'le groupe'
                 : 'la BU'}{' '}
-            <span className="font-semibold">{selectedLabel()}</span>
+            <span className="font-semibold text-emerald-800">
+              {selectedLabel()}
+            </span>
           </span>
         </div>
       )}
@@ -329,11 +342,25 @@ export function EntitySelector({
       {/* Avertissement + sélection de période si données existantes */}
       {selectedEntityId && selectedEntityType && hasData === true && (
         <div className="mt-3 space-y-3">
-          <div className="flex items-start gap-2 text-xs text-amber-100 border border-amber-400/25 bg-amber-500/10 p-3 rounded-xl">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-200" />
+          <div
+            className="flex items-start gap-2 text-xs p-3 rounded-xl border
+             dark:bg-amber-500/10 dark:text-amber-200 dark:border-amber-400/30"
+            style={{
+              backgroundColor: 'rgb(254, 243, 199)', // light
+              color: 'rgb(120, 53, 15)',
+              borderColor: 'rgb(251, 191, 36)'
+            }}
+          >
+            <AlertCircle
+              className="h-4 w-4 shrink-0 mt-0.5"
+              style={{ color: 'rgb(180, 83, 9)' }} // amber-700
+            />
+
             <div>
-              <p className="font-semibold text-white">Cette entité contient déjà des données comptables.</p>
-              <p className="mt-0.5 text-amber-100/90">
+              <p className="font-medium">
+                Cette entité contient déjà des données comptables.
+              </p>
+              <p className="font-normal">
                 Sélectionnez la période à remplacer. Seules les écritures dans cette plage seront écrasées.
               </p>
             </div>
