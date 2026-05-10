@@ -511,19 +511,19 @@ export default function StructureImportUploadPage() {
             onClick={() => setShowTemplatePreview(false)}
           >
             <div
-              className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
+              className="bg-background rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-border"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                 <div>
-                  <h2 className="text-base font-semibold text-slate-900">Aperçu du modèle Excel</h2>
+                  <h2 className="text-base font-semibold text-foreground">Aperçu du modèle Excel</h2>
                   <p className="text-sm text-muted-foreground mt-0.5">
                     3 onglets à remplir — respectez l'ordre des colonnes et les valeurs autorisées.
                   </p>
                 </div>
                 <button
                   onClick={() => setShowTemplatePreview(false)}
-                  className="p-2 rounded-lg hover:bg-slate-100 text-slate-500"
+                  className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -553,14 +553,14 @@ function TemplatePreviewTabs({
   return (
     <>
       {/* Tab bar */}
-      <div className="flex gap-2 px-6 pt-4 pb-0 border-b border-slate-200 bg-slate-50">
+      <div className="flex gap-2 px-6 pt-4 pb-0 border-b border-border bg-muted">
         {sheets.map((s, i) => (
           <button
             key={s.id}
             onClick={() => setActiveIdx(i)}
             className={`px-4 py-2 text-sm font-medium rounded-t-lg border border-b-0 transition-colors ${i === activeIdx
-              ? "bg-white border-slate-200 text-slate-900 -mb-px"
-              : "border-transparent text-slate-500 hover:text-slate-700"
+              ? "bg-background border-border text-foreground -mb-px"
+              : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
           >
             {s.label}
@@ -572,30 +572,30 @@ function TemplatePreviewTabs({
       <div className="flex-1 overflow-auto p-6 space-y-4">
         <p className="text-sm text-muted-foreground">{sheet.desc}</p>
 
-        <div className="rounded-xl border border-slate-200 overflow-hidden">
+        <div className="rounded-xl border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-4 py-2.5 text-left font-medium text-slate-500 text-xs w-8">#</th>
-                <th className="px-4 py-2.5 text-left font-medium text-slate-500 text-xs">Colonne Excel</th>
-                <th className="px-4 py-2.5 text-left font-medium text-slate-500 text-xs">Champ</th>
-                <th className="px-4 py-2.5 text-left font-medium text-slate-500 text-xs">Type</th>
-                <th className="px-4 py-2.5 text-left font-medium text-slate-500 text-xs">Note</th>
-                <th className="px-4 py-2.5 text-left font-medium text-slate-500 text-xs">Statut</th>
+              <tr className="bg-muted border-b border-border">
+                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs w-8">#</th>
+                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Colonne Excel</th>
+                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Champ</th>
+                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Type</th>
+                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Note</th>
+                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Statut</th>
               </tr>
             </thead>
             <tbody>
               {sheet.cols.map((col, i) => (
-                <tr key={col.key} className="border-b border-slate-100 hover:bg-slate-50/50">
-                  <td className="px-4 py-2.5 text-xs text-slate-400 font-mono">{i + 1}</td>
-                  <td className="px-4 py-2.5 font-medium text-slate-800">{col.name}</td>
-                  <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{col.key}</td>
-                  <td className="px-4 py-2.5 text-slate-600">{col.type}</td>
-                  <td className="px-4 py-2.5 text-xs text-slate-400">{col.note || "—"}</td>
+                <tr key={col.key} className="border-b border-border hover:bg-muted/50">
+                  <td className="px-4 py-2.5 text-xs text-muted-foreground font-mono">{i + 1}</td>
+                  <td className="px-4 py-2.5 font-medium text-foreground">{col.name}</td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{col.key}</td>
+                  <td className="px-4 py-2.5 text-foreground/80">{col.type}</td>
+                  <td className="px-4 py-2.5 text-xs text-muted-foreground">{col.note || "—"}</td>
                   <td className="px-4 py-2.5">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${col.req
-                      ? "bg-rose-50 text-rose-700"
-                      : "bg-slate-100 text-slate-500"
+                      ? "bg-destructive/10 text-destructive"
+                      : "bg-muted text-muted-foreground"
                       }`}>
                       {col.req ? "Requis" : "Facultatif"}
                     </span>
@@ -603,10 +603,10 @@ function TemplatePreviewTabs({
                 </tr>
               ))}
               {/* Exemple row */}
-              <tr className="bg-slate-50/60">
-                <td className="px-4 py-2.5 text-xs text-slate-400 font-medium">ex.</td>
+              <tr className="bg-muted/60">
+                <td className="px-4 py-2.5 text-xs text-muted-foreground font-medium">ex.</td>
                 {sheet.cols.map((col) => (
-                  <td key={col.key} className="px-4 py-2.5 text-xs text-slate-400 italic">
+                  <td key={col.key} className="px-4 py-2.5 text-xs text-muted-foreground italic">
                     {(sheet.example as Record<string, string>)[col.key] ?? "—"}
                   </td>
                 ))}
@@ -616,13 +616,13 @@ function TemplatePreviewTabs({
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-rose-400 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-destructive inline-block" />
             Champ requis — l'import échoue si absent
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-slate-300 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-muted-foreground/30 inline-block" />
             Facultatif
           </span>
           <span className="ml-auto italic">Dernière ligne = exemple de données</span>
@@ -630,8 +630,8 @@ function TemplatePreviewTabs({
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
-        <p className="text-xs text-slate-400">
+      <div className="px-6 py-4 border-t border-border flex justify-between items-center bg-muted">
+        <p className="text-xs text-muted-foreground">
           Respectez l'ordre des onglets : Groupes → Entreprises → Business Units
         </p>
         <Button onClick={onDownload} size="sm">
