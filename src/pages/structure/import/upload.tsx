@@ -358,34 +358,80 @@ export default function StructureImportUploadPage() {
         )}
 
         <div
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          className={
-            "nebula-glass nebula-blob rounded-3xl border-2 border-dashed p-12 text-center " +
-            (dragOver
-              ? "border-(--nebula-gold-light) bg-white/10 dark:bg-white/10"
-              : "border-gray-300 dark:border-white/15 bg-gray-50 dark:bg-white/5")
-          }
+  onDrop={handleDrop}
+  onDragOver={handleDragOver}
+  onDragLeave={handleDragLeave}
+  className={
+    "nebula-glass nebula-blob rounded-3xl border-2 border-dashed p-8 text-center transition-all " +
+    (dragOver
+      ? "border-(--nebula-gold-light) bg-white/10"
+      : "border-gray-300 dark:border-white/15 bg-gray-50 dark:bg-white/5")
+  }
+>
+  <input
+    type="file"
+    accept=".xlsx"
+    onChange={handleFileInput}
+    className="hidden"
+    id="file-upload"
+  />
+  
+  {file ? (
+    // Affichage quand un fichier est sélectionné
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex items-center gap-2 text-lg font-medium text-(--nebula-gold-light)">
+        <Upload className="h-5 w-5" />
+        <span className="font-mono break-all">{file.name}</span>
+      </div>
+      <div className="flex gap-3">
+        <label 
+          htmlFor="file-upload" 
+          className="cursor-pointer inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20 transition-colors"
         >
-          <input
-            type="file"
-            accept=".xlsx"
-            onChange={handleFileInput}
-            className="hidden"
-            id="file-upload"
-          />
-          <label htmlFor="file-upload" className="cursor-pointer">
-            {file ? (
-              <p className="font-medium text-[var(--nebula-ink)] font-mono">{file.name}</p>
-            ) : (
-              <p className="text-gray-600 dark:text-(--nebula-muted)">
-                Glissez-déposez un fichier Excel (.xlsx) ici ou cliquez pour
-                parcourir.
-              </p>
-            )}
-          </label>
+          Changer de fichier
+        </label>
+        <button
+          type="button"
+          onClick={() => {
+            setFile(null);
+            setReport(null);
+            setExecuteResult(null);
+            setError(null);
+            // Reset l'input file
+            const input = document.getElementById('file-upload') as HTMLInputElement;
+            if (input) input.value = '';
+          }}
+          className="inline-flex items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-colors"
+        >
+          <X className="h-4 w-4 mr-1" />
+          Supprimer
+        </button>
+      </div>
+    </div>
+  ) : (
+    // Affichage quand aucun fichier n'est sélectionné
+    <>
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-16 w-16 rounded-full bg-(--nebula-gold)/20 flex items-center justify-center">
+          <Upload className="h-8 w-8 text-(--nebula-gold-light)" />
         </div>
+        <label 
+          htmlFor="file-upload" 
+          className="cursor-pointer inline-flex items-center justify-center rounded-xl bg-(--nebula-gold-light) px-6 py-3 text-sm font-semibold text-black hover:bg-(--nebula-gold) transition-colors"
+        >
+          <Upload className="h-5 w-5 mr-2" />
+          Sélectionner un fichier Excel
+        </label>
+        <p className="text-gray-600 dark:text-(--nebula-muted) text-sm">
+          Format .xlsx uniquement
+        </p>
+      </div>
+      <div className="mt-4 text-center text-xs text-(--nebula-muted)">
+        ou glissez-déposez votre fichier ici
+      </div>
+    </>
+  )}
+</div>
 
         {error && <p className="text-sm text-red-400">{error}</p>}
 
@@ -578,7 +624,6 @@ function TemplatePreviewTabs({
               <tr className="bg-muted border-b border-border">
                 <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs w-8">#</th>
                 <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Colonne Excel</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Champ</th>
                 <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Type</th>
                 <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Note</th>
                 <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Statut</th>
@@ -589,7 +634,6 @@ function TemplatePreviewTabs({
                 <tr key={col.key} className="border-b border-border hover:bg-muted/50">
                   <td className="px-4 py-2.5 text-xs text-muted-foreground font-mono">{i + 1}</td>
                   <td className="px-4 py-2.5 font-medium text-foreground">{col.name}</td>
-                  <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{col.key}</td>
                   <td className="px-4 py-2.5 text-foreground/80">{col.type}</td>
                   <td className="px-4 py-2.5 text-xs text-muted-foreground">{col.note || "—"}</td>
                   <td className="px-4 py-2.5">

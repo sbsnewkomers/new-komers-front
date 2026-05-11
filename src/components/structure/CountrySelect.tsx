@@ -30,7 +30,9 @@ export function CountrySelect({
   }, [searchTerm]);
 
   const selectedCountry = useMemo(() => {
-    return COUNTRIES.find(country => country.value === value);
+  return COUNTRIES.find(country => 
+    country.value === value || country.label === value
+  );
   }, [value]);
 
   const handleSelect = useCallback((countryValue: string) => {
@@ -79,14 +81,16 @@ export function CountrySelect({
                     type="button"
                     onClick={() => handleSelect(country.value)}
                     className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 ${
-                      value === country.value
+                      value === country.value || value === country.label
                         ? "bg-muted/80 text-(--nebula-gold-light)"
                         : "text-popover-foreground"
                     }`}
                   >
                     <Check
                       className={`h-4 w-4 shrink-0 ${
-                        value === country.value ? "text-(--nebula-gold-light)" : "text-transparent"
+                        value === country.value || value === country.label 
+                        ? "text-(--nebula-gold-light)" 
+                        : "text-transparent"
                       }`}
                     />
                     <div className="min-w-0 flex-1">
