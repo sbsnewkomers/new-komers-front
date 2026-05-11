@@ -39,13 +39,13 @@ export function LoanStats({ overviewStats }: LoanStatsProps) {
                     {
                         label: 'Capital total',
                         value: formatCurrencyEUR(stats.principal, { maximumFractionDigits: 0, fallback: "0 €" }),
-                        color: 'blue-700',
+                        color: 'blue-500',
                         icon: Wallet,
                     },
                     {
                         label: 'Taux moyen',
                         value: formatPercent(stats.rate, { decimals: 2 }),
-                        color: 'amber-700',
+                        color: 'amber-500',
                         icon: Percent,
                     },
                 ] as const
@@ -58,7 +58,7 @@ export function LoanStats({ overviewStats }: LoanStatsProps) {
                     >
 											<div className="flex items-start justify-between">
 												<p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
-													§ {s.label}
+													{s.label}
 												</p>
 												<Icon
 													className={[

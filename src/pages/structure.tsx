@@ -95,6 +95,9 @@ import {
   type ShareholderDto,
   ownerTypeLabel,
 } from "@/lib/shareholdersApi";
+import { assetsApi } from "@/lib/assetsApi";
+import { globalDotationsApi } from "@/lib/globalDotationsApi";
+import { type Asset, type EntityType, type GlobalDotation } from "@/types/asset.types";
 import { fetchUsers, type UserItem } from "@/lib/usersApi";
 import {
   ShareholderFormDialog,
@@ -547,6 +550,8 @@ export default function StructurePage() {
   const [ficheCompany, setFicheCompany] = useState<CompanyFull | null>(null);
   const [ficheTab, setFicheTab] = useState("informations");
   const [ficheCompanyEmprunts, setFicheCompanyEmprunts] = useState<Emprunt[]>([]);
+  const [ficheCompanyActifs, setFicheCompanyActifs] = useState<Asset[]>([]);
+  const [ficheCompanyDotations, setFicheCompanyDotations] = useState<GlobalDotation[]>([]);
   const [ficheCompanyDataLoading, setFicheCompanyDataLoading] = useState(false);
 
   // Fiche Group states
@@ -555,6 +560,8 @@ export default function StructurePage() {
   const [ficheGroup, setFicheGroup] = useState<GroupFull | null>(null);
   const [ficheGroupTab, setFicheGroupTab] = useState("informations");
   const [ficheGroupEmprunts, setFicheGroupEmprunts] = useState<Emprunt[]>([]);
+  const [ficheGroupActifs, setFicheGroupActifs] = useState<Asset[]>([]);
+  const [ficheGroupDotations, setFicheGroupDotations] = useState<GlobalDotation[]>([]);
   const [ficheGroupDataLoading, setFicheGroupDataLoading] = useState(false);
 
   // Fiche BU states
@@ -563,6 +570,8 @@ export default function StructurePage() {
   const [ficheBU, setFicheBU] = useState<BusinessUnit | null>(null);
   const [ficheBUTab, setFicheBUTab] = useState("informations");
   const [ficheBUEmprunts, setFicheBUEmprunts] = useState<Emprunt[]>([]);
+  const [ficheBUActifs, setFicheBUActifs] = useState<Asset[]>([]);
+  const [ficheBUDotations, setFicheBUDotations] = useState<GlobalDotation[]>([]);
   const [ficheBUDataLoading, setFicheBUDataLoading] = useState(false);
 
   const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(
@@ -1366,7 +1375,7 @@ export default function StructurePage() {
             mainActivity: "",
             country: "",
             logo: undefined as string | undefined,
-            entity_code: "", 
+            entity_code: "",
           });
           setEditGroupLogoFile(null);
         }
@@ -1940,8 +1949,8 @@ export default function StructurePage() {
         formData.append('logo', addBULogoFile);
       }
       if (addBUForm.entity_code?.trim()) {
-      formData.append('entity_code', addBUForm.entity_code.trim());
-    }
+        formData.append('entity_code', addBUForm.entity_code.trim());
+      }
 
       await apiFetch(`/companies/${addBUCompanyId}/business-units`, {
         method: "POST",
@@ -1952,7 +1961,7 @@ export default function StructurePage() {
       await loadTree();
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
-      setAddBUForm({ name: "", code: "", activity: "", siret: "", country: "", logo: undefined,entity_code: "" });
+      setAddBUForm({ name: "", code: "", activity: "", siret: "", country: "", logo: undefined, entity_code: "" });
       setAddBULogoFile(null);
     } catch {
       /* snackbar handles */
@@ -2206,6 +2215,22 @@ export default function StructurePage() {
     });
   };
 
+  // Fonction pour gérer le clic sur un actif
+  const handleAssetClick = (assetId: string) => {
+    router.push(`/dotations/assets/view/${assetId}`);
+  };
+
+  // Fonction pour gérer le clic sur une dotation
+  const handleDotationClick = (dotationId: string) => {
+    router.push({
+      pathname: '/dotations/global',
+      query: {
+        view: 'details',
+        dotationId: dotationId
+      }
+    });
+  };
+
   // Fonctions pour charger les données extracomptables
   const loadGroupExtraData = async (groupId: string) => {
     setFicheGroupDataLoading(true);
@@ -2227,8 +2252,24 @@ export default function StructurePage() {
       }));
 
       setFicheGroupEmprunts(emprunts);
+
+      // Charger les actifs du groupe
+      const actifs = await assetsApi.getAssetsByEntity('group' as EntityType, groupId);
+      setFicheGroupActifs(actifs);
+
+      // Charger les dotations globales du groupe
+      console.log(`Loading dotations for group: ${groupId}`);
+      const allDotations = await globalDotationsApi.getAllGlobalDotations('group' as EntityType, groupId);
+      console.log(`Received ${allDotations.length} total dotations:`, allDotations);
+
+      // Filtrer pour n'afficher que les dotations de cette entité spécifique
+      const filteredDotations = allDotations.filter(d => d.entityId === groupId);
+      console.log(`Filtered to ${filteredDotations.length} dotations for group ${groupId}:`, filteredDotations);
+      setFicheGroupDotations(filteredDotations);
     } catch {
       setFicheGroupEmprunts([]);
+      setFicheGroupActifs([]);
+      setFicheGroupDotations([]);
     } finally {
       setFicheGroupDataLoading(false);
     }
@@ -2254,8 +2295,24 @@ export default function StructurePage() {
       }));
 
       setFicheBUEmprunts(emprunts);
+
+      // Charger les actifs de la BU
+      const actifs = await assetsApi.getAssetsByEntity('business unit' as EntityType, buId);
+      setFicheBUActifs(actifs);
+
+      // Charger les dotations globales de la BU
+      console.log(`Loading dotations for BU: ${buId}`);
+      const allDotations = await globalDotationsApi.getAllGlobalDotations('business unit' as EntityType, buId);
+      console.log(`Received ${allDotations.length} total dotations:`, allDotations);
+
+      // Filtrer pour n'afficher que les dotations de cette entité spécifique
+      const filteredDotations = allDotations.filter(d => d.entityId === buId);
+      console.log(`Filtered to ${filteredDotations.length} dotations for BU ${buId}:`, filteredDotations);
+      setFicheBUDotations(filteredDotations);
     } catch {
       setFicheBUEmprunts([]);
+      setFicheBUActifs([]);
+      setFicheBUDotations([]);
     } finally {
       setFicheBUDataLoading(false);
     }
@@ -2281,8 +2338,24 @@ export default function StructurePage() {
       }));
 
       setFicheCompanyEmprunts(emprunts);
+
+      // Charger les actifs de l'entreprise
+      const actifs = await assetsApi.getAssetsByEntity('company' as EntityType, companyId);
+      setFicheCompanyActifs(actifs);
+
+      // Charger les dotations globales de l'entreprise
+      console.log(`Loading dotations for company: ${companyId}`);
+      const allDotations = await globalDotationsApi.getAllGlobalDotations('company' as EntityType, companyId);
+      console.log(`Received ${allDotations.length} total dotations:`, allDotations);
+
+      // Filtrer pour n'afficher que les dotations de cette entité spécifique
+      const filteredDotations = allDotations.filter(d => d.entityId === companyId);
+      console.log(`Filtered to ${filteredDotations.length} dotations for company ${companyId}:`, filteredDotations);
+      setFicheCompanyDotations(filteredDotations);
     } catch {
       setFicheCompanyEmprunts([]);
+      setFicheCompanyActifs([]);
+      setFicheCompanyDotations([]);
     } finally {
       setFicheCompanyDataLoading(false);
     }
@@ -2338,7 +2411,7 @@ export default function StructurePage() {
         {/* Search and Actions */}
         <div className="flex gap-1 items-center">
           <div className="relative w-full sm:w-auto">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
             <Input
               type="search"
               placeholder="Rechercher..."
@@ -2719,7 +2792,7 @@ export default function StructurePage() {
                           <div>
                             {completion !== null && (
                               <div className="flex items-center gap-2">
-                                <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden">
+                                <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden border border-primary">
                                   <div
                                     className={`h-1.5 rounded-full transition-all duration-500 ${completion === 100
                                       ? "bg-green-500"
@@ -2730,7 +2803,7 @@ export default function StructurePage() {
                                     style={{ width: `${completion}%` }}
                                   />
                                 </div>
-                                <span className="text-[10px] tabular-nums text-white/45 font-medium">
+                                <span className="text-[10px] tabular-nums text-(--nebula-muted) font-medium">
                                   {completion}%
                                 </span>
                               </div>
@@ -2747,7 +2820,7 @@ export default function StructurePage() {
                                   <button
                                     type="button"
                                     onClick={(e) => e.stopPropagation()}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-(--nebula-muted) opacity-100 transition-all hover:bg-white/10 hover:text-primary hover:shadow-md md:opacity-0 md:group-hover/row:opacity-100"
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-(--nebula-muted) opacity-100 transition-all hover:bg-white/10 hover:text-primary hover:shadow-md md:group-hover/row:opacity-100"
                                   >
                                     <MoreHorizontal className="h-4 w-4" />
                                   </button>
@@ -2849,7 +2922,7 @@ export default function StructurePage() {
                                             siret: "",
                                             country: "",
                                             logo: undefined as string | undefined,
-                                            entity_code: "",  
+                                            entity_code: "",
                                           });
                                           setAddBULogoFile(null);
                                           setAddBUOpen(true);
@@ -3222,23 +3295,23 @@ export default function StructurePage() {
                   }
                 />
 
-                
-                    
+
+
                 <DetailSection
-                icon={Info}
-                title="Identité"
-                description="Informations principales du groupe."
-              >
-                {editing ? (
-                  <DetailGrid>
-                    <Field
-                      label="Nom"
-                      value={editGroup.name}
-                      editing={editing}
-                      onChange={(v) => setEditGroup((f) => ({ ...f, name: v }))}
-                    />
-                    
-                    <FieldCountry
+                  icon={Info}
+                  title="Identité"
+                  description="Informations principales du groupe."
+                >
+                  {editing ? (
+                    <DetailGrid>
+                      <Field
+                        label="Nom"
+                        value={editGroup.name}
+                        editing={editing}
+                        onChange={(v) => setEditGroup((f) => ({ ...f, name: v }))}
+                      />
+
+                      <FieldCountry
                         label="Pays"
                         value={editGroup.country}
                         editing={editing}
@@ -3246,18 +3319,18 @@ export default function StructurePage() {
                           setEditGroup((f) => ({ ...f, country: v }))
                         }
                       />
-                  </DetailGrid>
-                ) : (
-                  <DetailGrid>
-                    <ReadField label="Nom" value={editGroup.name} />
-                    <ReadField
-                      label="Pays"
-                      icon={Globe}
-                      value={editGroup.country}
-                    />
-                  </DetailGrid>
-                )}
-              </DetailSection>
+                    </DetailGrid>
+                  ) : (
+                    <DetailGrid>
+                      <ReadField label="Nom" value={editGroup.name} />
+                      <ReadField
+                        label="Pays"
+                        icon={Globe}
+                        value={editGroup.country}
+                      />
+                    </DetailGrid>
+                  )}
+                </DetailSection>
 
                 <DetailSection
                   icon={Hash}
@@ -3719,33 +3792,33 @@ export default function StructurePage() {
                   description="Taille et positionnement de l'entreprise."
                 >
                   {editing ? (
-  <DetailGrid>
-    <div>
-      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-        Taille
-      </label>
-      <Select
-        value={editCompany.size}
-        onValueChange={(v) => setEditCompany((f) => ({ ...f, size: v }))}
-      >
-        <option value="SMALL">SMALL</option>
-        <option value="MEDIUM">MEDIUM</option>
-        <option value="LARGE">LARGE</option>
-      </Select>
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-          Modèle
-        </label>
-        <Select
-          value={editCompany.model}
-          onValueChange={(v) => setEditCompany((f) => ({ ...f, model: v }))}
-        >
-          <option value="HOLDING">HOLDING</option>
-          <option value="SUBSIDIARY">SUBSIDIARY</option>
-        </Select>
-      </div>
-    </DetailGrid>
+                    <DetailGrid>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Taille
+                        </label>
+                        <Select
+                          value={editCompany.size}
+                          onValueChange={(v) => setEditCompany((f) => ({ ...f, size: v }))}
+                        >
+                          <option value="SMALL">SMALL</option>
+                          <option value="MEDIUM">MEDIUM</option>
+                          <option value="LARGE">LARGE</option>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Modèle
+                        </label>
+                        <Select
+                          value={editCompany.model}
+                          onValueChange={(v) => setEditCompany((f) => ({ ...f, model: v }))}
+                        >
+                          <option value="HOLDING">HOLDING</option>
+                          <option value="SUBSIDIARY">SUBSIDIARY</option>
+                        </Select>
+                      </div>
+                    </DetailGrid>
                   ) : (
                     <DetailGrid>
                       <ReadField
@@ -4539,6 +4612,16 @@ export default function StructurePage() {
                             emptyMessage="Aucun emprunt enregistré pour cette entreprise."
                             onLoanClick={handleLoanClick}
                           />
+                          <ActifsSection
+                            actifs={ficheCompanyActifs}
+                            emptyMessage="Aucun actif immobilisé enregistré pour cette entreprise."
+                            onAssetClick={handleAssetClick}
+                          />
+                          <DotationsSection
+                            dotations={ficheCompanyDotations}
+                            emptyMessage="Aucune dotation aux amortissements enregistrée pour cette entreprise."
+                            onDotationClick={handleDotationClick}
+                          />
 
                         </>
                       )}
@@ -4674,7 +4757,16 @@ export default function StructurePage() {
                             emptyMessage="Aucun emprunt enregistré pour ce groupe."
                             onLoanClick={handleLoanClick}
                           />
-
+                          <ActifsSection
+                            actifs={ficheGroupActifs}
+                            emptyMessage="Aucun actif immobilisé enregistré pour ce groupe."
+                            onAssetClick={handleAssetClick}
+                          />
+                          <DotationsSection
+                            dotations={ficheGroupDotations}
+                            emptyMessage="Aucune dotation aux amortissements enregistrée pour ce groupe."
+                            onDotationClick={handleDotationClick}
+                          />
                         </>
                       )}
                     </div>
@@ -4757,6 +4849,16 @@ export default function StructurePage() {
                             emprunts={ficheBUEmprunts}
                             emptyMessage="Aucun emprunt enregistré pour cette business unit."
                             onLoanClick={handleLoanClick}
+                          />
+                          <ActifsSection
+                            actifs={ficheBUActifs}
+                            emptyMessage="Aucun actif immobilisé enregistré pour cette business unit."
+                            onAssetClick={handleAssetClick}
+                          />
+                          <DotationsSection
+                            dotations={ficheBUDotations}
+                            emptyMessage="Aucune dotation aux amortissements enregistrée pour cette business unit."
+                            onDotationClick={handleDotationClick}
                           />
 
                         </>
@@ -4940,7 +5042,7 @@ export default function StructurePage() {
               />
             </div>
           </DialogBody>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddGroupOpen(false)}>
               Annuler
@@ -5634,7 +5736,12 @@ function EmpruntsSection({
   emptyMessage: string;
   onLoanClick: (loanId: string) => void;
 }) {
-  const total = emprunts.reduce((sum, e) => sum + e.amount, 0);
+  const total = emprunts.reduce((sum, e) => {
+    const amount = typeof e.amount === 'string' ? parseFloat(e.amount) : e.amount;
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0);
+  console.log('EmpruntsSection - emprunts:', emprunts);
+  console.log('EmpruntsSection - calculated total:', total);
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
@@ -5654,18 +5761,16 @@ function EmpruntsSection({
           </div>
           <div className={`space-y-2 ${emprunts.length > 4 ? "max-h-80 overflow-y-auto pr-1" : ""}`}>
             {emprunts.map((emprunt) => (
-              <button
+              <div
                 key={emprunt.id}
-                type="button"
-                className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left transition-colors hover:bg-white/10"
-                onClick={() => onLoanClick(emprunt.id)}
+                className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2"
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-white">Emprunt</p>
                   {emprunt.description && (
                     <p className="mt-1 truncate text-sm text-(--nebula-muted)">{emprunt.description}</p>
                   )}
-                  <p className="mt-1 text-xs text-white/45">
+                  <p className="mt-1 text-xs text-(--nebula-muted)">
                     {new Date(emprunt.date).toLocaleDateString("fr-FR")}
                     {emprunt.duration_months && (
                       <span className="ml-2">• {emprunt.duration_months} mois</span>
@@ -5675,10 +5780,166 @@ function EmpruntsSection({
                     )}
                   </p>
                 </div>
-                <p className="ml-3 shrink-0 text-sm font-semibold text-red-600">
-                  -{emprunt.amount.toLocaleString("fr-FR")} €
-                </p>
-              </button>
+                <div className="ml-3 flex items-center gap-2 shrink-0">
+                  <p className="text-sm font-semibold text-red-600">
+                    -{emprunt.amount.toLocaleString("fr-FR")} €
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onLoanClick(emprunt.id)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-(--nebula-gold-light)/30 bg-(--nebula-gold)/10 px-3 py-1.5 text-xs font-medium text-(--nebula-gold-light) transition-all duration-200 hover:bg-(--nebula-gold)/20 hover:border-(--nebula-gold-light)/50 hover:text-white hover:scale-105 focus:outline-none focus:ring-2 focus:ring-(--nebula-gold-light)/50 focus:ring-offset-1 focus:ring-offset-black/50"
+                    title="Voir les détails de cet emprunt"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span>Voir détails</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ActifsSection({
+  actifs,
+  emptyMessage,
+  onAssetClick,
+}: {
+  actifs: Asset[];
+  emptyMessage: string;
+  onAssetClick: (assetId: string) => void;
+}) {
+  const total = actifs.reduce((sum, a) => {
+    const amount = typeof a.acquisitionAmount === 'string' ? parseFloat(a.acquisitionAmount) : a.acquisitionAmount;
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0);
+  console.log('ActifsSection - actifs:', actifs);
+  console.log('ActifsSection - calculated total:', total);
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-white">
+        <Package className="h-4 w-4 text-green-600" />
+        Actifs - Mode Détaillé
+      </h3>
+      {actifs.length === 0 ? (
+        <p className="py-4 text-center text-sm text-(--nebula-muted)">{emptyMessage}</p>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <span className="text-sm font-medium text-white/90">Total des actifs</span>
+            <span className="text-base font-semibold text-green-600">
+              {total.toLocaleString("fr-FR")} €
+            </span>
+          </div>
+          <div className={`space-y-2 ${actifs.length > 4 ? "max-h-80 overflow-y-auto pr-1" : ""}`}>
+            {actifs.map((actif) => (
+              <div
+                key={actif.id}
+                className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-white">{actif.name}</p>
+                  {actif.description && (
+                    <p className="mt-1 truncate text-sm text-(--nebula-muted)">{actif.description}</p>
+                  )}
+                  <p className="mt-1 text-xs text-(--nebula-muted)">
+                    {new Date(actif.acquisitionDate).toLocaleDateString("fr-FR")}
+                    <span className="ml-2">• {actif.amortizationDurationYears} ans</span>
+                    <span className="ml-2">• {actif.amortizationType}</span>
+                  </p>
+                </div>
+                <div className="ml-3 flex items-center gap-2 shrink-0">
+                  <p className="text-sm font-semibold text-green-600">
+                    {actif.acquisitionAmount.toLocaleString("fr-FR")} €
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onAssetClick(actif.id)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-(--nebula-gold-light)/30 bg-(--nebula-gold)/10 px-3 py-1.5 text-xs font-medium text-(--nebula-gold-light) transition-all duration-200 hover:bg-(--nebula-gold)/20 hover:border-(--nebula-gold-light)/50 hover:text-white hover:scale-105 focus:outline-none focus:ring-2 focus:ring-(--nebula-gold-light)/50 focus:ring-offset-1 focus:ring-offset-black/50"
+                    title="Voir les détails de cet actif"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span>Voir détails</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DotationsSection({
+  dotations,
+  emptyMessage,
+  onDotationClick,
+}: {
+  dotations: GlobalDotation[];
+  emptyMessage: string;
+  onDotationClick: (dotationId: string) => void;
+}) {
+  const total = dotations.reduce((sum, d) => {
+    const amount = typeof d.totalAnnualAmortization === 'string' ? parseFloat(d.totalAnnualAmortization) : d.totalAnnualAmortization;
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0);
+  console.log('DotationsSection - dotations:', dotations);
+  console.log('DotationsSection - calculated total:', total);
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-white">
+        <TrendingUp className="h-4 w-4 text-blue-600" />
+        Dotations Globales - Mode Simplifié
+      </h3>
+      {dotations.length === 0 ? (
+        <p className="py-4 text-center text-sm text-(--nebula-muted)">{emptyMessage}</p>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <span className="text-sm font-medium text-white/90">Total des dotations</span>
+            <span className="text-base font-semibold text-blue-600">
+              {total.toLocaleString("fr-FR")} €
+            </span>
+          </div>
+          <div className={`space-y-2 ${dotations.length > 4 ? "max-h-80 overflow-y-auto pr-1" : ""}`}>
+            {dotations.map((dotation) => (
+              <div
+                key={dotation.id}
+                className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-white">Dotation {dotation.year}</p>
+                  {dotation.description && (
+                    <p className="mt-1 truncate text-sm text-(--nebula-muted)">{dotation.description}</p>
+                  )}
+                  <p className="mt-1 text-xs text-(--nebula-muted)">
+                    Mensuel: {dotation.monthlyAmortization.toLocaleString("fr-FR")} €
+                    {dotation.isValidated && (
+                      <span className="ml-2">• Validé</span>
+                    )}
+                  </p>
+                </div>
+                <div className="ml-3 flex items-center gap-2 shrink-0">
+                  <p className="text-sm font-semibold text-blue-600">
+                    {dotation.totalAnnualAmortization.toLocaleString("fr-FR")} €
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onDotationClick(dotation.id)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-(--nebula-gold-light)/30 bg-(--nebula-gold)/10 px-3 py-1.5 text-xs font-medium text-(--nebula-gold-light) transition-all duration-200 hover:bg-(--nebula-gold)/20 hover:border-(--nebula-gold-light)/50 hover:text-white hover:scale-105 focus:outline-none focus:ring-2 focus:ring-(--nebula-gold-light)/50 focus:ring-offset-1 focus:ring-offset-black/50"
+                    title="Voir les détails de cette dotation"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span>Voir détails</span>
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         </div>

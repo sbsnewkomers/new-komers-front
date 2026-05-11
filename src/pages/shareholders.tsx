@@ -182,7 +182,7 @@ export default function ShareholdersPage() {
             </div>
             <div>
               <h2 className="text-xl font-bold text-primary">Actionnaires</h2>
-              <p className="text-sm text-slate-500">Gérez les actionnaires (personnes ou entreprises) et leur pourcentage de détention.</p>
+              <p className="text-sm text-(--nebula-muted)">Gérez les actionnaires (personnes ou entreprises) et leur pourcentage de détention.</p>
             </div>
           </div>
         </div>
@@ -190,7 +190,7 @@ export default function ShareholdersPage() {
         {/* Search and Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:w-auto">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
             <Input
               type="search"
               placeholder="Rechercher par nom, email ou entreprise..."
