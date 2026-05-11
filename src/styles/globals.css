@@ -498,6 +498,22 @@ body.nebula-light {
   /* rose-600 for better contrast */
 }
 
+
+/* scrollbar  */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #d4b16a4b;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--nebula-gold-light);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--nebula-gold);
+}
+
 /* =============================================================================
    Landing page (NEWKOMERS marketing) – scoped
    ============================================================================= */
