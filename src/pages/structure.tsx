@@ -11,6 +11,7 @@ import {
 import Head from "next/head";
 import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
+import { COUNTRIES } from "@/lib/countriesData";
 import {
   fetchStructureTree,
   type StructureTree,
@@ -119,6 +120,7 @@ type BusinessUnit = {
   country: string;
   logo?: string;
   company_id?: string;
+  entity_code?: string | null;
 };
 
 type GroupFull = {
@@ -131,6 +133,7 @@ type GroupFull = {
   mainActivity?: string;
   country?: string;
   logo?: string;
+  entity_code?: string | null;
 };
 
 type workspaceFull = {
@@ -165,6 +168,7 @@ type CompanyFull = {
   logo?: string;
   completionPercentage?: number;
   group_id: string;
+  entity_code?: string | null;
 };
 
 type NodeUsersByRole = Record<
@@ -699,6 +703,7 @@ export default function StructurePage() {
     groupId: "",
     workspaceId: "",
     logo: undefined as string | undefined,
+    entity_code: "",
   });
   const [addCompanyLoading, setAddCompanyLoading] = useState(false);
   const [addCompanyLogoFile, setAddCompanyLogoFile] = useState<File | null>(null);
@@ -712,6 +717,7 @@ export default function StructurePage() {
     siret: "",
     country: "",
     logo: undefined as string | undefined,
+    entity_code: "",
   });
   const [addBULoading, setAddBULoading] = useState(false);
   const [addBULogoFile, setAddBULogoFile] = useState<File | null>(null);
@@ -727,6 +733,7 @@ export default function StructurePage() {
     country: "",
     workspaceId: "",
     logo: undefined as string | undefined,
+    entity_code: "",
   });
   const [addGroupLoading, setAddGroupLoading] = useState(false);
 
@@ -738,6 +745,7 @@ export default function StructurePage() {
     siret: "",
     country: "",
     companyId: "",
+    entity_code: "",
   });
   const [addBUStandaloneLoading, setAddBUStandaloneLoading] = useState(false);
 
@@ -764,6 +772,7 @@ export default function StructurePage() {
     mainActivity: "",
     country: "",
     logo: undefined as string | undefined,
+    entity_code: ""
   });
   const [editCompany, setEditCompany] = useState({
     name: "",
@@ -778,6 +787,7 @@ export default function StructurePage() {
     model: "",
     logo: undefined as string | undefined,
     completionPercentage: 0,
+    entity_code: "",
   });
   const [editBU, setEditBU] = useState({
     name: "",
@@ -786,6 +796,7 @@ export default function StructurePage() {
     siret: "",
     country: "",
     logo: undefined as string | undefined,
+    entity_code: "",
   });
   const [nodeUsers, setNodeUsers] = useState<NodeUsersByRole | null>(null);
   const [nodeUsersOpen, setNodeUsersOpen] = useState(false);
@@ -1293,6 +1304,7 @@ export default function StructurePage() {
         siret: "",
         country: "",
         logo: undefined as string | undefined,
+        entity_code: "",
       });
 
       if (node.type === "workspace") {
@@ -1342,6 +1354,7 @@ export default function StructurePage() {
             mainActivity: g.mainActivity ?? "",
             country: g.country ?? "",
             logo: g.logo ?? "",
+            entity_code: g.entity_code ?? "",
           });
         } catch {
           setEditGroup({
@@ -1353,6 +1366,7 @@ export default function StructurePage() {
             mainActivity: "",
             country: "",
             logo: undefined as string | undefined,
+            entity_code: "", 
           });
           setEditGroupLogoFile(null);
         }
@@ -1378,6 +1392,7 @@ export default function StructurePage() {
             model: c.model ?? "",
             logo: c.logo ?? "",
             completionPercentage: c.completionPercentage ?? 0,
+            entity_code: c.entity_code ?? "",
           });
         } catch {
           setEditCompany({
@@ -1393,6 +1408,7 @@ export default function StructurePage() {
             model: "",
             logo: undefined as string | undefined,
             completionPercentage: 0,
+            entity_code: "",
           });
         }
         loadBUsForCompany(node.id);
@@ -1412,6 +1428,7 @@ export default function StructurePage() {
             siret: bu.siret || "",
             country: bu.country || "",
             logo: bu.logo || "",
+            entity_code: bu.entity_code ?? "",
           };
           console.log('Setting editBU to:', updatedEditBU); // Debug log
           setEditBU(updatedEditBU);
@@ -1424,6 +1441,7 @@ export default function StructurePage() {
             siret: "",
             country: "",
             logo: undefined as string | undefined,
+            entity_code: "",
           });
         }
         loadBUsForCompany(node.id);
@@ -1532,6 +1550,9 @@ export default function StructurePage() {
       if (editGroupLogoFile) {
         formData.append('logo', editGroupLogoFile);
       }
+      if (editGroup.entity_code?.trim()) {
+        formData.append('entity_code', editGroup.entity_code.trim());
+      }
 
       const updatedGroup = await apiFetch<GroupFull>(`/groups/${selectedNode.id}`, {
         method: "PUT",
@@ -1584,6 +1605,9 @@ export default function StructurePage() {
       if (editCompanyLogoFile) {
         formData.append('logo', editCompanyLogoFile);
       }
+      if (editCompany.entity_code?.trim()) {
+        formData.append('entity_code', editCompany.entity_code.trim());
+      }
       formData.append('completionPercentage', String(editCompany.completionPercentage || 0));
 
       const updatedCompany = await apiFetch<CompanyFull>(`/companies/${selectedNode.id}`, {
@@ -1622,6 +1646,9 @@ export default function StructurePage() {
       if (editBULogoFile) {
         formData.append('logo', editBULogoFile);
       }
+      if (editBU.entity_code?.trim()) {
+        formData.append('entity_code', editBU.entity_code.trim());
+      }
 
       const updatedBU = await apiFetch<BusinessUnit>(
         `/companies/${selectedNode.companyId}/business-units/${selectedNode.id}`,
@@ -1644,7 +1671,8 @@ export default function StructurePage() {
           code: updatedBU.code,
           activity: updatedBU.activity,
           siret: updatedBU.siret,
-          logo: updatedBU.logo || ""
+          logo: updatedBU.logo || "",
+          entity_code: updatedBU.entity_code ?? "",
         }));
 
         // Recharger les BUs pour mettre à jour l'affichage dans l'arbre
@@ -1836,6 +1864,9 @@ export default function StructurePage() {
         console.log('Adding logo file:', addCompanyLogoFile.name, addCompanyLogoFile.size, addCompanyLogoFile.type);
         formData.append('logo', addCompanyLogoFile, addCompanyLogoFile.name);
       }
+      if (addCompanyForm.entity_code?.trim()) {
+        formData.append('entity_code', addCompanyForm.entity_code.trim());
+      }
 
       console.log('Sending FormData:');
       for (const [key, value] of formData.entries()) {
@@ -1866,6 +1897,7 @@ export default function StructurePage() {
         groupId: "",
         workspaceId: "",
         logo: undefined as string | undefined,
+        entity_code: "",
       });
       setAddCompanyLogoFile(null);
     } catch (error) {
@@ -1907,6 +1939,9 @@ export default function StructurePage() {
       if (addBULogoFile) {
         formData.append('logo', addBULogoFile);
       }
+      if (addBUForm.entity_code?.trim()) {
+      formData.append('entity_code', addBUForm.entity_code.trim());
+    }
 
       await apiFetch(`/companies/${addBUCompanyId}/business-units`, {
         method: "POST",
@@ -1917,7 +1952,7 @@ export default function StructurePage() {
       await loadTree();
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
-      setAddBUForm({ name: "", code: "", activity: "", siret: "", country: "", logo: undefined });
+      setAddBUForm({ name: "", code: "", activity: "", siret: "", country: "", logo: undefined,entity_code: "" });
       setAddBULogoFile(null);
     } catch {
       /* snackbar handles */
@@ -1970,6 +2005,9 @@ export default function StructurePage() {
       if (addGroupLogoFile) {
         formData.append('logo', addGroupLogoFile);
       }
+      if (addGroupForm.entity_code?.trim()) {
+        formData.append('entity_code', addGroupForm.entity_code.trim());
+      }
 
       await apiFetch("/groups", {
         method: "POST",
@@ -1989,6 +2027,7 @@ export default function StructurePage() {
         country: "",
         workspaceId: "",
         logo: undefined as string | undefined,
+        entity_code: "",
       });
       setAddGroupLogoFile(null);
     } catch {
@@ -2019,6 +2058,7 @@ export default function StructurePage() {
             activity: addBUStandaloneForm.activity,
             siret: addBUStandaloneForm.siret,
             country: addBUStandaloneForm.country,
+            entity_code: addBUStandaloneForm.entity_code,
           }),
           snackbar: {
             showSuccess: true,
@@ -2038,6 +2078,7 @@ export default function StructurePage() {
         siret: "",
         country: "",
         companyId: "",
+        entity_code: "",
       });
     } catch {
       /* snackbar handles */
@@ -2377,6 +2418,7 @@ export default function StructurePage() {
                                 groupId: "",
                                 workspaceId: "",
                                 logo: undefined as string | undefined,
+                                entity_code: ""
                               });
                               setAddCompanyOpen(true);
                             }}
@@ -2733,6 +2775,7 @@ export default function StructurePage() {
                                           last_closed_fiscal_year: "",
                                           workspaceId: node.id,
                                           logo: undefined as string | undefined,
+                                          entity_code: ""
                                         });
                                         setAddGroupLogoFile(null);
                                         setAddGroupOpen(true);
@@ -2775,6 +2818,7 @@ export default function StructurePage() {
                                             groupId: "",
                                             workspaceId: "",
                                             logo: undefined as string | undefined,
+                                            entity_code: ""
                                           });
                                           setAddCompanyOpen(true);
                                         }}
@@ -2805,6 +2849,7 @@ export default function StructurePage() {
                                             siret: "",
                                             country: "",
                                             logo: undefined as string | undefined,
+                                            entity_code: "",  
                                           });
                                           setAddBULogoFile(null);
                                           setAddBUOpen(true);
@@ -3177,22 +3222,23 @@ export default function StructurePage() {
                   }
                 />
 
+                
+                    
                 <DetailSection
-                  icon={Info}
-                  title="Identité"
-                  description="Informations principales du groupe."
-                >
-                  {editing ? (
-                    <DetailGrid>
-                      <Field
-                        label="Nom"
-                        value={editGroup.name}
-                        editing={editing}
-                        onChange={(v) =>
-                          setEditGroup((f) => ({ ...f, name: v }))
-                        }
-                      />
-                      <FieldCountry
+                icon={Info}
+                title="Identité"
+                description="Informations principales du groupe."
+              >
+                {editing ? (
+                  <DetailGrid>
+                    <Field
+                      label="Nom"
+                      value={editGroup.name}
+                      editing={editing}
+                      onChange={(v) => setEditGroup((f) => ({ ...f, name: v }))}
+                    />
+                    
+                    <FieldCountry
                         label="Pays"
                         value={editGroup.country}
                         editing={editing}
@@ -3200,18 +3246,18 @@ export default function StructurePage() {
                           setEditGroup((f) => ({ ...f, country: v }))
                         }
                       />
-                    </DetailGrid>
-                  ) : (
-                    <DetailGrid>
-                      <ReadField label="Nom" value={editGroup.name} />
-                      <ReadField
-                        label="Pays"
-                        icon={Globe}
-                        value={editGroup.country}
-                      />
-                    </DetailGrid>
-                  )}
-                </DetailSection>
+                  </DetailGrid>
+                ) : (
+                  <DetailGrid>
+                    <ReadField label="Nom" value={editGroup.name} />
+                    <ReadField
+                      label="Pays"
+                      icon={Globe}
+                      value={editGroup.country}
+                    />
+                  </DetailGrid>
+                )}
+              </DetailSection>
 
                 <DetailSection
                   icon={Hash}
@@ -3258,6 +3304,13 @@ export default function StructurePage() {
                           placeholder="—"
                         />
                       </div>
+                      <Field
+                        label="Code d'entité"
+                        value={editGroup.entity_code}
+                        editing={editing}
+                        onChange={(v) => setEditGroup((f) => ({ ...f, entity_code: v }))}
+                        placeholder="Ex: GRP-001"
+                      />
                     </DetailGrid>
                   ) : (
                     <DetailGrid>
@@ -3273,7 +3326,7 @@ export default function StructurePage() {
                         icon={Hash}
                         value={formatSiren(editGroup.siret)}
                         mono
-                        hint="Identifiant d'entreprise à 9 chiffres."
+                        hint="Identifiant d'établissement à 9 chiffres."
                       />
                       <ReadField
                         label="Code APE"
@@ -3285,6 +3338,12 @@ export default function StructurePage() {
                         label="Activité principale"
                         icon={FileText}
                         value={editGroup.mainActivity}
+                      />
+                      <ReadField
+                        label="Code d'entité"
+                        icon={Hash}
+                        value={editGroup.entity_code}
+                        mono
                       />
                     </DetailGrid>
                   )}
@@ -3317,7 +3376,7 @@ export default function StructurePage() {
                         />
                       </div>
                       <Field
-                        label="Dernier exercice clos"
+                        label="Dernier exercice clôturé"
                         value={editGroup.last_closed_fiscal_year}
                         editing={editing}
                         type="number"
@@ -3341,7 +3400,7 @@ export default function StructurePage() {
                         hint="Jour/mois de début de l'exercice fiscal."
                       />
                       <ReadField
-                        label="Dernier exercice clos"
+                        label="Dernier exercice clôturé"
                         icon={Calendar}
                         value={editGroup.last_closed_fiscal_year}
                         mono
@@ -3556,6 +3615,13 @@ export default function StructurePage() {
                         editing={false}
                         onChange={() => { }}
                       />
+                      <Field
+                        label="Code d'entité"
+                        value={editCompany.entity_code}
+                        editing={editing}
+                        onChange={(v) => setEditCompany((f) => ({ ...f, entity_code: v }))}
+                        placeholder="Ex: ENT-001"
+                      />
                     </div>
                   ) : (
                     <DetailGrid>
@@ -3571,7 +3637,7 @@ export default function StructurePage() {
                         icon={Hash}
                         value={formatSiren(editCompany.siret)}
                         mono
-                        hint="Identifiant d'entreprise à 9 chiffres."
+                        hint="Identifiant d'établissement à 9 chiffres."
                       />
                       <ReadField
                         label="Code APE"
@@ -3583,6 +3649,12 @@ export default function StructurePage() {
                         label="Activité principale"
                         icon={FileText}
                         value={editCompany.main_activity}
+                      />
+                      <ReadField
+                        label="Code d'entité"
+                        icon={Hash}
+                        value={editCompany.entity_code}
+                        mono
                       />
                     </DetailGrid>
                   )}
@@ -3608,7 +3680,7 @@ export default function StructurePage() {
                         placeholder="DD-MM"
                       />
                       <Field
-                        label="Dernier exercice clos"
+                        label="Dernier exercice clôturé"
                         value={editCompany.last_closed_fiscal_year}
                         editing={editing}
                         type="number"
@@ -3632,7 +3704,7 @@ export default function StructurePage() {
                         hint="Jour/mois de début de l'exercice fiscal."
                       />
                       <ReadField
-                        label="Dernier exercice clos"
+                        label="Dernier exercice clôturé"
                         icon={Calendar}
                         value={editCompany.last_closed_fiscal_year}
                         mono
@@ -3647,24 +3719,33 @@ export default function StructurePage() {
                   description="Taille et positionnement de l'entreprise."
                 >
                   {editing ? (
-                    <DetailGrid>
-                      <Field
-                        label="Taille"
-                        value={editCompany.size}
-                        editing={editing}
-                        onChange={(v) =>
-                          setEditCompany((f) => ({ ...f, size: v }))
-                        }
-                      />
-                      <Field
-                        label="Modèle"
-                        value={editCompany.model}
-                        editing={editing}
-                        onChange={(v) =>
-                          setEditCompany((f) => ({ ...f, model: v }))
-                        }
-                      />
-                    </DetailGrid>
+  <DetailGrid>
+    <div>
+      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+        Taille
+      </label>
+      <Select
+        value={editCompany.size}
+        onValueChange={(v) => setEditCompany((f) => ({ ...f, size: v }))}
+      >
+        <option value="SMALL">SMALL</option>
+        <option value="MEDIUM">MEDIUM</option>
+        <option value="LARGE">LARGE</option>
+      </Select>
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+          Modèle
+        </label>
+        <Select
+          value={editCompany.model}
+          onValueChange={(v) => setEditCompany((f) => ({ ...f, model: v }))}
+        >
+          <option value="HOLDING">HOLDING</option>
+          <option value="SUBSIDIARY">SUBSIDIARY</option>
+        </Select>
+      </div>
+    </DetailGrid>
                   ) : (
                     <DetailGrid>
                       <ReadField
@@ -3822,6 +3903,13 @@ export default function StructurePage() {
                           placeholder="Activité principale"
                         />
                       </div>
+                      <Field
+                        label="Code d'entité"
+                        value={editBU.entity_code}
+                        editing={editing}
+                        onChange={(v) => setEditBU((f) => ({ ...f, entity_code: v }))}
+                        placeholder="Ex: BU-001"
+                      />
                     </div>
                   ) : (
                     <DetailGrid>
@@ -3837,6 +3925,12 @@ export default function StructurePage() {
                         icon={FileText}
                         value={editBU.activity}
                         full
+                      />
+                      <ReadField
+                        label="Code d'entité"
+                        icon={Hash}
+                        value={editBU.entity_code}
+                        mono
                       />
                     </DetailGrid>
                   )}
@@ -4245,7 +4339,7 @@ export default function StructurePage() {
                             icon={Hash}
                             value={formatSiren(ficheCompany.siret)}
                             mono
-                            hint="Identifiant d'entreprise à 9 chiffres."
+                            hint="Identifiant d'établissement à 9 chiffres."
                           />
                           <ReadField
                             label="Code APE"
@@ -4276,7 +4370,7 @@ export default function StructurePage() {
                             hint="Jour/mois de début de l'exercice fiscal."
                           />
                           <ReadField
-                            label="Dernier exercice clos"
+                            label="Dernier exercice clôturé"
                             icon={Calendar}
                             value={
                               ficheCompany.last_closed_fiscal_year === null ||
@@ -4815,7 +4909,7 @@ export default function StructurePage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                  Dernier exercice clos
+                  Dernier exercice clôturé
                 </label>
                 <Input
                   type="number"
@@ -4832,7 +4926,21 @@ export default function StructurePage() {
                 />
               </div>
             </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Code d'entité
+              </label>
+              <Input
+                value={addGroupForm.entity_code}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({ ...f, entity_code: e.target.value }))
+                }
+                placeholder="Ex: GRP-001"
+                maxLength={50}
+              />
+            </div>
           </DialogBody>
+          
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddGroupOpen(false)}>
               Annuler
@@ -4957,6 +5065,19 @@ export default function StructurePage() {
                   setAddBUStandaloneForm((f) => ({ ...f, country: value }))
                 }
                 placeholder="Pays de la Business Unit"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Code d'entité
+              </label>
+              <Input
+                value={addBUStandaloneForm.entity_code}
+                onChange={(e) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, entity_code: e.target.value }))
+                }
+                placeholder="Ex: BU-001"
+                maxLength={50}
               />
             </div>
           </DialogBody>
@@ -5126,10 +5247,9 @@ export default function StructurePage() {
                     setAddCompanyForm((f) => ({ ...f, size: value }))
                   }
                 >
-                  <option value="SMALL">TPE</option>
-                  <option value="MEDIUM">PME</option>
-                  <option value="MEDIUM_ETI">ETI</option>
-                  <option value="LARGE">Grand Groupe</option>
+                  <option value="SMALL">SMALL</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="LARGE">LARGE</option>
                 </Select>
               </div>
               <div>
@@ -5142,9 +5262,8 @@ export default function StructurePage() {
                     setAddCompanyForm((f) => ({ ...f, model: value }))
                   }
                 >
-                  <option value="HOLDING">Holding</option>
-                  <option value="SUBSIDIARY">Filiale</option>
-                  <option value="INDEPENDANT">Indépendant</option>
+                  <option value="HOLDING">HOLDING</option>
+                  <option value="SUBSIDIARY">SUBSIDIARY</option>
                 </Select>
               </div>
             </div>
@@ -5165,6 +5284,19 @@ export default function StructurePage() {
                 }}
                 placeholder="Uploader une image de logo"
                 accept="image/*"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Code d'entité
+              </label>
+              <Input
+                value={addCompanyForm.entity_code}
+                onChange={(e) =>
+                  setAddCompanyForm((f) => ({ ...f, entity_code: e.target.value }))
+                }
+                placeholder="Ex: ENT-001"
+                maxLength={50}
               />
             </div>
 
@@ -5188,7 +5320,7 @@ export default function StructurePage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                  Dernier exercice clos
+                  Dernier exercice clôturé
                 </label>
                 <Input
                   type="number"
@@ -5318,6 +5450,19 @@ export default function StructurePage() {
                 }}
                 placeholder="Uploader une image de logo"
                 accept="image/*"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Code d'entité
+              </label>
+              <Input
+                value={addBUForm.entity_code}
+                onChange={(e) =>
+                  setAddBUForm((f) => ({ ...f, entity_code: e.target.value }))
+                }
+                placeholder="Ex: BU-001"
+                maxLength={50}
               />
             </div>
           </DialogBody>
