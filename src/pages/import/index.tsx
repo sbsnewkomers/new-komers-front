@@ -477,7 +477,7 @@ export default function ImportPage() {
         setTimeout(async () => {
           await fetchHistory();
           await recheckEntityData(entityId, entityType);
-        }, 5000);
+        }, 8000);
       } catch (apiError: unknown) {
         // Erreurs HTTP immédiates uniquement (réseau, auth, 400 du controller...)
         if (apiError instanceof ApiError) {
@@ -607,12 +607,23 @@ export default function ImportPage() {
       });
 
       setMappingOpen(false);
-    } catch (error) {
-      console.error("Erreur:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    }  catch (error: unknown) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Erreur inconnue';
+      setValidationErrors([{
+        line: 0, column: 'N/A', value: '',
+        reason: message,
+        message,
+      }]);
+      setValidationModalOpen(true);
+    } finally  {
+          setIsSubmitting(false);
+        }
+      };
 
   const handleSelectSavedMapping = async (savedMapping: SavedMapping) => {
     try {
