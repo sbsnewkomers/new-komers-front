@@ -554,3 +554,86 @@ body.nebula-light {
 .landing .landing-marquee-track:hover {
   animation-play-state: paused;
 }
+
+/* Isolate landing page from global theme changes */
+:root:not(.nebula-light) .landing,
+:root.nebula-light .landing {
+  /* Force dark theme regardless of global theme */
+  --primary: #080808;
+  --primary-light: #111111;
+  --accent: #d4b06a;
+  --accent-soft: rgba(212, 176, 106, 0.12);
+  --text-main: #e8e8e8;
+  --text-muted: #888888;
+  --text-dim: #555555;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-accent: rgba(212, 176, 106, 0.3);
+  --glass: rgba(8, 8, 8, 0.85);
+  background-color: var(--primary);
+  color: var(--text-main);
+  color-scheme: dark;
+}
+
+/* Prevent light mode overrides from affecting landing page */
+.nebula-light .landing,
+body.nebula-light .landing {
+  /* Reset any potential light mode inheritance */
+  background-color: var(--primary) !important;
+  color: var(--text-main) !important;
+  color-scheme: dark !important;
+}
+
+/* Ensure landing page components use dark theme colors */
+.landing .text-white {
+  color: #e8e8e8;
+}
+
+.landing .text-white\/60 {
+  color: rgba(232, 232, 232, 0.6);
+}
+
+.landing .text-white\/70 {
+  color: rgba(232, 232, 232, 0.7);
+}
+
+.landing .text-white\/80 {
+  color: rgba(232, 232, 232, 0.8);
+}
+
+.landing .text-white\/90 {
+  color: rgba(232, 232, 232, 0.9);
+}
+
+.landing .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.landing .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.landing .bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.landing .border-white\/10 {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.landing .border-white\/15 {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.landing .border-white\/20 {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.landing nav {
+  background-color: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.landing footer {
+  background-color: rgba(0, 0, 0, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+}
