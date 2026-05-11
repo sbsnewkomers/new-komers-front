@@ -10,7 +10,7 @@ import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 
 import { useWorkspaceContext } from "@/providers/WorkspaceProvider";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import {
   APP_NAV_FOOTER_ITEMS,
@@ -28,6 +28,7 @@ import {
   Sun,
   Moon,
   User,
+  LogOut,
 } from "lucide-react";
 
 type AppLayoutProps = {
@@ -59,7 +60,6 @@ export function AppLayout({
 
   const { workspaces: globalworkspaces } = useWorkspaceContext();
 
-  const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [theme, setTheme] = React.useState<"dark" | "light">(() => {
     if (typeof window === "undefined") return "dark";
@@ -67,7 +67,6 @@ export function AppLayout({
     return stored === "light" ? "light" : "dark";
   });
 
-  const menuRef = React.useRef<HTMLDivElement>(null);
   const { isImpersonating, exitImpersonation } = useImpersonation();
   const [exitLoading, setExitLoading] = React.useState(false);
 
@@ -94,17 +93,6 @@ export function AppLayout({
     return orgsToUse && orgsToUse.length > 0 ? orgsToUse[0].name : null;
   }, [user?.role, workspaces, globalworkspaces]);
 
-  React.useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node))
-        setUserMenuOpen(false);
-    }
-
-    if (userMenuOpen)
-      document.addEventListener("mousedown", handleClickOutside);
-
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [userMenuOpen]);
 
   const pathname = router.pathname;
   const handleExitImpersonation = async () => {
@@ -156,7 +144,7 @@ export function AppLayout({
           <div className="hidden md:block w-[260px] sticky top-0 h-[calc(100vh-2rem)] nebula-glass-modal p-5 shadow-lg! shadow-primary/20!">
             <div className="flex h-full min-h-0 flex-col gap-2">
               <div className="flex items-center gap-3 px-1 py-2">
-                <Link href="/" className="flex items-center gap-3">
+                <Link href="/dashboard" className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-(--nebula-gold-light) to-(--nebula-gold) text-white! nebula-glow">
                     <span className="text-xl font-bold">N</span>
                   </div>
@@ -190,59 +178,28 @@ export function AppLayout({
                 user={user}
                 mainItems={APP_NAV_MAIN_ITEMS}
                 footerItems={APP_NAV_FOOTER_ITEMS}
-                footerRef={menuRef}
                 bottomSlot={(
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setUserMenuOpen((o) => !o)}
-                      className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-all hover:bg-white/5 border border-white/10"
-                    >
-                      <Avatar className="h-10 w-10 border border-white/10 bg-white/5 rounded-xl flex items-center justify-center">
-                        <User className="h-5 w-5 text-primary" />
-                      </Avatar>
+                  <button
+                    type="button"
+                    onClick={() => void router.push("/profile")}
+                    className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-all hover:bg-white/5 border border-white/10"
+                  >
+                    <Avatar className="h-10 w-10 border border-white/10 bg-white/5 rounded-xl flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary" />
+                    </Avatar>
 
-                      <div className="flex flex-col overflow-hidden">
-                        <span className="truncate text-sm font-semibold text-white">
-                          {user?.email?.split("@")[0] || "-----"}
-                        </span>
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="truncate text-sm font-semibold text-white">
+                        {user?.firstName && user?.lastName
+                          ? `${user.firstName} ${user.lastName}`
+                          : user?.email?.split("@")[0] || "Utilisateur"}
+                      </span>
 
-                        <span className="truncate text-[10px] font-medium text-(--nebula-muted) uppercase tracking-wider">
-                          {user?.role?.replace("_", " ") || "----"}
-                        </span>
-                      </div>
-                    </button>
-
-                    {userMenuOpen && (
-                      <div className="absolute bottom-full left-0 right-0 mb-2 nebula-glass rounded-2xl p-1 z-50">
-                        <button
-                          type="button"
-                          className="w-full rounded-xl px-4 py-2 text-left text-sm text-white hover:bg-white/5"
-                          onClick={() => {
-                            setUserMenuOpen(false);
-
-                            void router.push("/profile");
-                          }}
-                        >
-                          Profil
-                        </button>
-
-                        <button
-                          type="button"
-                          className="w-full rounded-xl px-4 py-2 text-left text-sm text-white hover:bg-white/5"
-                          onClick={() => {
-                            setUserMenuOpen(false);
-
-                            logout();
-
-                            void router.push("/");
-                          }}
-                        >
-                          Déconnexion
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                      <span className="truncate text-[10px] font-medium text-(--nebula-muted) uppercase tracking-wider">
+                        {user?.role?.replace("_", " ") || "----"}
+                      </span>
+                    </div>
+                  </button>
                 )}
               />
 
@@ -312,6 +269,19 @@ export function AppLayout({
                     <Bell className="h-5 w-5" />
                     <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-(--nebula-gold-light) ring-2 ring-black/40" />
                   </button>
+
+                  {/* Logout Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      void router.push("/");
+                    }}
+                    className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center"
+                    aria-label="Déconnexion"
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </button>
                 </div>
               </div>
             </header>
@@ -334,7 +304,7 @@ export function AppLayout({
             <div className="relative z-10 flex h-full min-h-0 w-[min(85vw,260px)] flex-col nebula-glass-modal rounded-none border-r border-white/10">
               <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
                 <Link
-                  href="/"
+                  href="/dashboard"
                   className="flex items-center gap-2 min-w-0 flex-1"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -365,22 +335,6 @@ export function AppLayout({
                 footerItems={APP_NAV_FOOTER_ITEMS}
                 onLinkClick={() => setMobileMenuOpen(false)}
               />
-
-              <div className="border-t border-slate-100 p-4">
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-
-                    logout();
-
-                    void router.push("/");
-                  }}
-                >
-                  <span>Déconnexion</span>
-                </button>
-              </div>
             </div>
           </div>
         )}
