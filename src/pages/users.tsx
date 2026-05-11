@@ -503,7 +503,7 @@ export default function UsersPage() {
           }
           actions={
             invitableRoles.length > 0 ? (
-              <Button onClick={openInviteModal} className="w-full bg-primary text-white! hover:bg-slate-800 sm:w-auto">
+              <Button onClick={openInviteModal} className="w-full bg-primary text-white! hover:bg-primary/90 sm:w-auto">
                 <Send className="h-4 w-4" />
                 Inviter un utilisateur
               </Button>
@@ -569,22 +569,22 @@ export default function UsersPage() {
             <FilterBar
               search={
                 <div className="relative min-w-0">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
                   <Input
                     placeholder="Rechercher un utilisateur..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="h-9 pl-10 border-slate-200 bg-white"
+                    className="h-9 pl-10"
                   />
                 </div>
               }
               filters={
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                  <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-full border-primary/40! bg-white text-sm sm:w-fit!">
+                  <Select value={roleFilter} onValueChange={setRoleFilter} className="h-9 w-full text-sm sm:w-fit!">
                     <option value="">Tous les r&ocirc;les</option>
                     {ALL_ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
                   </Select>
-                  <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-full border-primary/40! bg-white text-sm sm:w-fit!">
+                  <Select value={statusFilter} onValueChange={setStatusFilter} className="h-9 w-full text-sm sm:w-fit!">
                     <option value="">Tous les statuts</option>
                     {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
                   </Select>
@@ -771,12 +771,12 @@ export default function UsersPage() {
             <FilterBar
               search={
                 <div className="relative min-w-0 sm:min-w-[200px] sm:max-w-xs">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input placeholder="Rechercher par email..." value={invSearch} onChange={(e) => setInvSearch(e.target.value)} className="h-9 pl-10 border-slate-200 bg-white" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
+                  <Input placeholder="Rechercher par email..." value={invSearch} onChange={(e) => setInvSearch(e.target.value)} className="h-9 pl-10" />
                 </div>
               }
               filters={
-                <Select value={invStatusFilter} onValueChange={(v) => setInvStatusFilter(v as InvitationStatus | "")} className="h-9 w-full border-slate-200 bg-white text-sm sm:w-fit!">
+                <Select value={invStatusFilter} onValueChange={(v) => setInvStatusFilter(v as InvitationStatus | "")} className="h-9 w-full text-sm sm:w-fit!">
                   <option value="">Tous les statuts</option>
                   {INVITATION_STATUSES.map((s) => <option key={s} value={s}>{invitationStatusLabel(s)}</option>)}
                 </Select>
@@ -963,28 +963,30 @@ export default function UsersPage() {
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent size="lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Send className="h-5 w-5 text-slate-700" /> Inviter un utilisateur</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
+              <Send className="h-5 w-5 text-(--nebula-gold-light)" /> Inviter un utilisateur
+            </DialogTitle>
           </DialogHeader>
           <DialogBody className="space-y-4">
             {/* <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Pr&eacute;nom</label>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">Pr&eacute;nom</label>
                 <Input value={inviteForm.firstName} onChange={(e) => setInviteForm((f) => ({ ...f, firstName: e.target.value }))} placeholder="John" />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Nom</label>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">Nom</label>
                 <Input value={inviteForm.lastName} onChange={(e) => setInviteForm((f) => ({ ...f, lastName: e.target.value }))} placeholder="Doe" />
               </div>
             </div> */}
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Email <span className="text-red-500">*</span></label>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">Email <span className="text-red-500">*</span></label>
               <Input type="email" value={inviteForm.email} onChange={(e) => setInviteForm((f) => ({ ...f, email: e.target.value }))} placeholder="john@exemple.com" required />
               {inviteForm.email && !isValidEmail(inviteForm.email) && (
                 <p className="mt-1 text-xs text-red-500">Veuillez entrer une adresse email valide</p>
               )}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le <span className="text-red-500">*</span></label>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">R&ocirc;le <span className="text-red-500">*</span></label>
               <Select
                 value={inviteForm.role}
                 onValueChange={(v) => {
@@ -1002,8 +1004,8 @@ export default function UsersPage() {
             {/* Data Perimeter */}
             {inviteForm.role !== "ADMIN" && (
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">P&eacute;rim&egrave;tre d&rsquo;acc&egrave;s <span className="text-red-500">*</span></label>
-                <p className="mb-3 text-xs text-slate-400">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">P&eacute;rim&egrave;tre d&rsquo;acc&egrave;s <span className="text-red-500">*</span></label>
+                <p className="mb-3 text-xs">
                   {inviteForm.role === "HEAD_MANAGER"
                     ? "Définir l'workspace accessible (obligatoire). L'héritage hiérarchique s'applique automatiquement."
                     : "Définir les groupes, entreprises ou BU accessibles. L'héritage hiérarchique s'applique automatiquement."
@@ -1013,12 +1015,12 @@ export default function UsersPage() {
                 {invitePerimeter.length > 0 && inviteForm.role !== "HEAD_MANAGER" && (
                   <ul className="mb-3 space-y-1.5">
                     {invitePerimeter.map((item, idx) => (
-                      <li key={idx} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
+                      <li key={idx} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
                         <div className="flex items-center gap-2">
-                          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">{nodeTypeLabelFr(item.nodeType)}</span>
-                          <span className="text-sm text-slate-700">{perimNodeName(item)}</span>
+                          <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-(--nebula-muted) ring-1 ring-white/10">{nodeTypeLabelFr(item.nodeType)}</span>
+                          <span className="text-sm">{perimNodeName(item)}</span>
                         </div>
-                        <button type="button" onClick={() => removePerimeterItem(idx)} className="flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-600">
+                        <button type="button" onClick={() => removePerimeterItem(idx)} className="flex h-6 w-6 items-center justify-center rounded text-white/45 hover:bg-white/10 hover:text-red-400">
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </li>
@@ -1028,7 +1030,7 @@ export default function UsersPage() {
 
                 {inviteForm.role === "HEAD_MANAGER" ? (
                   <div>
-                    <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Workspace</label>
+                    <label className="mb-1 block text-[10px] font-medium uppercase text-white/45">Workspace</label>
                     <select
                       value={invitePerimeter.length > 0 ? invitePerimeter[0].nodeId : ""}
                       onChange={(e) => {
@@ -1045,21 +1047,21 @@ export default function UsersPage() {
                           setInvitePerimeter([]);
                         }
                       }}
-                      className="h-8 w-full rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
+                      className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-white outline-none transition-colors hover:border-white/15 focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)"
                     >
                       <option value="">Choisir un workspace&hellip;</option>
                       {perimNodeOptions.map((n: { id: string; name: string }) => <option key={n.id} value={n.id}>{n.name}</option>)}
                     </select>
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-3">
+                  <div className="rounded-lg border border-dashed border-white/15 bg-white/5 p-3">
                     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
                       <div>
-                        <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Type</label>
+                        <label className="mb-1 block text-[10px] font-medium uppercase ">Type</label>
                         <select
                           value={perimNodeType}
                           onChange={(e) => { setPerimNodeType(e.target.value as NodeType); setPerimNodeId(""); if (e.target.value !== "BUSINESS_UNIT") setPerimCompanyId(""); }}
-                          className="h-8 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700"
+                          className="h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-white outline-none transition-colors hover:border-white/15 focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)"
                         >
                           <>
                             <option value="GROUP">Groupe</option>
@@ -1071,11 +1073,11 @@ export default function UsersPage() {
                       </div>
                       {perimNodeType === "BUSINESS_UNIT" && (
                         <div>
-                          <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Entreprise</label>
+                          <label className="mb-1 block text-[10px] font-medium uppercase">Entreprise</label>
                           <select
                             value={perimCompanyId}
                             onChange={(e) => { setPerimCompanyId(e.target.value); setPerimNodeId(""); }}
-                            className="h-8 w-full rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 sm:min-w-[140px] sm:w-auto"
+                            className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-white outline-none transition-colors hover:border-white/15 focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light) sm:min-w-[140px] sm:w-auto"
                           >
                             <option value="">Choisir&hellip;</option>
                             {(companiesHook.list ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -1083,12 +1085,12 @@ export default function UsersPage() {
                         </div>
                       )}
                       <div>
-                        <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">&Eacute;l&eacute;ment</label>
+                        <label className="mb-1 block text-[10px] font-medium uppercase">&Eacute;l&eacute;ment</label>
                         <select
                           value={perimNodeId}
                           onChange={(e) => setPerimNodeId(e.target.value)}
                           disabled={perimNodeType === "BUSINESS_UNIT" && !perimCompanyId}
-                          className="h-8 w-full rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 disabled:opacity-50 sm:min-w-[140px] sm:w-auto"
+                          className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-white outline-none transition-colors hover:border-white/15 focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light) disabled:opacity-50 sm:min-w-[140px] sm:w-auto"
                         >
                           <option value="">Choisir&hellip;</option>
                           {perimNodeOptions.map((n: { id: string; name: string }) => <option key={n.id} value={n.id}>{n.name}</option>)}
@@ -1126,19 +1128,19 @@ export default function UsersPage() {
       <Dialog open={inviteConfirmOpen} onOpenChange={setInviteConfirmOpen}>
         <DialogContent size="md">
           <DialogHeader>
-            <DialogTitle>Utilisateur déjà existant</DialogTitle>
+            <DialogTitle className="text-base font-semibold text-white">Utilisateur déjà existant</DialogTitle>
           </DialogHeader>
-          <DialogBody className="space-y-3 text-sm text-slate-700">
+          <DialogBody className="space-y-3 text-sm text-(--nebula-muted)">
             <p>Un utilisateur avec cet email existe déjà dans l’application :</p>
             {inviteExistingUser && (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-                <div className="font-medium text-slate-900">
+              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
+                <div className="font-medium text-white">
                   {(inviteExistingUser.firstName ?? "")} {(inviteExistingUser.lastName ?? "")}
                 </div>
-                <div className="text-xs text-slate-500">{inviteExistingUser.email}</div>
+                <div className="text-xs text-(--nebula-muted)">{inviteExistingUser.email}</div>
               </div>
             )}
-            <p>
+            <p className="text-(--nebula-muted)">
               Confirmez-vous vouloir lui attribuer ce nouveau périmètre d’accès
               et lui envoyer l’email d’information&nbsp;?
             </p>
@@ -1169,26 +1171,26 @@ export default function UsersPage() {
       {/* ═══════════════ EDIT MODAL ═══════════════ */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent size="md">
-          <DialogHeader><DialogTitle>Modifier l&apos;utilisateur</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-base font-semibold text-white">Modifier l&apos;utilisateur</DialogTitle></DialogHeader>
           <DialogBody className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Pr&eacute;nom</label>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">Pr&eacute;nom</label>
                 <Input value={editForm.firstName} onChange={(e) => setEditForm((f) => ({ ...f, firstName: e.target.value }))} />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Nom</label>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">Nom</label>
                 <Input value={editForm.lastName} onChange={(e) => setEditForm((f) => ({ ...f, lastName: e.target.value }))} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">R&ocirc;le</label>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">R&ocirc;le</label>
               <Select value={editForm.role} onValueChange={(v) => setEditForm((f) => ({ ...f, role: v as UserRole }))}>
                 {ALL_ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
               </Select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Statut</label>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">Statut</label>
               <Select value={editForm.status} onValueChange={(v) => setEditForm((f) => ({ ...f, status: v as UserStatus }))}>
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
               </Select>
@@ -1204,8 +1206,12 @@ export default function UsersPage() {
       {/* ═══════════════ DELETE MODAL ═══════════════ */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent size="sm">
-          <DialogHeader><DialogTitle>Confirmer la suppression</DialogTitle></DialogHeader>
-          <DialogBody><p className="text-sm text-slate-600">Supprimer <strong>{deleteTarget?.email}</strong> ? Cette action est irr&eacute;versible.</p></DialogBody>
+          <DialogHeader><DialogTitle className="text-base font-semibold text-white">Confirmer la suppression</DialogTitle></DialogHeader>
+          <DialogBody>
+            <p className="text-sm text-(--nebula-muted)">
+              Supprimer <strong className="font-semibold text-white">{deleteTarget?.email}</strong> ? Cette action est irr&eacute;versible.
+            </p>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteOpen(false)}>Annuler</Button>
             <Button className="bg-red-600 text-white hover:bg-red-700" onClick={handleDelete} disabled={deleteLoading}>{deleteLoading ? "Suppression\u2026" : "Supprimer"}</Button>
@@ -1217,29 +1223,33 @@ export default function UsersPage() {
       <Dialog open={permOpen} onOpenChange={setPermOpen}>
         <DialogContent size="2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5 text-slate-700" /> Permissions &mdash; {permUser?.email}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
+              <KeyRound className="h-5 w-5 text-(--nebula-gold-light)" /> Permissions &mdash; {permUser?.email}
+            </DialogTitle>
           </DialogHeader>
           {permLoading ? (
-            <DialogBody className="flex items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" /></DialogBody>
+            <DialogBody className="flex items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-(--nebula-gold-light)" />
+            </DialogBody>
           ) : !permDetail ? (
-            <DialogBody><p className="text-center text-sm text-slate-400">Impossible de charger les permissions.</p></DialogBody>
+            <DialogBody><p className="text-center text-sm text-white/45">Impossible de charger les permissions.</p></DialogBody>
           ) : (
             <DialogBody className="space-y-6">
               {/* Entity-level */}
               <div>
-                <h3 className="mb-3 text-sm font-semibold text-slate-900">Permissions par entit&eacute;</h3>
-                <p className="mb-4 text-xs text-slate-500">Accorder des droits sur tous les &eacute;l&eacute;ments d&apos;un type.</p>
+                <h3 className="mb-3 text-sm font-semibold text-white">Permissions par entit&eacute;</h3>
+                <p className="mb-4 text-xs text-(--nebula-muted)">Accorder des droits sur tous les &eacute;l&eacute;ments d&apos;un type.</p>
                 <div className="space-y-3">
                   {NODE_TYPES.map((nt) => (
-                    <div key={nt} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">{nodeTypeLabel(nt)}</p>
+                    <div key={nt} className="rounded-lg border border-white/10 bg-white/5 p-3">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">{nodeTypeLabel(nt)}</p>
                       <div className="flex flex-wrap gap-2">
                         {ALL_ACTIONS.map((action) => {
                           const granted = hasEntityPerm(nt, action);
                           return (
                             <button key={action} type="button" onClick={() => granted ? handleRevokeEntity(nt, action) : handleGrantEntity(nt, action)}
-                              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide transition-colors ${granted ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200" : "border-slate-200 bg-white text-slate-400 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"}`}>
-                              {granted && <span className="text-emerald-500">&#10003;</span>}{actionLabel(action)}
+                              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide transition-colors ${granted ? "border-white/15 bg-white/10 text-(--nebula-gold-light) hover:bg-white/10" : "border-white/10 bg-white/5  hover:bg-white/10 hover:text-white"}`}>
+                              {granted && <span className="text-(--nebula-gold-light)">&#10003;</span>}{actionLabel(action)}
                             </button>
                           );
                         })}
@@ -1250,66 +1260,66 @@ export default function UsersPage() {
               </div>
               {/* Node-level */}
               <div>
-                <h3 className="mb-3 text-sm font-semibold text-slate-900">Acc&egrave;s par n&oelig;ud</h3>
-                <p className="mb-4 text-xs text-slate-500">Acc&egrave;s &agrave; un workspace, un groupe, une entreprise, ou une BU sp&eacute;cifique.</p>
+                <h3 className="mb-3 text-sm font-semibold text-white">Acc&egrave;s par n&oelig;ud</h3>
+                <p className="mb-4 text-xs text-(--nebula-muted)">Acc&egrave;s &agrave; un workspace, un groupe, une entreprise, ou une BU sp&eacute;cifique.</p>
                 {(permDetail.nodeAccesses?.length ?? 0) > 0 ? (
                   <ul className="mb-4 space-y-2">
                     {permDetail.nodeAccesses.map((na) => {
                       const nodeName = na.nodeType === "GROUP" ? (groupsHook.list ?? []).find((g) => g.id === na.nodeId)?.name : na.nodeType === "COMPANY" ? (companiesHook.list ?? []).find((c) => c.id === na.nodeId)?.name : na.nodeType === "WORKSPACE" ? (structureTree?.workspaces ?? []).find((w) => w.id === na.nodeId)?.name : (busHook.list ?? []).find((b) => b.id === na.nodeId)?.name;
                       return (
-                        <li key={na.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <li key={na.id} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
                           <div>
-                            <span className="text-xs font-semibold uppercase text-slate-500">{nodeTypeLabel(na.nodeType)}</span>
-                            <span className="mx-1.5 text-slate-300">|</span>
-                            <span className="text-sm font-medium text-slate-900">{nodeName ?? na.nodeId.slice(0, 8)}</span>
+                            <span className="text-xs font-semibold uppercase text-(--nebula-muted)">{nodeTypeLabel(na.nodeType)}</span>
+                            <span className="mx-1.5 text-white/25">|</span>
+                            <span className="text-sm font-medium text-white">{nodeName ?? na.nodeId.slice(0, 8)}</span>
                             <div className="mt-1 flex flex-wrap gap-1">
-                              {na.actions.map((a) => (<span key={a} className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">{actionLabel(a)}</span>))}
+                              {na.actions.map((a) => (<span key={a} className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-medium text-(--nebula-muted) ring-1 ring-white/10">{actionLabel(a)}</span>))}
                             </div>
                           </div>
-                          <button type="button" onClick={() => handleRemoveNode(na.id)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"><X className="h-4 w-4" /></button>
+                          <button type="button" onClick={() => handleRemoveNode(na.id)} className="flex h-7 w-7 items-center justify-center rounded-lg text-white/45 transition hover:bg-white/10 hover:text-red-400"><X className="h-4 w-4" /></button>
                         </li>
                       );
                     })}
                   </ul>
                 ) : (
-                  <p className="mb-4 rounded-lg border border-dashed border-slate-200 py-4 text-center text-xs text-slate-400">Aucun acc&egrave;s n&oelig;ud configur&eacute;.</p>
+                  <p className="mb-4 rounded-lg border border-dashed border-white/15 py-4 text-center text-xs text-white/45">Aucun acc&egrave;s n&oelig;ud configur&eacute;.</p>
                 )}
-                <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Ajouter un acc&egrave;s</p>
+                <div className="rounded-lg border border-dashed border-white/15 bg-white/5 p-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">Ajouter un acc&egrave;s</p>
                   <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                     <div>
-                      <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Type</label>
+                      <label className="mb-1 block text-[10px] font-medium uppercase text-white/45">Type</label>
                       {permUser?.role === "HEAD_MANAGER" ? (
-                        <div className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700">
+                        <div className="h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white/90 flex items-center">
                           Workspace uniquement
                         </div>
                       ) : (
-                        <select value={addNodeType} onChange={(e) => { setAddNodeType(e.target.value as PermNodeType); setAddNodeId(""); if (e.target.value !== "BUSINESS_UNIT") setCompanyIdForBU(""); }} className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700">
+                        <select value={addNodeType} onChange={(e) => { setAddNodeType(e.target.value as PermNodeType); setAddNodeId(""); if (e.target.value !== "BUSINESS_UNIT") setCompanyIdForBU(""); }} className="h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white outline-none transition-colors hover:border-white/15 focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)">
                           {NODE_TYPES.map((n) => <option key={n} value={n}>{nodeTypeLabel(n)}</option>)}
                         </select>
                       )}
                     </div>
                     {addNodeType === "BUSINESS_UNIT" && (
                       <div>
-                        <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Entreprise</label>
-                        <select value={companyIdForBU} onChange={(e) => { setCompanyIdForBU(e.target.value); setAddNodeId(""); }} className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 sm:min-w-[160px] sm:w-auto">
+                        <label className="mb-1 block text-[10px] font-medium uppercase text-white/45">Entreprise</label>
+                        <select value={companyIdForBU} onChange={(e) => { setCompanyIdForBU(e.target.value); setAddNodeId(""); }} className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white outline-none transition-colors hover:border-white/15 focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light) sm:min-w-[160px] sm:w-auto">
                           <option value="">Choisir&hellip;</option>
                           {(companiesHook.list ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                       </div>
                     )}
                     <div>
-                      <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">&Eacute;l&eacute;ment</label>
-                      <select value={addNodeId} onChange={(e) => setAddNodeId(e.target.value)} disabled={addNodeType === "BUSINESS_UNIT" && !companyIdForBU} className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:opacity-50 sm:min-w-[160px] sm:w-auto">
+                      <label className="mb-1 block text-[10px] font-medium uppercase text-white/45">&Eacute;l&eacute;ment</label>
+                      <select value={addNodeId} onChange={(e) => setAddNodeId(e.target.value)} disabled={addNodeType === "BUSINESS_UNIT" && !companyIdForBU} className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white outline-none transition-colors hover:border-white/15 focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light) disabled:opacity-50 sm:min-w-[160px] sm:w-auto">
                         <option value="">Choisir&hellip;</option>
                         {permNodeOptions.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="mb-1 block text-[10px] font-medium uppercase text-slate-400">Actions</label>
+                      <label className="mb-1 block text-[10px] font-medium uppercase text-white/45">Actions</label>
                       <div className="flex flex-wrap gap-1.5">
                         {ALL_ACTIONS.map((a) => (
-                          <label key={a} className="flex cursor-pointer items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[10px] font-medium text-slate-600 has-checked:border-blue-300 has-checked:bg-blue-50 has-checked:text-blue-700">
+                          <label key={a} className="flex cursor-pointer items-center gap-1 rounded border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-medium text-(--nebula-muted) transition-colors has-checked:border-white/20 has-checked:bg-white/10 has-checked:text-(--nebula-gold-light)">
                             <input type="checkbox" checked={addActions.includes(a)} onChange={() => setAddActions((prev) => prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a])} className="sr-only" />
                             {actionLabel(a)}
                           </label>
