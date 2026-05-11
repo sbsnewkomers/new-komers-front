@@ -30,6 +30,8 @@ import {
   User,
   LogOut,
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../ui/DropdownMenu";
+import { NotificationsDropdownContent } from "./NotificationsDropdownContent";
 
 type AppLayoutProps = {
   title: string;
@@ -261,14 +263,24 @@ export function AppLayout({
                   >
                     <HelpCircle className="h-5 w-5" />
                   </button>
-                  <button
-                    type="button"
-                    className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center relative"
-                    aria-label="Notifications"
-                  >
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-(--nebula-gold-light) ring-2 ring-black/40" />
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center relative"
+                        aria-label="Notifications"
+                      >
+                        <Bell className="h-5 w-5" />
+                        <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-(--nebula-gold-light) ring-2 ring-black/40" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="border-white/10 nebula-glass-modal p-0 text-white shadow-xl backdrop-blur-xl"
+                    >
+                      <NotificationsDropdownContent />
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   {/* Logout Button */}
                   <button
