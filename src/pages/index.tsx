@@ -26,7 +26,7 @@ export default function LandingPage() {
   }, [mobileOpen]);
 
   return (
-    <div className="landing min-h-screen selection:bg-(--accent)/20">
+    <div className="landing force-dark min-h-screen selection:bg-(--accent)/20">
       <Head>
         <title>Newkomers — La clarté financière absolue pour les holdings &amp; groupes</title>
         <meta
@@ -36,9 +36,8 @@ export default function LandingPage() {
       </Head>
 
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 px-6 border-b transition-colors ${
-          navScrolled ? "bg-black/90" : "bg-black/70"
-        } backdrop-blur-xl border-white/10`}
+        className={`fixed top-0 left-0 right-0 z-50 px-6 border-b transition-colors ${navScrolled ? "bg-black/90" : "bg-black/70"
+          } backdrop-blur-xl border-white/10`}
         aria-label="Navigation"
       >
         <div className="mx-auto grid h-16 max-w-6xl grid-cols-[auto_1fr_auto] items-center gap-6">
@@ -556,11 +555,10 @@ export default function LandingPage() {
                 <button
                   type="submit"
                   disabled={contactSent}
-                  className={`inline-flex items-center justify-center rounded-full px-7 py-3 text-sm font-semibold transition ${
-                    contactSent
+                  className={`inline-flex items-center justify-center rounded-full px-7 py-3 text-sm font-semibold transition ${contactSent
                       ? "bg-linear-to-br from-emerald-400 to-emerald-600 text-black"
                       : "bg-linear-to-br from-(--accent) to-[#8a6a32] text-black hover:translate-y-[-1px]"
-                  } disabled:opacity-80`}
+                    } disabled:opacity-80`}
                 >
                   {contactSent ? "✓ Demande envoyée !" : "Envoyer ma demande"}
                 </button>

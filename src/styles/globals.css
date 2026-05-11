@@ -555,85 +555,94 @@ body.nebula-light {
   animation-play-state: paused;
 }
 
-/* Isolate landing page from global theme changes */
-:root:not(.nebula-light) .landing,
-:root.nebula-light .landing {
-  /* Force dark theme regardless of global theme */
-  --primary: #080808;
-  --primary-light: #111111;
-  --accent: #d4b06a;
-  --accent-soft: rgba(212, 176, 106, 0.12);
-  --text-main: #e8e8e8;
-  --text-muted: #888888;
-  --text-dim: #555555;
-  --border: rgba(255, 255, 255, 0.07);
-  --border-accent: rgba(212, 176, 106, 0.3);
-  --glass: rgba(8, 8, 8, 0.85);
-  background-color: var(--primary);
-  color: var(--text-main);
-  color-scheme: dark;
-}
-
-/* Prevent light mode overrides from affecting landing page */
-.nebula-light .landing,
-body.nebula-light .landing {
-  /* Reset any potential light mode inheritance */
-  background-color: var(--primary) !important;
-  color: var(--text-main) !important;
+/* Force dark theme for landing page - simple and effective approach */
+.force-dark {
+  /* Override any light mode theme completely */
+  --nebula-bg: #0a0a0a !important;
+  --nebula-ink: #f5ecd7 !important;
+  --nebula-muted: #9a8f78 !important;
+  --background: #0a0a0a !important;
+  --foreground: #f5ecd7 !important;
+  --muted: rgba(255, 255, 255, 0.06) !important;
+  --muted-foreground: #9a8f78 !important;
+  --border: rgba(245, 236, 215, 0.12) !important;
+  --input: rgba(245, 236, 215, 0.12) !important;
+  --card: rgba(255, 255, 255, 0.04) !important;
+  --card-foreground: #f5ecd7 !important;
+  --popover: rgba(10, 10, 10, 0.92) !important;
+  --popover-foreground: #f5ecd7 !important;
   color-scheme: dark !important;
 }
 
-/* Ensure landing page components use dark theme colors */
-.landing .text-white {
-  color: #e8e8e8;
+/* Ensure force-dark overrides light mode completely */
+.nebula-light .force-dark,
+body.nebula-light .force-dark {
+  background-color: #0a0a0a !important;
+  color: #f5ecd7 !important;
+  color-scheme: dark !important;
 }
 
-.landing .text-white\/60 {
-  color: rgba(232, 232, 232, 0.6);
+/* Force landing page components to use dark colors */
+.force-dark .text-white {
+  color: #f5ecd7 !important;
 }
 
-.landing .text-white\/70 {
-  color: rgba(232, 232, 232, 0.7);
+.force-dark .text-white\/60 {
+  color: rgba(245, 236, 215, 0.6) !important;
 }
 
-.landing .text-white\/80 {
-  color: rgba(232, 232, 232, 0.8);
+.force-dark .text-white\/70 {
+  color: rgba(245, 236, 215, 0.7) !important;
 }
 
-.landing .text-white\/90 {
-  color: rgba(232, 232, 232, 0.9);
+.force-dark .text-white\/80 {
+  color: rgba(245, 236, 215, 0.8) !important;
 }
 
-.landing .bg-white\/5 {
-  background-color: rgba(255, 255, 255, 0.05);
+.force-dark .text-white\/90 {
+  color: rgba(245, 236, 215, 0.9) !important;
 }
 
-.landing .bg-white\/10 {
-  background-color: rgba(255, 255, 255, 0.1);
+.force-dark .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
-.landing .bg-white\/20 {
-  background-color: rgba(255, 255, 255, 0.2);
+.force-dark .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.landing .border-white\/10 {
-  border-color: rgba(255, 255, 255, 0.1);
+.force-dark .bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.landing .border-white\/15 {
-  border-color: rgba(255, 255, 255, 0.15);
+.force-dark .border-white\/10 {
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.landing .border-white\/20 {
-  border-color: rgba(255, 255, 255, 0.2);
+.force-dark .border-white\/15 {
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-.landing nav {
-  background-color: rgba(0, 0, 0, 0.9);
-  border-color: rgba(255, 255, 255, 0.1);
+.force-dark .border-white\/20 {
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.landing footer {
-  background-color: rgba(0, 0, 0, 0.7);
-  border-color: rgba(255, 255, 255, 0.1);
+.force-dark nav {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.force-dark footer {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.force-dark .glass-panel {
+  background: rgba(8, 8, 8, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+.force-dark .feature-ui-card {
+  background: linear-gradient(145deg, #101010, #080808) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
 }
