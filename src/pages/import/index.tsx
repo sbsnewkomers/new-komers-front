@@ -601,7 +601,7 @@ export default function ImportPage() {
         body: JSON.stringify(templatePayload),
         snackbar: {
           showSuccess: true,
-          showError: true,
+          showError: false,
           successMessage: "✅ Mapping validé et sauvegardé avec succès !",
         },
       });
