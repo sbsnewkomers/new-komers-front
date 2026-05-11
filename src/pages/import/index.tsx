@@ -314,7 +314,6 @@ export default function ImportPage() {
     setWorkspaceId(null);
     setPeriodStart('');
     setPeriodEnd('');
-    setHasData(null);
     setIncludeDescendants(false);
 
     try {
