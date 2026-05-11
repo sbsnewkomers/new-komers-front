@@ -37,7 +37,6 @@ type AppSidebarNavProps = {
   footerItems?: readonly AppNavLinkItem[];
   /** Shown below footer links on desktop; on mobile, only main + footer inside nav (no bottom slot). */
   bottomSlot?: React.ReactNode;
-  footerRef?: React.Ref<HTMLDivElement>;
   onLinkClick?: () => void;
 };
 
@@ -48,7 +47,6 @@ export function AppSidebarNav({
   mainItems,
   footerItems = [],
   bottomSlot,
-  footerRef,
   onLinkClick,
 }: AppSidebarNavProps) {
   const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(
@@ -73,7 +71,9 @@ export function AppSidebarNav({
           const anyChildActive = item.children.some((c) =>
             isActivePath(pathname, c.href),
           );
-          if (anyChildActive) next[item.id] = true;
+          if (anyChildActive) {
+            next[item.id] = true;
+          }
         }
       }
       return next;
@@ -81,25 +81,24 @@ export function AppSidebarNav({
   }, [pathname, visibleMain]);
 
   const navLinkClass = (href: string) =>
-    "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-[13px] font-medium " +
+    "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 text-[13px] font-medium " +
     (isActivePath(pathname, href)
-      ? "bg-white/10 border border-white/20 text-white before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:rounded-full before:bg-linear-to-b before:from-(--nebula-gold-light) before:to-(--nebula-gold)"
-      : "text-(--nebula-muted) hover:bg-white/5 hover:text-white border border-transparent");
+      ? "bg-white/10 border border-white/20 text-white before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:rounded-full before:bg-linear-to-b before:from-(--nebula-gold-light) before:to-(--nebula-gold) shadow-md"
+      : "text-(--nebula-muted) hover:bg-white/8 hover:text-white hover:border-white/10 border border-transparent");
 
   const childLinkClass = (href: string) =>
-    `group flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-[13px] font-medium border ${
-      isActivePath(pathname, href)
-        ? "bg-white/10 border-white/20 text-white"
-        : "border-transparent text-(--nebula-muted) hover:bg-white/5 hover:text-white"
+    `group flex items-center gap-3 rounded-xl px-3 py-2 transition-all duration-200 text-[13px] font-medium border ${isActivePath(pathname, href)
+      ? "bg-white/10 border-white/20 text-white shadow-sm"
+      : "border-transparent text-(--nebula-muted) hover:bg-white/6 hover:text-white hover:border-white/10"
     }`;
 
   const groupButtonClass = (group: AppNavGroupItem) => {
     const active = group.children.some((c) => isActivePath(pathname, c.href));
     return (
-      "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all text-[13px] font-medium w-full text-left border " +
+      "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 text-[13px] font-medium w-full text-left border " +
       (active
-        ? "bg-white/10 border-white/20 text-white before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:rounded-full before:bg-linear-to-b before:from-(--nebula-gold-light) before:to-(--nebula-gold)"
-        : "border-transparent text-(--nebula-muted) hover:bg-white/5 hover:text-white")
+        ? "bg-white/10 border-white/20 text-white before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:rounded-full before:bg-linear-to-b before:from-(--nebula-gold-light) before:to-(--nebula-gold) shadow-md"
+        : "border-transparent text-(--nebula-muted) hover:bg-white/8 hover:text-white hover:border-white/10")
     );
   };
 
@@ -112,7 +111,7 @@ export function AppSidebarNav({
         className={navLinkClass(item.href)}
         onClick={onLinkClick}
       >
-        <Icon className="h-4 w-4" />
+        <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
         {item.label}
       </Link>
     );
@@ -130,10 +129,10 @@ export function AppSidebarNav({
           }
           className={groupButtonClass(item)}
         >
-          <Icon className="h-5 w-5" />
+          <Icon className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
           {item.label}
           <ChevronDown
-            className={`ml-auto h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+            className={`ml-auto h-4 w-4 transition-all duration-300 ${open ? "rotate-180 text-(--nebula-gold-light)" : "text-(--nebula-muted) group-hover:text-white"}`}
           />
         </button>
         {open && (
@@ -147,7 +146,7 @@ export function AppSidebarNav({
                   className={childLinkClass(child.href)}
                   onClick={onLinkClick}
                 >
-                  <ChildIcon className="h-4 w-4" />
+                  <ChildIcon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
                   {child.label}
                 </Link>
               );
@@ -182,7 +181,6 @@ export function AppSidebarNav({
       </nav>
 
       <div
-        ref={footerRef}
         className="mt-auto border-t border-white/10 pt-4 space-y-2"
       >
         {visibleFooter.map(renderLink)}
