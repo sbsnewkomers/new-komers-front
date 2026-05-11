@@ -213,9 +213,9 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  string: "border-sky-800 bg-sky-700 text-white dark:border-sky-400/30 dark:bg-sky-500/15 dark:text-sky-100",
-  number: "border-amber-800 bg-amber-700 text-white dark:border-amber-400/30 dark:bg-amber-500/15 dark:text-amber-100",
-  date: "border-violet-800 bg-violet-700 text-white dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-violet-100",
+  string: "border-sky-400/30 bg-sky-500/15 text-white",
+  number: "border-amber-400/30 bg-amber-500/15 text-white",
+  date: "border-violet-400/30 bg-violet-500/15 text-white",
 };
 
 // ─── Sous-composants ──────────────────────────────────────────────────────────
@@ -293,7 +293,18 @@ function FieldRow({ field }: { field: FieldInfo }) {
 // ─── Composant principal ──────────────────────────────────────────────────────
 
 export function ImportGuide() {
+  const [guideOpen, setGuideOpen] = useState(false);
   const [openSection, setOpenSection] = useState<"none" | "flow" | "fields" | "templates">("none");
+
+  const openGuide = () => {
+    setGuideOpen(true);
+    setOpenSection("flow");
+  };
+
+  const closeGuide = () => {
+    setGuideOpen(false);
+    setOpenSection("none");
+  };
 
   const toggle = (section: "flow" | "fields" | "templates") =>
     setOpenSection((prev) => (prev === section ? "none" : section));
@@ -301,18 +312,49 @@ export function ImportGuide() {
   const requiredFields = FIELD_DESCRIPTIONS.filter((f) => f.required);
   const optionalFields = FIELD_DESCRIPTIONS.filter((f) => !f.required);
 
+  if (!guideOpen) {
+    return (
+      <div className="nebula-glass rounded-3xl border border-white/10 overflow-hidden">
+        <button
+          type="button"
+          onClick={openGuide}
+          className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)/40"
+        >
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10">
+            <BookOpen className="h-4 w-4 text-(--nebula-gold-light)" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-white">Guide d&apos;utilisation</p>
+            <p className="text-xs text-(--nebula-muted)">
+              Cliquez pour afficher les 3 étapes du processus d&apos;import
+            </p>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0 text-(--nebula-muted)" aria-hidden />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="nebula-glass rounded-3xl border border-white/10 overflow-hidden">
-      {/* En-tête global */}
-      <div className="flex items-center gap-3 border-b border-white/10 bg-white/5 px-5 py-3">
-        <BookOpen className="h-4 w-4 text-(--nebula-gold-light)" />
-        <span className="text-sm font-semibold text-white">
-          Guide d&apos;utilisation
-        </span>
-        <span className="ml-auto text-[11px] text-(--nebula-muted)">
+      {/* En-tête global — réduire le guide */}
+      <button
+        type="button"
+        onClick={closeGuide}
+        className="flex w-full items-center gap-3 border-b border-white/10 bg-white/5 px-5 py-3 text-left transition-colors hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--nebula-gold-light)/40"
+        aria-expanded
+        aria-label="Réduire le guide"
+      >
+        <BookOpen className="h-4 w-4 shrink-0 text-(--nebula-gold-light)" />
+        <span className="text-sm font-semibold text-white">Guide d&apos;utilisation</span>
+        <span className="ml-auto hidden text-[11px] text-(--nebula-muted) sm:inline">
           Cliquez sur une section pour en savoir plus
         </span>
-      </div>
+        <ChevronDown
+          className="h-4 w-4 shrink-0 text-(--nebula-muted) transition-transform sm:ml-2 rotate-180"
+          aria-hidden
+        />
+      </button>
 
       {/* ── Section 1 : Fonctionnement ── */}
       <div className="border-b border-white/10">
