@@ -220,6 +220,7 @@ button {
     border-color 0.2s,
     box-shadow 0.2s,
     transform 0.2s;
+  cursor: pointer;
 }
 
 button:focus-visible,

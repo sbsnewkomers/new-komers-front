@@ -300,6 +300,7 @@ export function AppLayout({
                     type="button"
                     className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center"
                     aria-label="Aide"
+                    onClick={() => window.open("https://new-komers-guide.vercel.app/", "_blank")}
                   >
                     <HelpCircle className="h-5 w-5" />
                   </button>
