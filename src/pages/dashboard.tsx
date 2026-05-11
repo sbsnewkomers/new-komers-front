@@ -113,12 +113,6 @@ const isFiscalYearActiveToday = (fiscalYearStart: string, today: Date): boolean 
   return today >= activeBounds.start && today <= activeBounds.end;
 };
 
-const formatMonthDay = (fiscalYearStart: string): string => {
-  const parsed = parseMonthDay(fiscalYearStart);
-  if (!parsed) return fiscalYearStart;
-  return `${String(parsed.day).padStart(2, "0")}/${String(parsed.month).padStart(2, "0")}`;
-};
-
 export default function DashboardPage() {
   const { user, isAuthReady } = usePermissionsContext();
   const companies = useCompanies();
@@ -136,7 +130,8 @@ export default function DashboardPage() {
   React.useEffect(() => {
     if (!isAuthReady || !user) return;
     void companies.fetchList();
-  }, [isAuthReady, user, companies]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthReady, user]);
 
   // Simulate initial loading then rely on real data
   React.useEffect(() => {
@@ -144,12 +139,9 @@ export default function DashboardPage() {
     return () => clearTimeout(t);
   }, []);
 
-  // Initialize default widgets with real data once companies are loaded
-  React.useEffect(() => {
-    if (companies.loading) return;
+  const defaultWidgets = React.useMemo<Widget[]>(() => {
+    if (companies.loading) return [];
     const list = companies.list ?? [];
-    if (!list.length) return;
-    if (widgets.length > 0 || chartWidgets.length > 0) return;
 
     const today = new Date();
     const activeFiscalYears = list.filter((c) => {
@@ -164,66 +156,55 @@ export default function DashboardPage() {
       return db - da;
     })[0];
 
-    const byYearMap = new Map<string, number>();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    list.forEach((c: any) => {
-      if (!c.fiscal_year_start) return;
-      const label = formatMonthDay(c.fiscal_year_start);
-      byYearMap.set(label, (byYearMap.get(label) ?? 0) + 1);
-    });
-    const byYearData = Array.from(byYearMap.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([label, count]) => ({ name: label, value: count }));
+    return [
+      {
+        id: "k-total-companies",
+        type: "kpi",
+        title: "ENTREPRISES",
+        value: list.length.toString(),
+        description: "Total périmètre",
+        trend: "+1 ce mois",
+        trendUp: true,
+        icon: Building2,
+      },
+      {
+        id: "k-active-fiscal",
+        type: "kpi",
+        title: "EXERCICES EN COURS",
+        value: activeFiscalYears.toString(),
+        description: "Clôture prochaine",
+        trend: "Stable",
+        trendUp: true,
+        icon: Calendar,
+      },
+      latestCompany && {
+        id: "k-latest-company",
+        type: "kpi",
+        title: "DERNIÈRE CRÉATION",
+        value: latestCompany.name ?? "—",
+        description: latestCompany.siret ? `SIRET ${latestCompany.siret}` : "",
+        icon: Activity,
+      },
+    ].filter(Boolean) as Widget[];
+  }, [companies.loading, companies.list]);
 
-    setWidgets(
-      [
-        {
-          id: "k-total-companies",
-          type: "kpi",
-          title: "ENTREPRISES",
-          value: list.length.toString(),
-          description: "Total périmètre",
-          trend: "+1 ce mois",
-          trendUp: true,
-          icon: Building2,
-        },
-        {
-          id: "k-active-fiscal",
-          type: "kpi",
-          title: "EXERCICES EN COURS",
-          value: activeFiscalYears.toString(),
-          description: "Clôture prochaine",
-          trend: "Stable",
-          trendUp: true,
-          icon: Calendar,
-        },
-        latestCompany && {
-          id: "k-latest-company",
-          type: "kpi",
-          title: "DERNIÈRE CRÉATION",
-          value: latestCompany.name ?? "—",
-          description: latestCompany.siret
-            ? `SIRET ${latestCompany.siret}`
-            : "",
-          icon: Activity,
-        },
-      ].filter(Boolean) as Widget[],
-    );
+  // Keep chart visuals/data static (not DB/API-driven)
+  const defaultChartWidgets = React.useMemo<Widget[]>(
+    () => [
+      {
+        id: "c-static-demo",
+        type: "chart",
+        title: "Évolution (démo)",
+        chartType: "bar",
+        data: DEMO_CHART_DATA,
+      },
+    ],
+    [],
+  );
 
-    if (byYearData.length) {
-      setChartWidgets([
-        {
-          id: "c-companies-by-year",
-          type: "chart",
-          title: "Entreprises par début d'exercice",
-          chartType: "bar",
-          data: byYearData,
-        },
-      ]);
-    }
-  }, [companies.loading, companies.list, widgets.length, chartWidgets.length]);
-
-  const allWidgets = [...widgets, ...chartWidgets];
+  const effectiveWidgets = widgets.length ? widgets : defaultWidgets;
+  const effectiveChartWidgets = chartWidgets.length ? chartWidgets : defaultChartWidgets;
+  const allWidgets = [...effectiveWidgets, ...effectiveChartWidgets];
   const isEmpty = allWidgets.length === 0 && !loading;
   const companyList = companies.list ?? [];
   const selectedCompanyId = "";
@@ -338,7 +319,7 @@ export default function DashboardPage() {
       {!loading && !isEmpty && (
         <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {widgets.map((w) => (
+            {effectiveWidgets.map((w) => (
               <Card
                 key={w.id}
                 className="relative overflow-hidden nebula-blob"
@@ -381,7 +362,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-            {chartWidgets.map((w) => (
+            {effectiveChartWidgets.map((w) => (
               <>
                 <Card key={`${w.id}-primary`} className="flex flex-col nebula-blob overflow-hidden">
                   <div className="border-b border-white/10 bg-white/5 px-6 py-4">
