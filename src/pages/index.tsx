@@ -1,7 +1,10 @@
 import Head from "next/head";
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import * as React from "react";
+
+const DOCUMENTATION_URL = "https://new-komers-guide.vercel.app/";
 
 export default function LandingPage() {
   const { user, logout } = usePermissionsContext();
@@ -51,6 +54,17 @@ export default function LandingPage() {
             <li><a className="hover:text-(--accent) transition-colors" href="#features">Solutions</a></li>
             <li><a className="hover:text-(--accent) transition-colors" href="#pricing">Tarification</a></li>
             <li><a className="hover:text-(--accent) transition-colors" href="#contact">Contact</a></li>
+            <li>
+              <a
+                className="inline-flex items-center gap-1 hover:text-(--accent) transition-colors"
+                href={DOCUMENTATION_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Documentation
+                <ExternalLink className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+              </a>
+            </li>
           </ul>
 
           <div className="flex items-center justify-end gap-3">
@@ -125,6 +139,18 @@ export default function LandingPage() {
               <li><a className="hover:text-(--accent)" href="#features" onClick={() => setMobileOpen(false)}>Solutions</a></li>
               <li><a className="hover:text-(--accent)" href="#pricing" onClick={() => setMobileOpen(false)}>Tarification</a></li>
               <li><a className="hover:text-(--accent)" href="#contact" onClick={() => setMobileOpen(false)}>Contact</a></li>
+              <li>
+                <a
+                  className="inline-flex items-center gap-1.5 hover:text-(--accent)"
+                  href={DOCUMENTATION_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Documentation
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+                </a>
+              </li>
               <li className="pt-3">
                 <Link
                   href={user ? "/dashboard" : "/login"}
