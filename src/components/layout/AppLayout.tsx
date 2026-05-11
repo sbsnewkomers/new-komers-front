@@ -294,19 +294,6 @@ export function AppLayout({
                   >
                     <LogOut className="h-5 w-5" />
                   </button>
-
-                  {/* Logout Button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      logout();
-                      void router.push("/");
-                    }}
-                    className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center"
-                    aria-label="Déconnexion"
-                  >
-                    <LogOut className="h-5 w-5" />
-                  </button>
                 </div>
               </div>
             </header>
