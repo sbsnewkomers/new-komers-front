@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/patterns/PageHeader';
 import { loansApi } from '@/lib/loansApi';
@@ -35,6 +36,7 @@ type LoanTabKey =
     | 'manual';
 
 export default function LoansPage() {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<LoanTabKey>('overview');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<LoanStatus | 'all'>('all');
@@ -46,6 +48,40 @@ export default function LoansPage() {
     const { selectedLoan, loanStats, loadLoanDetails } = useLoanDetails();
     const { deleteConfirmOpen, loanToDelete, confirmDelete, cancelDelete, closeDialog } = useDeleteConfirm();
     const { user } = usePermissionsContext();
+
+    // Utiliser useRef pour éviter les boucles infinies
+    const processedUrlRef = useRef<string>('');
+
+    // Gérer les paramètres d'URL pour afficher directement les détails d'un emprunt
+    useEffect(() => {
+        const handleUrlParams = async () => {
+            if (router.isReady) {
+                const { tab, loanId } = router.query;
+                const urlKey = `${tab}-${loanId}`;
+
+                // Éviter de traiter la même URL plusieurs fois
+                if (processedUrlRef.current === urlKey) return;
+
+                if (tab === 'details' && loanId && typeof loanId === 'string') {
+                    // Éviter de recharger si on est déjà sur le bon onglet avec le bon emprunt
+                    const isAlreadyOnDetails = activeTab === 'details' && selectedLoan?.id === loanId;
+
+                    if (!isAlreadyOnDetails) {
+                        // Charger les détails de l'emprunt et afficher l'onglet détails
+                        await loadLoanDetails(loanId);
+                        setActiveTab('details');
+                        processedUrlRef.current = urlKey;
+                    }
+                } else if (tab && typeof tab === 'string' && activeTab !== tab) {
+                    // Afficher l'onglet demandé seulement si on n'y est pas déjà
+                    setActiveTab(tab as LoanTabKey);
+                    processedUrlRef.current = urlKey;
+                }
+            }
+        };
+
+        handleUrlParams();
+    }, [router.isReady, router.query, activeTab, selectedLoan?.id, loadLoanDetails]);
 
     const overviewStats = useMemo(() => {
         const validLoans = loans.filter((loan) => loan != null);
