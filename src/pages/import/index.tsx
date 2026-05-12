@@ -846,7 +846,9 @@ export default function ImportPage() {
             setRollbackConfirmOpen(true);
           }}
           onViewEntries={(row) => {
-            void router.push(`/import/entries?file=${encodeURIComponent(row.file)}`);
+            void router.push(
+              `/import/entries?file=${encodeURIComponent(row.file)}&dataImportId=${encodeURIComponent(row.id)}`
+            );
           }}
           disabled={isEndUser}
           currentUserEmail={currentUser?.email}

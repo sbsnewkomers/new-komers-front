@@ -29,10 +29,15 @@ function formatDate(value?: string | null): string {
 export default function ImportEntriesPage() {
   const router = useRouter();
   const queryFile = router.query.file;
+  const queryDataImportId = router.query.dataImportId;
   const selectedFile = useMemo(() => {
     if (Array.isArray(queryFile)) return queryFile[0] ?? "";
     return queryFile ?? "";
   }, [queryFile]);
+  const selectedDataImportId = useMemo(() => {
+  if (Array.isArray(queryDataImportId)) return queryDataImportId[0] ?? "";
+  return queryDataImportId ?? "";
+  }, [queryDataImportId]);
 
   const [items, setItems] = useState<ImportedAccountingEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -71,6 +76,9 @@ export default function ImportEntriesPage() {
           pageSize: String(PAGE_SIZE),
           movement,
         });
+        if (selectedDataImportId) {
+          params.set("dataImportId", selectedDataImportId);
+        }
         if (search) {
           params.set("search", search);
         }
@@ -92,8 +100,7 @@ export default function ImportEntriesPage() {
     };
 
     void loadEntries();
-  }, [selectedFile, page, movement, search]);
-
+  }, [selectedFile, selectedDataImportId, page, movement, search]);
   return (
     <AppLayout title="Ecritures comptables importees">
       <Head>
