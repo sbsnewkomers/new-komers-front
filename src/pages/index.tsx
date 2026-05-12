@@ -54,7 +54,7 @@ export default function LandingPage() {
             <li><a className="hover:text-(--accent) transition-colors" href="#features">Solutions</a></li>
             <li><a className="hover:text-(--accent) transition-colors" href="#pricing">Tarification</a></li>
             <li><a className="hover:text-(--accent) transition-colors" href="#contact">Contact</a></li>
-            <li>
+            {/* <li>
               <a
                 className="inline-flex items-center gap-1 hover:text-(--accent) transition-colors"
                 href={DOCUMENTATION_URL}
@@ -64,7 +64,7 @@ export default function LandingPage() {
                 Documentation
                 <ExternalLink className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
               </a>
-            </li>
+            </li> */}
           </ul>
 
           <div className="flex items-center justify-end gap-3">
