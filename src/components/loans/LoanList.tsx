@@ -156,7 +156,7 @@ export function LoanList({
             <div className="nebula-glass rounded-3xl border border-white/10 p-3 sm:p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <div className="relative min-w-0 flex-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
                     <Input
                         placeholder="Rechercher un emprunt..."
                         value={searchTerm}
