@@ -1,8 +1,8 @@
-import { CheckCircle2, XCircle, Clock, Ban, Archive, RotateCcw, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Ban, Archive, RotateCcw, AlertCircle,Loader2  } from "lucide-react";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import type { ReactNode } from "react";
 
-type StatusKey = 'active' | 'archived' | 'deleted' | 'failed';
+type StatusKey = 'active' | 'archived' | 'deleted' | 'failed' | 'processing';
 
 const STATUS_MAP: Record<StatusKey, { variant: BadgeVariant; icon: ReactNode; label: string }> = {
   active: {
@@ -24,6 +24,11 @@ const STATUS_MAP: Record<StatusKey, { variant: BadgeVariant; icon: ReactNode; la
     variant: "warning",
     icon: <AlertCircle className="h-3.5 w-3.5" />,
     label: "Échoué",
+  },
+  processing: {
+    variant: "info",
+    icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />,
+    label: "En cours",
   },
   
 };

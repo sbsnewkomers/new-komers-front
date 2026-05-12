@@ -445,6 +445,7 @@ useEffect(() => {
         await apiFetch("/mapping-templates", {
           method: "POST",
           body: JSON.stringify(payload),
+          snackbar: { showSuccess: false, showError: false },
         });
         await Promise.all([
           effectiveWorkspaceId
@@ -453,6 +454,7 @@ useEffect(() => {
           fetchGlobalMappings(),
         ]);
         setSaveDialogOpen(false);
+        onOpenChange(false); 
         setTab("editor"); // s'assurer qu'on est sur l'onglet editor
         setFeedback({
           tone: "success",
@@ -466,13 +468,17 @@ useEffect(() => {
         onOpenChange(false);
       } catch (err) {
         console.error(err);
+        const message =
+          err && typeof err === "object" && "message" in err
+            ? String((err as { message?: unknown }).message ?? "Erreur inconnue")
+            : "Erreur inconnue";
+        setSaveDialogOpen(false);
         setFeedback({
           tone: "error",
-          message: "Impossible d'enregistrer le mapping.",
+          message, // ← vrai message backend
         });
-        onSaveError?.("Impossible d'enregistrer le mapping.");
-        
-      } finally {
+        onSaveError?.(message);
+}finally {
         setIsSaving(false);
       }
     },
@@ -537,6 +543,7 @@ useEffect(() => {
         await apiFetch("/mapping-templates", {
           method: "POST",
           body: JSON.stringify(payload),
+          snackbar: { showSuccess: false, showError: false },
         });
         await Promise.all([
           effectiveWorkspaceId
@@ -558,14 +565,20 @@ useEffect(() => {
           "Mapping dupliqué ✅",
           `Le mapping « ${value.name} » a été créé comme nouvelle version.`,
         );
-      } catch (err) {
+      }catch (err) {
         console.error(err);
+        const message =
+          err && typeof err === "object" && "message" in err
+            ? String((err as { message?: unknown }).message ?? "Erreur inconnue")
+            : "Erreur inconnue";
+        setSaveAsNewDialogOpen(false);
+        onOpenChange(false)
         setDetailFeedback({
           tone: "error",
-          message: "Impossible d'enregistrer le nouveau mapping.",
+          message, // ← vrai message backend
         });
-        onSaveError?.("Impossible d'enregistrer le nouveau mapping.");
-      } finally {
+        onSaveError?.(message);
+      }finally {
         setIsSaving(false);
       }
     },
