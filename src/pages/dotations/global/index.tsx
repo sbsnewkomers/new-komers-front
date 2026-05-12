@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
+import { globalDotationsApi } from '@/lib/globalDotationsApi';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { GlobalDotationList } from '@/components/dotations/global/GlobalDotationList';
 import { GlobalDotationForm } from '@/components/dotations/global/GlobalDotationForm';
@@ -19,6 +20,7 @@ export default function GlobalDotationsPage() {
   const [selectedDotation, setSelectedDotation] = useState<GlobalDotation | undefined>();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const entityName = useEntityName(selectedDotation, viewMode);
+  const processedUrlRef = useRef<string>('');
 
   const { workspaces } = useWorkspaceContext();
 
@@ -53,6 +55,34 @@ export default function GlobalDotationsPage() {
   const handleBackToAssets = () => {
     router.push('/dotations');
   };
+
+  // Gérer les paramètres d'URL pour afficher directement les détails d'une dotation
+  useEffect(() => {
+    const handleUrlParams = async () => {
+      if (router.isReady) {
+        const { view, dotationId } = router.query;
+        const urlKey = `${view}-${dotationId}`;
+
+        // Éviter de traiter la même URL plusieurs fois
+        if (processedUrlRef.current === urlKey) return;
+
+        if (view === 'details' && dotationId && typeof dotationId === 'string') {
+          try {
+            // Charger la dotation spécifique
+            const dotation = await globalDotationsApi.getGlobalDotationById(dotationId);
+            setSelectedDotation(dotation);
+            setViewMode('view');
+            processedUrlRef.current = urlKey;
+          } catch (error) {
+            console.error('Erreur lors du chargement de la dotation:', error);
+            setViewMode('list');
+          }
+        }
+      }
+    };
+
+    handleUrlParams();
+  }, [router.isReady, router.query]);
 
   return (
     <AppLayout title="Dotations Globales - Mode Simplifié">
