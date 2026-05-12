@@ -430,7 +430,7 @@ export default function AuditPage() {
               className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden"
             >
               <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
-                § {s.label}
+                {s.label}
               </p>
               <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
                 {s.value}
@@ -448,7 +448,7 @@ export default function AuditPage() {
         {/* Filters */}
         <div className="nebula-glass nebula-blob rounded-3xl p-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="relative min-w-0 flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
             <Input
               placeholder="Rechercher..."
               value={search}

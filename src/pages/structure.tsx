@@ -2719,7 +2719,7 @@ export default function StructurePage() {
                           <div>
                             {completion !== null && (
                               <div className="flex items-center gap-2">
-                                <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden">
+                                <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden border border-primary">
                                   <div
                                     className={`h-1.5 rounded-full transition-all duration-500 ${completion === 100
                                       ? "bg-green-500"
@@ -2730,7 +2730,7 @@ export default function StructurePage() {
                                     style={{ width: `${completion}%` }}
                                   />
                                 </div>
-                                <span className="text-[10px] tabular-nums text-white/45 font-medium">
+                                <span className="text-[10px] tabular-nums text-(--nebula-muted) font-medium">
                                   {completion}%
                                 </span>
                               </div>
@@ -2747,7 +2747,7 @@ export default function StructurePage() {
                                   <button
                                     type="button"
                                     onClick={(e) => e.stopPropagation()}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-(--nebula-muted) opacity-100 transition-all hover:bg-white/10 hover:text-primary hover:shadow-md md:opacity-0 md:group-hover/row:opacity-100"
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-(--nebula-muted) opacity-100 transition-all hover:bg-white/10 hover:text-primary hover:shadow-md md:group-hover/row:opacity-100"
                                   >
                                     <MoreHorizontal className="h-4 w-4" />
                                   </button>
