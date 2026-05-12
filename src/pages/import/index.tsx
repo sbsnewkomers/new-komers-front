@@ -156,6 +156,18 @@ export default function ImportPage() {
     fetchHistory();
   }, []);
 
+  // ← AJOUTE ICI
+  useEffect(() => {
+    const hasProcessing = history.some((row) => row.status === "processing");
+    if (!hasProcessing) return;
+
+    const interval = setInterval(async () => {
+      await fetchHistory();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [history, fetchHistory]);
+
   const companyList = companies.list ?? [];
 
   const applySavedMapping = (savedMapping: SavedMapping) => {
