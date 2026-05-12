@@ -268,7 +268,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-primary">Vue d&apos;ensemble</h2>
-            <p className="text-sm text-slate-500">Tableau de bord avec indicateurs clés et widgets personnalisables.</p>
+            <p className="text-sm text-(--nebula-muted)">Tableau de bord avec indicateurs clés et widgets personnalisables.</p>
           </div>
         </div>
 
@@ -352,7 +352,7 @@ export default function DashboardPage() {
                         </span>
                       )}
                       {w.description && (
-                        <span className="text-slate-400">{w.description}</span>
+                        <span className="text-(--nebula-muted)">{w.description}</span>
                       )}
                     </div>
                   )}

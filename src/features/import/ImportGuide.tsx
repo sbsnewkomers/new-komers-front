@@ -267,7 +267,7 @@ function FieldRow({ field }: { field: FieldInfo }) {
           {TYPE_LABELS[field.type]}
         </span>
         {field.required ? (
-          <span className="inline-flex items-center gap-0.5 rounded-full border border-red-800 bg-red-700 px-1.5 py-0.5 text-[10px] font-medium text-white dark:border-red-400/30 dark:bg-red-500/15 dark:text-red-100">
+          <span className="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium border-red-400/30 bg-red-500/15 text-red-700">
             <CheckCircle2 className="h-2.5 w-2.5" />
             Requis
           </span>
@@ -386,7 +386,7 @@ export function ImportGuide() {
 
             <div className="mt-4 rounded-xl border-border bg-card p-3">
               <div className="flex items-start gap-2">
-                <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-yellow-600 dark:text-yellow-400" />
+                <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-yellow-400" />
                 <p className="text-xs text-foreground">
                   <span className="font-semibold text-foreground">Bon à savoir : </span>
                   Si l&apos;entité cible contient déjà des données, un message de confirmation vous sera présenté avant tout remplacement. Les données précédentes sont archivées et peuvent être restaurées depuis l&apos;historique.
@@ -411,7 +411,7 @@ export function ImportGuide() {
             {/* Requis */}
             <div>
               <div className="mb-2 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full border border-red-800 bg-red-700 px-2 py-0.5 text-[11px] font-semibold text-white dark:border-red-400/30 dark:bg-red-500/15 dark:text-red-100">
+                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold border-red-400/30 bg-red-500/15 text-red-700">
                   <CheckCircle2 className="h-3 w-3" />
                   Champs obligatoires
                 </span>
@@ -440,17 +440,17 @@ export function ImportGuide() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-sky-300 bg-sky-100 p-3 dark:border-sky-600 dark:bg-sky-800">
+            <div className="rounded-xl border border-sky-300 bg-sky-100 p-3">
               <div className="flex items-start gap-2">
-                <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-black dark:text-white" />
-                <p className="text-xs text-black dark:text-white">
+                <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-black" />
+                <p className="text-xs text-black">
                   <span className="font-semibold">Format des dates : </span>
                   Toutes les dates doivent être au format{" "}
-                  <code className="rounded border border-sky-400 bg-sky-200 px-1 font-mono text-[11px] text-black dark:border-sky-600/30 dark:bg-sky-800/50 dark:text-white">
+                  <code className="rounded border border-sky-400 bg-sky-200 px-1 font-mono text-[11px] text-white">
                     AAAAMMJJ
                   </code>{" "}
                   (ex :{" "}
-                  <code className="rounded border border-sky-400 bg-sky-200 px-1 font-mono text-[11px] text-black dark:border-sky-600/30 dark:bg-sky-800/50 dark:text-white">
+                  <code className="rounded border border-sky-400 bg-sky-200 px-1 font-mono text-[11px] text-white">
                     20240131
                   </code>{" "}
                   pour le 31 janvier 2024).
@@ -516,7 +516,7 @@ export function ImportGuide() {
               ))}
             </div>
 
-            <div className="rounded-xl border border-sky-300 bg-sky-100 p-3 dark:border-sky-600 dark:bg-sky-800">
+            <div className="rounded-xl border border-sky-300 bg-sky-100 p-3">
               <div className="flex items-start gap-2">
                 <Wand2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-200" />
                 <p className="text-xs text-violet-100/95">
