@@ -554,7 +554,7 @@ export default function UsersPage() {
                   className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden"
                 >
                   <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
-                    § {s.label}
+                    {s.label}
                   </p>
                   <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
                     {s.value}
@@ -573,7 +573,7 @@ export default function UsersPage() {
             <FilterBar
               search={
                 <div className="relative min-w-0">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
                   <Input
                     placeholder="Rechercher un utilisateur..."
                     value={search}
@@ -756,7 +756,7 @@ export default function UsersPage() {
                   className="nebula-glass nebula-blob rounded-3xl p-6 relative overflow-hidden"
                 >
                   <p className="text-[10px] uppercase tracking-[0.2em] text-(--nebula-muted)">
-                    § {s.label}
+                    {s.label}
                   </p>
                   <p className="mt-3 text-3xl font-bold font-mono nebula-grad-text tabular-nums">
                     {s.value}
@@ -775,7 +775,7 @@ export default function UsersPage() {
             <FilterBar
               search={
                 <div className="relative min-w-0 sm:min-w-[200px] sm:max-w-xs">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
                   <Input placeholder="Rechercher par email..." value={invSearch} onChange={(e) => setInvSearch(e.target.value)} className="h-9 pl-10" />
                 </div>
               }
