@@ -152,6 +152,12 @@ export function ImportHistory({ history, historyOpen, onToggle, onRollback, onVi
                             Restaurer
                           </Button>
                         )}
+                        {/* Message pendant le traitement */}
+                          {row.status === "processing" && (
+                            <span className="text-xs text-blue-300/70 italic">
+                              Traitement en cours...
+                            </span>
+                          )}
 
                       </div>
                     </TableCell>

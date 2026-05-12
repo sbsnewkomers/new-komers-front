@@ -3,7 +3,7 @@ export interface ImportHistoryRow {
   id: string;
   file: string;
   date: string;
-  status: 'active' | 'archived' | 'deleted' | 'failed';
+  status: 'active' | 'archived' | 'deleted' | 'failed' | 'processing'; 
   errorMessage?: string | null;
   entityType: string;
   entityName: string;
