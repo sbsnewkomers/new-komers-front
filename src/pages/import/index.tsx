@@ -156,6 +156,18 @@ export default function ImportPage() {
     fetchHistory();
   }, []);
 
+  // ← AJOUTE ICI
+  useEffect(() => {
+    const hasProcessing = history.some((row) => row.status === "processing");
+    if (!hasProcessing) return;
+
+    const interval = setInterval(async () => {
+      await fetchHistory();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [history, fetchHistory]);
+
   const companyList = companies.list ?? [];
 
   const applySavedMapping = (savedMapping: SavedMapping) => {
@@ -329,13 +341,23 @@ export default function ImportPage() {
           { snackbar: { showSuccess: false, showError: false } }
         );
         setWorkspaceId(group.workspace_id ?? null);
-      } else if (entityType === 'BusinessUnit') {
-        const bu = await apiFetch<{ workspace_id: string }>(
-          `/business-units/${entityId}`,
+      }  else if (entityType === 'BusinessUnit') {
+      const bu = await apiFetch<{ workspace_id: string; company_id: string }>(
+        `/business-units/${entityId}`,
+        { snackbar: { showSuccess: false, showError: false } }
+      );
+      
+      if (bu.workspace_id) {
+        setWorkspaceId(bu.workspace_id);
+      } else if (bu.company_id) {
+        // Remonter à la company pour récupérer le workspace
+        const company = await apiFetch<{ workspace_id: string }>(
+          `/companies/${bu.company_id}`,
           { snackbar: { showSuccess: false, showError: false } }
         );
-        setWorkspaceId(bu.workspace_id ?? null);
+        setWorkspaceId(company.workspace_id ?? null);
       }
+    }
     } catch {
       setWorkspaceId(null);
     }
