@@ -267,7 +267,7 @@ function FieldRow({ field }: { field: FieldInfo }) {
           {TYPE_LABELS[field.type]}
         </span>
         {field.required ? (
-          <span className="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium border-red-400/30 bg-red-500/15 text-red-700">
+          <span className="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium border-red-400/30 bg-red-500/15 text-red-400">
             <CheckCircle2 className="h-2.5 w-2.5" />
             Requis
           </span>
@@ -411,7 +411,7 @@ export function ImportGuide() {
             {/* Requis */}
             <div>
               <div className="mb-2 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold border-red-400/30 bg-red-500/15 text-red-700">
+                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold border-red-400/30 bg-red-500/15 text-red-400">
                   <CheckCircle2 className="h-3 w-3" />
                   Champs obligatoires
                 </span>
