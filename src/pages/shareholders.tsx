@@ -18,8 +18,12 @@ import {
   createShareholder,
   updateShareholder,
   deleteShareholder,
+  toCreateShareholderInput,
+  toUpdateShareholderInput,
+  getShareholderDisplayLabel,
+  getShareholderSearchText,
   type ShareholderDto,
-  ownerTypeLabel,
+  shareholderKindLabel,
 } from "@/lib/shareholdersApi";
 import { fetchUsers, type UserItem } from "@/lib/usersApi";
 import { useCompanies } from "@/hooks";
@@ -38,6 +42,7 @@ export default function ShareholdersPage() {
   const [search, setSearch] = useState("");
 
   const [users, setUsers] = useState<UserItem[]>([]);
+  const [formMetaLoaded, setFormMetaLoaded] = useState(false);
   const companiesHook = useCompanies();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -50,24 +55,42 @@ export default function ShareholdersPage() {
   const canManageShareholders =
     user?.role && (user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "MANAGER");
 
-  const loadAll = useCallback(async () => {
+  const loadShareholdersOnly = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [sh, us] = await Promise.all([fetchShareholders(), fetchUsers()]);
+      const sh = await fetchShareholders();
       setShareholders(sh);
-      setUsers(us);
-      await companiesHook.fetchList();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Impossible de charger les actionnaires.");
     } finally {
       setLoading(false);
     }
-  }, [companiesHook.fetchList]);
+  }, []);
 
   useEffect(() => {
-    void loadAll();
-  }, [loadAll]);
+    void loadShareholdersOnly();
+  }, [loadShareholdersOnly]);
+
+  /** Listes utilisateurs / entreprises pour le formulaire uniquement (lazy). */
+  useEffect(() => {
+    if (!formOpen || formMetaLoaded) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const [us] = await Promise.all([fetchUsers(), companiesHook.fetchList()]);
+        if (!cancelled) {
+          setUsers(us);
+          setFormMetaLoaded(true);
+        }
+      } catch {
+        if (!cancelled) setFormMetaLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [formOpen, formMetaLoaded, companiesHook]);
 
   const companyOptions = useMemo(
     () => (companiesHook.list ?? []).map((c) => ({ id: c.id, name: c.name })),
@@ -84,29 +107,10 @@ export default function ShareholdersPage() {
     [users],
   );
 
-  const findUserLabel = (id: string): string => {
-    const u = userOptionsForDialog.find((x) => x.id === id);
-    if (!u) return id;
-    return `${u.label} (${u.secondary})`;
-  };
-
-  const findCompanyName = (id: string): string => {
-    const c = companyOptions.find((x) => x.id === id);
-    return c?.name ?? id;
-  };
-
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     if (!q) return shareholders;
-    return shareholders.filter((s) => {
-      const ownerLabel =
-        s.ownerType === "USER" ? findUserLabel(s.ownerId).toLowerCase() : findCompanyName(s.ownerId).toLowerCase();
-      const companiesNames = (s.companies ?? [])
-        .map((c) => c.name ?? "")
-        .join(", ")
-        .toLowerCase();
-      return ownerLabel.includes(q) || companiesNames.includes(q);
-    });
+    return shareholders.filter((s) => getShareholderSearchText(s).includes(q));
   }, [shareholders, search]);
 
   const openCreate = () => {
@@ -115,13 +119,62 @@ export default function ShareholdersPage() {
   };
 
   const openEdit = (s: ShareholderDto) => {
-    setFormInitial({
-      id: s.id,
-      ownerType: s.ownerType,
-      ownerId: s.ownerId,
-      percentage: s.percentage,
-      companyIds: (s.companies ?? []).map((c) => c.id),
-    });
+    const companyIds = (s.companies ?? []).map((c) => c.id);
+    const emptyPerson = {
+      lastName: "",
+      firstName: "",
+      address: "",
+      email: "",
+      phone: "",
+    };
+    const emptyCo = {
+      companyName: "",
+      siret: "",
+      email: "",
+      phone: "",
+      address: "",
+    };
+    if (s.ownerType === "USER") {
+      setFormInitial({
+        id: s.id,
+        ownerKind: "USER_LINKED",
+        ownerId: s.ownerId,
+        externalPerson: null,
+        externalCompany: null,
+        percentage: s.percentage,
+        companyIds,
+      });
+    } else if (s.ownerType === "COMPANY") {
+      setFormInitial({
+        id: s.id,
+        ownerKind: "COMPANY_LINKED",
+        ownerId: s.ownerId,
+        externalPerson: null,
+        externalCompany: null,
+        percentage: s.percentage,
+        companyIds,
+      });
+    } else if (s.ownerType === "EXTERNAL_PERSON") {
+      setFormInitial({
+        id: s.id,
+        ownerKind: "USER_EXTERNAL",
+        ownerId: "",
+        externalPerson: s.externalPerson ?? emptyPerson,
+        externalCompany: null,
+        percentage: s.percentage,
+        companyIds,
+      });
+    } else {
+      setFormInitial({
+        id: s.id,
+        ownerKind: "COMPANY_EXTERNAL",
+        ownerId: "",
+        externalPerson: null,
+        externalCompany: s.externalCompany ?? emptyCo,
+        percentage: s.percentage,
+        companyIds,
+      });
+    }
     setFormOpen(true);
   };
 
@@ -129,20 +182,10 @@ export default function ShareholdersPage() {
     setFormSaving(true);
     try {
       if (values.id) {
-        const updated = await updateShareholder(values.id, {
-          ownerType: values.ownerType,
-          ownerId: values.ownerId,
-          percentage: values.percentage,
-          companyIds: values.companyIds,
-        });
+        const updated = await updateShareholder(values.id, toUpdateShareholderInput(values));
         setShareholders((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
       } else {
-        const created = await createShareholder({
-          ownerType: values.ownerType,
-          ownerId: values.ownerId,
-          percentage: values.percentage,
-          companyIds: values.companyIds,
-        });
+        const created = await createShareholder(toCreateShareholderInput(values));
         setShareholders((prev) => [created, ...prev]);
       }
       setFormOpen(false);
@@ -244,14 +287,17 @@ export default function ShareholdersPage() {
               </thead>
               <tbody className="divide-y divide-primary/30">
                 {filtered.map((s) => {
-                  const ownerLabel =
-                    s.ownerType === "USER" ? findUserLabel(s.ownerId) : findCompanyName(s.ownerId);
+                  const ownerLabel = getShareholderDisplayLabel(s);
                   return (
                     <tr key={s.id} className="hover:bg-primary/30">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                            {s.ownerType === "USER" ? <Users className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
+                            {s.ownerType === "USER" || s.ownerType === "EXTERNAL_PERSON" ? (
+                              <Users className="h-4 w-4" />
+                            ) : (
+                              <Building2 className="h-4 w-4" />
+                            )}
                           </div>
                           <div className="flex flex-col">
                             <span className="font-medium text-foreground">{ownerLabel}</span>
@@ -260,7 +306,7 @@ export default function ShareholdersPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-foreground">
-                          {ownerTypeLabel(s.ownerType)}
+                          {shareholderKindLabel(s)}
                         </span>
                       </td>
                       <td className="px-4 py-3">

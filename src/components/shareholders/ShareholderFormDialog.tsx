@@ -12,17 +12,32 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Users, Building2, X, Check } from "lucide-react";
-import type { ShareholderOwnerType } from "@/lib/shareholdersApi";
+import type {
+  ShareholderFormValues,
+  ShareholderOwnerKind,
+  ExternalPersonInput,
+  ExternalCompanyInput,
+} from "@/lib/shareholdersApi";
+
+export type { ShareholderFormValues, ShareholderOwnerKind } from "@/lib/shareholdersApi";
 
 type OwnerOption = { id: string; label: string; secondary?: string };
 type CompanyOption = { id: string; name: string };
 
-export type ShareholderFormValues = {
-  id?: string;
-  ownerType: ShareholderOwnerType;
-  ownerId: string;
-  percentage: number;
-  companyIds: string[];
+const emptyExternal: ExternalPersonInput = {
+  lastName: "",
+  firstName: "",
+  address: "",
+  email: "",
+  phone: "",
+};
+
+const emptyExternalCompany: ExternalCompanyInput = {
+  companyName: "",
+  siret: "",
+  email: "",
+  phone: "",
+  address: "",
 };
 
 type Props = {
@@ -150,6 +165,14 @@ function SearchableSelect({
   );
 }
 
+function isPersonKind(k: ShareholderOwnerKind): boolean {
+  return k === "USER_LINKED" || k === "USER_EXTERNAL";
+}
+
+function isCompanyKind(k: ShareholderOwnerKind): boolean {
+  return k === "COMPANY_LINKED" || k === "COMPANY_EXTERNAL";
+}
+
 export function ShareholderFormDialog({
   open,
   onOpenChange,
@@ -161,10 +184,16 @@ export function ShareholderFormDialog({
   lockedCompanyId,
   title,
 }: Props) {
-  const [ownerType, setOwnerType] = useState<ShareholderOwnerType>(
-    initial?.ownerType ?? "USER",
+  const [ownerKind, setOwnerKind] = useState<ShareholderOwnerKind>(
+    initial?.ownerKind ?? "USER_LINKED",
   );
   const [ownerId, setOwnerId] = useState(initial?.ownerId ?? "");
+  const [external, setExternal] = useState<ExternalPersonInput>(
+    () => ({ ...emptyExternal, ...initial?.externalPerson }),
+  );
+  const [externalCompany, setExternalCompany] = useState<ExternalCompanyInput>(
+    () => ({ ...emptyExternalCompany, ...initial?.externalCompany }),
+  );
   const [percentage, setPercentage] = useState(
     initial?.percentage?.toString() ?? "",
   );
@@ -175,8 +204,10 @@ export function ShareholderFormDialog({
 
   useEffect(() => {
     if (open) {
-      setOwnerType(initial?.ownerType ?? "USER");
+      setOwnerKind(initial?.ownerKind ?? "USER_LINKED");
       setOwnerId(initial?.ownerId ?? "");
+      setExternal({ ...emptyExternal, ...initial?.externalPerson });
+      setExternalCompany({ ...emptyExternalCompany, ...initial?.externalCompany });
       setPercentage(initial?.percentage?.toString() ?? "");
       setSelectedCompanyIds(
         initial?.companyIds ?? (lockedCompanyId ? [lockedCompanyId] : []),
@@ -198,16 +229,36 @@ export function ShareholderFormDialog({
   }, []);
 
   const isEditing = !!initial?.id;
-  const isValid = ownerId && percentage && !Number.isNaN(Number(percentage));
+  const pctNum = Number(percentage);
+  const pctOk = percentage !== "" && !Number.isNaN(pctNum);
+  const isValid = useMemo(() => {
+    if (!pctOk) return false;
+    switch (ownerKind) {
+      case "USER_LINKED":
+        return !!ownerId;
+      case "USER_EXTERNAL":
+        return (
+          external.lastName.trim().length > 0 && external.firstName.trim().length > 0
+        );
+      case "COMPANY_LINKED":
+        return !!ownerId;
+      case "COMPANY_EXTERNAL":
+        return externalCompany.companyName.trim().length > 0;
+      default:
+        return false;
+    }
+  }, [ownerKind, ownerId, external.lastName, external.firstName, externalCompany.companyName, pctOk]);
 
   const handleSubmit = async () => {
     if (!isValid) return;
     await onSubmit({
       id: initial?.id,
-      ownerType,
+      ownerKind,
       ownerId,
-      percentage: Number(percentage),
+      percentage: pctNum,
       companyIds: selectedCompanyIds,
+      externalPerson: ownerKind === "USER_EXTERNAL" ? { ...external } : null,
+      externalCompany: ownerKind === "COMPANY_EXTERNAL" ? { ...externalCompany } : null,
     });
   };
 
@@ -221,6 +272,11 @@ export function ShareholderFormDialog({
     [companyOptions],
   );
 
+  const personLinked = ownerKind === "USER_LINKED";
+  const personExternal = ownerKind === "USER_EXTERNAL";
+  const companyLinked = ownerKind === "COMPANY_LINKED";
+  const companyExternal = ownerKind === "COMPANY_EXTERNAL";
+
   return (
     <Dialog open={open} onOpenChange={(v) => !saving && onOpenChange(v)}>
       <DialogContent size="lg">
@@ -231,7 +287,6 @@ export function ShareholderFormDialog({
         </DialogHeader>
 
         <DialogBody className="space-y-5">
-          {/* Owner type toggle */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
               Type d&apos;actionnaire
@@ -239,13 +294,15 @@ export function ShareholderFormDialog({
             <div className="flex gap-2">
               <button
                 type="button"
-                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${ownerType === "USER"
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${isPersonKind(ownerKind)
                   ? "border-primary bg-primary text-primary-foreground shadow-sm"
                   : "border-input bg-background text-muted-foreground hover:border-border hover:bg-muted"
                   }`}
                 onClick={() => {
-                  setOwnerType("USER");
+                  setOwnerKind("USER_LINKED");
                   setOwnerId("");
+                  setExternal({ ...emptyExternal });
+                  setExternalCompany({ ...emptyExternalCompany });
                 }}
               >
                 <Users className="h-4 w-4" />
@@ -253,46 +310,262 @@ export function ShareholderFormDialog({
               </button>
               <button
                 type="button"
-                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${ownerType === "COMPANY"
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${isCompanyKind(ownerKind)
                   ? "border-primary bg-primary text-primary-foreground shadow-sm"
                   : "border-input bg-background text-muted-foreground hover:border-border hover:bg-muted"
                   }`}
                 onClick={() => {
-                  setOwnerType("COMPANY");
+                  setOwnerKind("COMPANY_LINKED");
                   setOwnerId("");
+                  setExternal({ ...emptyExternal });
+                  setExternalCompany({ ...emptyExternalCompany });
                 }}
               >
                 <Building2 className="h-4 w-4" />
                 Entreprise
               </button>
             </div>
+            {isPersonKind(ownerKind) && (
+              <p className="text-xs text-muted-foreground">
+                Compte utilisateur de la plateforme ou saisie manuelle pour une personne externe.
+              </p>
+            )}
+            {isCompanyKind(ownerKind) && (
+              <p className="text-xs text-muted-foreground">
+                Société présente dans la plateforme ou saisie d&apos;une entreprise externe.
+              </p>
+            )}
           </div>
 
-          {/* Owner searchable select */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
-              {ownerType === "USER" ? "Utilisateur" : "Entreprise actionnaire"}
-            </label>
-            <SearchableSelect
-              options={ownerType === "USER" ? userAsOwnerOptions : companyAsOwnerOptions}
-              value={ownerId}
-              onChange={setOwnerId}
-              placeholder={
-                ownerType === "USER"
-                  ? "Sélectionner un utilisateur..."
-                  : "Sélectionner une entreprise..."
-              }
-              icon={
-                ownerType === "USER" ? (
-                  <Users className="h-4 w-4 shrink-0 text-slate-400" />
-                ) : (
-                  <Building2 className="h-4 w-4 shrink-0 text-slate-400" />
-                )
-              }
-            />
-          </div>
+          {isPersonKind(ownerKind) && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Origine de la personne
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className={`flex flex-1 items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium transition-all sm:text-sm ${personLinked
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-input bg-background text-muted-foreground hover:bg-muted"
+                    }`}
+                  onClick={() => {
+                    setOwnerKind("USER_LINKED");
+                    setExternal({ ...emptyExternal });
+                  }}
+                >
+                  Utilisateur existant
+                </button>
+                <button
+                  type="button"
+                  className={`flex flex-1 items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium transition-all sm:text-sm ${personExternal
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-input bg-background text-muted-foreground hover:bg-muted"
+                    }`}
+                  onClick={() => {
+                    setOwnerKind("USER_EXTERNAL");
+                    setOwnerId("");
+                  }}
+                >
+                  Personne externe
+                </button>
+              </div>
+            </div>
+          )}
 
-          {/* Percentage */}
+          {isCompanyKind(ownerKind) && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Origine de l&apos;entreprise
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className={`flex flex-1 items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium transition-all sm:text-sm ${companyLinked
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-input bg-background text-muted-foreground hover:bg-muted"
+                    }`}
+                  onClick={() => {
+                    setOwnerKind("COMPANY_LINKED");
+                    setExternalCompany({ ...emptyExternalCompany });
+                  }}
+                >
+                  Entreprise plateforme
+                </button>
+                <button
+                  type="button"
+                  className={`flex flex-1 items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium transition-all sm:text-sm ${companyExternal
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-input bg-background text-muted-foreground hover:bg-muted"
+                    }`}
+                  onClick={() => {
+                    setOwnerKind("COMPANY_EXTERNAL");
+                    setOwnerId("");
+                  }}
+                >
+                  Entreprise externe
+                </button>
+              </div>
+            </div>
+          )}
+
+          {personLinked && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Utilisateur
+              </label>
+              <SearchableSelect
+                options={userAsOwnerOptions}
+                value={ownerId}
+                onChange={setOwnerId}
+                placeholder="Sélectionner un utilisateur..."
+                icon={<Users className="h-4 w-4 shrink-0 text-slate-400" />}
+              />
+            </div>
+          )}
+
+          {personExternal && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Nom et prénom obligatoires ; adresse, mail et téléphone optionnels.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">
+                    Nom <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    value={external.lastName}
+                    onChange={(e) => setExternal((p) => ({ ...p, lastName: e.target.value }))}
+                    placeholder="Nom"
+                    autoComplete="family-name"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">
+                    Prénom <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    value={external.firstName}
+                    onChange={(e) => setExternal((p) => ({ ...p, firstName: e.target.value }))}
+                    placeholder="Prénom"
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-sm font-medium text-foreground">Adresse</label>
+                  <Input
+                    value={external.address ?? ""}
+                    onChange={(e) => setExternal((p) => ({ ...p, address: e.target.value }))}
+                    placeholder="Adresse"
+                    autoComplete="street-address"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Mail</label>
+                  <Input
+                    type="email"
+                    value={external.email ?? ""}
+                    onChange={(e) => setExternal((p) => ({ ...p, email: e.target.value }))}
+                    placeholder="email@exemple.com"
+                    autoComplete="email"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Téléphone</label>
+                  <Input
+                    type="tel"
+                    value={external.phone ?? ""}
+                    onChange={(e) => setExternal((p) => ({ ...p, phone: e.target.value }))}
+                    placeholder="Téléphone"
+                    autoComplete="tel"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {companyLinked && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Entreprise actionnaire
+              </label>
+              <SearchableSelect
+                options={companyAsOwnerOptions}
+                value={ownerId}
+                onChange={setOwnerId}
+                placeholder="Sélectionner une entreprise..."
+                icon={<Building2 className="h-4 w-4 shrink-0 text-slate-400" />}
+              />
+            </div>
+          )}
+
+          {companyExternal && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Raison sociale obligatoire ; SIRET, adresse, mail et téléphone optionnels.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Raison sociale <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    value={externalCompany.companyName}
+                    onChange={(e) =>
+                      setExternalCompany((p) => ({ ...p, companyName: e.target.value }))
+                    }
+                    placeholder="Nom de la société"
+                    autoComplete="organization"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">SIRET</label>
+                  <Input
+                    value={externalCompany.siret ?? ""}
+                    onChange={(e) =>
+                      setExternalCompany((p) => ({ ...p, siret: e.target.value }))
+                    }
+                    placeholder="14 chiffres"
+                    inputMode="numeric"
+                  />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-sm font-medium text-foreground">Adresse</label>
+                  <Input
+                    value={externalCompany.address ?? ""}
+                    onChange={(e) =>
+                      setExternalCompany((p) => ({ ...p, address: e.target.value }))
+                    }
+                    placeholder="Adresse"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Mail</label>
+                  <Input
+                    type="email"
+                    value={externalCompany.email ?? ""}
+                    onChange={(e) =>
+                      setExternalCompany((p) => ({ ...p, email: e.target.value }))
+                    }
+                    placeholder="email@exemple.com"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Téléphone</label>
+                  <Input
+                    type="tel"
+                    value={externalCompany.phone ?? ""}
+                    onChange={(e) =>
+                      setExternalCompany((p) => ({ ...p, phone: e.target.value }))
+                    }
+                    placeholder="Téléphone"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
               Pourcentage de détention
@@ -320,7 +593,6 @@ export function ShareholderFormDialog({
             </div>
           </div>
 
-          {/* Linked companies */}
           {!lockedCompanyId && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">

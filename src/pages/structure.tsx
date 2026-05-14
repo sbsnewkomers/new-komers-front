@@ -92,8 +92,10 @@ import {
 import {
   fetchShareholdersByCompany,
   createShareholder,
+  toCreateShareholderInput,
+  getShareholderDisplayLabel,
   type ShareholderDto,
-  ownerTypeLabel,
+  shareholderKindLabel,
 } from "@/lib/shareholdersApi";
 import { assetsApi } from "@/lib/assetsApi";
 import { globalDotationsApi } from "@/lib/globalDotationsApi";
@@ -2125,9 +2127,6 @@ export default function StructurePage() {
     try {
       const sh = await fetchShareholdersByCompany(companyId);
       setFicheShareholders(sh);
-      // Load users so we can resolve shareholder user labels
-      const us = await fetchUsers();
-      setFicheShareholderUsers(us);
     } catch {
       setFicheShareholders([]);
     } finally {
@@ -4233,12 +4232,12 @@ export default function StructurePage() {
           if (!ficheCompanyId) return;
           setFicheShareholderSaving(true);
           try {
-            const created = await createShareholder({
-              ownerType: values.ownerType,
-              ownerId: values.ownerId,
-              percentage: values.percentage,
-              companyIds: [ficheCompanyId],
-            });
+            const created = await createShareholder(
+              toCreateShareholderInput({
+                ...values,
+                companyIds: [ficheCompanyId],
+              }),
+            );
             setFicheShareholders((prev) => [created, ...prev]);
             setFicheShareholderFormOpen(false);
           } finally {
@@ -4568,14 +4567,7 @@ export default function StructurePage() {
                       ) : (
                         <ul className="space-y-2 text-sm">
                           {ficheShareholders.map((s) => {
-                            const ownerLabel =
-                              s.ownerType === "USER"
-                                ? ficheShareholderUsers.find((u) => u.id === s.ownerId)?.firstName +
-                                " " +
-                                ficheShareholderUsers.find((u) => u.id === s.ownerId)?.lastName
-                                : s.ownerType === "COMPANY"
-                                  ? allTreeCompanies.find((c) => c.id === s.ownerId)?.name
-                                  : s.ownerId || "Inconnu";
+                            const ownerLabel = getShareholderDisplayLabel(s);
                             return (
                               <li
                                 key={s.id}
@@ -4586,7 +4578,7 @@ export default function StructurePage() {
                                     {ownerLabel}
                                   </span>
                                   <span className="text-[11px] text-white/45">
-                                    {ownerTypeLabel(s.ownerType)}
+                                    {shareholderKindLabel(s)}
                                   </span>
                                 </div>
                                 <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-xs font-medium text-(--nebula-gold-light)">
