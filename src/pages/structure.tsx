@@ -37,6 +37,8 @@ import { Textarea } from "@/components/ui/Textarea";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { ApeCodeSelect } from "@/components/structure/ApeCodeSelect";
+import { ApeCodeSelectModal } from "@/components/structure/ApeCodeSelectModal";
+import { APE_CODES } from "@/lib/nafApeData";
 import { CountrySelect } from "@/components/structure/CountrySelect";
 import { CountrySelectModal } from "@/components/structure/CountrySelectModal";
 import PhoneInput from "react-phone-number-input";
@@ -212,8 +214,8 @@ type NodeUsersByRole = Record<
 >;
 
 type TreeNode =
-  | { type: "workspace"; id: string; name: string }
-  | { type: "group"; id: string; name: string }
+  | { type: "workspace"; id: string; name: string; completionPercentage: number }
+  | { type: "group"; id: string; name: string; completionPercentage: number }
   | {
     type: "company";
     id: string;
@@ -222,7 +224,7 @@ type TreeNode =
     workspaceId?: string;
     completionPercentage: number;
   }
-  | { type: "bu"; id: string; name: string; companyId: string; code: string }
+  | { type: "bu"; id: string; name: string; companyId: string; code: string; completionPercentage: number }
   | { type: "section-header"; id: string; name: string };
 
 const MONTH_DAY_REGEX = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])$/;
@@ -639,6 +641,12 @@ export default function StructurePage() {
   const [countryModalOpen, setCountryModalOpen] = useState(false);
   const [createCountryModalOpen, setCreateCountryModalOpen] = useState(false);
   const [groupCountryModalOpen, setGroupCountryModalOpen] = useState(false);
+  const [companyApeModalOpen, setCompanyApeModalOpen] = useState(false);
+  const [editBUApeModalOpen, setEditBUApeModalOpen] = useState(false);
+  const [addBUStandaloneApeModalOpen, setAddBUStandaloneApeModalOpen] = useState(false);
+  const [addCompanyApeModalOpen, setAddCompanyApeModalOpen] = useState(false);
+  const [addBUApeModalOpen, setAddBUApeModalOpen] = useState(false);
+  const [addCompanyCountryModalOpen, setAddCompanyCountryModalOpen] = useState(false);
 
   // Gérer le changement de fichier logo
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -690,68 +698,49 @@ export default function StructurePage() {
     }
   };
 
-  const handlePhoneChange = (value: string) => {
-    setAddworkspaceForm((f) => ({ ...f, contact_phone: value }));
+  const handlePhoneChange = (
+    value: string,
+    formType: 'addworkspace' | 'editworkspace' | 'editGroup' | 'addGroup' | 'editCompany',
+    field?: 'phoneMobile' | 'phoneLandline' | 'contact_phone'
+  ) => {
+    // Validation du téléphone
+    const isValid = validatePhone(value);
+    const errorMessage = isValid ? "" : "Veuillez entrer un numéro de téléphone valide";
 
-    if (!validatePhone(value)) {
-      setWorkspaceErrors((prev) => ({
-        ...prev,
-        contact_phone: "Veuillez entrer un numéro de téléphone valide",
-      }));
-    } else {
-      setWorkspaceErrors((prev) => ({ ...prev, contact_phone: "" }));
-    }
-  };
+    // Mise à jour du formulaire et des erreurs selon le type
+    switch (formType) {
+      case 'addworkspace':
+        if (field) {
+          setAddworkspaceForm((f) => ({ ...f, [field]: value }));
+          setWorkspaceErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
 
-  // Fonctions de validation pour l'édition
-  const handleEditEmailChange = (value: string) => {
-    setEditworkspace((f) => ({ ...f, contact_email: value }));
-    if (!validateEmail(value)) {
-      setEditWorkspaceErrors((prev) => ({
-        ...prev,
-        contact_email: "Veuillez entrer un email valide",
-      }));
-    } else {
-      setEditWorkspaceErrors((prev) => ({ ...prev, contact_email: "" }));
-    }
-  };
+      case 'editworkspace':
+        setEditworkspace((f) => ({ ...f, phoneMobile: value }));
+        setEditWorkspaceErrors((prev) => ({ ...prev, contact_phone: errorMessage }));
+        break;
 
-  const handleEditPhoneChange = (value: string) => {
-    setEditworkspace((f) => ({ ...f, phoneMobile: value }));
+      case 'editGroup':
+        if (field) {
+          setEditGroup((f) => ({ ...f, [field]: value }));
+          setGroupErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
 
-    if (!validatePhone(value)) {
-      setEditWorkspaceErrors((prev) => ({
-        ...prev,
-        contact_phone: "Veuillez entrer un numéro de téléphone valide",
-      }));
-    } else {
-      setEditWorkspaceErrors((prev) => ({ ...prev, contact_phone: "" }));
-    }
-  };
+      case 'addGroup':
+        if (field) {
+          setAddGroupForm((f) => ({ ...f, [field]: value }));
+          setAddGroupErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
 
-  const handleGroupPhoneChange = (value: string, field: 'phoneMobile' | 'phoneLandline') => {
-    setEditGroup((f) => ({ ...f, [field]: value }));
-
-    if (!validatePhone(value)) {
-      setGroupErrors((prev) => ({
-        ...prev,
-        [field]: "Veuillez entrer un numéro de téléphone valide",
-      }));
-    } else {
-      setGroupErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  };
-
-  const handleAddGroupPhoneChange = (value: string, field: 'phoneMobile' | 'phoneLandline') => {
-    setAddGroupForm((f) => ({ ...f, [field]: value }));
-
-    if (!validatePhone(value)) {
-      setAddGroupErrors((prev) => ({
-        ...prev,
-        [field]: "Veuillez entrer un numéro de téléphone valide",
-      }));
-    } else {
-      setAddGroupErrors((prev) => ({ ...prev, [field]: "" }));
+      case 'editCompany':
+        if (field) {
+          setEditCompany((f) => ({ ...f, [field]: value }));
+          setCompanyErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
     }
   };
 
@@ -856,6 +845,7 @@ export default function StructurePage() {
     phoneLandline: "",
     phoneMobile: "",
     manager_id: "",
+    completionPercentage: 0,
   });
   const [editworkspaceLogoFile, setEditworkspaceLogoFile] = useState<File | null>(null);
   const [editGroupLogoFile, setEditGroupLogoFile] = useState<File | null>(null);
@@ -876,6 +866,7 @@ export default function StructurePage() {
     phoneMobile: "",
     contact_email: "",
     logo: undefined as string | undefined,
+    completionPercentage: 0,
 
   });
   const [groupErrors, setGroupErrors] = useState({ contact_email: "", phoneLandline: "", phoneMobile: "" });
@@ -900,6 +891,8 @@ export default function StructurePage() {
     logo: undefined as string | undefined,
     completionPercentage: 0,
   });
+  const [companyErrors, setCompanyErrors] = useState({ contact_email: "", phoneLandline: "", phoneMobile: "" });
+  const [companyCountryModalOpen, setCompanyCountryModalOpen] = useState(false);
   const [editBU, setEditBU] = useState({
     name: "",
     description: "",
@@ -1273,13 +1266,23 @@ export default function StructurePage() {
     (filteredTreeData?.workspaces ?? []).forEach((org) => {
       // N'afficher les workspaces que pour SUPER_ADMIN et ADMIN
       if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
-        rows.push({ type: "workspace", id: org.id, name: org.name });
+        rows.push({
+          type: "workspace",
+          id: org.id,
+          name: org.name,
+          completionPercentage: org.completionPercentage || 0
+        });
         console.log(`Added workspace: ${org.name}`);
       }
 
       // Ajouter les groupes de l'workspace immédiatement après le workspace
       org.groups.forEach((g) => {
-        rows.push({ type: "group", id: g.id, name: g.name });
+        rows.push({
+          type: "group",
+          id: g.id,
+          name: g.name,
+          completionPercentage: g.completionPercentage || 0
+        });
         console.log(`Added group for workspace ${org.name}: ${g.name}`);
         g.companies.forEach((c) => {
           rows.push({
@@ -1298,6 +1301,7 @@ export default function StructurePage() {
                 name: bu.name,
                 companyId: c.id,
                 code: bu.code,
+                completionPercentage: bu.completionPercentage || 0,
               });
             });
           }
@@ -1328,6 +1332,7 @@ export default function StructurePage() {
                 name: bu.name,
                 companyId: c.id,
                 code: bu.code,
+                completionPercentage: bu.completionPercentage || 0,
               });
             });
           }
@@ -1362,6 +1367,7 @@ export default function StructurePage() {
                 name: bu.name,
                 companyId: c.id,
                 code: bu.code,
+                completionPercentage: bu.completionPercentage || 0,
               });
             });
           }
@@ -1393,6 +1399,7 @@ export default function StructurePage() {
               name: bu.name,
               companyId: c.id,
               code: bu.code,
+              completionPercentage: bu.completionPercentage || 0,
             });
           });
         }
@@ -1447,6 +1454,7 @@ export default function StructurePage() {
             phoneLandline: org.phoneLandline ?? "",
             phoneMobile: org.phoneMobile ?? "",
             manager_id: org.manager_id ?? "",
+            completionPercentage: org.completionPercentage || 0,
           });
           setEditworkspaceLogoFile(null);
           setEditWorkspaceErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
@@ -1463,6 +1471,7 @@ export default function StructurePage() {
             phoneLandline: "",
             phoneMobile: "",
             manager_id: "",
+            completionPercentage: 0,
           });
           setEditworkspaceLogoFile(null);
           setEditWorkspaceErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
@@ -1489,6 +1498,7 @@ export default function StructurePage() {
             phoneMobile: "",
             contact_email: "",
             logo: g.logo ?? "",
+            completionPercentage: g.completionPercentage || 0,
           });
           setEditGroupLogoFile(null);
           setGroupErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
@@ -1506,6 +1516,7 @@ export default function StructurePage() {
             phoneMobile: "",
             contact_email: "",
             logo: undefined as string | undefined,
+            completionPercentage: 0,
           });
           setEditGroupLogoFile(null);
           setGroupErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
@@ -2991,8 +3002,7 @@ export default function StructurePage() {
                           : node.type === "company"
                             ? "neutral"
                             : "neutral";
-                    const completion =
-                      node.type === "company" ? node.completionPercentage : null;
+                    const completion = node.completionPercentage;
                     const canExpand =
                       node.type === "company" && companiesWithBus.has(node.id);
 
@@ -3514,7 +3524,7 @@ export default function StructurePage() {
                             defaultCountry="FR"
                             value={editworkspace.phoneMobile}
                             onChange={(value) =>
-                              handleEditPhoneChange(value || "")
+                              handlePhoneChange(value || "", "editworkspace", "phoneMobile")
                             }
                             className={
                               editWorkspaceErrors.phoneLandline && editWorkspaceErrors.phoneMobile && editWorkspaceErrors.contact_email
@@ -3522,7 +3532,7 @@ export default function StructurePage() {
                                 : ""
                             }
                             numberInputProps={{
-                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.contact_phone ? "border-red-500" : ""}`,
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.phoneMobile ? "border-red-500" : ""}`,
                             }}
                           />
 
@@ -3543,7 +3553,7 @@ export default function StructurePage() {
                             defaultCountry="FR"
                             value={editworkspace.phoneLandline}
                             onChange={(value) =>
-                              handleEditPhoneChange(value || "")
+                              handlePhoneChange(value || "", "editworkspace", "phoneLandline")
                             }
                             className={
                               editWorkspaceErrors.phoneLandline
@@ -3551,7 +3561,7 @@ export default function StructurePage() {
                                 : ""
                             }
                             numberInputProps={{
-                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.contact_phone ? "border-red-500" : ""}`,
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.phoneLandline ? "border-red-500" : ""}`,
                             }}
                           />
                           {editWorkspaceErrors.phoneLandline && (
@@ -3651,26 +3661,6 @@ export default function StructurePage() {
                   type="group"
                   name={editGroup.name}
                   logo={editGroup.logo}
-                  pills={
-                    <>
-                      {editGroup.contact_email && (
-                        <DetailPill icon={Mail}>
-                          {editGroup.contact_email}
-                        </DetailPill>
-                      )}
-                      {editGroup.phoneMobile && (
-                        <DetailPill icon={Phone}>
-                          {editGroup.phoneMobile}
-                        </DetailPill>
-                      )}
-                      {editGroup.phoneLandline && (
-                        <DetailPill icon={Phone}>
-                          {editGroup.phoneLandline}
-                        </DetailPill>
-                      )}
-                    </>
-
-                  }
                 />
 
 
@@ -3782,7 +3772,7 @@ export default function StructurePage() {
                           defaultCountry="FR"
                           value={editGroup.phoneMobile}
                           onChange={(value) =>
-                            handleGroupPhoneChange(value || "", "phoneMobile")
+                            handlePhoneChange(value || "", "editGroup", "phoneMobile")
                           }
                           className={
                             groupErrors.phoneMobile
@@ -3809,7 +3799,7 @@ export default function StructurePage() {
                           defaultCountry="FR"
                           value={editGroup.phoneLandline}
                           onChange={(value) =>
-                            handleGroupPhoneChange(value || "", "phoneLandline")
+                            handlePhoneChange(value || "", "editGroup", "phoneLandline")
                           }
                           className={
                             groupErrors.phoneLandline
@@ -3976,30 +3966,7 @@ export default function StructurePage() {
                   type="company"
                   name={editCompany.name}
                   logo={editCompany.logo}
-                  pills={
-                    <>
-                      {editCompany.siret && (
-                        <DetailPill icon={Hash} mono>
-                          SIRET {formatSiret(editCompany.siret)}
-                        </DetailPill>
-                      )}
-                      {editCompany.ape_code && (
-                        <DetailPill icon={BadgeCheck} mono>
-                          APE {editCompany.ape_code}
-                        </DetailPill>
-                      )}
-                      {editCompany.country && (
-                        <DetailPill icon={Globe}>
-                          {editCompany.country}
-                        </DetailPill>
-                      )}
-                      {editCompany.size && (
-                        <DetailPill icon={UsersIcon}>
-                          {editCompany.size}
-                        </DetailPill>
-                      )}
-                    </>
-                  }
+
                 />
 
                 {/* Completion progress (view only) */}
@@ -4047,37 +4014,171 @@ export default function StructurePage() {
                             setEditCompany((f) => ({ ...f, name: v }))
                           }
                         />
-                        <FieldCountry
-                          label="Pays"
-                          value={editCompany.country}
+                        <FieldTextarea
+                          label="Description"
+                          value={editCompany.description}
                           editing={editing}
-                          onChange={(v) =>
-                            setEditCompany((f) => ({ ...f, country: v }))
-                          }
+                          onChange={(v) => setEditCompany((f) => ({ ...f, description: v }))}
                         />
+
                       </DetailGrid>
-                      <FieldTextarea
-                        label="Adresse"
-                        value={editCompany.address}
-                        editing={editing}
-                        onChange={(v) =>
-                          setEditCompany((f) => ({ ...f, address: v }))
-                        }
-                      />
                     </div>
                   ) : (
                     <DetailGrid>
                       <ReadField label="Nom" value={editCompany.name} />
                       <ReadField
-                        label="Pays"
-                        icon={Globe}
-                        value={editCompany.country}
+                        label="Description"
+                        value={editCompany.description}
+                        full
+                      />
+                    </DetailGrid>
+                  )}
+                </DetailSection>
+
+                <DetailSection
+                  icon={MapPin}
+                  title="Adresse et contact"
+                  description="Coordonnées et localisation de l'entreprise."
+                >
+                  {editing ? (
+                    <div className="space-y-4">
+                      <DetailGrid>
+                        <Field
+                          label="Rue"
+                          value={editCompany.street}
+                          editing={editing}
+                          onChange={(v) => setEditCompany((f) => ({ ...f, street: v }))}
+                          placeholder="123 rue de la République"
+                        />
+                        <Field
+                          label="Code postal"
+                          value={editCompany.postalCode}
+                          editing={editing}
+                          onChange={(v) => setEditCompany((f) => ({ ...f, postalCode: v }))}
+                          placeholder="75001"
+                        />
+                        <Field
+                          label="Ville"
+                          value={editCompany.city}
+                          editing={editing}
+                          onChange={(v) => setEditCompany((f) => ({ ...f, city: v }))}
+                          placeholder="Paris"
+                        />
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Pays
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setCompanyCountryModalOpen(true)}
+                            className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                          >
+                            <span className={editCompany.country ? "text-foreground" : "text-muted-foreground"}>
+                              {editCompany.country ? getCountryName(editCompany.country) : "Sélectionner un pays..."}
+                            </span>
+                            <Globe className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        </div>
+                        <Field
+                          label="Email de contact"
+                          value={editCompany.contact_email}
+                          editing={editing}
+                          type="email"
+                          onChange={(v) => setEditCompany((f) => ({ ...f, contact_email: v }))}
+                          placeholder="contact@entreprise.com"
+                        />
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Téléphone mobile
+                          </label>
+                          <PhoneInput
+                            international
+                            countryCallingCodeEditable={false}
+                            defaultCountry="FR"
+                            value={editCompany.phoneMobile}
+                            onChange={(value) =>
+                              handlePhoneChange(value || "", "editCompany", "phoneMobile")
+                            }
+                            className={
+                              companyErrors?.phoneMobile
+                                ? "border-red-500"
+                                : ""
+                            }
+                            numberInputProps={{
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phoneMobile ? "border-red-500" : ""}`,
+                            }}
+                          />
+                          {companyErrors?.phoneMobile && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {companyErrors.phoneMobile}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Téléphone fixe
+                          </label>
+                          <PhoneInput
+                            international
+                            countryCallingCodeEditable={false}
+                            defaultCountry="FR"
+                            value={editCompany.phoneLandline}
+                            onChange={(value) =>
+                              handlePhoneChange(value || "", "editCompany", "phoneLandline")
+                            }
+                            className={
+                              companyErrors?.phoneLandline
+                                ? "border-red-500"
+                                : ""
+                            }
+                            numberInputProps={{
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phoneLandline ? "border-red-500" : ""}`,
+                            }}
+                          />
+                          {companyErrors?.phoneLandline && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {companyErrors.phoneLandline}
+                            </p>
+                          )}
+                        </div>
+                      </DetailGrid>
+                    </div>
+                  ) : (
+                    <DetailGrid>
+                      <ReadField
+                        label="Rue"
+                        icon={MapPin}
+                        value={editCompany.street}
                       />
                       <ReadField
-                        label="Adresse"
+                        label="Code postal"
                         icon={MapPin}
-                        value={editCompany.address}
-                        full
+                        value={editCompany.postalCode}
+                      />
+                      <ReadField
+                        label="Ville"
+                        icon={MapPin}
+                        value={editCompany.city}
+                      />
+                      <ReadField
+                        label="Pays"
+                        icon={Globe}
+                        value={editCompany.country ? getCountryName(editCompany.country) : ""}
+                      />
+                      <ReadField
+                        label="Email de contact"
+                        icon={Mail}
+                        value={editCompany.contact_email}
+                      />
+                      <ReadField
+                        label="Téléphone fixe"
+                        icon={Phone}
+                        value={editCompany.phoneLandline}
+                      />
+                      <ReadField
+                        label="Téléphone mobile"
+                        icon={Phone}
+                        value={editCompany.phoneMobile}
                       />
                     </DetailGrid>
                   )}
@@ -4115,18 +4216,19 @@ export default function StructurePage() {
                         <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                           Code APE
                         </label>
-                        <ApeCodeSelect
-                          value={editCompany.ape_code}
-                          onChange={(value) =>
-                            setEditCompany((f) => ({ ...f, ape_code: value }))
-                          }
-                          onDescriptionChange={(description) =>
-                            setEditCompany((f) => ({
-                              ...f,
-                              main_activity: description,
-                            }))
-                          }
-                        />
+                        <button
+                          type="button"
+                          onClick={() => setCompanyApeModalOpen(true)}
+                          className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                        >
+                          <span className={editCompany.ape_code ? "text-foreground" : "text-muted-foreground"}>
+                            {editCompany.ape_code ?
+                              APE_CODES.find(code => code.value === editCompany.ape_code)?.label || editCompany.ape_code
+                              : "Sélectionner un code APE"
+                            }
+                          </span>
+                          <Search className="h-4 w-4 text-muted-foreground" />
+                        </button>
                       </div>
                       <Field
                         label="Activité principale"
@@ -4387,18 +4489,19 @@ export default function StructurePage() {
                         <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                           Code APE
                         </label>
-                        <ApeCodeSelect
-                          value={editBU.code}
-                          onChange={(value) =>
-                            setEditBU((f) => ({ ...f, code: value }))
-                          }
-                          onDescriptionChange={(description) =>
-                            setEditBU((f) => ({
-                              ...f,
-                              activity: description,
-                            }))
-                          }
-                        />
+                        <button
+                          type="button"
+                          onClick={() => setEditBUApeModalOpen(true)}
+                          className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                        >
+                          <span className={editBU.code ? "text-foreground" : "text-muted-foreground"}>
+                            {editBU.code ?
+                              APE_CODES.find(code => code.value === editBU.code)?.label || editBU.code
+                              : "Sélectionner un code APE"
+                            }
+                          </span>
+                          <Search className="h-4 w-4 text-muted-foreground" />
+                        </button>
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -5427,7 +5530,7 @@ export default function StructurePage() {
                   defaultCountry="FR"
                   value={addGroupForm.phoneMobile}
                   onChange={(value) =>
-                    handleAddGroupPhoneChange(value || "", "phoneMobile")
+                    handlePhoneChange(value || "", "addGroup", "phoneMobile")
                   }
                   className={
                     addGroupErrors.phoneMobile
@@ -5454,7 +5557,7 @@ export default function StructurePage() {
                   defaultCountry="FR"
                   value={addGroupForm.phoneLandline}
                   onChange={(value) =>
-                    handleAddGroupPhoneChange(value || "", "phoneLandline")
+                    handlePhoneChange(value || "", "addGroup", "phoneLandline")
                   }
                   className={
                     addGroupErrors.phoneLandline
@@ -5592,21 +5695,19 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Code APE *
               </label>
-              <ApeCodeSelect
-                value={addBUStandaloneForm.code}
-                onChange={(value) =>
-                  setAddBUStandaloneForm((f) => ({
-                    ...f,
-                    code: value,
-                  }))
-                }
-                onDescriptionChange={(description) =>
-                  setAddBUStandaloneForm((f) => ({
-                    ...f,
-                    activity: description,
-                  }))
-                }
-              />
+              <button
+                type="button"
+                onClick={() => setAddBUStandaloneApeModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+              >
+                <span className={addBUStandaloneForm.code ? "text-foreground" : "text-muted-foreground"}>
+                  {addBUStandaloneForm.code ?
+                    APE_CODES.find(code => code.value === addBUStandaloneForm.code)?.label || addBUStandaloneForm.code
+                    : "Sélectionner un code APE"
+                  }
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -5693,7 +5794,7 @@ export default function StructurePage() {
             </p>
           ) : (
             <p className="text-sm text-(--nebula-muted)">
-              Sélectionnez un groupe pour rattacher cette entreprise
+              Si aucun groupe n'est sélectionné, l'entreprise sera créée comme indépendante
             </p>
           )}
           <DialogBody className="space-y-4">
@@ -5701,7 +5802,7 @@ export default function StructurePage() {
             {!addCompanyGroupId && (
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                  Groupe *
+                  Groupe
                 </label>
                 <Select
                   value={addCompanyForm.groupId || ""}
@@ -5714,9 +5815,8 @@ export default function StructurePage() {
                     }));
                   }}
                   className="h-11"
-                  required
                 >
-                  <option value="">Sélectionner un groupe</option>
+                  <option value="">Sélectionner un groupe (optionnel)</option>
                   {groupList.map((g) => (
                     <option key={g.id} value={g.id}>{g.name}</option>
                   ))}
@@ -5754,15 +5854,19 @@ export default function StructurePage() {
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   Code APE *
                 </label>
-                <ApeCodeSelect
-                  value={addCompanyForm.ape_code}
-                  onChange={(value) =>
-                    setAddCompanyForm((f) => ({ ...f, ape_code: value }))
-                  }
-                  onDescriptionChange={(description) =>
-                    setAddCompanyForm((f) => ({ ...f, main_activity: description }))
-                  }
-                />
+                <button
+                  type="button"
+                  onClick={() => setAddCompanyApeModalOpen(true)}
+                  className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+                >
+                  <span className={addCompanyForm.ape_code ? "text-foreground" : "text-muted-foreground"}>
+                    {addCompanyForm.ape_code ?
+                      APE_CODES.find(code => code.value === addCompanyForm.ape_code)?.label || addCompanyForm.ape_code
+                      : "Sélectionner un code APE"
+                    }
+                  </span>
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                </button>
               </div>
             </div>
 
@@ -5783,26 +5887,119 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Adresse
               </label>
-              <Textarea
-                value={addCompanyForm.address}
+              <Input
+                value={addCompanyForm.street}
                 onChange={(e) =>
-                  setAddCompanyForm((f) => ({ ...f, address: e.target.value }))
+                  setAddCompanyForm((f) => ({ ...f, street: e.target.value }))
                 }
-                placeholder="Adresse de l'entreprise"
+                placeholder="Rue et numéro"
               />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Code postal
+                </label>
+                <Input
+                  value={addCompanyForm.postalCode}
+                  onChange={(e) =>
+                    setAddCompanyForm((f) => ({ ...f, postalCode: e.target.value }))
+                  }
+                  placeholder="Code postal"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Ville
+                </label>
+                <Input
+                  value={addCompanyForm.city}
+                  onChange={(e) =>
+                    setAddCompanyForm((f) => ({ ...f, city: e.target.value }))
+                  }
+                  placeholder="Ville"
+                />
+              </div>
             </div>
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Pays *
               </label>
-              <CountrySelect
-                placeholder="Pays de l'entreprise"
-                value={addCompanyForm.country}
-                onChange={(value) =>
-                  setAddCompanyForm((f) => ({ ...f, country: value }))
+              <button
+                type="button"
+                onClick={() => setAddCompanyCountryModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+              >
+                <span className={addCompanyForm.country ? "text-foreground" : "text-muted-foreground"}>
+                  {addCompanyForm.country ? addCompanyForm.country : "Sélectionner un pays"}
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Téléphone mobile
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="FR"
+                  value={addCompanyForm.phoneMobile}
+                  onChange={(value) =>
+                    setAddCompanyForm((f) => ({ ...f, phoneMobile: value || "" }))
+                  }
+                  className={companyErrors?.phoneMobile ? "border-red-500" : ""}
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phoneMobile ? "border-red-500" : ""}`
+                  }}
+                />
+                {companyErrors?.phoneMobile && (
+                  <p className="mt-1 text-xs text-red-500">{companyErrors.phoneMobile}</p>
+                )}
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Téléphone fixe
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="FR"
+                  value={addCompanyForm.phoneLandline}
+                  onChange={(value) =>
+                    setAddCompanyForm((f) => ({ ...f, phoneLandline: value || "" }))
+                  }
+                  className={companyErrors?.phoneLandline ? "border-red-500" : ""}
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phoneLandline ? "border-red-500" : ""}`
+                  }}
+                />
+                {companyErrors?.phoneLandline && (
+                  <p className="mt-1 text-xs text-red-500">{companyErrors.phoneLandline}</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Email de contact
+              </label>
+              <Input
+                type="email"
+                value={addCompanyForm.contact_email}
+                onChange={(e) =>
+                  setAddCompanyForm((f) => ({ ...f, contact_email: e.target.value }))
                 }
+                placeholder="email@exemple.com"
+                className={companyErrors?.contact_email ? "border-red-500" : ""}
               />
+              {companyErrors?.contact_email && (
+                <p className="mt-1 text-xs text-red-500">{companyErrors.contact_email}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -5908,8 +6105,7 @@ export default function StructurePage() {
                 (addCompanyForm.siret && !validateSiret(addCompanyForm.siret)) ||
                 !addCompanyForm.ape_code.trim() ||
                 !addCompanyForm.country.trim() ||
-                !isValidMonthDay(toMonthDay(addCompanyForm.fiscal_year_start)) ||
-                (!addCompanyGroupId && !addCompanyForm.groupId.trim())
+                !isValidMonthDay(toMonthDay(addCompanyForm.fiscal_year_start))
               }
             >
               {addCompanyLoading ? "Création..." : "Créer"}
@@ -5950,11 +6146,19 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Code APE *
               </label>
-              <ApeCodeSelect
-                value={addBUForm.code}
-                onChange={(value) => setAddBUForm((f) => ({ ...f, code: value }))}
-                onDescriptionChange={(description) => setAddBUForm((f) => ({ ...f, activity: description }))}
-              />
+              <button
+                type="button"
+                onClick={() => setAddBUApeModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+              >
+                <span className={addBUForm.code ? "text-foreground" : "text-muted-foreground"}>
+                  {addBUForm.code ?
+                    APE_CODES.find(code => code.value === addBUForm.code)?.label || addBUForm.code
+                    : "Sélectionner un code APE"
+                  }
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -6178,14 +6382,14 @@ export default function StructurePage() {
                   countryCallingCodeEditable={false}
                   defaultCountry="FR"
                   value={addworkspaceForm.phoneMobile}
-                  onChange={(value) => handlePhoneChange(value || "")}
-                  className={workspaceErrors.contact_phone ? "border-red-500" : ""}
+                  onChange={(value) => handlePhoneChange(value || "", "addworkspace", "phoneMobile")}
+                  className={workspaceErrors.phoneMobile ? "border-red-500" : ""}
                   numberInputProps={{
-                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.contact_phone ? "border-red-500" : ""}`
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.phoneMobile ? "border-red-500" : ""}`
                   }}
                 />
-                {workspaceErrors.contact_phone && (
-                  <p className="text-xs text-red-500">{workspaceErrors.contact_phone}</p>
+                {workspaceErrors.phoneMobile && (
+                  <p className="text-xs text-red-500">{workspaceErrors.phoneMobile}</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -6197,14 +6401,14 @@ export default function StructurePage() {
                   countryCallingCodeEditable={false}
                   defaultCountry="FR"
                   value={addworkspaceForm.phoneLandline}
-                  onChange={(value) => handlePhoneChange(value || "")}
-                  className={workspaceErrors.contact_phone ? "border-red-500" : ""}
+                  onChange={(value) => handlePhoneChange(value || "", "addworkspace", "phoneLandline")}
+                  className={workspaceErrors.phoneLandline ? "border-red-500" : ""}
                   numberInputProps={{
-                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.contact_phone ? "border-red-500" : ""}`
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.phoneLandline ? "border-red-500" : ""}`
                   }}
                 />
-                {workspaceErrors.contact_phone && (
-                  <p className="text-xs text-red-500">{workspaceErrors.contact_phone}</p>
+                {workspaceErrors.phoneLandline && (
+                  <p className="text-xs text-red-500">{workspaceErrors.phoneLandline}</p>
                 )}
               </div>
             </div>
@@ -6216,7 +6420,7 @@ export default function StructurePage() {
                 setAddworkspaceOpen(false);
                 setLogoFile(null);
                 setLogoPreview("");
-                setWorkspaceErrors({ contact_email: "", contact_phone: "" });
+                setWorkspaceErrors({ contact_email: "", phoneMobile: "", phoneLandline: "", });
               }}
             >
               Annuler
@@ -6263,6 +6467,106 @@ export default function StructurePage() {
           setEditGroup((f) => ({ ...f, country: value }))
         }
         title="Sélectionner le pays du groupe"
+      />
+
+      {/* Modal de sélection de pays pour l'entreprise */}
+      <CountrySelectModal
+        open={companyCountryModalOpen}
+        onOpenChange={setCompanyCountryModalOpen}
+        value={editCompany.country}
+        onChange={(value) =>
+          setEditCompany((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays de l'entreprise"
+      />
+
+      {/* Modal de sélection de code APE pour l'entreprise */}
+      <ApeCodeSelectModal
+        open={companyApeModalOpen}
+        onOpenChange={setCompanyApeModalOpen}
+        value={editCompany.ape_code}
+        onChange={(value) =>
+          setEditCompany((f) => ({ ...f, ape_code: value }))
+        }
+        onDescriptionChange={(description) =>
+          setEditCompany((f) => ({
+            ...f,
+            main_activity: description,
+          }))
+        }
+        title="Sélectionner le code APE de l'entreprise"
+      />
+
+      {/* Modal de sélection de code APE pour la BU */}
+      <ApeCodeSelectModal
+        open={editBUApeModalOpen}
+        onOpenChange={setEditBUApeModalOpen}
+        value={editBU.code}
+        onChange={(value) =>
+          setEditBU((f) => ({ ...f, code: value }))
+        }
+        onDescriptionChange={(description) =>
+          setEditBU((f) => ({
+            ...f,
+            activity: description,
+          }))
+        }
+        title="Sélectionner le code APE de la BU"
+      />
+
+      {/* Modal de sélection de code APE pour la création de BU standalone */}
+      <ApeCodeSelectModal
+        open={addBUStandaloneApeModalOpen}
+        onOpenChange={setAddBUStandaloneApeModalOpen}
+        value={addBUStandaloneForm.code}
+        onChange={(value) =>
+          setAddBUStandaloneForm((f) => ({
+            ...f,
+            code: value,
+          }))
+        }
+        onDescriptionChange={(description) =>
+          setAddBUStandaloneForm((f) => ({
+            ...f,
+            activity: description,
+          }))
+        }
+        title="Sélectionner le code APE de la BU"
+      />
+
+      {/* Modal de sélection de code APE pour la création d'entreprise */}
+      <ApeCodeSelectModal
+        open={addCompanyApeModalOpen}
+        onOpenChange={setAddCompanyApeModalOpen}
+        value={addCompanyForm.ape_code}
+        onChange={(value) =>
+          setAddCompanyForm((f) => ({ ...f, ape_code: value }))
+        }
+        onDescriptionChange={(description) =>
+          setAddCompanyForm((f) => ({ ...f, main_activity: description }))
+        }
+        title="Sélectionner le code APE de l'entreprise"
+      />
+
+      {/* Modal de sélection de code APE pour la création de BU */}
+      <ApeCodeSelectModal
+        open={addBUApeModalOpen}
+        onOpenChange={setAddBUApeModalOpen}
+        value={addBUForm.code}
+        onChange={(value) => setAddBUForm((f) => ({ ...f, code: value }))}
+        onDescriptionChange={(description) => setAddBUForm((f) => ({ ...f, activity: description }))}
+        title="Sélectionner le code APE de la BU"
+      />
+
+      {/* Modal de sélection de pays pour la création d'entreprise */}
+      <CountrySelectModal
+        open={addCompanyCountryModalOpen}
+        onOpenChange={setAddCompanyCountryModalOpen}
+        value={addCompanyForm.country}
+        onChange={(value) =>
+          setAddCompanyForm((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays de l'entreprise"
       />
 
     </AppLayout>

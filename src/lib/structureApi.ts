@@ -5,6 +5,7 @@ export type TreeBU = {
   name: string;
   code: string;
   country: string;
+  completionPercentage?: number;
 };
 
 export type TreeCompany = {
@@ -18,6 +19,7 @@ export type TreeCompany = {
 export type TreeGroup = {
   id: string;
   name: string;
+  completionPercentage?: number;
   companies: TreeCompany[];
 };
 
@@ -40,6 +42,7 @@ export type Treeworkspace = {
     lastName?: string | null;
     email: string;
   } | null;
+  completionPercentage?: number;
   groups: TreeGroup[];
   standaloneCompanies: TreeCompany[];
 };
