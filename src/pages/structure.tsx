@@ -1501,7 +1501,7 @@ export default function StructurePage() {
           });
           setEditGroup({
             name: g.name,
-            description: "",
+            description: g.description ?? "",
             fiscal_year_start: toMonthDay(g.fiscal_year_start),
             last_closed_fiscal_year:
               g.last_closed_fiscal_year !== null &&
@@ -1509,12 +1509,12 @@ export default function StructurePage() {
                 ? String(g.last_closed_fiscal_year)
                 : "",
             country: g.country ?? "",
-            street: "",
-            postal_code: "",
-            city: "",
-            phone_landline: "",
-            phone_mobile: "",
-            contact_email: "",
+            street: g.street ?? "",
+            postal_code: g.postal_code ?? "",
+            city: g.city ?? "",
+            phone_landline: g.phone_landline ?? "",
+            phone_mobile: g.phone_mobile ?? "",
+            contact_email: g.contact_email ?? "",
             logo: g.logo ?? "",
             completionPercentage: g.completionPercentage || 0,
           });
@@ -1735,6 +1735,9 @@ export default function StructurePage() {
 
       const formData = new FormData();
       formData.append('name', editGroup.name);
+      if (editGroup.description) {
+        formData.append('description', editGroup.description);
+      }
 
       const normalizedGroupFiscalYearStart = toMonthDay(editGroup.fiscal_year_start);
       if (normalizedGroupFiscalYearStart) {
@@ -2285,6 +2288,9 @@ export default function StructurePage() {
     try {
       const formData = new FormData();
       formData.append('name', addGroupForm.name);
+      if (addGroupForm.description) {
+        formData.append('description', addGroupForm.description);
+      }
 
       if (normalizedGroupFiscalYearStart) {
         formData.append('fiscal_year_start', normalizedGroupFiscalYearStart);
