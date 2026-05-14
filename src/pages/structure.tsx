@@ -5428,16 +5428,51 @@ export default function StructurePage() {
                   <TabsContent value="informations" className="mt-0">
                     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                       <dl className="grid gap-3 text-sm sm:grid-cols-2">
-
-                        <dt className="text-(--nebula-muted)">Début d&apos;exercice</dt>
+                        <dt className="text-(--nebula-muted)">Description</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheGroup.description || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Début exercice</dt>
                         <dd className="font-medium text-primary">
                           {formatMonthDayForDisplay(ficheGroup.fiscal_year_start)}
                         </dd>
-                        {ficheGroup.country && (
+                        <dt className="text-(--nebula-muted)">Dernier exercice clôturé</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.last_closed_fiscal_year ? String(ficheGroup.last_closed_fiscal_year) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Rue</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheGroup.street || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Code Postal</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.postal_code || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Ville</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.city || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Pays</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.country ? getCountryName(ficheGroup.country) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Téléphone Fixe</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.phone_landline || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Téléphone Mobile</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.phone_mobile || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Email</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.contact_email || "—"}
+                        </dd>
+                        {ficheGroup.workspace_id && (
                           <>
-                            <dt className="text-(--nebula-muted)">Pays</dt>
+                            <dt className="text-(--nebula-muted)">Workspace</dt>
                             <dd className="font-medium text-primary">
-                              {ficheGroup.country}
+                              {tree?.workspaces?.find(w => w.id === ficheGroup.workspace_id)?.name || ficheGroup.workspace_id}
                             </dd>
                           </>
                         )}
