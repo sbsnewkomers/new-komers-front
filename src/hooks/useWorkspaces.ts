@@ -6,9 +6,13 @@ export type Workspace = {
   name: string;
   description?: string;
   logo?: string;
-  address?: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
   contact_email?: string;
-  contact_phone?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
   manager_id?: string;
   manager?: {
     id: string;

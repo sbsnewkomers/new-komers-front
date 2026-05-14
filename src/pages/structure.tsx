@@ -9,10 +9,15 @@ import {
   useMemo,
 } from "react";
 import Head from "next/head";
-import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
 import { emitSnackbar } from "@/ui/snackbarBus";
 import { COUNTRIES } from "@/lib/countriesData";
+
+// Fonction pour trouver le nom du pays à partir du code
+const getCountryName = (code: string) => {
+  const country = COUNTRIES.find((c) => c.value === code || c.code === code);
+  return country ? country.label : code;
+};
 import {
   fetchStructureTree,
   type StructureTree,
@@ -32,7 +37,10 @@ import { Textarea } from "@/components/ui/Textarea";
 import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { ApeCodeSelect } from "@/components/structure/ApeCodeSelect";
+import { ApeCodeSelectModal } from "@/components/structure/ApeCodeSelectModal";
+import { APE_CODES } from "@/lib/nafApeData";
 import { CountrySelect } from "@/components/structure/CountrySelect";
+import { CountrySelectModal } from "@/components/structure/CountrySelectModal";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { isValidPhoneNumber } from "react-phone-number-input";
@@ -128,33 +136,55 @@ type Emprunt = {
 
 type EditBUFormState = {
   name: string;
+  description?: string;
   code: string;
   activity: string;
   siret: string;
   country: string;
   logo?: string;
+  company_id?: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
+  contact_email?: string;
   entity_code: string;
 } & BUManagerFormFields;
 
 type AddBUFormState = {
   name: string;
+  description?: string;
   code: string;
   activity: string;
   siret: string;
   country: string;
   logo?: string;
   entity_code: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
+  contact_email?: string;
 } & BUManagerFormFields;
 
 function createEmptyAddBUForm(): AddBUFormState {
   return {
     name: "",
+    description: "",
     code: "",
     activity: "",
     siret: "",
     country: "",
     logo: undefined,
     entity_code: "",
+    street: "",
+    postal_code: "",
+    city: "",
+    phone_landline: "",
+    phone_mobile: "",
+    contact_email: "",
     ...defaultBUManagerFormFields(),
   };
 }
@@ -191,11 +221,19 @@ function managerFieldsFromForm(
 function createEmptyEditBUForm(): EditBUFormState {
   return {
     name: "",
+    description: "",
     code: "",
     activity: "",
     siret: "",
     country: "",
     logo: undefined,
+    company_id: undefined,
+    street: "",
+    postal_code: "",
+    city: "",
+    phone_landline: "",
+    phone_mobile: "",
+    contact_email: "",
     entity_code: "",
     ...defaultBUManagerFormFields(),
   };
@@ -241,14 +279,21 @@ function previewBuFromEditForm(edit: EditBUFormState, users: UserItem[]): Busine
 type GroupFull = {
   id: string;
   name: string;
-  siret: string;
-  ape_code?: string;
+  description?: string;
+
   fiscal_year_start: string;
   last_closed_fiscal_year?: number | null;
-  mainActivity?: string;
+
   country?: string;
   logo?: string;
-  entity_code?: string | null;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
+  contact_email?: string;
+  completionPercentage?: number;
+  workspace_id?: string;
 };
 
 type workspaceFull = {
@@ -256,9 +301,14 @@ type workspaceFull = {
   name: string;
   description?: string;
   logo?: string;
-  address?: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
   contact_email?: string;
-  contact_phone?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
+  completionPercentage?: number;
   manager_id?: string;
   manager?: {
     id: string;
@@ -271,11 +321,17 @@ type workspaceFull = {
 type CompanyFull = {
   id: string;
   name: string;
+  description?: string;
   siret: string;
   fiscal_year_start: string;
   last_closed_fiscal_year?: number | null;
-  address?: string;
-  country: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
+  contact_email?: string;
   ape_code?: string;
   main_activity?: string;
   size?: string;
@@ -283,7 +339,6 @@ type CompanyFull = {
   logo?: string;
   completionPercentage?: number;
   group_id: string;
-  entity_code?: string | null;
 };
 
 type NodeUsersByRole = Record<
@@ -297,8 +352,8 @@ type NodeUsersByRole = Record<
 >;
 
 type TreeNode =
-  | { type: "workspace"; id: string; name: string }
-  | { type: "group"; id: string; name: string }
+  | { type: "workspace"; id: string; name: string; completionPercentage: number }
+  | { type: "group"; id: string; name: string; completionPercentage: number }
   | {
     type: "company";
     id: string;
@@ -307,7 +362,7 @@ type TreeNode =
     workspaceId?: string;
     completionPercentage: number;
   }
-  | { type: "bu"; id: string; name: string; companyId: string; code: string }
+  | { type: "bu"; id: string; name: string; companyId: string; code: string; completionPercentage: number }
   | { type: "section-header"; id: string; name: string };
 
 const MONTH_DAY_REGEX = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])$/;
@@ -593,12 +648,12 @@ function ReadField({
         {label}
       </dt>
       <dd
-        className={`mt-1 wrap-break-word text-sm ${display ? "italic text-white/45" : "font-medium text-white"} ${mono && !display ? "font-mono tracking-tight" : ""}`}
+        className={`mt-1 wrap-break-word text-sm ${display ? "italic text-(--nebula-muted)" : "font-medium text-(--nebula-ink)"} ${mono && !display ? "font-mono tracking-tight" : ""}`}
       >
         {display ? "Non renseigné" : value}
       </dd>
       {hint && !display && (
-        <p className="mt-0.5 text-[11px] leading-snug text-white/45">{hint}</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-(--nebula-muted)">{hint}</p>
       )}
     </div>
   );
@@ -629,23 +684,7 @@ export default function StructurePage() {
     user?.role === "MANAGER";
   const canCreateCompany = can("companies", CRUD_ACTION.CREATE);
 
-  useEffect(() => {
-    if (!isAuthReady || user) return;
-
-    const returnTo = router.asPath || "/structure";
-    try {
-      window.localStorage.setItem("nk-return-to", returnTo);
-    } catch {
-      // ignore storage write errors
-    }
-
-    void router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`);
-  }, [isAuthReady, user, router]);
-
-  if (!isAuthReady || !user) {
-    return null;
-  }
-
+  // Move ALL hooks here before any conditional returns
   const [tree, setTree] = useState<StructureTree | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeError, setTreeError] = useState<string | null>(null);
@@ -693,7 +732,6 @@ export default function StructurePage() {
 
   // États pour la recherche
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // État pour créer une workspace
   const [addworkspaceOpen, setAddworkspaceOpen] = useState(false);
@@ -701,9 +739,13 @@ export default function StructurePage() {
     name: "",
     description: "",
     logo: undefined as string | undefined,
-    address: "",
+    street: "",
+    postal_code: "",
+    city: "",
+    country: "",
     contact_email: "",
-    contact_phone: "",
+    phone_mobile: "",
+    phone_landline: "",
     manager_id: "",
   });
   const [addworkspaceLoading, setAddworkspaceLoading] = useState(false);
@@ -711,12 +753,26 @@ export default function StructurePage() {
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [workspaceErrors, setWorkspaceErrors] = useState({
     contact_email: "",
-    contact_phone: "",
+    phone_mobile: "",
+    phone_landline: "",
   });
   const [editWorkspaceErrors, setEditWorkspaceErrors] = useState({
     contact_email: "",
-    contact_phone: "",
+    phone_mobile: "",
+    phone_landline: "",
   });
+  const [countryModalOpen, setCountryModalOpen] = useState(false);
+  const [createCountryModalOpen, setCreateCountryModalOpen] = useState(false);
+  const [groupCountryModalOpen, setGroupCountryModalOpen] = useState(false);
+  const [companyApeModalOpen, setCompanyApeModalOpen] = useState(false);
+  const [editBUApeModalOpen, setEditBUApeModalOpen] = useState(false);
+  const [editBUCountryModalOpen, setEditBUCountryModalOpen] = useState(false);
+  const [addBUCountryModalOpen, setAddBUCountryModalOpen] = useState(false);
+  const [addBUStandaloneCountryModalOpen, setAddBUStandaloneCountryModalOpen] = useState(false);
+  const [addBUStandaloneApeModalOpen, setAddBUStandaloneApeModalOpen] = useState(false);
+  const [addCompanyApeModalOpen, setAddCompanyApeModalOpen] = useState(false);
+  const [addBUApeModalOpen, setAddBUApeModalOpen] = useState(false);
+  const [addCompanyCountryModalOpen, setAddCompanyCountryModalOpen] = useState(false);
 
   // Gérer le changement de fichier logo
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -768,42 +824,79 @@ export default function StructurePage() {
     }
   };
 
-  const handlePhoneChange = (value: string) => {
-    setAddworkspaceForm((f) => ({ ...f, contact_phone: value }));
+  const handlePhoneChange = (
+    value: string,
+    formType: 'addworkspace' | 'editworkspace' | 'editGroup' | 'addGroup' | 'editCompany' | 'addCompany' | 'editBU' | 'addBU' | 'addBUStandalone',
+    field?: 'phone_mobile' | 'phone_landline' | 'contact_phone'
+  ) => {
+    // Validation du téléphone
+    const isValid = validatePhone(value);
+    const errorMessage = isValid ? "" : "Veuillez entrer un numéro de téléphone valide";
 
-    if (!validatePhone(value)) {
-      setWorkspaceErrors((prev) => ({
-        ...prev,
-        contact_phone: "Veuillez entrer un numéro de téléphone valide",
-      }));
-    } else {
-      setWorkspaceErrors((prev) => ({ ...prev, contact_phone: "" }));
-    }
-  };
+    // Mise à jour du formulaire et des erreurs selon le type
+    switch (formType) {
+      case 'addworkspace':
+        if (field) {
+          setAddworkspaceForm((f) => ({ ...f, [field]: value }));
+          setWorkspaceErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
 
-  // Fonctions de validation pour l'édition
-  const handleEditEmailChange = (value: string) => {
-    setEditworkspace((f) => ({ ...f, contact_email: value }));
-    if (!validateEmail(value)) {
-      setEditWorkspaceErrors((prev) => ({
-        ...prev,
-        contact_email: "Veuillez entrer un email valide",
-      }));
-    } else {
-      setEditWorkspaceErrors((prev) => ({ ...prev, contact_email: "" }));
-    }
-  };
+      case 'editworkspace':
+        if (field) {
+          setEditworkspace((f) => ({ ...f, [field]: value }));
+          setEditWorkspaceErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
 
-  const handleEditPhoneChange = (value: string) => {
-    setEditworkspace((f) => ({ ...f, contact_phone: value }));
+      case 'editGroup':
+        if (field) {
+          setEditGroup((f) => ({ ...f, [field]: value }));
+          setGroupErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
 
-    if (!validatePhone(value)) {
-      setEditWorkspaceErrors((prev) => ({
-        ...prev,
-        contact_phone: "Veuillez entrer un numéro de téléphone valide",
-      }));
-    } else {
-      setEditWorkspaceErrors((prev) => ({ ...prev, contact_phone: "" }));
+      case 'addGroup':
+        if (field) {
+          setAddGroupForm((f) => ({ ...f, [field]: value }));
+          setAddGroupErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
+
+      case 'editCompany':
+        if (field) {
+          setEditCompany((f) => ({ ...f, [field]: value }));
+          setCompanyErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
+
+      case 'addCompany':
+        if (field) {
+          setAddCompanyForm((f) => ({ ...f, [field]: value }));
+          setCompanyErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
+
+      case 'editBU':
+        if (field) {
+          setEditBU((f) => ({ ...f, [field]: value }));
+          setBuErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
+
+      case 'addBU':
+        if (field) {
+          setAddBUForm((f) => ({ ...f, [field]: value }));
+          setAddBUErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
+
+      case 'addBUStandalone':
+        if (field) {
+          setAddBUStandaloneForm((f) => ({ ...f, [field]: value }));
+          setAddBUStandaloneErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
     }
   };
 
@@ -813,19 +906,26 @@ export default function StructurePage() {
   );
   const [addCompanyForm, setAddCompanyForm] = useState({
     name: "",
+    description: "",
     siret: "",
     fiscal_year_start: "",
     last_closed_fiscal_year: "",
-    address: "",
+
+    street: "",
+    postal_code: "",
+    city: "",
     country: "",
+    phone_landline: "",
+    phone_mobile: "",
+    contact_email: "",
     ape_code: "",
     main_activity: "",
     size: "SMALL",
     model: "SUBSIDIARY",
     groupId: "",
     workspaceId: "",
-    logo: undefined as string | undefined,
     entity_code: "",
+    logo: undefined as string | undefined,
   });
   const [addCompanyLoading, setAddCompanyLoading] = useState(false);
   const [addCompanyLogoFile, setAddCompanyLogoFile] = useState<File | null>(null);
@@ -839,16 +939,23 @@ export default function StructurePage() {
   const [addGroupOpen, setAddGroupOpen] = useState(false);
   const [addGroupForm, setAddGroupForm] = useState({
     name: "",
-    siret: "",
-    ape_code: "",
+    description: "",
     fiscal_year_start: "",
     last_closed_fiscal_year: "",
-    mainActivity: "",
+
     country: "",
+    street: "",
+    postal_code: "",
+    city: "",
+    phone_landline: "",
+    phone_mobile: "",
+    contact_email: "",
     workspaceId: "",
-    logo: undefined as string | undefined,
     entity_code: "",
+    logo: undefined as string | undefined,
   });
+  const [addGroupErrors, setAddGroupErrors] = useState({ contact_email: "", phone_landline: "", phone_mobile: "" });
+  const [addGroupCountryModalOpen, setAddGroupCountryModalOpen] = useState(false);
   const [addGroupLoading, setAddGroupLoading] = useState(false);
 
   const [addBUStandaloneOpen, setAddBUStandaloneOpen] = useState(false);
@@ -861,10 +968,15 @@ export default function StructurePage() {
     name: "",
     description: "",
     logo: undefined as string | undefined,
-    address: "",
+    street: "",
+    postal_code: "",
+    city: "",
+    country: "",
     contact_email: "",
-    contact_phone: "",
+    phone_landline: "",
+    phone_mobile: "",
     manager_id: "",
+    completionPercentage: 0,
   });
   const [editworkspaceLogoFile, setEditworkspaceLogoFile] = useState<File | null>(null);
   const [editGroupLogoFile, setEditGroupLogoFile] = useState<File | null>(null);
@@ -873,20 +985,34 @@ export default function StructurePage() {
   const [editBULogoFile, setEditBULogoFile] = useState<File | null>(null);
   const [editGroup, setEditGroup] = useState({
     name: "",
-    siret: "",
-    ape_code: "",
+    description: "",
     fiscal_year_start: "",
     last_closed_fiscal_year: "",
-    mainActivity: "",
+
     country: "",
+    street: "",
+    postal_code: "",
+    city: "",
+    phone_landline: "",
+    phone_mobile: "",
+    contact_email: "",
     logo: undefined as string | undefined,
-    entity_code: ""
+    completionPercentage: 0,
+
   });
+  const [groupErrors, setGroupErrors] = useState({ contact_email: "", phone_landline: "", phone_mobile: "" });
   const [editCompany, setEditCompany] = useState({
     name: "",
+    description: "",
     siret: "",
-    address: "",
+
+    street: "",
+    postal_code: "",
+    city: "",
     country: "",
+    phone_landline: "",
+    phone_mobile: "",
+    contact_email: "",
     ape_code: "",
     main_activity: "",
     fiscal_year_start: "",
@@ -895,8 +1021,12 @@ export default function StructurePage() {
     model: "",
     logo: undefined as string | undefined,
     completionPercentage: 0,
-    entity_code: "",
   });
+  const [companyErrors, setCompanyErrors] = useState({ contact_email: "", phone_landline: "", phone_mobile: "" });
+  const [buErrors, setBuErrors] = useState({ contact_email: "", phone_landline: "", phone_mobile: "" });
+  const [addBUErrors, setAddBUErrors] = useState({ contact_email: "", phone_landline: "", phone_mobile: "" });
+  const [addBUStandaloneErrors, setAddBUStandaloneErrors] = useState({ contact_email: "", phone_landline: "", phone_mobile: "" });
+  const [companyCountryModalOpen, setCompanyCountryModalOpen] = useState(false);
   const [editBU, setEditBU] = useState<EditBUFormState>(() => createEmptyEditBUForm());
   const [nodeUsers, setNodeUsers] = useState<NodeUsersByRole | null>(null);
   const [nodeUsersOpen, setNodeUsersOpen] = useState(false);
@@ -1255,13 +1385,23 @@ export default function StructurePage() {
     (filteredTreeData?.workspaces ?? []).forEach((org) => {
       // N'afficher les workspaces que pour SUPER_ADMIN et ADMIN
       if (user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") {
-        rows.push({ type: "workspace", id: org.id, name: org.name });
+        rows.push({
+          type: "workspace",
+          id: org.id,
+          name: org.name,
+          completionPercentage: org.completionPercentage || 0
+        });
         console.log(`Added workspace: ${org.name}`);
       }
 
       // Ajouter les groupes de l'workspace immédiatement après le workspace
       org.groups.forEach((g) => {
-        rows.push({ type: "group", id: g.id, name: g.name });
+        rows.push({
+          type: "group",
+          id: g.id,
+          name: g.name,
+          completionPercentage: g.completionPercentage || 0
+        });
         console.log(`Added group for workspace ${org.name}: ${g.name}`);
         g.companies.forEach((c) => {
           rows.push({
@@ -1280,6 +1420,7 @@ export default function StructurePage() {
                 name: bu.name,
                 companyId: c.id,
                 code: bu.code,
+                completionPercentage: bu.completionPercentage || 0,
               });
             });
           }
@@ -1310,6 +1451,7 @@ export default function StructurePage() {
                 name: bu.name,
                 companyId: c.id,
                 code: bu.code,
+                completionPercentage: bu.completionPercentage || 0,
               });
             });
           }
@@ -1326,7 +1468,12 @@ export default function StructurePage() {
 
     (filteredTreeData?.groups ?? []).forEach((g) => {
       if (!workspaceGroupIds.has(g.id)) {
-        rows.push({ type: "group", id: g.id, name: g.name });
+        rows.push({
+          type: "group",
+          id: g.id,
+          name: g.name,
+          completionPercentage: g.completionPercentage ?? 0,
+        });
         console.log(`Added standalone group: ${g.name}`);
         g.companies.forEach((c) => {
           rows.push({
@@ -1344,6 +1491,7 @@ export default function StructurePage() {
                 name: bu.name,
                 companyId: c.id,
                 code: bu.code,
+                completionPercentage: bu.completionPercentage || 0,
               });
             });
           }
@@ -1375,6 +1523,7 @@ export default function StructurePage() {
               name: bu.name,
               companyId: c.id,
               code: bu.code,
+              completionPercentage: bu.completionPercentage || 0,
             });
           });
         }
@@ -1427,7 +1576,6 @@ export default function StructurePage() {
       setEditing(false);
       setNodeUsers(null);
 
-      // Réinitialiser editBU avec des valeurs vides AVANT de charger les nouvelles données
       setEditBU(createEmptyEditBUForm());
 
       if (node.type === "workspace") {
@@ -1439,25 +1587,35 @@ export default function StructurePage() {
             name: org.name,
             description: org.description ?? "",
             logo: org.logo ?? "",
-            address: org.address ?? "",
+            street: org.street ?? "",
+            postal_code: org.postal_code ?? "",
+            city: org.city ?? "",
+            country: org.country ?? "",
             contact_email: org.contact_email ?? "",
-            contact_phone: org.contact_phone ?? "",
+            phone_landline: org.phone_landline ?? "",
+            phone_mobile: org.phone_mobile ?? "",
             manager_id: org.manager_id ?? "",
+            completionPercentage: org.completionPercentage || 0,
           });
           setEditworkspaceLogoFile(null);
-          setEditWorkspaceErrors({ contact_email: "", contact_phone: "" });
+          setEditWorkspaceErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
         } catch {
           setEditworkspace({
             name: node.name,
             description: "",
             logo: undefined as string | undefined,
-            address: "",
+            street: "",
+            postal_code: "",
+            city: "",
+            country: "",
             contact_email: "",
-            contact_phone: "",
+            phone_landline: "",
+            phone_mobile: "",
             manager_id: "",
+            completionPercentage: 0,
           });
           setEditworkspaceLogoFile(null);
-          setEditWorkspaceErrors({ contact_email: "", contact_phone: "" });
+          setEditWorkspaceErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
         }
       } else if (node.type === "group") {
         try {
@@ -1466,32 +1624,43 @@ export default function StructurePage() {
           });
           setEditGroup({
             name: g.name,
-            siret: g.siret ?? "",
-            ape_code: g.ape_code ?? "",
+            description: g.description ?? "",
             fiscal_year_start: toMonthDay(g.fiscal_year_start),
             last_closed_fiscal_year:
               g.last_closed_fiscal_year !== null &&
                 g.last_closed_fiscal_year !== undefined
                 ? String(g.last_closed_fiscal_year)
                 : "",
-            mainActivity: g.mainActivity ?? "",
             country: g.country ?? "",
+            street: g.street ?? "",
+            postal_code: g.postal_code ?? "",
+            city: g.city ?? "",
+            phone_landline: g.phone_landline ?? "",
+            phone_mobile: g.phone_mobile ?? "",
+            contact_email: g.contact_email ?? "",
             logo: g.logo ?? "",
-            entity_code: g.entity_code ?? "",
+            completionPercentage: g.completionPercentage || 0,
           });
+          setEditGroupLogoFile(null);
+          setGroupErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
         } catch {
           setEditGroup({
             name: node.name,
-            siret: "",
-            ape_code: "",
+            description: "",
             fiscal_year_start: "",
             last_closed_fiscal_year: "",
-            mainActivity: "",
             country: "",
+            street: "",
+            postal_code: "",
+            city: "",
+            phone_landline: "",
+            phone_mobile: "",
+            contact_email: "",
             logo: undefined as string | undefined,
-            entity_code: "",
+            completionPercentage: 0,
           });
           setEditGroupLogoFile(null);
+          setGroupErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
         }
       } else if (node.type === "company") {
         try {
@@ -1500,9 +1669,15 @@ export default function StructurePage() {
           });
           setEditCompany({
             name: c.name,
+            description: c.description ?? "",
             siret: c.siret ?? "",
-            address: c.address ?? "",
+            street: c.street ?? "",
+            postal_code: c.postal_code ?? "",
+            city: c.city ?? "",
             country: c.country ?? "",
+            phone_landline: c.phone_landline ?? "",
+            phone_mobile: c.phone_mobile ?? "",
+            contact_email: c.contact_email ?? "",
             ape_code: c.ape_code ?? "",
             main_activity: c.main_activity ?? "",
             fiscal_year_start: toMonthDay(c.fiscal_year_start),
@@ -1515,14 +1690,19 @@ export default function StructurePage() {
             model: c.model ?? "",
             logo: c.logo ?? "",
             completionPercentage: c.completionPercentage ?? 0,
-            entity_code: c.entity_code ?? "",
           });
         } catch {
           setEditCompany({
             name: node.name,
+            description: "",
             siret: "",
-            address: "",
+            street: "",
+            postal_code: "",
+            city: "",
             country: "",
+            phone_landline: "",
+            phone_mobile: "",
+            contact_email: "",
             ape_code: "",
             main_activity: "",
             fiscal_year_start: "",
@@ -1531,7 +1711,6 @@ export default function StructurePage() {
             model: "",
             logo: undefined as string | undefined,
             completionPercentage: 0,
-            entity_code: "",
           });
         }
         loadBUsForCompany(node.id);
@@ -1542,10 +1721,17 @@ export default function StructurePage() {
         if (bu) {
           setEditBU({
             name: bu.name,
+            description: bu.description || "",
             code: bu.code,
             activity: bu.activity || "",
             siret: bu.siret || "",
             country: bu.country || "",
+            street: bu.street || "",
+            postal_code: bu.postal_code || "",
+            city: bu.city || "",
+            phone_landline: bu.phone_landline || "",
+            phone_mobile: bu.phone_mobile || "",
+            contact_email: bu.contact_email || "",
             logo: bu.logo || "",
             entity_code: bu.entity_code ?? "",
             ...mapApiBuToManagerFormFields(bu),
@@ -1553,10 +1739,17 @@ export default function StructurePage() {
         } else {
           setEditBU({
             name: node.name,
+            description: "",
             code: node.code,
             activity: "",
             siret: "",
             country: "",
+            street: "",
+            postal_code: "",
+            city: "",
+            phone_landline: "",
+            phone_mobile: "",
+            contact_email: "",
             logo: undefined as string | undefined,
             entity_code: "",
             ...defaultBUManagerFormFields(),
@@ -1596,13 +1789,14 @@ export default function StructurePage() {
     if (selectedNode.type === "workspace") {
       // Valider l'email et le téléphone
       const emailValid = validateEmail(editworkspace.contact_email);
-      const phoneValid = validatePhone(editworkspace.contact_phone);
+      const phoneValid = validatePhone(editworkspace?.phone_mobile || "");
 
       if (!emailValid || !phoneValid) {
         // Mettre à jour les erreurs
         setEditWorkspaceErrors({
           contact_email: emailValid ? "" : "Veuillez entrer un email valide",
-          contact_phone: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+          phone_mobile: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+          phone_landline: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
         });
         return;
       }
@@ -1612,14 +1806,26 @@ export default function StructurePage() {
       if (editworkspace.description) {
         formData.append('description', editworkspace.description);
       }
-      if (editworkspace.address) {
-        formData.append('address', editworkspace.address);
+      if (editworkspace.street) {
+        formData.append('street', editworkspace.street);
+      }
+      if (editworkspace.postal_code) {
+        formData.append('postal_code', editworkspace.postal_code);
+      }
+      if (editworkspace.city) {
+        formData.append('city', editworkspace.city);
+      }
+      if (editworkspace.country) {
+        formData.append('country', editworkspace.country);
+      }
+      if (editworkspace.phone_landline) {
+        formData.append('phone_landline', editworkspace.phone_landline);
+      }
+      if (editworkspace.phone_mobile) {
+        formData.append('phone_mobile', editworkspace.phone_mobile);
       }
       if (editworkspace.contact_email) {
         formData.append('contact_email', editworkspace.contact_email);
-      }
-      if (editworkspace.contact_phone) {
-        formData.append('contact_phone', editworkspace.contact_phone);
       }
       if (editworkspace.manager_id) {
         formData.append('manager_id', editworkspace.manager_id);
@@ -1635,7 +1841,7 @@ export default function StructurePage() {
         snackbar: { showSuccess: true, successMessage: "Workspace mise à jour" },
       });
       setEditworkspaceLogoFile(null);
-      setEditWorkspaceErrors({ contact_email: "", contact_phone: "" });
+      setEditWorkspaceErrors({ contact_email: "", phone_mobile: "", phone_landline: "" });
       // Mettre à jour l'état local avec le logo retourné par le serveur
       if (updatedOrg) {
         setEditworkspace(prev => ({
@@ -1644,14 +1850,27 @@ export default function StructurePage() {
         }));
       }
     } else if (selectedNode.type === "group") {
+      // Valider l'email et les téléphones
+      const emailValid = validateEmail(editGroup.contact_email);
+      const phone_mobileValid = validatePhone(editGroup.phone_mobile || "");
+      const phone_landlineValid = validatePhone(editGroup.phone_landline || "");
+
+      if (!emailValid || !phone_mobileValid || !phone_landlineValid) {
+        // Mettre à jour les erreurs
+        setGroupErrors({
+          contact_email: emailValid ? "" : "Veuillez entrer un email valide",
+          phone_mobile: phone_mobileValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+          phone_landline: phone_landlineValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        });
+        return;
+      }
+
       const formData = new FormData();
       formData.append('name', editGroup.name);
-      if (editGroup.siret) {
-        formData.append('siret', editGroup.siret);
+      if (editGroup.description) {
+        formData.append('description', editGroup.description);
       }
-      if (editGroup.ape_code) {
-        formData.append('ape_code', editGroup.ape_code);
-      }
+
       const normalizedGroupFiscalYearStart = toMonthDay(editGroup.fiscal_year_start);
       if (normalizedGroupFiscalYearStart) {
         formData.append('fiscal_year_start', normalizedGroupFiscalYearStart);
@@ -1659,18 +1878,31 @@ export default function StructurePage() {
       if (editGroup.last_closed_fiscal_year.trim()) {
         formData.append('last_closed_fiscal_year', editGroup.last_closed_fiscal_year.trim());
       }
-      if (editGroup.mainActivity) {
-        formData.append('mainActivity', editGroup.mainActivity);
-      }
       if (editGroup.country) {
         formData.append('country', editGroup.country);
+      }
+      if (editGroup.street) {
+        formData.append('street', editGroup.street);
+      }
+      if (editGroup.postal_code) {
+        formData.append('postal_code', editGroup.postal_code);
+      }
+      if (editGroup.city) {
+        formData.append('city', editGroup.city);
+      }
+      if (editGroup.contact_email) {
+        formData.append('contact_email', editGroup.contact_email);
+      }
+      if (editGroup.phone_mobile) {
+        formData.append('phone_mobile', editGroup.phone_mobile);
+      }
+      if (editGroup.phone_landline) {
+        formData.append('phone_landline', editGroup.phone_landline);
       }
       if (editGroupLogoFile) {
         formData.append('logo', editGroupLogoFile);
       }
-      if (editGroup.entity_code?.trim()) {
-        formData.append('entity_code', editGroup.entity_code.trim());
-      }
+
 
       const updatedGroup = await apiFetch<GroupFull>(`/groups/${selectedNode.id}`, {
         method: "PUT",
@@ -1679,6 +1911,7 @@ export default function StructurePage() {
         snackbar: { showSuccess: true, successMessage: "Groupe mis à jour" },
       });
       setEditGroupLogoFile(null);
+      setGroupErrors({ contact_email: "", phone_mobile: "", phone_landline: "" });
       // Mettre à jour l'état local avec le logo retourné par le serveur
       if (updatedGroup) {
         setEditGroup(prev => ({
@@ -1689,14 +1922,32 @@ export default function StructurePage() {
     } else if (selectedNode.type === "company") {
       const formData = new FormData();
       formData.append('name', editCompany.name);
+      if (editCompany.description) {
+        formData.append('description', editCompany.description);
+      }
       if (editCompany.siret) {
         formData.append('siret', editCompany.siret);
       }
-      if (editCompany.address) {
-        formData.append('address', editCompany.address);
+      if (editCompany.street) {
+        formData.append('street', editCompany.street);
+      }
+      if (editCompany.postal_code) {
+        formData.append('postal_code', editCompany.postal_code);
+      }
+      if (editCompany.city) {
+        formData.append('city', editCompany.city);
       }
       if (editCompany.country) {
         formData.append('country', editCompany.country);
+      }
+      if (editCompany.phone_landline) {
+        formData.append('phone_landline', editCompany.phone_landline);
+      }
+      if (editCompany.phone_mobile) {
+        formData.append('phone_mobile', editCompany.phone_mobile);
+      }
+      if (editCompany.contact_email) {
+        formData.append('contact_email', editCompany.contact_email);
       }
       if (editCompany.ape_code) {
         formData.append('ape_code', editCompany.ape_code);
@@ -1723,9 +1974,7 @@ export default function StructurePage() {
       if (editCompanyLogoFile) {
         formData.append('logo', editCompanyLogoFile);
       }
-      if (editCompany.entity_code?.trim()) {
-        formData.append('entity_code', editCompany.entity_code.trim());
-      }
+
       formData.append('completionPercentage', String(editCompany.completionPercentage || 0));
 
       const updatedCompany = await apiFetch<CompanyFull>(`/companies/${selectedNode.id}`, {
@@ -1754,6 +2003,9 @@ export default function StructurePage() {
       }
       const formData = new FormData();
       formData.append('name', editBU.name);
+      if (editBU.description) {
+        formData.append('description', editBU.description);
+      }
       if (editBU.code) {
         formData.append('code', editBU.code);
       }
@@ -1765,6 +2017,24 @@ export default function StructurePage() {
       }
       if (editBU.country) {
         formData.append('country', editBU.country);
+      }
+      if (editBU.street) {
+        formData.append('street', editBU.street);
+      }
+      if (editBU.postal_code) {
+        formData.append('postal_code', editBU.postal_code);
+      }
+      if (editBU.city) {
+        formData.append('city', editBU.city);
+      }
+      if (editBU.phone_landline) {
+        formData.append('phone_landline', editBU.phone_landline);
+      }
+      if (editBU.phone_mobile) {
+        formData.append('phone_mobile', editBU.phone_mobile);
+      }
+      if (editBU.contact_email) {
+        formData.append('contact_email', editBU.contact_email);
       }
       if (editBULogoFile) {
         formData.append('logo', editBULogoFile);
@@ -1818,13 +2088,14 @@ export default function StructurePage() {
 
     // Valider l'email et le téléphone
     const emailValid = validateEmail(addworkspaceForm.contact_email);
-    const phoneValid = validatePhone(addworkspaceForm.contact_phone);
+    const phoneValid = validatePhone(addworkspaceForm.phone_mobile) && validatePhone(addworkspaceForm.phone_landline);
 
     if (!emailValid || !phoneValid) {
       // Mettre à jour les erreurs
       setWorkspaceErrors({
         contact_email: emailValid ? "" : "Veuillez entrer un email valide",
-        contact_phone: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        phone_landline: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        phone_mobile: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
       });
       return;
     }
@@ -1835,9 +2106,13 @@ export default function StructurePage() {
       const formData = new FormData();
       formData.append('name', addworkspaceForm.name.trim());
       formData.append('description', addworkspaceForm.description.trim() || '');
-      formData.append('address', addworkspaceForm.address.trim() || '');
+      formData.append('street', addworkspaceForm.street.trim() || '');
+      formData.append('postal_code', addworkspaceForm.postal_code.trim() || '');
+      formData.append('city', addworkspaceForm.city.trim() || '');
+      formData.append('country', addworkspaceForm.country.trim() || '');
       formData.append('contact_email', addworkspaceForm.contact_email.trim() || '');
-      formData.append('contact_phone', addworkspaceForm.contact_phone.trim() || '');
+      formData.append('phone_mobile', addworkspaceForm.phone_mobile.trim() || '');
+      formData.append('phone_landline', addworkspaceForm.phone_landline.trim() || '');
 
       // Ajouter le fichier logo s'il existe
       if (logoFile) {
@@ -1857,14 +2132,18 @@ export default function StructurePage() {
         name: "",
         description: "",
         logo: undefined as string | undefined,
-        address: "",
+        street: "",
+        postal_code: "",
+        city: "",
+        country: "",
         contact_email: "",
-        contact_phone: "",
+        phone_mobile: "",
+        phone_landline: "",
         manager_id: "",
       });
       setLogoFile(null);
       setLogoPreview("");
-      setWorkspaceErrors({ contact_email: "", contact_phone: "" });
+      setWorkspaceErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
       void loadTree();
     } finally {
       setAddworkspaceLoading(false);
@@ -1931,11 +2210,8 @@ export default function StructurePage() {
       return;
     }
 
-    // Validation pour le mode standalone : un groupe est requis
-    if (!addCompanyGroupId && !finalGroupId) {
-      console.error('Un groupe est requis');
-      return;
-    }
+    // En mode standalone, le groupe est optionnel
+    // La création est possible sans groupe
 
     // Validation supplémentaire
     const normalizedCompanyFiscalYearStart = toMonthDay(addCompanyForm.fiscal_year_start);
@@ -1964,6 +2240,9 @@ export default function StructurePage() {
       }
 
       formData.append('name', addCompanyForm.name);
+      if (addCompanyForm.description) {
+        formData.append('description', addCompanyForm.description);
+      }
       if (addCompanyForm.siret) {
         formData.append('siret', addCompanyForm.siret);
       }
@@ -1974,17 +2253,32 @@ export default function StructurePage() {
           addCompanyForm.last_closed_fiscal_year.trim(),
         );
       }
-      if (addCompanyForm.address) {
-        formData.append('address', addCompanyForm.address);
+      if (addCompanyForm.country) {
+        formData.append('country', addCompanyForm.country);
+      }
+      if (addCompanyForm.street) {
+        formData.append('street', addCompanyForm.street);
+      }
+      if (addCompanyForm.postal_code) {
+        formData.append('postal_code', addCompanyForm.postal_code);
+      }
+      if (addCompanyForm.city) {
+        formData.append('city', addCompanyForm.city);
+      }
+      if (addCompanyForm.phone_landline) {
+        formData.append('phone_landline', addCompanyForm.phone_landline);
+      }
+      if (addCompanyForm.phone_mobile) {
+        formData.append('phone_mobile', addCompanyForm.phone_mobile);
+      }
+      if (addCompanyForm.contact_email) {
+        formData.append('contact_email', addCompanyForm.contact_email);
       }
       if (addCompanyForm.ape_code) {
         formData.append('ape_code', addCompanyForm.ape_code);
       }
       if (addCompanyForm.main_activity) {
         formData.append('main_activity', addCompanyForm.main_activity);
-      }
-      if (addCompanyForm.country) {
-        formData.append('country', addCompanyForm.country);
       }
       formData.append('size', addCompanyForm.size);
       formData.append('model', addCompanyForm.model);
@@ -2013,19 +2307,26 @@ export default function StructurePage() {
       setAddCompanyOpen(false);
       setAddCompanyForm({
         name: "",
+        description: "",
         siret: "",
         fiscal_year_start: "",
         last_closed_fiscal_year: "",
-        address: "",
+
+        street: "",
+        postal_code: "",
+        city: "",
         country: "",
+        phone_landline: "",
+        phone_mobile: "",
+        contact_email: "",
         ape_code: "",
         main_activity: "",
         size: "SMALL",
         model: "SUBSIDIARY",
         groupId: "",
         workspaceId: "",
-        logo: undefined as string | undefined,
         entity_code: "",
+        logo: undefined as string | undefined,
       });
       setAddCompanyLogoFile(null);
     } catch (error) {
@@ -2059,6 +2360,9 @@ export default function StructurePage() {
       const formData = new FormData();
       formData.append("company_id", addBUCompanyId);
       formData.append('name', addBUForm.name);
+      if (addBUForm.description?.trim()) {
+        formData.append('description', addBUForm.description.trim());
+      }
       if (addBUForm.code) {
         formData.append('code', addBUForm.code);
       }
@@ -2070,6 +2374,24 @@ export default function StructurePage() {
       }
       if (addBUForm.country) {
         formData.append('country', addBUForm.country);
+      }
+      if (addBUForm.street) {
+        formData.append('street', addBUForm.street);
+      }
+      if (addBUForm.postal_code) {
+        formData.append('postal_code', addBUForm.postal_code);
+      }
+      if (addBUForm.city) {
+        formData.append('city', addBUForm.city);
+      }
+      if (addBUForm.phone_landline) {
+        formData.append('phone_landline', addBUForm.phone_landline);
+      }
+      if (addBUForm.phone_mobile) {
+        formData.append('phone_mobile', addBUForm.phone_mobile);
+      }
+      if (addBUForm.contact_email) {
+        formData.append('contact_email', addBUForm.contact_email);
       }
       if (addBULogoFile) {
         formData.append('logo', addBULogoFile);
@@ -2091,6 +2413,7 @@ export default function StructurePage() {
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
       setAddBUForm(createEmptyAddBUForm());
+      setAddBUErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
       setAddBULogoFile(null);
     } catch {
       /* snackbar handles */
@@ -2101,27 +2424,38 @@ export default function StructurePage() {
 
   const handleCreateGroup = async () => {
     if (!addGroupForm.name.trim()) return;
+
+    // Valider l'email et les téléphones
+    const emailValid = validateEmail(addGroupForm.contact_email);
+    const phone_mobileValid = validatePhone(addGroupForm.phone_mobile || "");
+    const phone_landlineValid = validatePhone(addGroupForm.phone_landline || "");
+
+    if (!emailValid || !phone_mobileValid || !phone_landlineValid) {
+      // Mettre à jour les erreurs
+      setAddGroupErrors({
+        contact_email: emailValid ? "" : "Veuillez entrer un email valide",
+        phone_mobile: phone_mobileValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        phone_landline: phone_landlineValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+      });
+      return;
+    }
+
     const normalizedGroupFiscalYearStart = toMonthDay(addGroupForm.fiscal_year_start);
     if (!isValidMonthDay(normalizedGroupFiscalYearStart)) {
       console.error("La date de début d'exercice est invalide (DD-MM)");
       return;
     }
 
-    // Valider le SIRET avant d'envoyer la requête
-    if (addGroupForm.siret && !validateSiret(addGroupForm.siret)) {
-      return;
-    }
+
 
     setAddGroupLoading(true);
     try {
       const formData = new FormData();
       formData.append('name', addGroupForm.name);
-      if (addGroupForm.siret) {
-        formData.append('siret', addGroupForm.siret);
+      if (addGroupForm.description) {
+        formData.append('description', addGroupForm.description);
       }
-      if (addGroupForm.ape_code) {
-        formData.append('ape_code', addGroupForm.ape_code);
-      }
+
       if (normalizedGroupFiscalYearStart) {
         formData.append('fiscal_year_start', normalizedGroupFiscalYearStart);
       }
@@ -2131,21 +2465,38 @@ export default function StructurePage() {
           addGroupForm.last_closed_fiscal_year.trim(),
         );
       }
-      if (addGroupForm.mainActivity) {
-        formData.append('mainActivity', addGroupForm.mainActivity);
-      }
+
       if (addGroupForm.country) {
         formData.append('country', addGroupForm.country);
+      }
+      if (addGroupForm.street) {
+        formData.append('street', addGroupForm.street);
+      }
+      if (addGroupForm.postal_code) {
+        formData.append('postal_code', addGroupForm.postal_code);
+      }
+      if (addGroupForm.city) {
+        formData.append('city', addGroupForm.city);
+      }
+      if (addGroupForm.phone_landline) {
+        formData.append('phone_landline', addGroupForm.phone_landline);
+      }
+      if (addGroupForm.phone_mobile) {
+        formData.append('phone_mobile', addGroupForm.phone_mobile);
+      }
+      if (addGroupForm.contact_email) {
+        formData.append('contact_email', addGroupForm.contact_email);
       }
       if (addGroupForm.workspaceId) {
         formData.append('workspace_id', addGroupForm.workspaceId);
       }
-      if (addGroupLogoFile) {
-        formData.append('logo', addGroupLogoFile);
-      }
       if (addGroupForm.entity_code?.trim()) {
         formData.append('entity_code', addGroupForm.entity_code.trim());
       }
+      if (addGroupLogoFile) {
+        formData.append('logo', addGroupLogoFile);
+      }
+
 
       await apiFetch("/groups", {
         method: "POST",
@@ -2157,17 +2508,24 @@ export default function StructurePage() {
       setAddGroupOpen(false);
       setAddGroupForm({
         name: "",
-        siret: "",
-        ape_code: "",
+        description: "",
+
         fiscal_year_start: "",
         last_closed_fiscal_year: "",
-        mainActivity: "",
+
         country: "",
+        street: "",
+        postal_code: "",
+        city: "",
+        phone_landline: "",
+        phone_mobile: "",
+        contact_email: "",
         workspaceId: "",
-        logo: undefined as string | undefined,
         entity_code: "",
+        logo: undefined as string | undefined,
       });
       setAddGroupLogoFile(null);
+      setAddGroupErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
     } catch {
       /* snackbar handles */
     } finally {
@@ -2200,10 +2558,17 @@ export default function StructurePage() {
           method: "POST",
           body: JSON.stringify({
             name: addBUStandaloneForm.name,
+            description: addBUStandaloneForm.description,
             code: addBUStandaloneForm.code,
             activity: addBUStandaloneForm.activity,
             siret: addBUStandaloneForm.siret,
             country: addBUStandaloneForm.country,
+            street: addBUStandaloneForm.street,
+            postal_code: addBUStandaloneForm.postal_code,
+            city: addBUStandaloneForm.city,
+            phone_landline: addBUStandaloneForm.phone_landline,
+            phone_mobile: addBUStandaloneForm.phone_mobile,
+            contact_email: addBUStandaloneForm.contact_email,
             entity_code: addBUStandaloneForm.entity_code,
             company_id: addBUStandaloneForm.companyId,
             ...buildBuCreateManagerJson(managerFieldsFromForm(addBUStandaloneForm)),
@@ -2487,6 +2852,24 @@ export default function StructurePage() {
     }
   };
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthReady || user) return;
+
+    const returnTo = router.asPath || "/structure";
+    try {
+      window.localStorage.setItem("nk-return-to", returnTo);
+    } catch {
+      // ignore storage write errors
+    }
+
+    void router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+  }, [isAuthReady, user, router]);
+
+  if (!isAuthReady || !user) {
+    return null;
+  }
+
   const typeLabel =
     selectedNode?.type === "workspace"
       ? "Workspace"
@@ -2505,7 +2888,7 @@ export default function StructurePage() {
       onCompanyChange={() => { }}
     >
       <Head>
-        <title>Structure de l&apos;workspace</title>
+        <title>Structure du workspace</title>
       </Head>
       <div className="space-y-6">
         {/* Header */}
@@ -2605,19 +2988,25 @@ export default function StructurePage() {
                               setAddCompanyGroupId(null);
                               setAddCompanyForm({
                                 name: "",
+                                description: "",
                                 siret: "",
                                 fiscal_year_start: "",
                                 last_closed_fiscal_year: "",
-                                address: "",
+                                street: "",
+                                postal_code: "",
+                                city: "",
                                 country: "",
+                                phone_landline: "",
+                                phone_mobile: "",
+                                contact_email: "",
                                 ape_code: "",
                                 main_activity: "",
                                 size: "SMALL",
                                 model: "SUBSIDIARY",
                                 groupId: "",
                                 workspaceId: "",
+                                entity_code: "",
                                 logo: undefined as string | undefined,
-                                entity_code: ""
                               });
                               setAddCompanyOpen(true);
                             }}
@@ -2857,8 +3246,7 @@ export default function StructurePage() {
                           : node.type === "company"
                             ? "neutral"
                             : "neutral";
-                    const completion =
-                      node.type === "company" ? node.completionPercentage : null;
+                    const completion = node.completionPercentage;
                     const canExpand =
                       node.type === "company" && companiesWithBus.has(node.id);
 
@@ -2966,15 +3354,19 @@ export default function StructurePage() {
                                         e.stopPropagation();
                                         setAddGroupForm({
                                           name: "",
-                                          siret: "",
-                                          ape_code: "",
-                                          mainActivity: "",
+                                          description: "",
+                                          street: "",
+                                          postal_code: "",
+                                          city: "",
+                                          phone_landline: "",
+                                          phone_mobile: "",
                                           country: "",
+                                          contact_email: "",
                                           fiscal_year_start: "",
                                           last_closed_fiscal_year: "",
                                           workspaceId: node.id,
+                                          entity_code: "",
                                           logo: undefined as string | undefined,
-                                          entity_code: ""
                                         });
                                         setAddGroupLogoFile(null);
                                         setAddGroupOpen(true);
@@ -3005,10 +3397,16 @@ export default function StructurePage() {
                                           setAddCompanyGroupId(node.id);
                                           setAddCompanyForm({
                                             name: "",
+                                            description: "",
                                             siret: "",
                                             fiscal_year_start: "",
                                             last_closed_fiscal_year: "",
-                                            address: "",
+                                            street: "",
+                                            postal_code: "",
+                                            city: "",
+                                            phone_landline: "",
+                                            phone_mobile: "",
+                                            contact_email: "",
                                             country: "",
                                             ape_code: "",
                                             main_activity: "",
@@ -3016,8 +3414,8 @@ export default function StructurePage() {
                                             model: "SUBSIDIARY",
                                             groupId: "",
                                             workspaceId: "",
+                                            entity_code: "",
                                             logo: undefined as string | undefined,
-                                            entity_code: ""
                                           });
                                           setAddCompanyOpen(true);
                                         }}
@@ -3208,9 +3606,14 @@ export default function StructurePage() {
                           {editworkspace.contact_email}
                         </DetailPill>
                       )}
-                      {editworkspace.contact_phone && (
+                      {editworkspace.phone_mobile && (
                         <DetailPill icon={Phone}>
-                          {editworkspace.contact_phone}
+                          {editworkspace.phone_mobile}
+                        </DetailPill>
+                      )}
+                      {editworkspace.phone_landline && (
+                        <DetailPill icon={Phone}>
+                          {editworkspace.phone_landline}
                         </DetailPill>
                       )}
                     </>
@@ -3255,29 +3658,111 @@ export default function StructurePage() {
 
                 <DetailSection
                   icon={MapPin}
-                  title="Coordonnées"
-                  description="Adresse postale et points de contact."
+                  title="Adresse"
+                  description="Adresse postale de l'espace de travail."
                 >
                   {editing ? (
                     <div className="space-y-4">
-                      <FieldTextarea
-                        label="Adresse"
-                        value={editworkspace.address}
+                      <Field
+                        label="Rue"
+                        value={editworkspace.street}
                         editing={editing}
                         onChange={(v) =>
-                          setEditworkspace((f) => ({ ...f, address: v }))
+                          setEditworkspace((f) => ({ ...f, street: v }))
                         }
                       />
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <Field
+                          label="Code postal"
+                          value={editworkspace.postal_code}
+                          editing={editing}
+                          onChange={(v) =>
+                            setEditworkspace((f) => ({ ...f, postal_code: v }))
+                          }
+                        />
+                        <Field
+                          label="Ville"
+                          value={editworkspace.city}
+                          editing={editing}
+                          onChange={(v) =>
+                            setEditworkspace((f) => ({ ...f, city: v }))
+                          }
+                        />
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                            Email de contact
+                            Pays
+                          </label>
+                          {editing ? (
+                            <button
+                              type="button"
+                              onClick={() => setCountryModalOpen(true)}
+                              className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                            >
+                              <span className={editworkspace.country ? "text-foreground" : "text-muted-foreground"}>
+                                {editworkspace.country ?
+                                  (() => {
+                                    const country = COUNTRIES.find(c => c.value === editworkspace.country || c.label === editworkspace.country);
+                                    return country ? `${country.label} (${country.code})` : editworkspace.country;
+                                  })()
+                                  : "Sélectionner un pays"
+                                }
+                              </span>
+                              <Search className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                          ) : (
+                            <div className="min-h-10 flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm">
+                              {editworkspace.country ?
+                                (() => {
+                                  const country = COUNTRIES.find(c => c.value === editworkspace.country || c.label === editworkspace.country);
+                                  return country ? `${country.label} (${country.code})` : editworkspace.country;
+                                })()
+                                : "Non renseigné"
+                              }
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <DetailGrid>
+                      <ReadField
+                        label="Rue"
+                        icon={MapPin}
+                        value={editworkspace.street}
+                      />
+                      <ReadField
+                        label="Code postal"
+                        value={editworkspace.postal_code}
+                      />
+                      <ReadField
+                        label="Ville"
+                        value={editworkspace.city}
+                      />
+                      <ReadField
+                        label="Pays"
+                        value={editworkspace.country}
+                      />
+                    </DetailGrid>
+                  )}
+                </DetailSection>
+
+                <DetailSection
+                  icon={Phone}
+                  title="Contact"
+                  description="Coordonnées pour contacter l'espace de travail."
+                >
+                  {editing ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Email
                           </label>
                           <Input
                             type="email"
                             value={editworkspace.contact_email}
                             onChange={(e) =>
-                              handleEditEmailChange(e.target.value)
+                              setEditworkspace((f) => ({ ...f, contact_email: e.target.value }))
                             }
                             placeholder="email@exemple.com"
                             className={
@@ -3294,28 +3779,57 @@ export default function StructurePage() {
                         </div>
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                            Téléphone de contact
+                            Téléphone mobile
                           </label>
                           <PhoneInput
                             international
                             countryCallingCodeEditable={false}
                             defaultCountry="FR"
-                            value={editworkspace.contact_phone}
+                            value={editworkspace.phone_mobile}
                             onChange={(value) =>
-                              handleEditPhoneChange(value || "")
+                              handlePhoneChange(value || "", "editworkspace", "phone_mobile")
                             }
                             className={
-                              editWorkspaceErrors.contact_phone
+                              editWorkspaceErrors.phone_landline && editWorkspaceErrors.phone_mobile && editWorkspaceErrors.contact_email
                                 ? "border-red-500"
                                 : ""
                             }
                             numberInputProps={{
-                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.contact_phone ? "border-red-500" : ""}`,
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.phone_mobile ? "border-red-500" : ""}`,
                             }}
                           />
-                          {editWorkspaceErrors.contact_phone && (
+
+                          {editWorkspaceErrors.phone_mobile && (
                             <p className="mt-1 text-xs text-red-500">
-                              {editWorkspaceErrors.contact_phone}
+                              {editWorkspaceErrors.phone_mobile}
+                            </p>
+                          )}
+
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Téléphone fixe
+                          </label>
+                          <PhoneInput
+                            international
+                            countryCallingCodeEditable={false}
+                            defaultCountry="FR"
+                            value={editworkspace.phone_landline}
+                            onChange={(value) =>
+                              handlePhoneChange(value || "", "editworkspace", "phone_landline")
+                            }
+                            className={
+                              editWorkspaceErrors.phone_landline
+                                ? "border-red-500"
+                                : ""
+                            }
+                            numberInputProps={{
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.phone_landline ? "border-red-500" : ""}`,
+                            }}
+                          />
+                          {editWorkspaceErrors.phone_landline && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {editWorkspaceErrors.phone_landline}
                             </p>
                           )}
                         </div>
@@ -3324,20 +3838,19 @@ export default function StructurePage() {
                   ) : (
                     <DetailGrid>
                       <ReadField
-                        label="Adresse"
-                        icon={MapPin}
-                        value={editworkspace.address}
-                        full
-                      />
-                      <ReadField
                         label="Email"
                         icon={Mail}
                         value={editworkspace.contact_email}
                       />
                       <ReadField
-                        label="Téléphone"
+                        label="Téléphone mobile"
                         icon={Phone}
-                        value={editworkspace.contact_phone}
+                        value={editworkspace.phone_mobile}
+                      />
+                      <ReadField
+                        label="Téléphone fixe"
+                        icon={Phone}
+                        value={editworkspace.phone_landline}
                       />
                     </DetailGrid>
                   )}
@@ -3379,7 +3892,7 @@ export default function StructurePage() {
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-white/45">
+                    <p className="text-sm italic text-(--nebula-muted)">
                       Aucun logo renseigné
                     </p>
                   )}
@@ -3394,25 +3907,7 @@ export default function StructurePage() {
                   type="group"
                   name={editGroup.name}
                   logo={editGroup.logo}
-                  pills={
-                    <>
-                      {editGroup.siret && (
-                        <DetailPill icon={Hash} mono>
-                          SIRET {formatSiret(editGroup.siret)}
-                        </DetailPill>
-                      )}
-                      {editGroup.ape_code && (
-                        <DetailPill icon={BadgeCheck} mono>
-                          APE {editGroup.ape_code}
-                        </DetailPill>
-                      )}
-                      {editGroup.country && (
-                        <DetailPill icon={Globe}>{editGroup.country}</DetailPill>
-                      )}
-                    </>
-                  }
                 />
-
 
 
                 <DetailSection
@@ -3428,113 +3923,189 @@ export default function StructurePage() {
                         editing={editing}
                         onChange={(v) => setEditGroup((f) => ({ ...f, name: v }))}
                       />
-
-                      <FieldCountry
-                        label="Pays"
-                        value={editGroup.country}
+                      <FieldTextarea
+                        label="Description"
+                        value={editGroup.description}
                         editing={editing}
-                        onChange={(v) =>
-                          setEditGroup((f) => ({ ...f, country: v }))
-                        }
+                        onChange={(v) => setEditGroup((f) => ({ ...f, description: v }))}
                       />
                     </DetailGrid>
                   ) : (
                     <DetailGrid>
                       <ReadField label="Nom" value={editGroup.name} />
                       <ReadField
-                        label="Pays"
-                        icon={Globe}
-                        value={editGroup.country}
+                        label="Description"
+                        value={editGroup.description}
+                        full
                       />
                     </DetailGrid>
                   )}
                 </DetailSection>
 
                 <DetailSection
-                  icon={Hash}
-                  title="Informations légales"
-                  description="Identifiants d'immatriculation et activité principale."
+                  icon={MapPin}
+                  title="Adresse"
+                  description="Adresse postale du groupe."
                 >
                   {editing ? (
                     <DetailGrid>
                       <Field
-                        label="SIRET"
-                        value={editGroup.siret}
+                        label="Rue"
+                        value={editGroup.street}
                         editing={editing}
-                        validate={validateSiret}
-                        onChange={(v) =>
-                          setEditGroup((f) => ({ ...f, siret: v }))
-                        }
+                        onChange={(v) => setEditGroup((f) => ({ ...f, street: v }))}
+                        placeholder="123 rue de la République"
                       />
                       <Field
-                        label="SIREN"
-                        value={
-                          editGroup.siret
-                            ? editGroup.siret.substring(0, 9)
-                            : ""
-                        }
-                        editing={false}
-                        onChange={() => { }}
+                        label="Code postal"
+                        value={editGroup.postal_code}
+                        editing={editing}
+                        onChange={(v) => setEditGroup((f) => ({ ...f, postal_code: v }))}
+                        placeholder="75001"
                       />
                       <Field
-                        label="Code APE"
-                        value={editGroup.ape_code}
+                        label="Ville"
+                        value={editGroup.city}
                         editing={editing}
-                        onChange={(v) =>
-                          setEditGroup((f) => ({ ...f, ape_code: v }))
-                        }
+                        onChange={(v) => setEditGroup((f) => ({ ...f, city: v }))}
+                        placeholder="Paris"
                       />
-                      <div>
-                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                          Activité principale
-                        </label>
-                        <Input
-                          value={editGroup.mainActivity}
-                          readOnly
-                          className="bg-white/5 cursor-not-allowed"
-                          placeholder="—"
+                      {editing ? (
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Pays
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setGroupCountryModalOpen(true)}
+                            className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                          >
+                            <span className={editGroup.country ? "text-foreground" : "text-muted-foreground"}>
+                              {editGroup.country ? getCountryName(editGroup.country) : "Sélectionner un pays..."}
+                            </span>
+                            <Globe className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        </div>
+                      ) : (
+                        <ReadField
+                          label="Pays"
+                          icon={Globe}
+                          value={editGroup.country ? getCountryName(editGroup.country) : ""}
                         />
-                      </div>
-                      <Field
-                        label="Code d'entité"
-                        value={editGroup.entity_code}
-                        editing={editing}
-                        onChange={(v) => setEditGroup((f) => ({ ...f, entity_code: v }))}
-                        placeholder="Ex: GRP-001"
-                      />
+                      )}
                     </DetailGrid>
                   ) : (
                     <DetailGrid>
                       <ReadField
-                        label="SIRET"
-                        icon={Hash}
-                        value={formatSiret(editGroup.siret)}
-                        mono
-                        hint="Identifiant d'établissement à 14 chiffres."
+                        label="Rue"
+                        icon={MapPin}
+                        value={editGroup.street}
                       />
                       <ReadField
-                        label="SIREN"
-                        icon={Hash}
-                        value={formatSiren(editGroup.siret)}
-                        mono
-                        hint="Identifiant d'établissement à 9 chiffres."
+                        label="Code postal"
+                        icon={MapPin}
+                        value={editGroup.postal_code}
                       />
                       <ReadField
-                        label="Code APE"
-                        icon={BadgeCheck}
-                        value={editGroup.ape_code}
-                        mono
+                        label="Ville"
+                        icon={MapPin}
+                        value={editGroup.city}
                       />
                       <ReadField
-                        label="Activité principale"
-                        icon={FileText}
-                        value={editGroup.mainActivity}
+                        label="Pays"
+                        icon={Globe}
+                        value={editGroup.country ? getCountryName(editGroup.country) : ""}
+                      />
+                    </DetailGrid>
+                  )}
+                </DetailSection>
+
+                <DetailSection
+                  icon={Phone}
+                  title="Contact"
+                  description="Coordonnées pour contacter le groupe."
+                >
+                  {editing ? (
+                    <DetailGrid>
+                      <Field
+                        label="Email"
+                        value={editGroup.contact_email}
+                        editing={editing}
+                        type="email"
+                        onChange={(v) => setEditGroup((f) => ({ ...f, contact_email: v }))}
+                        placeholder="contact@groupe.com"
+                      />
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Téléphone mobile
+                        </label>
+                        <PhoneInput
+                          international
+                          countryCallingCodeEditable={false}
+                          defaultCountry="FR"
+                          value={editGroup.phone_mobile}
+                          onChange={(value) =>
+                            handlePhoneChange(value || "", "editGroup", "phone_mobile")
+                          }
+                          className={
+                            groupErrors.phone_mobile
+                              ? "border-red-500"
+                              : ""
+                          }
+                          numberInputProps={{
+                            className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${groupErrors.phone_mobile ? "border-red-500" : ""}`,
+                          }}
+                        />
+                        {groupErrors.phone_mobile && (
+                          <p className="mt-1 text-xs text-red-500">
+                            {groupErrors.phone_mobile}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Téléphone fixe
+                        </label>
+                        <PhoneInput
+                          international
+                          countryCallingCodeEditable={false}
+                          defaultCountry="FR"
+                          value={editGroup.phone_landline}
+                          onChange={(value) =>
+                            handlePhoneChange(value || "", "editGroup", "phone_landline")
+                          }
+                          className={
+                            groupErrors.phone_landline
+                              ? "border-red-500"
+                              : ""
+                          }
+                          numberInputProps={{
+                            className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${groupErrors.phone_landline ? "border-red-500" : ""}`,
+                          }}
+                        />
+                        {groupErrors.phone_landline && (
+                          <p className="mt-1 text-xs text-red-500">
+                            {groupErrors.phone_landline}
+                          </p>
+                        )}
+                      </div>
+                    </DetailGrid>
+                  ) : (
+                    <DetailGrid>
+                      <ReadField
+                        label="Email"
+                        icon={Mail}
+                        value={editGroup.contact_email}
                       />
                       <ReadField
-                        label="Code d'entité"
-                        icon={Hash}
-                        value={editGroup.entity_code}
-                        mono
+                        label="Téléphone fixe"
+                        icon={Phone}
+                        value={editGroup.phone_landline}
+                      />
+                      <ReadField
+                        label="Téléphone mobile"
+                        icon={Phone}
+                        value={editGroup.phone_mobile}
                       />
                     </DetailGrid>
                   )}
@@ -3633,7 +4204,7 @@ export default function StructurePage() {
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-white/45">
+                    <p className="text-sm italic text-(--nebula-muted)">
                       Aucun logo renseigné
                     </p>
                   )}
@@ -3648,30 +4219,7 @@ export default function StructurePage() {
                   type="company"
                   name={editCompany.name}
                   logo={editCompany.logo}
-                  pills={
-                    <>
-                      {editCompany.siret && (
-                        <DetailPill icon={Hash} mono>
-                          SIRET {formatSiret(editCompany.siret)}
-                        </DetailPill>
-                      )}
-                      {editCompany.ape_code && (
-                        <DetailPill icon={BadgeCheck} mono>
-                          APE {editCompany.ape_code}
-                        </DetailPill>
-                      )}
-                      {editCompany.country && (
-                        <DetailPill icon={Globe}>
-                          {editCompany.country}
-                        </DetailPill>
-                      )}
-                      {editCompany.size && (
-                        <DetailPill icon={UsersIcon}>
-                          {editCompany.size}
-                        </DetailPill>
-                      )}
-                    </>
-                  }
+
                 />
 
                 {/* Completion progress (view only) */}
@@ -3719,37 +4267,187 @@ export default function StructurePage() {
                             setEditCompany((f) => ({ ...f, name: v }))
                           }
                         />
-                        <FieldCountry
-                          label="Pays"
-                          value={editCompany.country}
+                        <FieldTextarea
+                          label="Description"
+                          value={editCompany.description}
                           editing={editing}
-                          onChange={(v) =>
-                            setEditCompany((f) => ({ ...f, country: v }))
-                          }
+                          onChange={(v) => setEditCompany((f) => ({ ...f, description: v }))}
                         />
+
                       </DetailGrid>
-                      <FieldTextarea
-                        label="Adresse"
-                        value={editCompany.address}
-                        editing={editing}
-                        onChange={(v) =>
-                          setEditCompany((f) => ({ ...f, address: v }))
-                        }
-                      />
                     </div>
                   ) : (
                     <DetailGrid>
                       <ReadField label="Nom" value={editCompany.name} />
                       <ReadField
-                        label="Pays"
-                        icon={Globe}
-                        value={editCompany.country}
+                        label="Description"
+                        value={editCompany.description}
+                        full
+                      />
+                    </DetailGrid>
+                  )}
+                </DetailSection>
+
+                <DetailSection
+                  icon={MapPin}
+                  title="Adresse"
+                  description="Adresse postale de l'entreprise."
+                >
+                  {editing ? (
+                    <div className="space-y-4">
+                      <DetailGrid>
+                        <Field
+                          label="Rue"
+                          value={editCompany.street}
+                          editing={editing}
+                          onChange={(v) => setEditCompany((f) => ({ ...f, street: v }))}
+                          placeholder="123 rue de la République"
+                        />
+                        <Field
+                          label="Code postal"
+                          value={editCompany.postal_code}
+                          editing={editing}
+                          onChange={(v) => setEditCompany((f) => ({ ...f, postal_code: v }))}
+                          placeholder="75001"
+                        />
+                        <Field
+                          label="Ville"
+                          value={editCompany.city}
+                          editing={editing}
+                          onChange={(v) => setEditCompany((f) => ({ ...f, city: v }))}
+                          placeholder="Paris"
+                        />
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Pays
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setCompanyCountryModalOpen(true)}
+                            className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                          >
+                            <span className={editCompany.country ? "text-foreground" : "text-muted-foreground"}>
+                              {editCompany.country ? getCountryName(editCompany.country) : "Sélectionner un pays..."}
+                            </span>
+                            <Globe className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        </div>
+                      </DetailGrid>
+                    </div>
+                  ) : (
+                    <DetailGrid>
+                      <ReadField
+                        label="Rue"
+                        icon={MapPin}
+                        value={editCompany.street}
                       />
                       <ReadField
-                        label="Adresse"
+                        label="Code postal"
                         icon={MapPin}
-                        value={editCompany.address}
-                        full
+                        value={editCompany.postal_code}
+                      />
+                      <ReadField
+                        label="Ville"
+                        icon={MapPin}
+                        value={editCompany.city}
+                      />
+                      <ReadField
+                        label="Pays"
+                        icon={Globe}
+                        value={editCompany.country ? getCountryName(editCompany.country) : ""}
+                      />
+                    </DetailGrid>
+                  )}
+                </DetailSection>
+
+                <DetailSection
+                  icon={Phone}
+                  title="Contact"
+                  description="Coordonnées pour contacter l'entreprise."
+                >
+                  {editing ? (
+                    <div className="space-y-4">
+                      <DetailGrid>
+                        <Field
+                          label="Email"
+                          value={editCompany.contact_email}
+                          editing={editing}
+                          type="email"
+                          onChange={(v) => setEditCompany((f) => ({ ...f, contact_email: v }))}
+                          placeholder="contact@entreprise.com"
+                        />
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Téléphone mobile
+                          </label>
+                          <PhoneInput
+                            international
+                            countryCallingCodeEditable={false}
+                            defaultCountry="FR"
+                            value={editCompany.phone_mobile}
+                            onChange={(value) =>
+                              handlePhoneChange(value || "", "editCompany", "phone_mobile")
+                            }
+                            className={
+                              companyErrors?.phone_mobile
+                                ? "border-red-500"
+                                : ""
+                            }
+                            numberInputProps={{
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phone_mobile ? "border-red-500" : ""}`,
+                            }}
+                          />
+                          {companyErrors?.phone_mobile && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {companyErrors.phone_mobile}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Téléphone fixe
+                          </label>
+                          <PhoneInput
+                            international
+                            countryCallingCodeEditable={false}
+                            defaultCountry="FR"
+                            value={editCompany.phone_landline}
+                            onChange={(value) =>
+                              handlePhoneChange(value || "", "editCompany", "phone_landline")
+                            }
+                            className={
+                              companyErrors?.phone_landline
+                                ? "border-red-500"
+                                : ""
+                            }
+                            numberInputProps={{
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phone_landline ? "border-red-500" : ""}`,
+                            }}
+                          />
+                          {companyErrors?.phone_landline && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {companyErrors.phone_landline}
+                            </p>
+                          )}
+                        </div>
+                      </DetailGrid>
+                    </div>
+                  ) : (
+                    <DetailGrid>
+                      <ReadField
+                        label="Email"
+                        icon={Mail}
+                        value={editCompany.contact_email}
+                      />
+                      <ReadField
+                        label="Téléphone fixe"
+                        icon={Phone}
+                        value={editCompany.phone_landline}
+                      />
+                      <ReadField
+                        label="Téléphone mobile"
+                        icon={Phone}
+                        value={editCompany.phone_mobile}
                       />
                     </DetailGrid>
                   )}
@@ -3787,18 +4485,19 @@ export default function StructurePage() {
                         <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                           Code APE
                         </label>
-                        <ApeCodeSelect
-                          value={editCompany.ape_code}
-                          onChange={(value) =>
-                            setEditCompany((f) => ({ ...f, ape_code: value }))
-                          }
-                          onDescriptionChange={(description) =>
-                            setEditCompany((f) => ({
-                              ...f,
-                              main_activity: description,
-                            }))
-                          }
-                        />
+                        <button
+                          type="button"
+                          onClick={() => setCompanyApeModalOpen(true)}
+                          className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                        >
+                          <span className={editCompany.ape_code ? "text-foreground" : "text-muted-foreground"}>
+                            {editCompany.ape_code ?
+                              APE_CODES.find(code => code.value === editCompany.ape_code)?.label || editCompany.ape_code
+                              : "Sélectionner un code APE"
+                            }
+                          </span>
+                          <Search className="h-4 w-4 text-muted-foreground" />
+                        </button>
                       </div>
                       <Field
                         label="Activité principale"
@@ -3806,13 +4505,7 @@ export default function StructurePage() {
                         editing={false}
                         onChange={() => { }}
                       />
-                      <Field
-                        label="Code d'entité"
-                        value={editCompany.entity_code}
-                        editing={editing}
-                        onChange={(v) => setEditCompany((f) => ({ ...f, entity_code: v }))}
-                        placeholder="Ex: ENT-001"
-                      />
+
                     </div>
                   ) : (
                     <DetailGrid>
@@ -3841,12 +4534,7 @@ export default function StructurePage() {
                         icon={FileText}
                         value={editCompany.main_activity}
                       />
-                      <ReadField
-                        label="Code d'entité"
-                        icon={Hash}
-                        value={editCompany.entity_code}
-                        mono
-                      />
+
                     </DetailGrid>
                   )}
                 </DetailSection>
@@ -3985,7 +4673,7 @@ export default function StructurePage() {
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-white/45">
+                    <p className="text-sm italic text-(--nebula-muted)">
                       Aucun logo renseigné
                     </p>
                   )}
@@ -4066,63 +4754,25 @@ export default function StructurePage() {
                           setEditBU((f) => ({ ...f, name: v }))
                         }
                       />
-                      <div>
-                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                          Code APE
-                        </label>
-                        <ApeCodeSelect
-                          value={editBU.code}
-                          onChange={(value) =>
-                            setEditBU((f) => ({ ...f, code: value }))
-                          }
-                          onDescriptionChange={(description) =>
-                            setEditBU((f) => ({
-                              ...f,
-                              activity: description,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                          Activité
-                        </label>
-                        <Input
-                          value={editBU.activity}
-                          readOnly
-                          className="bg-white/5"
-                          placeholder="Activité principale"
-                        />
-                      </div>
                       <Field
-                        label="Code d'entité"
-                        value={editBU.entity_code}
+                        label="Description"
+                        value={editBU.description ?? ""}
                         editing={editing}
-                        onChange={(v) => setEditBU((f) => ({ ...f, entity_code: v }))}
-                        placeholder="Ex: BU-001"
+                        onChange={(v) =>
+                          setEditBU((f) => ({ ...f, description: v }))
+                        }
                       />
                     </div>
                   ) : (
                     <DetailGrid>
                       <ReadField label="Nom" value={editBU.name} />
                       <ReadField
-                        label="Code APE"
-                        icon={BadgeCheck}
-                        value={editBU.code}
-                        mono
-                      />
-                      <ReadField
-                        label="Activité"
+                        label="Description"
                         icon={FileText}
-                        value={editBU.activity}
+                        value={editBU.description}
                         full
                       />
-                      <ReadField
-                        label="Code d'entité"
-                        icon={Hash}
-                        value={editBU.entity_code}
-                        mono
-                      />
+
                     </DetailGrid>
                   )}
                 </DetailSection>
@@ -4169,14 +4819,35 @@ export default function StructurePage() {
                           setEditBU((f) => ({ ...f, siret: v }))
                         }
                       />
-                      <FieldCountry
-                        label="Pays"
-                        value={editBU.country}
-                        editing={editing}
-                        onChange={(v) =>
-                          setEditBU((f) => ({ ...f, country: v }))
-                        }
-                      />
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Code APE
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setEditBUApeModalOpen(true)}
+                          className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                        >
+                          <span className={editBU.code ? "text-foreground" : "text-muted-foreground"}>
+                            {editBU.code ?
+                              APE_CODES.find(code => code.value === editBU.code)?.label || editBU.code
+                              : "Sélectionner un code APE"
+                            }
+                          </span>
+                          <Search className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Activité
+                        </label>
+                        <Input
+                          value={editBU.activity}
+                          readOnly
+                          className="bg-white/5"
+                          placeholder="Activité principale"
+                        />
+                      </div>
                     </DetailGrid>
                   ) : (
                     <DetailGrid>
@@ -4188,9 +4859,203 @@ export default function StructurePage() {
                         hint="Identifiant d'établissement à 14 chiffres."
                       />
                       <ReadField
+                        label="Code APE"
+                        icon={BadgeCheck}
+                        value={editBU.code}
+                        mono
+                      />
+                      <ReadField
+                        label="Activité"
+                        icon={FileText}
+                        value={editBU.activity}
+                        full
+                      />
+                    </DetailGrid>
+                  )}
+                </DetailSection>
+
+                <DetailSection
+                  icon={MapPin}
+                  title="Adresse"
+                  description="Adresse postale de l'unité."
+                >
+                  {editing ? (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Rue
+                        </label>
+                        <Input
+                          value={editBU.street}
+                          onChange={(e) =>
+                            setEditBU((f) => ({ ...f, street: e.target.value }))
+                          }
+                          placeholder="Rue"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Code postal
+                        </label>
+                        <Input
+                          value={editBU.postal_code}
+                          onChange={(e) =>
+                            setEditBU((f) => ({ ...f, postal_code: e.target.value }))
+                          }
+                          placeholder="Code postal"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Ville
+                        </label>
+                        <Input
+                          value={editBU.city}
+                          onChange={(e) =>
+                            setEditBU((f) => ({ ...f, city: e.target.value }))
+                          }
+                          placeholder="Ville"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Pays
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setEditBUCountryModalOpen(true)}
+                          className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                        >
+                          <span className={editBU.country ? "text-foreground" : "text-muted-foreground"}>
+                            {editBU.country ?
+                              (() => {
+                                const country = COUNTRIES.find(c => c.value === editBU.country || c.label === editBU.country);
+                                return country ? `${country.label} (${country.code})` : editBU.country;
+                              })()
+                              : "Sélectionner un pays"
+                            }
+                          </span>
+                          <Search className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <ReadField
+                        label="Rue"
+                        icon={MapPin}
+                        value={editBU.street}
+                        full
+                      />
+                      <ReadField
+                        label="Code postal"
+                        icon={MapPin}
+                        value={editBU.postal_code}
+                        mono
+                      />
+                      <ReadField
+                        label="Ville"
+                        icon={MapPin}
+                        value={editBU.city}
+                      />
+                      <ReadField
                         label="Pays"
                         icon={Globe}
                         value={editBU.country}
+                      />
+                    </div>
+                  )}
+                </DetailSection>
+
+                <DetailSection
+                  icon={Phone}
+                  title="Contact"
+                  description="Téléphones et email."
+                >
+                  {editing ? (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Téléphone mobile
+                        </label>
+                        <PhoneInput
+                          international
+                          countryCallingCodeEditable={false}
+                          defaultCountry="FR"
+                          value={editBU.phone_mobile}
+                          onChange={(value) =>
+                            handlePhoneChange(value || "", "editBU", "phone_mobile")
+                          }
+                          className={
+                            buErrors?.phone_mobile
+                              ? "border-red-500"
+                              : ""
+                          }
+                          numberInputProps={{
+                            className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${buErrors?.phone_mobile ? "border-red-500" : ""}`,
+                          }}
+                        />
+                        {buErrors?.phone_mobile && (
+                          <p className="mt-1 text-xs text-red-500">
+                            {buErrors.phone_mobile}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Téléphone fixe
+                        </label>
+                        <PhoneInput
+                          international
+                          countryCallingCodeEditable={false}
+                          defaultCountry="FR"
+                          value={editBU.phone_landline}
+                          onChange={(value) =>
+                            handlePhoneChange(value || "", "editBU", "phone_landline")
+                          }
+                          className={
+                            buErrors?.phone_landline
+                              ? "border-red-500"
+                              : ""
+                          }
+                          numberInputProps={{
+                            className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${buErrors?.phone_landline ? "border-red-500" : ""}`,
+                          }}
+                        />
+                        {buErrors?.phone_landline && (
+                          <p className="mt-1 text-xs text-red-500">
+                            {buErrors.phone_landline}
+                          </p>
+                        )}
+                      </div>
+                      <Field
+                        label="Email"
+                        value={editBU.contact_email ?? ""}
+                        editing={editing}
+                        onChange={(v) =>
+                          setEditBU((f) => ({ ...f, contact_email: v }))
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <DetailGrid>
+                      <ReadField
+                        label="Téléphone fixe"
+                        icon={Phone}
+                        value={editBU.phone_landline}
+                        mono
+                      />
+                      <ReadField
+                        label="Téléphone mobile"
+                        icon={Phone}
+                        value={editBU.phone_mobile}
+                        mono
+                      />
+                      <ReadField
+                        label="Email"
+                        icon={Mail}
+                        value={editBU.contact_email}
+                        mono
                       />
                     </DetailGrid>
                   )}
@@ -4229,7 +5094,7 @@ export default function StructurePage() {
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-white/45">
+                    <p className="text-sm italic text-(--nebula-muted)">
                       Aucun logo renseigné
                     </p>
                   )}
@@ -4464,171 +5329,81 @@ export default function StructurePage() {
                     <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
                   </TabsList>
                   <TabsContent value="informations" className="mt-0">
-                    <div className="space-y-4">
-                      <DetailHero
-                        type="company"
-                        name={ficheCompany.name}
-                        logo={ficheCompany.logo}
-                        pills={
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                        <dt className="text-(--nebula-muted)">Description</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheCompany.description || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">SIRET</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.siret ? formatSiret(ficheCompany.siret) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">SIREN</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.siret ? formatSiren(ficheCompany.siret) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Code APE</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.ape_code || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Activité principale</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheCompany.main_activity || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Taille</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.size || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Modèle</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.model || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Rue</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheCompany.street || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Code Postal</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.postal_code || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Ville</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.city || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Pays</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.country ? getCountryName(ficheCompany.country) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Téléphone Fixe</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.phone_landline || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Téléphone Mobile</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.phone_mobile || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Email</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.contact_email || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Début exercice</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.fiscal_year_start ? formatMonthDayForDisplay(ficheCompany.fiscal_year_start) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Dernier exercice clôturé</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.last_closed_fiscal_year ? String(ficheCompany.last_closed_fiscal_year) : "—"}
+                        </dd>
+                        {ficheCompany.group_id && (
                           <>
-                            {ficheCompany.siret && (
-                              <DetailPill icon={Hash} mono>
-                                SIRET {formatSiret(ficheCompany.siret)}
-                              </DetailPill>
-                            )}
-                            {ficheCompany.ape_code && (
-                              <DetailPill icon={BadgeCheck} mono>
-                                APE {ficheCompany.ape_code}
-                              </DetailPill>
-                            )}
-                            {ficheCompany.country && (
-                              <DetailPill icon={Globe}>{ficheCompany.country}</DetailPill>
-                            )}
-                            {ficheCompany.size && (
-                              <DetailPill icon={UsersIcon}>{ficheCompany.size}</DetailPill>
-                            )}
+                            <dt className="text-(--nebula-muted)">Groupe</dt>
+                            <dd className="font-medium text-primary">
+                              {groupList.find(g => g.id === ficheCompany.group_id)?.name || ficheCompany.group_id}
+                            </dd>
                           </>
-                        }
-                      />
-
-                      {typeof ficheCompany.completionPercentage === "number" && (
-                        <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 nebula-blob">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                              <h4 className="text-sm font-semibold text-white">
-                                Complétion du profil
-                              </h4>
-                              <p className="text-[11px] leading-snug text-(--nebula-muted)">
-                                Pourcentage d&apos;informations renseignées sur cette entreprise.
-                              </p>
-                            </div>
-                            <span className="text-xl font-semibold tabular-nums text-white font-mono">
-                              {Math.round(ficheCompany.completionPercentage)}
-                              <span className="text-sm text-(--nebula-muted)">%</span>
-                            </span>
-                          </div>
-                          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
-                            <div
-                              className="h-full rounded-full bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) transition-all"
-                              style={{
-                                width: `${Math.max(
-                                  0,
-                                  Math.min(100, ficheCompany.completionPercentage),
-                                )}%`,
-                              }}
-                            />
-                          </div>
-                        </section>
-                      )}
-
-                      <DetailSection
-                        icon={Info}
-                        title="Identité"
-                        description="Informations générales de l'entreprise."
-                      >
-                        <DetailGrid>
-                          <ReadField label="Nom" value={ficheCompany.name} />
-                          <ReadField label="Pays" icon={Globe} value={ficheCompany.country} />
-                          <ReadField
-                            label="Adresse"
-                            icon={MapPin}
-                            value={ficheCompany.address}
-                            full
-                          />
-                        </DetailGrid>
-                      </DetailSection>
-
-                      <DetailSection
-                        icon={Hash}
-                        title="Informations légales"
-                        description="Identifiants d'immatriculation et activité principale."
-                      >
-                        <DetailGrid>
-                          <ReadField
-                            label="SIRET"
-                            icon={Hash}
-                            value={formatSiret(ficheCompany.siret)}
-                            mono
-                            hint="Identifiant d'établissement à 14 chiffres."
-                          />
-                          <ReadField
-                            label="SIREN"
-                            icon={Hash}
-                            value={formatSiren(ficheCompany.siret)}
-                            mono
-                            hint="Identifiant d'établissement à 9 chiffres."
-                          />
-                          <ReadField
-                            label="Code APE"
-                            icon={BadgeCheck}
-                            value={ficheCompany.ape_code}
-                            mono
-                          />
-                          <ReadField
-                            label="Activité principale"
-                            icon={FileText}
-                            value={ficheCompany.main_activity}
-                            full
-                          />
-                        </DetailGrid>
-                      </DetailSection>
-
-                      <DetailSection
-                        icon={Calendar}
-                        title="Exercice fiscal"
-                        description="Dates clés de la période comptable."
-                      >
-                        <DetailGrid>
-                          <ReadField
-                            label="Début d'exercice"
-                            icon={Calendar}
-                            value={formatMonthDayForDisplay(ficheCompany.fiscal_year_start)}
-                            mono
-                            hint="Jour/mois de début de l'exercice fiscal."
-                          />
-                          <ReadField
-                            label="Dernier exercice clôturé"
-                            icon={Calendar}
-                            value={
-                              ficheCompany.last_closed_fiscal_year === null ||
-                                ficheCompany.last_closed_fiscal_year === undefined
-                                ? undefined
-                                : String(ficheCompany.last_closed_fiscal_year)
-                            }
-                            mono
-                          />
-                        </DetailGrid>
-                      </DetailSection>
-
-                      <DetailSection
-                        icon={Briefcase}
-                        title="Profil commercial"
-                        description="Taille et positionnement de l'entreprise."
-                      >
-                        <DetailGrid>
-                          <ReadField label="Taille" icon={UsersIcon} value={ficheCompany.size} />
-                          <ReadField label="Modèle" value={ficheCompany.model} />
-                        </DetailGrid>
-                      </DetailSection>
-
-                      <DetailSection
-                        icon={ImageIcon}
-                        title="Identité visuelle"
-                        description="Logo affiché dans les interfaces."
-                      >
-                        {ficheCompany.logo ? (
-                          <div className="flex items-center gap-3">
-                            <DetailLogoPreview logo={ficheCompany.logo} alt="Logo" size={72} />
-                            <p className="truncate text-xs text-(--nebula-muted)">
-                              {ficheCompany.logo}
-                            </p>
-                          </div>
-                        ) : (
-                          <p className="text-sm italic text-white/45">
-                            Aucun logo renseigné
-                          </p>
                         )}
-                      </DetailSection>
+                      </dl>
                     </div>
                   </TabsContent>
                   <TabsContent value="business-units" className="mt-0">
@@ -4646,6 +5421,7 @@ export default function StructurePage() {
                                 name: b.name,
                                 companyId: ficheCompany.id,
                                 code: b.code,
+                                completionPercentage: b.completionPercentage ?? 0,
                               });
                             }}
                           >
@@ -4807,43 +5583,51 @@ export default function StructurePage() {
                   <TabsContent value="informations" className="mt-0">
                     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                       <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                        <dt className="text-(--nebula-muted)">SIRET</dt>
-                        <dd className="font-medium text-primary">
-                          {ficheGroup.siret || "—"}
+                        <dt className="text-(--nebula-muted)">Description</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheGroup.description || "—"}
                         </dd>
-                        <dt className="text-(--nebula-muted)">SIREN</dt>
-                        <dd className="font-medium text-primary">
-                          {ficheGroup.siret
-                            ? ficheGroup.siret.substring(0, 9)
-                            : "—"}
-                        </dd>
-                        <dt className="text-(--nebula-muted)">Début d&apos;exercice</dt>
+                        <dt className="text-(--nebula-muted)">Début exercice</dt>
                         <dd className="font-medium text-primary">
                           {formatMonthDayForDisplay(ficheGroup.fiscal_year_start)}
                         </dd>
-                        {ficheGroup.ape_code && (
+                        <dt className="text-(--nebula-muted)">Dernier exercice clôturé</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.last_closed_fiscal_year ? String(ficheGroup.last_closed_fiscal_year) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Rue</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheGroup.street || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Code Postal</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.postal_code || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Ville</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.city || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Pays</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.country ? getCountryName(ficheGroup.country) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Téléphone Fixe</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.phone_landline || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Téléphone Mobile</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.phone_mobile || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Email</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheGroup.contact_email || "—"}
+                        </dd>
+                        {ficheGroup.workspace_id && (
                           <>
-                            <dt className="text-(--nebula-muted)">Code APE</dt>
+                            <dt className="text-(--nebula-muted)">Workspace</dt>
                             <dd className="font-medium text-primary">
-                              {ficheGroup.ape_code}
-                            </dd>
-                          </>
-                        )}
-                        {ficheGroup.mainActivity && (
-                          <>
-                            <dt className="text-(--nebula-muted)">
-                              Activité principale
-                            </dt>
-                            <dd className="font-medium text-primary">
-                              {ficheGroup.mainActivity}
-                            </dd>
-                          </>
-                        )}
-                        {ficheGroup.country && (
-                          <>
-                            <dt className="text-(--nebula-muted)">Pays</dt>
-                            <dd className="font-medium text-primary">
-                              {ficheGroup.country}
+                              {tree?.workspaces?.find(w => w.id === ficheGroup.workspace_id)?.name || ficheGroup.workspace_id}
                             </dd>
                           </>
                         )}
@@ -4947,6 +5731,10 @@ export default function StructurePage() {
                   <TabsContent value="informations" className="mt-0">
                     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                       <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                        <dt className="text-(--nebula-muted)">Description</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheBU.description || "—"}
+                        </dd>
                         <dt className="text-(--nebula-muted)">Code</dt>
                         <dd className="font-medium text-primary">
                           {ficheBU.code || "—"}
@@ -4959,9 +5747,33 @@ export default function StructurePage() {
                         <dd className="font-medium text-primary">
                           {ficheBU.activity || "—"}
                         </dd>
+                        <dt className="text-(--nebula-muted)">Rue</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheBU.street || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Code Postal</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.postal_code || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Ville</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.city || "—"}
+                        </dd>
                         <dt className="text-(--nebula-muted)">Pays</dt>
                         <dd className="font-medium text-primary">
-                          {ficheBU.country || "—"}
+                          {ficheBU.country ? getCountryName(ficheBU.country) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Téléphone Fixe</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.phone_landline || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Téléphone Mobile</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.phone_mobile || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Email</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.contact_email || "—"}
                         </dd>
                         {ficheBU.company_id && (
                           <>
@@ -5061,44 +5873,15 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code APE *
+                Description
               </label>
-              <ApeCodeSelect
-                value={addGroupForm.ape_code}
-                onChange={(value) =>
-                  setAddGroupForm((f) => ({ ...f, ape_code: value }))
-                }
-                onDescriptionChange={(description) =>
-                  setAddGroupForm((f) => ({ ...f, mainActivity: description }))
-                }
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Activité principale
-              </label>
-              <Input
-                value={addGroupForm.mainActivity}
+              <Textarea
+                value={addGroupForm.description}
                 onChange={(e) =>
-                  setAddGroupForm((f) => ({
-                    ...f,
-                    mainActivity: e.target.value,
-                  }))
+                  setAddGroupForm((f) => ({ ...f, description: e.target.value }))
                 }
-                placeholder="Activité principale"
-                readOnly
-                className="bg-white/5 cursor-not-allowed"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                SIRET *
-              </label>
-              <SiretInput
-                value={addGroupForm.siret}
-                onChange={(value) =>
-                  setAddGroupForm((f) => ({ ...f, siret: value }))
-                }
+                placeholder="Description du groupe"
+                rows={3}
               />
             </div>
             <div>
@@ -5123,13 +5906,127 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Pays *
               </label>
-              <CountrySelect
-                value={addGroupForm.country}
-                onChange={(value) =>
-                  setAddGroupForm((f) => ({ ...f, country: value }))
+              <button
+                type="button"
+                onClick={() => setAddGroupCountryModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+              >
+                <span className={addGroupForm.country ? "text-foreground" : "text-muted-foreground"}>
+                  {addGroupForm.country ? getCountryName(addGroupForm.country) : "Sélectionner un pays..."}
+                </span>
+                <Globe className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Rue
+              </label>
+              <Input
+                value={addGroupForm.street}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({ ...f, street: e.target.value }))
                 }
-                placeholder="Pays du groupe"
+                placeholder="123 rue de la République"
               />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Code postal
+                </label>
+                <Input
+                  value={addGroupForm.postal_code}
+                  onChange={(e) =>
+                    setAddGroupForm((f) => ({ ...f, postal_code: e.target.value }))
+                  }
+                  placeholder="75001"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Ville
+                </label>
+                <Input
+                  value={addGroupForm.city}
+                  onChange={(e) =>
+                    setAddGroupForm((f) => ({ ...f, city: e.target.value }))
+                  }
+                  placeholder="Paris"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Email
+              </label>
+              <Input
+                type="email"
+                value={addGroupForm.contact_email}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({ ...f, contact_email: e.target.value }))
+                }
+                placeholder="contact@groupe.com"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Téléphone mobile
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="FR"
+                  value={addGroupForm.phone_mobile}
+                  onChange={(value) =>
+                    handlePhoneChange(value || "", "addGroup", "phone_mobile")
+                  }
+                  className={
+                    addGroupErrors.phone_mobile
+                      ? "border-red-500"
+                      : ""
+                  }
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addGroupErrors.phone_mobile ? "border-red-500" : ""}`,
+                  }}
+                />
+                {addGroupErrors.phone_mobile && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {addGroupErrors.phone_mobile}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Téléphone fixe
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="FR"
+                  value={addGroupForm.phone_landline}
+                  onChange={(value) =>
+                    handlePhoneChange(value || "", "addGroup", "phone_landline")
+                  }
+                  className={
+                    addGroupErrors.phone_landline
+                      ? "border-red-500"
+                      : ""
+                  }
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addGroupErrors.phone_landline ? "border-red-500" : ""}`,
+                  }}
+                />
+                {addGroupErrors.phone_landline && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {addGroupErrors.phone_landline}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -5194,9 +6091,6 @@ export default function StructurePage() {
                 addGroupLoading ||
                 !addGroupForm.name.trim() ||
                 !addGroupForm.workspaceId.trim() ||
-                !addGroupForm.ape_code.trim() ||
-                !addGroupForm.siret.trim() ||
-                (addGroupForm.siret && !validateSiret(addGroupForm.siret)) ||
                 !addGroupForm.country.trim() ||
                 !isValidMonthDay(toMonthDay(addGroupForm.fiscal_year_start))
               }
@@ -5206,6 +6100,15 @@ export default function StructurePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Country Select Modal for Add Group */}
+      <CountrySelectModal
+        open={addGroupCountryModalOpen}
+        onOpenChange={setAddGroupCountryModalOpen}
+        value={addGroupForm.country}
+        onChange={(value) => setAddGroupForm((f) => ({ ...f, country: value }))}
+        title="Sélectionner un pays pour le groupe"
+      />
 
       {/* Add BU Standalone Modal */}
       <Dialog open={addBUStandaloneOpen} onOpenChange={setAddBUStandaloneOpen}>
@@ -5254,21 +6157,19 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Code APE *
               </label>
-              <ApeCodeSelect
-                value={addBUStandaloneForm.code}
-                onChange={(value) =>
-                  setAddBUStandaloneForm((f) => ({
-                    ...f,
-                    code: value,
-                  }))
-                }
-                onDescriptionChange={(description) =>
-                  setAddBUStandaloneForm((f) => ({
-                    ...f,
-                    activity: description,
-                  }))
-                }
-              />
+              <button
+                type="button"
+                onClick={() => setAddBUStandaloneApeModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+              >
+                <span className={addBUStandaloneForm.code ? "text-foreground" : "text-muted-foreground"}>
+                  {addBUStandaloneForm.code ?
+                    APE_CODES.find(code => code.value === addBUStandaloneForm.code)?.label || addBUStandaloneForm.code
+                    : "Sélectionner un code APE"
+                  }
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -5302,12 +6203,35 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Pays *
               </label>
-              <CountrySelect
-                value={addBUStandaloneForm.country}
-                onChange={(value) =>
-                  setAddBUStandaloneForm((f) => ({ ...f, country: value }))
+              <button
+                type="button"
+                onClick={() => setAddBUStandaloneCountryModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+              >
+                <span className={addBUStandaloneForm.country ? "text-foreground" : "text-muted-foreground"}>
+                  {addBUStandaloneForm.country ?
+                    (() => {
+                      const country = COUNTRIES.find(c => c.value === addBUStandaloneForm.country || c.label === addBUStandaloneForm.country);
+                      return country ? `${country.label} (${country.code})` : addBUStandaloneForm.country;
+                    })()
+                    : "Sélectionner un pays"
+                  }
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Description
+              </label>
+              <textarea
+                value={addBUStandaloneForm.description}
+                onChange={(e) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, description: e.target.value }))
                 }
-                placeholder="Pays de la Business Unit"
+                placeholder="Description de la Business Unit"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+                rows={3}
               />
             </div>
             <div>
@@ -5323,6 +6247,124 @@ export default function StructurePage() {
                 maxLength={50}
               />
             </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Adresse
+              </label>
+              <Input
+                value={addBUStandaloneForm.street}
+                onChange={(e) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, street: e.target.value }))
+                }
+                placeholder="Rue"
+                className="mb-4"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Code postal
+              </label>
+              <Input
+                value={addBUStandaloneForm.postal_code}
+                onChange={(e) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, postal_code: e.target.value }))
+                }
+                placeholder="Code postal"
+                className="mb-4"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Ville
+              </label>
+              <Input
+                value={addBUStandaloneForm.city}
+                onChange={(e) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, city: e.target.value }))
+                }
+                placeholder="Ville"
+                className="mb-4"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Contact
+              </label>
+              <div className="space-y-2">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
+                    Téléphone mobile
+                  </label>
+                  <PhoneInput
+                    international
+                    countryCallingCodeEditable={false}
+                    defaultCountry="FR"
+                    value={addBUStandaloneForm.phone_mobile}
+                    onChange={(value) =>
+                      handlePhoneChange(value || "", "addBUStandalone", "phone_mobile")
+                    }
+                    className={
+                      addBUStandaloneErrors?.phone_mobile
+                        ? "border-red-500"
+                        : ""
+                    }
+                    numberInputProps={{
+                      className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addBUStandaloneErrors?.phone_mobile ? "border-red-500" : ""}`,
+                    }}
+                  />
+                  {addBUStandaloneErrors?.phone_mobile && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {addBUStandaloneErrors.phone_mobile}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
+                    Téléphone fixe
+                  </label>
+                  <PhoneInput
+                    international
+                    countryCallingCodeEditable={false}
+                    defaultCountry="FR"
+                    value={addBUStandaloneForm.phone_landline}
+                    onChange={(value) =>
+                      handlePhoneChange(value || "", "addBUStandalone", "phone_landline")
+                    }
+                    className={
+                      addBUStandaloneErrors?.phone_landline
+                        ? "border-red-500"
+                        : ""
+                    }
+                    numberInputProps={{
+                      className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addBUStandaloneErrors?.phone_landline ? "border-red-500" : ""}`,
+                    }}
+                  />
+                  {addBUStandaloneErrors?.phone_landline && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {addBUStandaloneErrors.phone_landline}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
+                    Email
+                  </label>
+                  <Input
+                    value={addBUStandaloneForm.contact_email}
+                    onChange={(e) =>
+                      setAddBUStandaloneForm((f) => ({ ...f, contact_email: e.target.value }))
+                    }
+                    placeholder="Email"
+                  />
+                  {addBUStandaloneErrors?.contact_email && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {addBUStandaloneErrors.contact_email}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <BuManagerFormFields
               value={managerFieldsFromForm(addBUStandaloneForm)}
               onChange={(m) =>
@@ -5382,7 +6424,7 @@ export default function StructurePage() {
             </p>
           ) : (
             <p className="text-sm text-(--nebula-muted)">
-              Sélectionnez un groupe pour rattacher cette entreprise
+              Si aucun groupe n&apos;est sélectionné, l&apos;entreprise sera créée comme indépendante
             </p>
           )}
           <DialogBody className="space-y-4">
@@ -5390,7 +6432,7 @@ export default function StructurePage() {
             {!addCompanyGroupId && (
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                  Groupe *
+                  Groupe
                 </label>
                 <Select
                   value={addCompanyForm.groupId || ""}
@@ -5403,9 +6445,8 @@ export default function StructurePage() {
                     }));
                   }}
                   className="h-11"
-                  required
                 >
-                  <option value="">Sélectionner un groupe</option>
+                  <option value="">Sélectionner un groupe (optionnel)</option>
                   {groupList.map((g) => (
                     <option key={g.id} value={g.id}>{g.name}</option>
                   ))}
@@ -5425,7 +6466,19 @@ export default function StructurePage() {
               />
             </div>
 
-
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Description
+              </label>
+              <textarea
+                value={addCompanyForm.description}
+                onChange={(e) =>
+                  setAddCompanyForm((f) => ({ ...f, description: e.target.value }))
+                }
+                placeholder="Description de l'entreprise"
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 border-white/10 bg-white/5 text-white placeholder:text-white/45"
+              />
+            </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
@@ -5443,15 +6496,19 @@ export default function StructurePage() {
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   Code APE *
                 </label>
-                <ApeCodeSelect
-                  value={addCompanyForm.ape_code}
-                  onChange={(value) =>
-                    setAddCompanyForm((f) => ({ ...f, ape_code: value }))
-                  }
-                  onDescriptionChange={(description) =>
-                    setAddCompanyForm((f) => ({ ...f, main_activity: description }))
-                  }
-                />
+                <button
+                  type="button"
+                  onClick={() => setAddCompanyApeModalOpen(true)}
+                  className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+                >
+                  <span className={addCompanyForm.ape_code ? "text-foreground" : "text-muted-foreground"}>
+                    {addCompanyForm.ape_code ?
+                      APE_CODES.find(code => code.value === addCompanyForm.ape_code)?.label || addCompanyForm.ape_code
+                      : "Sélectionner un code APE"
+                    }
+                  </span>
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                </button>
               </div>
             </div>
 
@@ -5472,26 +6529,119 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Adresse
               </label>
-              <Textarea
-                value={addCompanyForm.address}
+              <Input
+                value={addCompanyForm.street}
                 onChange={(e) =>
-                  setAddCompanyForm((f) => ({ ...f, address: e.target.value }))
+                  setAddCompanyForm((f) => ({ ...f, street: e.target.value }))
                 }
-                placeholder="Adresse de l'entreprise"
+                placeholder="Rue et numéro"
               />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Code postal
+                </label>
+                <Input
+                  value={addCompanyForm.postal_code}
+                  onChange={(e) =>
+                    setAddCompanyForm((f) => ({ ...f, postal_code: e.target.value }))
+                  }
+                  placeholder="Code postal"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Ville
+                </label>
+                <Input
+                  value={addCompanyForm.city}
+                  onChange={(e) =>
+                    setAddCompanyForm((f) => ({ ...f, city: e.target.value }))
+                  }
+                  placeholder="Ville"
+                />
+              </div>
             </div>
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Pays *
               </label>
-              <CountrySelect
-                placeholder="Pays de l'entreprise"
-                value={addCompanyForm.country}
-                onChange={(value) =>
-                  setAddCompanyForm((f) => ({ ...f, country: value }))
+              <button
+                type="button"
+                onClick={() => setAddCompanyCountryModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+              >
+                <span className={addCompanyForm.country ? "text-foreground" : "text-muted-foreground"}>
+                  {addCompanyForm.country ? addCompanyForm.country : "Sélectionner un pays"}
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Téléphone mobile
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="FR"
+                  value={addCompanyForm.phone_mobile}
+                  onChange={(value) =>
+                    handlePhoneChange(value || "", 'addCompany', 'phone_mobile')
+                  }
+                  className={companyErrors?.phone_mobile ? "border-red-500" : ""}
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phone_mobile ? "border-red-500" : ""}`
+                  }}
+                />
+                {companyErrors?.phone_mobile && (
+                  <p className="mt-1 text-xs text-red-500">{companyErrors.phone_mobile}</p>
+                )}
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Téléphone fixe
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="FR"
+                  value={addCompanyForm.phone_landline}
+                  onChange={(value) =>
+                    handlePhoneChange(value || "", 'addCompany', 'phone_landline')
+                  }
+                  className={companyErrors?.phone_landline ? "border-red-500" : ""}
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phone_landline ? "border-red-500" : ""}`
+                  }}
+                />
+                {companyErrors?.phone_landline && (
+                  <p className="mt-1 text-xs text-red-500">{companyErrors.phone_landline}</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Email
+              </label>
+              <Input
+                type="email"
+                value={addCompanyForm.contact_email}
+                onChange={(e) =>
+                  setAddCompanyForm((f) => ({ ...f, contact_email: e.target.value }))
                 }
+                placeholder="email@exemple.com"
+                className={companyErrors?.contact_email ? "border-red-500" : ""}
               />
+              {companyErrors?.contact_email && (
+                <p className="mt-1 text-xs text-red-500">{companyErrors.contact_email}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -5610,7 +6760,8 @@ export default function StructurePage() {
                 !addCompanyForm.ape_code.trim() ||
                 !addCompanyForm.country.trim() ||
                 !isValidMonthDay(toMonthDay(addCompanyForm.fiscal_year_start)) ||
-                (!addCompanyGroupId && !addCompanyForm.groupId.trim())
+                !!companyErrors?.phone_mobile ||
+                !!companyErrors?.phone_landline
               }
             >
               {addCompanyLoading ? "Création..." : "Créer"}
@@ -5651,11 +6802,19 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Code APE *
               </label>
-              <ApeCodeSelect
-                value={addBUForm.code}
-                onChange={(value) => setAddBUForm((f) => ({ ...f, code: value }))}
-                onDescriptionChange={(description) => setAddBUForm((f) => ({ ...f, activity: description }))}
-              />
+              <button
+                type="button"
+                onClick={() => setAddBUApeModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+              >
+                <span className={addBUForm.code ? "text-foreground" : "text-muted-foreground"}>
+                  {addBUForm.code ?
+                    APE_CODES.find(code => code.value === addBUForm.code)?.label || addBUForm.code
+                    : "Sélectionner un code APE"
+                  }
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -5684,13 +6843,153 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Pays *
               </label>
-              <CountrySelect
-                value={addBUForm.country}
-                onChange={(value) =>
-                  setAddBUForm((f) => ({ ...f, country: value }))
+              <button
+                type="button"
+                onClick={() => setAddBUCountryModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+              >
+                <span className={addBUForm.country ? "text-foreground" : "text-muted-foreground"}>
+                  {addBUForm.country ?
+                    (() => {
+                      const country = COUNTRIES.find(c => c.value === addBUForm.country || c.label === addBUForm.country);
+                      return country ? `${country.label} (${country.code})` : addBUForm.country;
+                    })()
+                    : "Sélectionner un pays"
+                  }
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Description
+              </label>
+              <textarea
+                value={addBUForm.description}
+                onChange={(e) =>
+                  setAddBUForm((f) => ({ ...f, description: e.target.value }))
                 }
-                placeholder="Pays de la Business Unit"
+                placeholder="Description de la Business Unit"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+                rows={3}
               />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Rue
+              </label>
+              <Input
+                value={addBUForm.street}
+                onChange={(e) =>
+                  setAddBUForm((f) => ({ ...f, street: e.target.value }))
+                }
+                placeholder="Rue"
+                className="mb-4"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Code postal
+              </label>
+              <Input
+                value={addBUForm.postal_code}
+                onChange={(e) =>
+                  setAddBUForm((f) => ({ ...f, postal_code: e.target.value }))
+                }
+                placeholder="Code postal"
+                className="mb-4"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Ville
+              </label>
+              <Input
+                value={addBUForm.city}
+                onChange={(e) =>
+                  setAddBUForm((f) => ({ ...f, city: e.target.value }))
+                }
+                placeholder="Ville"
+                className="mb-4"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Contact
+              </label>
+              <div className="space-y-2">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
+                    Téléphone mobile
+                  </label>
+                  <PhoneInput
+                    international
+                    countryCallingCodeEditable={false}
+                    defaultCountry="FR"
+                    value={addBUForm.phone_mobile}
+                    onChange={(value) =>
+                      handlePhoneChange(value || "", "addBU", "phone_mobile")
+                    }
+                    className={
+                      addBUErrors?.phone_mobile
+                        ? "border-red-500"
+                        : ""
+                    }
+                    numberInputProps={{
+                      className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addBUErrors?.phone_mobile ? "border-red-500" : ""}`,
+                    }}
+                  />
+                  {addBUErrors?.phone_mobile && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {addBUErrors.phone_mobile}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
+                    Téléphone fixe
+                  </label>
+                  <PhoneInput
+                    international
+                    countryCallingCodeEditable={false}
+                    defaultCountry="FR"
+                    value={addBUForm.phone_landline}
+                    onChange={(value) =>
+                      handlePhoneChange(value || "", "addBU", "phone_landline")
+                    }
+                    className={
+                      addBUErrors?.phone_landline
+                        ? "border-red-500"
+                        : ""
+                    }
+                    numberInputProps={{
+                      className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addBUErrors?.phone_landline ? "border-red-500" : ""}`,
+                    }}
+                  />
+                  {addBUErrors?.phone_landline && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {addBUErrors.phone_landline}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
+                    Email
+                  </label>
+                  <Input
+                    value={addBUForm.contact_email}
+                    onChange={(e) =>
+                      setAddBUForm((f) => ({ ...f, contact_email: e.target.value }))
+                    }
+                    placeholder="Email"
+                  />
+                  {addBUErrors?.contact_email && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {addBUErrors.contact_email}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -5738,6 +7037,7 @@ export default function StructurePage() {
               }
               userOptions={buUserOptionsForManager}
             />
+
           </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddBUOpen(false)}>
@@ -5768,7 +7068,7 @@ export default function StructurePage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
               <Building2 className="h-5 w-5 shrink-0 text-(--nebula-gold-light)" />
-              Créer l&apos;workspace
+              Créer le workspace
             </DialogTitle>
           </DialogHeader>
           <DialogBody className="space-y-4">
@@ -5781,7 +7081,7 @@ export default function StructurePage() {
                 onChange={(e) =>
                   setAddworkspaceForm((f) => ({ ...f, name: e.target.value }))
                 }
-                placeholder="Nom de l&apos;workspace"
+                placeholder="Nom du workspace"
               />
             </div>
             <div className="space-y-2">
@@ -5796,7 +7096,7 @@ export default function StructurePage() {
                     description: e.target.value,
                   }))
                 }
-                placeholder="Description de l&apos;workspace"
+                placeholder="Description du workspace"
                 rows={3}
               />
             </div>
@@ -5826,19 +7126,64 @@ export default function StructurePage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/90">
-                Adresse
+                Rue
               </label>
               <Input
-                value={addworkspaceForm.address}
+                value={addworkspaceForm.street}
                 onChange={(e) =>
-                  setAddworkspaceForm((f) => ({ ...f, address: e.target.value }))
+                  setAddworkspaceForm((f) => ({ ...f, street: e.target.value }))
                 }
-                placeholder="Adresse de l&apos;workspace"
+                placeholder="Rue"
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/90">
-                Email de contact
+                Code postal
+              </label>
+              <Input
+                value={addworkspaceForm.postal_code}
+                onChange={(e) =>
+                  setAddworkspaceForm((f) => ({ ...f, postal_code: e.target.value }))
+                }
+                placeholder="Code postal"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white/90">
+                Ville
+              </label>
+              <Input
+                value={addworkspaceForm.city}
+                onChange={(e) =>
+                  setAddworkspaceForm((f) => ({ ...f, city: e.target.value }))
+                }
+                placeholder="Ville"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white/90">
+                Pays
+              </label>
+              <button
+                type="button"
+                onClick={() => setCreateCountryModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+              >
+                <span className={addworkspaceForm.country ? "text-foreground" : "text-muted-foreground"}>
+                  {addworkspaceForm.country ?
+                    (() => {
+                      const country = COUNTRIES.find(c => c.value === addworkspaceForm.country || c.label === addworkspaceForm.country);
+                      return country ? `${country.label} (${country.code})` : addworkspaceForm.country;
+                    })()
+                    : "Sélectionner un pays"
+                  }
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white/90">
+                Email
               </label>
               <Input
                 type="email"
@@ -5851,24 +7196,45 @@ export default function StructurePage() {
                 <p className="text-xs text-red-500">{workspaceErrors.contact_email}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-white/90">
-                Téléphone de contact
-              </label>
-              <PhoneInput
-                international
-                countryCallingCodeEditable={false}
-                defaultCountry="FR"
-                value={addworkspaceForm.contact_phone}
-                onChange={(value) => handlePhoneChange(value || "")}
-                className={workspaceErrors.contact_phone ? "border-red-500" : ""}
-                numberInputProps={{
-                  className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.contact_phone ? "border-red-500" : ""}`
-                }}
-              />
-              {workspaceErrors.contact_phone && (
-                <p className="text-xs text-red-500">{workspaceErrors.contact_phone}</p>
-              )}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/90">
+                  Téléphone mobile
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="FR"
+                  value={addworkspaceForm.phone_mobile}
+                  onChange={(value) => handlePhoneChange(value || "", "addworkspace", "phone_mobile")}
+                  className={workspaceErrors.phone_mobile ? "border-red-500" : ""}
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.phone_mobile ? "border-red-500" : ""}`
+                  }}
+                />
+                {workspaceErrors.phone_mobile && (
+                  <p className="text-xs text-red-500">{workspaceErrors.phone_mobile}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/90">
+                  Téléphone fixe
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="FR"
+                  value={addworkspaceForm.phone_landline}
+                  onChange={(value) => handlePhoneChange(value || "", "addworkspace", "phone_landline")}
+                  className={workspaceErrors.phone_landline ? "border-red-500" : ""}
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.phone_landline ? "border-red-500" : ""}`
+                  }}
+                />
+                {workspaceErrors.phone_landline && (
+                  <p className="text-xs text-red-500">{workspaceErrors.phone_landline}</p>
+                )}
+              </div>
             </div>
           </DialogBody>
           <DialogFooter>
@@ -5878,14 +7244,20 @@ export default function StructurePage() {
                 setAddworkspaceOpen(false);
                 setLogoFile(null);
                 setLogoPreview("");
-                setWorkspaceErrors({ contact_email: "", contact_phone: "" });
+                setWorkspaceErrors({ contact_email: "", phone_mobile: "", phone_landline: "", });
               }}
             >
               Annuler
             </Button>
             <Button
               onClick={handleCreateworkspace}
-              disabled={addworkspaceLoading || !addworkspaceForm.name.trim() || !!workspaceErrors.contact_email || !!workspaceErrors.contact_phone}
+              disabled={
+                addworkspaceLoading ||
+                !addworkspaceForm.name.trim() ||
+                !!workspaceErrors.contact_email ||
+                !!workspaceErrors.phone_mobile ||
+                !!workspaceErrors.phone_landline
+              }
               className="bg-purple-600 text-white hover:bg-purple-700"
             >
               {addworkspaceLoading ? "Création..." : "Créer"}
@@ -5893,6 +7265,172 @@ export default function StructurePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de sélection de pays */}
+      <CountrySelectModal
+        open={countryModalOpen}
+        onOpenChange={setCountryModalOpen}
+        value={editworkspace.country}
+        onChange={(value) =>
+          setEditworkspace((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays du workspace"
+      />
+
+      {/* Modal de sélection de pays pour la création */}
+      <CountrySelectModal
+        open={createCountryModalOpen}
+        onOpenChange={setCreateCountryModalOpen}
+        value={addworkspaceForm.country}
+        onChange={(value) =>
+          setAddworkspaceForm((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays du workspace"
+      />
+
+      {/* Modal de sélection de pays pour le groupe */}
+      <CountrySelectModal
+        open={groupCountryModalOpen}
+        onOpenChange={setGroupCountryModalOpen}
+        value={editGroup.country}
+        onChange={(value) =>
+          setEditGroup((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays du groupe"
+      />
+
+      {/* Modal de sélection de pays pour l'entreprise */}
+      <CountrySelectModal
+        open={companyCountryModalOpen}
+        onOpenChange={setCompanyCountryModalOpen}
+        value={editCompany.country}
+        onChange={(value) =>
+          setEditCompany((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays de l'entreprise"
+      />
+
+      {/* Modal de sélection de code APE pour l'entreprise */}
+      <ApeCodeSelectModal
+        open={companyApeModalOpen}
+        onOpenChange={setCompanyApeModalOpen}
+        value={editCompany.ape_code}
+        onChange={(value) =>
+          setEditCompany((f) => ({ ...f, ape_code: value }))
+        }
+        onDescriptionChange={(description) =>
+          setEditCompany((f) => ({
+            ...f,
+            main_activity: description,
+          }))
+        }
+        title="Sélectionner le code APE de l'entreprise"
+      />
+
+      {/* Modal de sélection de code APE pour la BU */}
+      <ApeCodeSelectModal
+        open={editBUApeModalOpen}
+        onOpenChange={setEditBUApeModalOpen}
+        value={editBU.code}
+        onChange={(value) =>
+          setEditBU((f) => ({ ...f, code: value }))
+        }
+        onDescriptionChange={(description) =>
+          setEditBU((f) => ({
+            ...f,
+            activity: description,
+          }))
+        }
+        title="Sélectionner le code APE de la BU"
+      />
+
+      {/* Modal de sélection de pays pour la BU */}
+      <CountrySelectModal
+        open={editBUCountryModalOpen}
+        onOpenChange={setEditBUCountryModalOpen}
+        value={editBU.country}
+        onChange={(value) =>
+          setEditBU((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays de la BU"
+      />
+
+      {/* Modal de sélection de pays pour la création de BU */}
+      <CountrySelectModal
+        open={addBUCountryModalOpen}
+        onOpenChange={setAddBUCountryModalOpen}
+        value={addBUForm.country}
+        onChange={(value) =>
+          setAddBUForm((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays de la BU"
+      />
+
+      {/* Modal de sélection de pays pour la création de BU standalone */}
+      <CountrySelectModal
+        open={addBUStandaloneCountryModalOpen}
+        onOpenChange={setAddBUStandaloneCountryModalOpen}
+        value={addBUStandaloneForm.country}
+        onChange={(value) =>
+          setAddBUStandaloneForm((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays de la BU"
+      />
+
+      {/* Modal de sélection de code APE pour la création de BU standalone */}
+      <ApeCodeSelectModal
+        open={addBUStandaloneApeModalOpen}
+        onOpenChange={setAddBUStandaloneApeModalOpen}
+        value={addBUStandaloneForm.code}
+        onChange={(value) =>
+          setAddBUStandaloneForm((f) => ({
+            ...f,
+            code: value,
+          }))
+        }
+        onDescriptionChange={(description) =>
+          setAddBUStandaloneForm((f) => ({
+            ...f,
+            activity: description,
+          }))
+        }
+        title="Sélectionner le code APE de la BU"
+      />
+
+      {/* Modal de sélection de code APE pour la création d'entreprise */}
+      <ApeCodeSelectModal
+        open={addCompanyApeModalOpen}
+        onOpenChange={setAddCompanyApeModalOpen}
+        value={addCompanyForm.ape_code}
+        onChange={(value) =>
+          setAddCompanyForm((f) => ({ ...f, ape_code: value }))
+        }
+        onDescriptionChange={(description) =>
+          setAddCompanyForm((f) => ({ ...f, main_activity: description }))
+        }
+        title="Sélectionner le code APE de l'entreprise"
+      />
+
+      {/* Modal de sélection de code APE pour la création de BU */}
+      <ApeCodeSelectModal
+        open={addBUApeModalOpen}
+        onOpenChange={setAddBUApeModalOpen}
+        value={addBUForm.code}
+        onChange={(value) => setAddBUForm((f) => ({ ...f, code: value }))}
+        onDescriptionChange={(description) => setAddBUForm((f) => ({ ...f, activity: description }))}
+        title="Sélectionner le code APE de la BU"
+      />
+
+      {/* Modal de sélection de pays pour la création d'entreprise */}
+      <CountrySelectModal
+        open={addCompanyCountryModalOpen}
+        onOpenChange={setAddCompanyCountryModalOpen}
+        value={addCompanyForm.country}
+        onChange={(value) =>
+          setAddCompanyForm((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays de l'entreprise"
+      />
 
     </AppLayout>
   );
@@ -5907,17 +7445,14 @@ function EmpruntsSection({
   emptyMessage: string;
   onLoanClick: (loanId: string) => void;
 }) {
-  const total = emprunts.reduce((sum, e) => {
-    const amount = typeof e.amount === 'string' ? parseFloat(e.amount) : e.amount;
-    return sum + (isNaN(amount) ? 0 : amount);
-  }, 0);
-  console.log('EmpruntsSection - emprunts:', emprunts);
-  console.log('EmpruntsSection - calculated total:', total);
-
+  const total = emprunts.reduce(
+    (sum, e) => sum + (Number.isFinite(e.amount) ? e.amount : 0),
+    0,
+  );
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
       <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-white">
-        <TrendingDown className="h-4 w-4 text-red-600" />
+        <TrendingDown className="h-4 w-4 text-orange-400" />
         Emprunts
       </h3>
       {emprunts.length === 0 ? (
@@ -5925,35 +7460,36 @@ function EmpruntsSection({
       ) : (
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <span className="text-sm font-medium text-white/90">Total des emprunts</span>
-            <span className="text-base font-semibold text-red-600">
-              -{total.toLocaleString("fr-FR")} €
+            <span className="text-sm font-medium text-white/90">Montant total</span>
+            <span className="text-base font-semibold text-orange-400">
+              {total.toLocaleString("fr-FR")} €
             </span>
           </div>
-          <div className={`space-y-2 ${emprunts.length > 4 ? "max-h-80 overflow-y-auto pr-1" : ""}`}>
+          <div
+            className={`space-y-2 ${emprunts.length > 4 ? "max-h-80 overflow-y-auto pr-1" : ""}`}
+          >
             {emprunts.map((emprunt) => (
               <div
                 key={emprunt.id}
                 className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-white">Emprunt</p>
-                  {emprunt.description && (
-                    <p className="mt-1 truncate text-sm text-(--nebula-muted)">{emprunt.description}</p>
-                  )}
+                  <p className="font-medium text-white">
+                    {emprunt.description?.trim() ||
+                      `Emprunt du ${new Date(emprunt.date).toLocaleDateString("fr-FR")}`}
+                  </p>
                   <p className="mt-1 text-xs text-(--nebula-muted)">
-                    {new Date(emprunt.date).toLocaleDateString("fr-FR")}
-                    {emprunt.duration_months && (
-                      <span className="ml-2">• {emprunt.duration_months} mois</span>
-                    )}
-                    {emprunt.interest_rate && (
-                      <span className="ml-2">• {emprunt.interest_rate}% d&apos;intérêt</span>
-                    )}
+                    {[
+                      emprunt.interest_rate != null ? `${emprunt.interest_rate}% / an` : "",
+                      emprunt.duration_months != null ? `${emprunt.duration_months} mois` : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" • ")}
                   </p>
                 </div>
                 <div className="ml-3 flex items-center gap-2 shrink-0">
-                  <p className="text-sm font-semibold text-red-600">
-                    -{emprunt.amount.toLocaleString("fr-FR")} €
+                  <p className="text-sm font-semibold text-orange-400">
+                    {emprunt.amount.toLocaleString("fr-FR")} €
                   </p>
                   <button
                     type="button"
@@ -5983,30 +7519,19 @@ function ActifsSection({
   emptyMessage: string;
   onAssetClick: (assetId: string) => void;
 }) {
-  const total = actifs.reduce((sum, a) => {
-    const amount = typeof a.acquisitionAmount === 'string' ? parseFloat(a.acquisitionAmount) : a.acquisitionAmount;
-    return sum + (isNaN(amount) ? 0 : amount);
-  }, 0);
-  console.log('ActifsSection - actifs:', actifs);
-  console.log('ActifsSection - calculated total:', total);
-
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
       <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-white">
-        <Package className="h-4 w-4 text-green-600" />
-        Actifs - Mode Détaillé
+        <Building2 className="h-4 w-4 text-(--nebula-gold-light)" />
+        Actifs immobilisés
       </h3>
       {actifs.length === 0 ? (
         <p className="py-4 text-center text-sm text-(--nebula-muted)">{emptyMessage}</p>
       ) : (
         <div className="space-y-3">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <span className="text-sm font-medium text-white/90">Total des actifs</span>
-            <span className="text-base font-semibold text-green-600">
-              {total.toLocaleString("fr-FR")} €
-            </span>
-          </div>
-          <div className={`space-y-2 ${actifs.length > 4 ? "max-h-80 overflow-y-auto pr-1" : ""}`}>
+          <div
+            className={`space-y-2 ${actifs.length > 4 ? "max-h-80 overflow-y-auto pr-1" : ""}`}
+          >
             {actifs.map((actif) => (
               <div
                 key={actif.id}
@@ -6015,16 +7540,17 @@ function ActifsSection({
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-white">{actif.name}</p>
                   {actif.description && (
-                    <p className="mt-1 truncate text-sm text-(--nebula-muted)">{actif.description}</p>
+                    <p className="mt-1 truncate text-sm text-(--nebula-muted)">
+                      {actif.description}
+                    </p>
                   )}
                   <p className="mt-1 text-xs text-(--nebula-muted)">
+                    Acquisition:{" "}
                     {new Date(actif.acquisitionDate).toLocaleDateString("fr-FR")}
-                    <span className="ml-2">• {actif.amortizationDurationYears} ans</span>
-                    <span className="ml-2">• {actif.amortizationType}</span>
                   </p>
                 </div>
                 <div className="ml-3 flex items-center gap-2 shrink-0">
-                  <p className="text-sm font-semibold text-green-600">
+                  <p className="text-sm font-semibold text-(--nebula-gold-light)">
                     {actif.acquisitionAmount.toLocaleString("fr-FR")} €
                   </p>
                   <button

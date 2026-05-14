@@ -146,7 +146,7 @@ export default function SettingsPage() {
                     <Input
                       value={orgName}
                       onChange={(e) => setOrgName(e.target.value)}
-                      placeholder="Nom de l'workspace"
+                      placeholder="Nom du workspace"
                     />
                   </div>
                   <div className="space-y-1.5">

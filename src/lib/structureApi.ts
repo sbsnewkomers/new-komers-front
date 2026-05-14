@@ -3,8 +3,16 @@ import { apiFetch } from "@/lib/apiClient";
 export type TreeBU = {
   id: string;
   name: string;
+  description?: string;
   code: string;
   country: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
+  contact_email?: string;
+  completionPercentage?: number;
 };
 
 export type TreeCompany = {
@@ -18,6 +26,7 @@ export type TreeCompany = {
 export type TreeGroup = {
   id: string;
   name: string;
+  completionPercentage?: number;
   companies: TreeCompany[];
 };
 
@@ -26,9 +35,13 @@ export type Treeworkspace = {
   name: string;
   description?: string;
   logo?: string;
-  address?: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
   contact_email?: string;
-  contact_phone?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
   manager_id?: string;
   manager?: {
     id: string;
@@ -36,6 +49,7 @@ export type Treeworkspace = {
     lastName?: string | null;
     email: string;
   } | null;
+  completionPercentage?: number;
   groups: TreeGroup[];
   standaloneCompanies: TreeCompany[];
 };

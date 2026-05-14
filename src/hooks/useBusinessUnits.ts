@@ -4,10 +4,17 @@ import type { BusinessUnitApi } from "@/types/business-unit";
 
 type CreateBusinessUnitDto = {
   name: string;
+  description?: string;
   code: string;
   activity: string;
   siret: string;
   country: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
+  contact_email?: string;
 };
 
 type UpdateBusinessUnitDto = Partial<CreateBusinessUnitDto>;
