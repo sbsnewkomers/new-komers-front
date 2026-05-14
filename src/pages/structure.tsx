@@ -2673,7 +2673,7 @@ export default function StructurePage() {
       onCompanyChange={() => { }}
     >
       <Head>
-        <title>Structure de l&apos;workspace</title>
+        <title>Structure du workspace</title>
       </Head>
       <div className="space-y-6">
         {/* Header */}
@@ -6739,7 +6739,7 @@ export default function StructurePage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
               <Building2 className="h-5 w-5 shrink-0 text-(--nebula-gold-light)" />
-              Créer l&apos;workspace
+              Créer le workspace
             </DialogTitle>
           </DialogHeader>
           <DialogBody className="space-y-4">
@@ -6752,7 +6752,7 @@ export default function StructurePage() {
                 onChange={(e) =>
                   setAddworkspaceForm((f) => ({ ...f, name: e.target.value }))
                 }
-                placeholder="Nom de l&apos;workspace"
+                placeholder="Nom du workspace"
               />
             </div>
             <div className="space-y-2">
