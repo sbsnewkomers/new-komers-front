@@ -9,9 +9,15 @@ import {
   useMemo,
 } from "react";
 import Head from "next/head";
-import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
-import { COUNTRIES } from "@/lib/countriesData";
+import { COUNTRIES } from '@/lib/countriesData';
+
+// Fonction pour trouver le nom du pays à partir du code
+const getCountryName = (code: string) => {
+  const country = COUNTRIES.find(c => c.value === code || c.code === code);
+  return country ? country.label : code;
+};
+
 import {
   fetchStructureTree,
   type StructureTree,
@@ -118,26 +124,37 @@ type Emprunt = {
 type BusinessUnit = {
   id: string;
   name: string;
+  description?: string;
   code: string;
   activity: string;
   siret: string;
   country: string;
   logo?: string;
   company_id?: string;
-  entity_code?: string | null;
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  phoneLandline?: string;
+  phoneMobile?: string;
+  contact_email?: string;
 };
 
 type GroupFull = {
   id: string;
   name: string;
-  siret: string;
-  ape_code?: string;
+  description?: string;
+
   fiscal_year_start: string;
   last_closed_fiscal_year?: number | null;
-  mainActivity?: string;
+
   country?: string;
   logo?: string;
-  entity_code?: string | null;
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  phoneLandline?: string;
+  phoneMobile?: string;
+  contact_email?: string;
 };
 
 type workspaceFull = {
@@ -164,11 +181,17 @@ type workspaceFull = {
 type CompanyFull = {
   id: string;
   name: string;
+  description?: string;
   siret: string;
   fiscal_year_start: string;
   last_closed_fiscal_year?: number | null;
-  address?: string;
-  country: string;
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
+  phoneLandline?: string;
+  phoneMobile?: string;
+  contact_email?: string;
   ape_code?: string;
   main_activity?: string;
   size?: string;
@@ -176,7 +199,6 @@ type CompanyFull = {
   logo?: string;
   completionPercentage?: number;
   group_id: string;
-  entity_code?: string | null;
 };
 
 type NodeUsersByRole = Record<
@@ -585,7 +607,6 @@ export default function StructurePage() {
 
   // États pour la recherche
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // État pour créer une workspace
   const [addworkspaceOpen, setAddworkspaceOpen] = useState(false);
@@ -607,14 +628,17 @@ export default function StructurePage() {
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [workspaceErrors, setWorkspaceErrors] = useState({
     contact_email: "",
-    contact_phone: "",
+    phoneMobile: "",
+    phoneLandline: "",
   });
   const [editWorkspaceErrors, setEditWorkspaceErrors] = useState({
     contact_email: "",
-    contact_phone: "",
+    phoneMobile: "",
+    phoneLandline: "",
   });
   const [countryModalOpen, setCountryModalOpen] = useState(false);
   const [createCountryModalOpen, setCreateCountryModalOpen] = useState(false);
+  const [groupCountryModalOpen, setGroupCountryModalOpen] = useState(false);
 
   // Gérer le changement de fichier logo
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -693,7 +717,7 @@ export default function StructurePage() {
   };
 
   const handleEditPhoneChange = (value: string) => {
-    setEditworkspace((f) => ({ ...f, contact_phone: value }));
+    setEditworkspace((f) => ({ ...f, phoneMobile: value }));
 
     if (!validatePhone(value)) {
       setEditWorkspaceErrors((prev) => ({
@@ -705,17 +729,50 @@ export default function StructurePage() {
     }
   };
 
+  const handleGroupPhoneChange = (value: string, field: 'phoneMobile' | 'phoneLandline') => {
+    setEditGroup((f) => ({ ...f, [field]: value }));
+
+    if (!validatePhone(value)) {
+      setGroupErrors((prev) => ({
+        ...prev,
+        [field]: "Veuillez entrer un numéro de téléphone valide",
+      }));
+    } else {
+      setGroupErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handleAddGroupPhoneChange = (value: string, field: 'phoneMobile' | 'phoneLandline') => {
+    setAddGroupForm((f) => ({ ...f, [field]: value }));
+
+    if (!validatePhone(value)) {
+      setAddGroupErrors((prev) => ({
+        ...prev,
+        [field]: "Veuillez entrer un numéro de téléphone valide",
+      }));
+    } else {
+      setAddGroupErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   const [addCompanyGroupId, setAddCompanyGroupId] = useState<string | null>(
     null,
   );
   const [addCompanyForm, setAddCompanyForm] = useState({
     name: "",
+    description: "",
     siret: "",
     fiscal_year_start: "",
     last_closed_fiscal_year: "",
-    address: "",
+
+    street: "",
+    postalCode: "",
+    city: "",
     country: "",
+    phoneLandline: "",
+    phoneMobile: "",
+    contact_email: "",
     ape_code: "",
     main_activity: "",
     size: "SMALL",
@@ -723,7 +780,6 @@ export default function StructurePage() {
     groupId: "",
     workspaceId: "",
     logo: undefined as string | undefined,
-    entity_code: "",
   });
   const [addCompanyLoading, setAddCompanyLoading] = useState(false);
   const [addCompanyLogoFile, setAddCompanyLogoFile] = useState<File | null>(null);
@@ -732,12 +788,18 @@ export default function StructurePage() {
   const [addBUCompanyId, setAddBUCompanyId] = useState<string | null>(null);
   const [addBUForm, setAddBUForm] = useState({
     name: "",
+    description: "",
     code: "",
     activity: "",
     siret: "",
     country: "",
+    street: "",
+    postalCode: "",
+    city: "",
+    phoneLandline: "",
+    phoneMobile: "",
+    contact_email: "",
     logo: undefined as string | undefined,
-    entity_code: "",
   });
   const [addBULoading, setAddBULoading] = useState(false);
   const [addBULogoFile, setAddBULogoFile] = useState<File | null>(null);
@@ -745,27 +807,40 @@ export default function StructurePage() {
   const [addGroupOpen, setAddGroupOpen] = useState(false);
   const [addGroupForm, setAddGroupForm] = useState({
     name: "",
-    siret: "",
-    ape_code: "",
+    description: "",
     fiscal_year_start: "",
     last_closed_fiscal_year: "",
-    mainActivity: "",
+
     country: "",
+    street: "",
+    postalCode: "",
+    city: "",
+    phoneLandline: "",
+    phoneMobile: "",
+    contact_email: "",
     workspaceId: "",
     logo: undefined as string | undefined,
-    entity_code: "",
   });
+  const [addGroupErrors, setAddGroupErrors] = useState({ contact_email: "", phoneLandline: "", phoneMobile: "" });
+  const [addGroupCountryModalOpen, setAddGroupCountryModalOpen] = useState(false);
   const [addGroupLoading, setAddGroupLoading] = useState(false);
 
   const [addBUStandaloneOpen, setAddBUStandaloneOpen] = useState(false);
   const [addBUStandaloneForm, setAddBUStandaloneForm] = useState({
     name: "",
+    description: "",
+
     code: "",
     activity: "",
     siret: "",
     country: "",
+    street: "",
+    postalCode: "",
+    city: "",
+    phoneLandline: "",
+    phoneMobile: "",
+    contact_email: "",
     companyId: "",
-    entity_code: "",
   });
   const [addBUStandaloneLoading, setAddBUStandaloneLoading] = useState(false);
 
@@ -789,20 +864,33 @@ export default function StructurePage() {
   const [editBULogoFile, setEditBULogoFile] = useState<File | null>(null);
   const [editGroup, setEditGroup] = useState({
     name: "",
-    siret: "",
-    ape_code: "",
+    description: "",
     fiscal_year_start: "",
     last_closed_fiscal_year: "",
-    mainActivity: "",
+
     country: "",
+    street: "",
+    postalCode: "",
+    city: "",
+    phoneLandline: "",
+    phoneMobile: "",
+    contact_email: "",
     logo: undefined as string | undefined,
-    entity_code: ""
+
   });
+  const [groupErrors, setGroupErrors] = useState({ contact_email: "", phoneLandline: "", phoneMobile: "" });
   const [editCompany, setEditCompany] = useState({
     name: "",
+    description: "",
     siret: "",
-    address: "",
+
+    street: "",
+    postalCode: "",
+    city: "",
     country: "",
+    phoneLandline: "",
+    phoneMobile: "",
+    contact_email: "",
     ape_code: "",
     main_activity: "",
     fiscal_year_start: "",
@@ -811,16 +899,21 @@ export default function StructurePage() {
     model: "",
     logo: undefined as string | undefined,
     completionPercentage: 0,
-    entity_code: "",
   });
   const [editBU, setEditBU] = useState({
     name: "",
+    description: "",
     code: "",
     activity: "",
     siret: "",
     country: "",
+    street: "",
+    postalCode: "",
+    city: "",
+    phoneLandline: "",
+    phoneMobile: "",
+    contact_email: "",
     logo: undefined as string | undefined,
-    entity_code: "",
   });
   const [nodeUsers, setNodeUsers] = useState<NodeUsersByRole | null>(null);
   const [nodeUsersOpen, setNodeUsersOpen] = useState(false);
@@ -1323,12 +1416,18 @@ export default function StructurePage() {
       // Réinitialiser editBU avec des valeurs vides AVANT de charger les nouvelles données
       setEditBU({
         name: "",
+        description: "",
         code: "",
         activity: "",
         siret: "",
         country: "",
         logo: undefined as string | undefined,
-        entity_code: "",
+        street: "",
+        postalCode: "",
+        city: "",
+        phoneLandline: "",
+        phoneMobile: "",
+        contact_email: "",
       });
 
       if (node.type === "workspace") {
@@ -1350,7 +1449,7 @@ export default function StructurePage() {
             manager_id: org.manager_id ?? "",
           });
           setEditworkspaceLogoFile(null);
-          setEditWorkspaceErrors({ contact_email: "", contact_phone: "" });
+          setEditWorkspaceErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
         } catch {
           setEditworkspace({
             name: node.name,
@@ -1366,7 +1465,7 @@ export default function StructurePage() {
             manager_id: "",
           });
           setEditworkspaceLogoFile(null);
-          setEditWorkspaceErrors({ contact_email: "", contact_phone: "" });
+          setEditWorkspaceErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
         }
       } else if (node.type === "group") {
         try {
@@ -1375,32 +1474,41 @@ export default function StructurePage() {
           });
           setEditGroup({
             name: g.name,
-            siret: g.siret ?? "",
-            ape_code: g.ape_code ?? "",
+            description: "",
             fiscal_year_start: toMonthDay(g.fiscal_year_start),
             last_closed_fiscal_year:
               g.last_closed_fiscal_year !== null &&
                 g.last_closed_fiscal_year !== undefined
                 ? String(g.last_closed_fiscal_year)
                 : "",
-            mainActivity: g.mainActivity ?? "",
             country: g.country ?? "",
+            street: "",
+            postalCode: "",
+            city: "",
+            phoneLandline: "",
+            phoneMobile: "",
+            contact_email: "",
             logo: g.logo ?? "",
-            entity_code: g.entity_code ?? "",
           });
+          setEditGroupLogoFile(null);
+          setGroupErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
         } catch {
           setEditGroup({
             name: node.name,
-            siret: "",
-            ape_code: "",
+            description: "",
             fiscal_year_start: "",
             last_closed_fiscal_year: "",
-            mainActivity: "",
             country: "",
+            street: "",
+            postalCode: "",
+            city: "",
+            phoneLandline: "",
+            phoneMobile: "",
+            contact_email: "",
             logo: undefined as string | undefined,
-            entity_code: "",
           });
           setEditGroupLogoFile(null);
+          setGroupErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
         }
       } else if (node.type === "company") {
         try {
@@ -1409,9 +1517,15 @@ export default function StructurePage() {
           });
           setEditCompany({
             name: c.name,
+            description: c.description ?? "",
             siret: c.siret ?? "",
-            address: c.address ?? "",
+            street: c.street ?? "",
+            postalCode: c.postalCode ?? "",
+            city: c.city ?? "",
             country: c.country ?? "",
+            phoneLandline: c.phoneLandline ?? "",
+            phoneMobile: c.phoneMobile ?? "",
+            contact_email: c.contact_email ?? "",
             ape_code: c.ape_code ?? "",
             main_activity: c.main_activity ?? "",
             fiscal_year_start: toMonthDay(c.fiscal_year_start),
@@ -1424,14 +1538,19 @@ export default function StructurePage() {
             model: c.model ?? "",
             logo: c.logo ?? "",
             completionPercentage: c.completionPercentage ?? 0,
-            entity_code: c.entity_code ?? "",
           });
         } catch {
           setEditCompany({
             name: node.name,
+            description: "",
             siret: "",
-            address: "",
+            street: "",
+            postalCode: "",
+            city: "",
             country: "",
+            phoneLandline: "",
+            phoneMobile: "",
+            contact_email: "",
             ape_code: "",
             main_activity: "",
             fiscal_year_start: "",
@@ -1440,7 +1559,6 @@ export default function StructurePage() {
             model: "",
             logo: undefined as string | undefined,
             completionPercentage: 0,
-            entity_code: "",
           });
         }
         loadBUsForCompany(node.id);
@@ -1455,12 +1573,18 @@ export default function StructurePage() {
         if (bu) {
           const updatedEditBU = {
             name: bu.name,
+            description: "",
             code: bu.code,
             activity: bu.activity || "",
             siret: bu.siret || "",
             country: bu.country || "",
+            street: "",
+            postalCode: "",
+            city: "",
+            phoneLandline: "",
+            phoneMobile: "",
+            contact_email: "",
             logo: bu.logo || "",
-            entity_code: bu.entity_code ?? "",
           };
           console.log('Setting editBU to:', updatedEditBU); // Debug log
           setEditBU(updatedEditBU);
@@ -1468,12 +1592,18 @@ export default function StructurePage() {
           // Valeurs par défaut seulement si la BU n'est pas trouvée
           setEditBU({
             name: node.name,
+            description: "",
             code: node.code,
             activity: "",
             siret: "",
             country: "",
+            street: "",
+            postalCode: "",
+            city: "",
+            phoneLandline: "",
+            phoneMobile: "",
+            contact_email: "",
             logo: undefined as string | undefined,
-            entity_code: "",
           });
         }
         loadBUsForCompany(node.id);
@@ -1510,13 +1640,14 @@ export default function StructurePage() {
     if (selectedNode.type === "workspace") {
       // Valider l'email et le téléphone
       const emailValid = validateEmail(editworkspace.contact_email);
-      const phoneValid = validatePhone(editworkspace.contact_phone);
+      const phoneValid = validatePhone(editworkspace?.phoneMobile || "");
 
       if (!emailValid || !phoneValid) {
         // Mettre à jour les erreurs
         setEditWorkspaceErrors({
           contact_email: emailValid ? "" : "Veuillez entrer un email valide",
-          contact_phone: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+          phoneMobile: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+          phoneLandline: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
         });
         return;
       }
@@ -1526,14 +1657,14 @@ export default function StructurePage() {
       if (editworkspace.description) {
         formData.append('description', editworkspace.description);
       }
-      if (editworkspace.address) {
-        formData.append('address', editworkspace.address);
+      if (editworkspace.street) {
+        formData.append('address', editworkspace.street);
       }
       if (editworkspace.contact_email) {
         formData.append('contact_email', editworkspace.contact_email);
       }
-      if (editworkspace.contact_phone) {
-        formData.append('contact_phone', editworkspace.contact_phone);
+      if (editworkspace.phoneMobile) {
+        formData.append('contact_phone', editworkspace.phoneMobile);
       }
       if (editworkspace.manager_id) {
         formData.append('manager_id', editworkspace.manager_id);
@@ -1549,7 +1680,7 @@ export default function StructurePage() {
         snackbar: { showSuccess: true, successMessage: "Workspace mise à jour" },
       });
       setEditworkspaceLogoFile(null);
-      setEditWorkspaceErrors({ contact_email: "", contact_phone: "" });
+      setEditWorkspaceErrors({ contact_email: "", phoneMobile: "", phoneLandline: "" });
       // Mettre à jour l'état local avec le logo retourné par le serveur
       if (updatedOrg) {
         setEditworkspace(prev => ({
@@ -1558,14 +1689,24 @@ export default function StructurePage() {
         }));
       }
     } else if (selectedNode.type === "group") {
+      // Valider l'email et les téléphones
+      const emailValid = validateEmail(editGroup.contact_email);
+      const phoneMobileValid = validatePhone(editGroup.phoneMobile || "");
+      const phoneLandlineValid = validatePhone(editGroup.phoneLandline || "");
+
+      if (!emailValid || !phoneMobileValid || !phoneLandlineValid) {
+        // Mettre à jour les erreurs
+        setGroupErrors({
+          contact_email: emailValid ? "" : "Veuillez entrer un email valide",
+          phoneMobile: phoneMobileValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+          phoneLandline: phoneLandlineValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        });
+        return;
+      }
+
       const formData = new FormData();
       formData.append('name', editGroup.name);
-      if (editGroup.siret) {
-        formData.append('siret', editGroup.siret);
-      }
-      if (editGroup.ape_code) {
-        formData.append('ape_code', editGroup.ape_code);
-      }
+
       const normalizedGroupFiscalYearStart = toMonthDay(editGroup.fiscal_year_start);
       if (normalizedGroupFiscalYearStart) {
         formData.append('fiscal_year_start', normalizedGroupFiscalYearStart);
@@ -1573,18 +1714,31 @@ export default function StructurePage() {
       if (editGroup.last_closed_fiscal_year.trim()) {
         formData.append('last_closed_fiscal_year', editGroup.last_closed_fiscal_year.trim());
       }
-      if (editGroup.mainActivity) {
-        formData.append('mainActivity', editGroup.mainActivity);
-      }
       if (editGroup.country) {
         formData.append('country', editGroup.country);
+      }
+      if (editGroup.street) {
+        formData.append('street', editGroup.street);
+      }
+      if (editGroup.postalCode) {
+        formData.append('postalCode', editGroup.postalCode);
+      }
+      if (editGroup.city) {
+        formData.append('city', editGroup.city);
+      }
+      if (editGroup.contact_email) {
+        formData.append('contact_email', editGroup.contact_email);
+      }
+      if (editGroup.phoneMobile) {
+        formData.append('phoneMobile', editGroup.phoneMobile);
+      }
+      if (editGroup.phoneLandline) {
+        formData.append('phoneLandline', editGroup.phoneLandline);
       }
       if (editGroupLogoFile) {
         formData.append('logo', editGroupLogoFile);
       }
-      if (editGroup.entity_code?.trim()) {
-        formData.append('entity_code', editGroup.entity_code.trim());
-      }
+
 
       const updatedGroup = await apiFetch<GroupFull>(`/groups/${selectedNode.id}`, {
         method: "PUT",
@@ -1593,6 +1747,7 @@ export default function StructurePage() {
         snackbar: { showSuccess: true, successMessage: "Groupe mis à jour" },
       });
       setEditGroupLogoFile(null);
+      setGroupErrors({ contact_email: "", phoneMobile: "", phoneLandline: "" });
       // Mettre à jour l'état local avec le logo retourné par le serveur
       if (updatedGroup) {
         setEditGroup(prev => ({
@@ -1606,11 +1761,23 @@ export default function StructurePage() {
       if (editCompany.siret) {
         formData.append('siret', editCompany.siret);
       }
-      if (editCompany.address) {
-        formData.append('address', editCompany.address);
+      if (editCompany.street) {
+        formData.append('street', editCompany.street);
+      }
+      if (editCompany.postalCode) {
+        formData.append('postalCode', editCompany.postalCode);
+      }
+      if (editCompany.city) {
+        formData.append('city', editCompany.city);
       }
       if (editCompany.country) {
         formData.append('country', editCompany.country);
+      }
+      if (editCompany.phoneLandline) {
+        formData.append('phoneLandline', editCompany.phoneLandline);
+      }
+      if (editCompany.phoneMobile) {
+        formData.append('phoneMobile', editCompany.phoneMobile);
       }
       if (editCompany.ape_code) {
         formData.append('ape_code', editCompany.ape_code);
@@ -1637,9 +1804,7 @@ export default function StructurePage() {
       if (editCompanyLogoFile) {
         formData.append('logo', editCompanyLogoFile);
       }
-      if (editCompany.entity_code?.trim()) {
-        formData.append('entity_code', editCompany.entity_code.trim());
-      }
+
       formData.append('completionPercentage', String(editCompany.completionPercentage || 0));
 
       const updatedCompany = await apiFetch<CompanyFull>(`/companies/${selectedNode.id}`, {
@@ -1678,9 +1843,7 @@ export default function StructurePage() {
       if (editBULogoFile) {
         formData.append('logo', editBULogoFile);
       }
-      if (editBU.entity_code?.trim()) {
-        formData.append('entity_code', editBU.entity_code.trim());
-      }
+
 
       const updatedBU = await apiFetch<BusinessUnit>(
         `/companies/${selectedNode.companyId}/business-units/${selectedNode.id}`,
@@ -1704,7 +1867,6 @@ export default function StructurePage() {
           activity: updatedBU.activity,
           siret: updatedBU.siret,
           logo: updatedBU.logo || "",
-          entity_code: updatedBU.entity_code ?? "",
         }));
 
         // Recharger les BUs pour mettre à jour l'affichage dans l'arbre
@@ -1728,7 +1890,8 @@ export default function StructurePage() {
       // Mettre à jour les erreurs
       setWorkspaceErrors({
         contact_email: emailValid ? "" : "Veuillez entrer un email valide",
-        contact_phone: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        phoneLandline: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        phoneMobile: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
       });
       return;
     }
@@ -1776,7 +1939,7 @@ export default function StructurePage() {
       });
       setLogoFile(null);
       setLogoPreview("");
-      setWorkspaceErrors({ contact_email: "", contact_phone: "" });
+      setWorkspaceErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
       void loadTree();
     } finally {
       setAddworkspaceLoading(false);
@@ -1886,26 +2049,32 @@ export default function StructurePage() {
           addCompanyForm.last_closed_fiscal_year.trim(),
         );
       }
-      if (addCompanyForm.address) {
-        formData.append('address', addCompanyForm.address);
-      }
-      if (addCompanyForm.ape_code) {
-        formData.append('ape_code', addCompanyForm.ape_code);
-      }
-      if (addCompanyForm.main_activity) {
-        formData.append('main_activity', addCompanyForm.main_activity);
-      }
       if (addCompanyForm.country) {
         formData.append('country', addCompanyForm.country);
+      }
+      if (addCompanyForm.street) {
+        formData.append('street', addCompanyForm.street);
+      }
+      if (addCompanyForm.postalCode) {
+        formData.append('postalCode', addCompanyForm.postalCode);
+      }
+      if (addCompanyForm.city) {
+        formData.append('city', addCompanyForm.city);
+      }
+      if (addCompanyForm.phoneLandline) {
+        formData.append('phoneLandline', addCompanyForm.phoneLandline);
+      }
+      if (addCompanyForm.phoneMobile) {
+        formData.append('phoneMobile', addCompanyForm.phoneMobile);
+      }
+      if (addCompanyForm.contact_email) {
+        formData.append('contact_email', addCompanyForm.contact_email);
       }
       formData.append('size', addCompanyForm.size);
       formData.append('model', addCompanyForm.model);
       if (addCompanyLogoFile) {
         console.log('Adding logo file:', addCompanyLogoFile.name, addCompanyLogoFile.size, addCompanyLogoFile.type);
         formData.append('logo', addCompanyLogoFile, addCompanyLogoFile.name);
-      }
-      if (addCompanyForm.entity_code?.trim()) {
-        formData.append('entity_code', addCompanyForm.entity_code.trim());
       }
 
       console.log('Sending FormData:');
@@ -1925,11 +2094,18 @@ export default function StructurePage() {
       setAddCompanyOpen(false);
       setAddCompanyForm({
         name: "",
+        description: "",
         siret: "",
         fiscal_year_start: "",
         last_closed_fiscal_year: "",
-        address: "",
+
+        street: "",
+        postalCode: "",
+        city: "",
         country: "",
+        phoneLandline: "",
+        phoneMobile: "",
+        contact_email: "",
         ape_code: "",
         main_activity: "",
         size: "SMALL",
@@ -1937,7 +2113,6 @@ export default function StructurePage() {
         groupId: "",
         workspaceId: "",
         logo: undefined as string | undefined,
-        entity_code: "",
       });
       setAddCompanyLogoFile(null);
     } catch (error) {
@@ -1976,12 +2151,28 @@ export default function StructurePage() {
       if (addBUForm.country) {
         formData.append('country', addBUForm.country);
       }
+      if (addBUForm.street) {
+        formData.append('street', addBUForm.street);
+      }
+      if (addBUForm.postalCode) {
+        formData.append('postalCode', addBUForm.postalCode);
+      }
+      if (addBUForm.city) {
+        formData.append('city', addBUForm.city);
+      }
+      if (addBUForm.phoneLandline) {
+        formData.append('phoneLandline', addBUForm.phoneLandline);
+      }
+      if (addBUForm.phoneMobile) {
+        formData.append('phoneMobile', addBUForm.phoneMobile);
+      }
+      if (addBUForm.contact_email) {
+        formData.append('contact_email', addBUForm.contact_email);
+      }
       if (addBULogoFile) {
         formData.append('logo', addBULogoFile);
       }
-      if (addBUForm.entity_code?.trim()) {
-        formData.append('entity_code', addBUForm.entity_code.trim());
-      }
+
 
       await apiFetch(`/companies/${addBUCompanyId}/business-units`, {
         method: "POST",
@@ -1992,7 +2183,7 @@ export default function StructurePage() {
       await loadTree();
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
-      setAddBUForm({ name: "", code: "", activity: "", siret: "", country: "", logo: undefined, entity_code: "" });
+      setAddBUForm({ name: "", description: "", code: "", activity: "", siret: "", country: "", street: "", postalCode: "", city: "", phoneLandline: "", phoneMobile: "", contact_email: "", logo: undefined });
       setAddBULogoFile(null);
     } catch {
       /* snackbar handles */
@@ -2003,27 +2194,35 @@ export default function StructurePage() {
 
   const handleCreateGroup = async () => {
     if (!addGroupForm.name.trim()) return;
+
+    // Valider l'email et les téléphones
+    const emailValid = validateEmail(addGroupForm.contact_email);
+    const phoneMobileValid = validatePhone(addGroupForm.phoneMobile || "");
+    const phoneLandlineValid = validatePhone(addGroupForm.phoneLandline || "");
+
+    if (!emailValid || !phoneMobileValid || !phoneLandlineValid) {
+      // Mettre à jour les erreurs
+      setAddGroupErrors({
+        contact_email: emailValid ? "" : "Veuillez entrer un email valide",
+        phoneMobile: phoneMobileValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        phoneLandline: phoneLandlineValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+      });
+      return;
+    }
+
     const normalizedGroupFiscalYearStart = toMonthDay(addGroupForm.fiscal_year_start);
     if (!isValidMonthDay(normalizedGroupFiscalYearStart)) {
       console.error("La date de début d'exercice est invalide (DD-MM)");
       return;
     }
 
-    // Valider le SIRET avant d'envoyer la requête
-    if (addGroupForm.siret && !validateSiret(addGroupForm.siret)) {
-      return;
-    }
+
 
     setAddGroupLoading(true);
     try {
       const formData = new FormData();
       formData.append('name', addGroupForm.name);
-      if (addGroupForm.siret) {
-        formData.append('siret', addGroupForm.siret);
-      }
-      if (addGroupForm.ape_code) {
-        formData.append('ape_code', addGroupForm.ape_code);
-      }
+
       if (normalizedGroupFiscalYearStart) {
         formData.append('fiscal_year_start', normalizedGroupFiscalYearStart);
       }
@@ -2033,11 +2232,27 @@ export default function StructurePage() {
           addGroupForm.last_closed_fiscal_year.trim(),
         );
       }
-      if (addGroupForm.mainActivity) {
-        formData.append('mainActivity', addGroupForm.mainActivity);
-      }
+
       if (addGroupForm.country) {
         formData.append('country', addGroupForm.country);
+      }
+      if (addGroupForm.street) {
+        formData.append('street', addGroupForm.street);
+      }
+      if (addGroupForm.postalCode) {
+        formData.append('postalCode', addGroupForm.postalCode);
+      }
+      if (addGroupForm.city) {
+        formData.append('city', addGroupForm.city);
+      }
+      if (addGroupForm.phoneLandline) {
+        formData.append('phoneLandline', addGroupForm.phoneLandline);
+      }
+      if (addGroupForm.phoneMobile) {
+        formData.append('phoneMobile', addGroupForm.phoneMobile);
+      }
+      if (addGroupForm.contact_email) {
+        formData.append('contact_email', addGroupForm.contact_email);
       }
       if (addGroupForm.workspaceId) {
         formData.append('workspace_id', addGroupForm.workspaceId);
@@ -2045,9 +2260,7 @@ export default function StructurePage() {
       if (addGroupLogoFile) {
         formData.append('logo', addGroupLogoFile);
       }
-      if (addGroupForm.entity_code?.trim()) {
-        formData.append('entity_code', addGroupForm.entity_code.trim());
-      }
+
 
       await apiFetch("/groups", {
         method: "POST",
@@ -2059,17 +2272,23 @@ export default function StructurePage() {
       setAddGroupOpen(false);
       setAddGroupForm({
         name: "",
-        siret: "",
-        ape_code: "",
+        description: "",
+
         fiscal_year_start: "",
         last_closed_fiscal_year: "",
-        mainActivity: "",
+
         country: "",
+        street: "",
+        postalCode: "",
+        city: "",
+        phoneLandline: "",
+        phoneMobile: "",
+        contact_email: "",
         workspaceId: "",
         logo: undefined as string | undefined,
-        entity_code: "",
       });
       setAddGroupLogoFile(null);
+      setAddGroupErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
     } catch {
       /* snackbar handles */
     } finally {
@@ -2098,7 +2317,6 @@ export default function StructurePage() {
             activity: addBUStandaloneForm.activity,
             siret: addBUStandaloneForm.siret,
             country: addBUStandaloneForm.country,
-            entity_code: addBUStandaloneForm.entity_code,
           }),
           snackbar: {
             showSuccess: true,
@@ -2113,12 +2331,18 @@ export default function StructurePage() {
       setAddBUStandaloneOpen(false);
       setAddBUStandaloneForm({
         name: "",
+        description: "",
         code: "",
         activity: "",
         siret: "",
         country: "",
+        street: "",
+        postalCode: "",
+        city: "",
+        phoneLandline: "",
+        phoneMobile: "",
+        contact_email: "",
         companyId: "",
-        entity_code: "",
       });
     } catch {
       /* snackbar handles */
@@ -2510,11 +2734,17 @@ export default function StructurePage() {
                               setAddCompanyGroupId(null);
                               setAddCompanyForm({
                                 name: "",
+                                description: "",
                                 siret: "",
                                 fiscal_year_start: "",
                                 last_closed_fiscal_year: "",
-                                address: "",
+                                street: "",
+                                postalCode: "",
+                                city: "",
                                 country: "",
+                                phoneLandline: "",
+                                phoneMobile: "",
+                                contact_email: "",
                                 ape_code: "",
                                 main_activity: "",
                                 size: "SMALL",
@@ -2522,7 +2752,6 @@ export default function StructurePage() {
                                 groupId: "",
                                 workspaceId: "",
                                 logo: undefined as string | undefined,
-                                entity_code: ""
                               });
                               setAddCompanyOpen(true);
                             }}
@@ -2871,15 +3100,18 @@ export default function StructurePage() {
                                         e.stopPropagation();
                                         setAddGroupForm({
                                           name: "",
-                                          siret: "",
-                                          ape_code: "",
-                                          mainActivity: "",
+                                          description: "",
+                                          street: "",
+                                          postalCode: "",
+                                          city: "",
+                                          phoneLandline: "",
+                                          phoneMobile: "",
                                           country: "",
+                                          contact_email: "",
                                           fiscal_year_start: "",
                                           last_closed_fiscal_year: "",
                                           workspaceId: node.id,
                                           logo: undefined as string | undefined,
-                                          entity_code: ""
                                         });
                                         setAddGroupLogoFile(null);
                                         setAddGroupOpen(true);
@@ -2910,10 +3142,16 @@ export default function StructurePage() {
                                           setAddCompanyGroupId(node.id);
                                           setAddCompanyForm({
                                             name: "",
+                                            description: "",
                                             siret: "",
                                             fiscal_year_start: "",
                                             last_closed_fiscal_year: "",
-                                            address: "",
+                                            street: "",
+                                            postalCode: "",
+                                            city: "",
+                                            phoneLandline: "",
+                                            phoneMobile: "",
+                                            contact_email: "",
                                             country: "",
                                             ape_code: "",
                                             main_activity: "",
@@ -2922,7 +3160,6 @@ export default function StructurePage() {
                                             groupId: "",
                                             workspaceId: "",
                                             logo: undefined as string | undefined,
-                                            entity_code: ""
                                           });
                                           setAddCompanyOpen(true);
                                         }}
@@ -2948,12 +3185,18 @@ export default function StructurePage() {
                                           setAddBUCompanyId(node.id);
                                           setAddBUForm({
                                             name: "",
+                                            description: "",
                                             code: "",
                                             activity: "",
                                             siret: "",
+                                            street: "",
+                                            postalCode: "",
+                                            city: "",
                                             country: "",
+                                            phoneLandline: "",
+                                            phoneMobile: "",
+                                            contact_email: "",
                                             logo: undefined as string | undefined,
-                                            entity_code: "",
                                           });
                                           setAddBULogoFile(null);
                                           setAddBUOpen(true);
@@ -3274,7 +3517,7 @@ export default function StructurePage() {
                               handleEditPhoneChange(value || "")
                             }
                             className={
-                              editWorkspaceErrors.contact_phone
+                              editWorkspaceErrors.phoneLandline && editWorkspaceErrors.phoneMobile && editWorkspaceErrors.contact_email
                                 ? "border-red-500"
                                 : ""
                             }
@@ -3282,11 +3525,13 @@ export default function StructurePage() {
                               className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.contact_phone ? "border-red-500" : ""}`,
                             }}
                           />
-                          {editWorkspaceErrors.contact_phone && (
+
+                          {editWorkspaceErrors.phoneMobile && (
                             <p className="mt-1 text-xs text-red-500">
-                              {editWorkspaceErrors.contact_phone}
+                              {editWorkspaceErrors.phoneMobile}
                             </p>
                           )}
+
                         </div>
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -3301,7 +3546,7 @@ export default function StructurePage() {
                               handleEditPhoneChange(value || "")
                             }
                             className={
-                              editWorkspaceErrors.contact_phone
+                              editWorkspaceErrors.phoneLandline
                                 ? "border-red-500"
                                 : ""
                             }
@@ -3309,9 +3554,9 @@ export default function StructurePage() {
                               className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.contact_phone ? "border-red-500" : ""}`,
                             }}
                           />
-                          {editWorkspaceErrors.contact_phone && (
+                          {editWorkspaceErrors.phoneLandline && (
                             <p className="mt-1 text-xs text-red-500">
-                              {editWorkspaceErrors.contact_phone}
+                              {editWorkspaceErrors.phoneLandline}
                             </p>
                           )}
                         </div>
@@ -3408,23 +3653,25 @@ export default function StructurePage() {
                   logo={editGroup.logo}
                   pills={
                     <>
-                      {editGroup.siret && (
-                        <DetailPill icon={Hash} mono>
-                          SIRET {formatSiret(editGroup.siret)}
+                      {editGroup.contact_email && (
+                        <DetailPill icon={Mail}>
+                          {editGroup.contact_email}
                         </DetailPill>
                       )}
-                      {editGroup.ape_code && (
-                        <DetailPill icon={BadgeCheck} mono>
-                          APE {editGroup.ape_code}
+                      {editGroup.phoneMobile && (
+                        <DetailPill icon={Phone}>
+                          {editGroup.phoneMobile}
                         </DetailPill>
                       )}
-                      {editGroup.country && (
-                        <DetailPill icon={Globe}>{editGroup.country}</DetailPill>
+                      {editGroup.phoneLandline && (
+                        <DetailPill icon={Phone}>
+                          {editGroup.phoneLandline}
+                        </DetailPill>
                       )}
                     </>
+
                   }
                 />
-
 
 
                 <DetailSection
@@ -3440,113 +3687,182 @@ export default function StructurePage() {
                         editing={editing}
                         onChange={(v) => setEditGroup((f) => ({ ...f, name: v }))}
                       />
-
-                      <FieldCountry
-                        label="Pays"
-                        value={editGroup.country}
+                      <FieldTextarea
+                        label="Description"
+                        value={editGroup.description}
                         editing={editing}
-                        onChange={(v) =>
-                          setEditGroup((f) => ({ ...f, country: v }))
-                        }
+                        onChange={(v) => setEditGroup((f) => ({ ...f, description: v }))}
                       />
                     </DetailGrid>
                   ) : (
                     <DetailGrid>
                       <ReadField label="Nom" value={editGroup.name} />
                       <ReadField
-                        label="Pays"
-                        icon={Globe}
-                        value={editGroup.country}
+                        label="Description"
+                        value={editGroup.description}
+                        full
                       />
                     </DetailGrid>
                   )}
                 </DetailSection>
 
                 <DetailSection
-                  icon={Hash}
-                  title="Informations légales"
-                  description="Identifiants d'immatriculation et activité principale."
+                  icon={MapPin}
+                  title="Adresse et contact"
+                  description="Coordonnées et localisation du groupe."
                 >
                   {editing ? (
                     <DetailGrid>
                       <Field
-                        label="SIRET"
-                        value={editGroup.siret}
+                        label="Rue"
+                        value={editGroup.street}
                         editing={editing}
-                        validate={validateSiret}
-                        onChange={(v) =>
-                          setEditGroup((f) => ({ ...f, siret: v }))
-                        }
+                        onChange={(v) => setEditGroup((f) => ({ ...f, street: v }))}
+                        placeholder="123 rue de la République"
                       />
                       <Field
-                        label="SIREN"
-                        value={
-                          editGroup.siret
-                            ? editGroup.siret.substring(0, 9)
-                            : ""
-                        }
-                        editing={false}
-                        onChange={() => { }}
+                        label="Code postal"
+                        value={editGroup.postalCode}
+                        editing={editing}
+                        onChange={(v) => setEditGroup((f) => ({ ...f, postalCode: v }))}
+                        placeholder="75001"
                       />
                       <Field
-                        label="Code APE"
-                        value={editGroup.ape_code}
+                        label="Ville"
+                        value={editGroup.city}
                         editing={editing}
-                        onChange={(v) =>
-                          setEditGroup((f) => ({ ...f, ape_code: v }))
-                        }
+                        onChange={(v) => setEditGroup((f) => ({ ...f, city: v }))}
+                        placeholder="Paris"
+                      />
+                      <Field
+                        label="Pays"
+                        value={editGroup.country}
+                        editing={editing}
+                        onChange={(v) => setEditGroup((f) => ({ ...f, country: v }))}
+                        placeholder="France"
+                      />
+                      {editing ? (
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Pays
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setGroupCountryModalOpen(true)}
+                            className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                          >
+                            <span className={editGroup.country ? "text-foreground" : "text-muted-foreground"}>
+                              {editGroup.country ? getCountryName(editGroup.country) : "Sélectionner un pays..."}
+                            </span>
+                            <Globe className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        </div>
+                      ) : (
+                        <ReadField
+                          label="Pays"
+                          icon={Globe}
+                          value={editGroup.country ? getCountryName(editGroup.country) : ""}
+                        />
+                      )}
+                      <Field
+                        label="Email de contact"
+                        value={editGroup.contact_email}
+                        editing={editing}
+                        type="email"
+                        onChange={(v) => setEditGroup((f) => ({ ...f, contact_email: v }))}
+                        placeholder="contact@groupe.com"
                       />
                       <div>
                         <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                          Activité principale
+                          Téléphone mobile
                         </label>
-                        <Input
-                          value={editGroup.mainActivity}
-                          readOnly
-                          className="bg-white/5 cursor-not-allowed"
-                          placeholder="—"
+                        <PhoneInput
+                          international
+                          countryCallingCodeEditable={false}
+                          defaultCountry="FR"
+                          value={editGroup.phoneMobile}
+                          onChange={(value) =>
+                            handleGroupPhoneChange(value || "", "phoneMobile")
+                          }
+                          className={
+                            groupErrors.phoneMobile
+                              ? "border-red-500"
+                              : ""
+                          }
+                          numberInputProps={{
+                            className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${groupErrors.phoneMobile ? "border-red-500" : ""}`,
+                          }}
                         />
+                        {groupErrors.phoneMobile && (
+                          <p className="mt-1 text-xs text-red-500">
+                            {groupErrors.phoneMobile}
+                          </p>
+                        )}
                       </div>
-                      <Field
-                        label="Code d'entité"
-                        value={editGroup.entity_code}
-                        editing={editing}
-                        onChange={(v) => setEditGroup((f) => ({ ...f, entity_code: v }))}
-                        placeholder="Ex: GRP-001"
-                      />
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Téléphone fixe
+                        </label>
+                        <PhoneInput
+                          international
+                          countryCallingCodeEditable={false}
+                          defaultCountry="FR"
+                          value={editGroup.phoneLandline}
+                          onChange={(value) =>
+                            handleGroupPhoneChange(value || "", "phoneLandline")
+                          }
+                          className={
+                            groupErrors.phoneLandline
+                              ? "border-red-500"
+                              : ""
+                          }
+                          numberInputProps={{
+                            className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${groupErrors.phoneLandline ? "border-red-500" : ""}`,
+                          }}
+                        />
+                        {groupErrors.phoneLandline && (
+                          <p className="mt-1 text-xs text-red-500">
+                            {groupErrors.phoneLandline}
+                          </p>
+                        )}
+                      </div>
                     </DetailGrid>
                   ) : (
                     <DetailGrid>
                       <ReadField
-                        label="SIRET"
-                        icon={Hash}
-                        value={formatSiret(editGroup.siret)}
-                        mono
-                        hint="Identifiant d'établissement à 14 chiffres."
+                        label="Rue"
+                        icon={MapPin}
+                        value={editGroup.street}
                       />
                       <ReadField
-                        label="SIREN"
-                        icon={Hash}
-                        value={formatSiren(editGroup.siret)}
-                        mono
-                        hint="Identifiant d'établissement à 9 chiffres."
+                        label="Code postal"
+                        icon={MapPin}
+                        value={editGroup.postalCode}
                       />
                       <ReadField
-                        label="Code APE"
-                        icon={BadgeCheck}
-                        value={editGroup.ape_code}
-                        mono
+                        label="Ville"
+                        icon={MapPin}
+                        value={editGroup.city}
                       />
                       <ReadField
-                        label="Activité principale"
-                        icon={FileText}
-                        value={editGroup.mainActivity}
+                        label="Pays"
+                        icon={Globe}
+                        value={editGroup.country ? getCountryName(editGroup.country) : ""}
                       />
                       <ReadField
-                        label="Code d'entité"
-                        icon={Hash}
-                        value={editGroup.entity_code}
-                        mono
+                        label="Email de contact"
+                        icon={Mail}
+                        value={editGroup.contact_email}
+                      />
+                      <ReadField
+                        label="Téléphone fixe"
+                        icon={Phone}
+                        value={editGroup.phoneLandline}
+                      />
+                      <ReadField
+                        label="Téléphone mobile"
+                        icon={Phone}
+                        value={editGroup.phoneMobile}
                       />
                     </DetailGrid>
                   )}
@@ -3645,7 +3961,7 @@ export default function StructurePage() {
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-white/45">
+                    <p className="text-sm italic text-(--nebula-muted)">
                       Aucun logo renseigné
                     </p>
                   )}
@@ -3818,13 +4134,7 @@ export default function StructurePage() {
                         editing={false}
                         onChange={() => { }}
                       />
-                      <Field
-                        label="Code d'entité"
-                        value={editCompany.entity_code}
-                        editing={editing}
-                        onChange={(v) => setEditCompany((f) => ({ ...f, entity_code: v }))}
-                        placeholder="Ex: ENT-001"
-                      />
+
                     </div>
                   ) : (
                     <DetailGrid>
@@ -3853,12 +4163,7 @@ export default function StructurePage() {
                         icon={FileText}
                         value={editCompany.main_activity}
                       />
-                      <ReadField
-                        label="Code d'entité"
-                        icon={Hash}
-                        value={editCompany.entity_code}
-                        mono
-                      />
+
                     </DetailGrid>
                   )}
                 </DetailSection>
@@ -3997,7 +4302,7 @@ export default function StructurePage() {
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-white/45">
+                    <p className="text-sm italic text-(--nebula-muted)">
                       Aucun logo renseigné
                     </p>
                   )}
@@ -4106,13 +4411,7 @@ export default function StructurePage() {
                           placeholder="Activité principale"
                         />
                       </div>
-                      <Field
-                        label="Code d'entité"
-                        value={editBU.entity_code}
-                        editing={editing}
-                        onChange={(v) => setEditBU((f) => ({ ...f, entity_code: v }))}
-                        placeholder="Ex: BU-001"
-                      />
+
                     </div>
                   ) : (
                     <DetailGrid>
@@ -4129,12 +4428,7 @@ export default function StructurePage() {
                         value={editBU.activity}
                         full
                       />
-                      <ReadField
-                        label="Code d'entité"
-                        icon={Hash}
-                        value={editBU.entity_code}
-                        mono
-                      />
+
                     </DetailGrid>
                   )}
                 </DetailSection>
@@ -4215,7 +4509,7 @@ export default function StructurePage() {
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-white/45">
+                    <p className="text-sm italic text-(--nebula-muted)">
                       Aucun logo renseigné
                     </p>
                   )}
@@ -4610,7 +4904,7 @@ export default function StructurePage() {
                             </p>
                           </div>
                         ) : (
-                          <p className="text-sm italic text-white/45">
+                          <p className="text-sm italic text-(--nebula-muted)">
                             Aucun logo renseigné
                           </p>
                         )}
@@ -4800,38 +5094,11 @@ export default function StructurePage() {
                   <TabsContent value="informations" className="mt-0">
                     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                       <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                        <dt className="text-(--nebula-muted)">SIRET</dt>
-                        <dd className="font-medium text-primary">
-                          {ficheGroup.siret || "—"}
-                        </dd>
-                        <dt className="text-(--nebula-muted)">SIREN</dt>
-                        <dd className="font-medium text-primary">
-                          {ficheGroup.siret
-                            ? ficheGroup.siret.substring(0, 9)
-                            : "—"}
-                        </dd>
+
                         <dt className="text-(--nebula-muted)">Début d&apos;exercice</dt>
                         <dd className="font-medium text-primary">
                           {formatMonthDayForDisplay(ficheGroup.fiscal_year_start)}
                         </dd>
-                        {ficheGroup.ape_code && (
-                          <>
-                            <dt className="text-(--nebula-muted)">Code APE</dt>
-                            <dd className="font-medium text-primary">
-                              {ficheGroup.ape_code}
-                            </dd>
-                          </>
-                        )}
-                        {ficheGroup.mainActivity && (
-                          <>
-                            <dt className="text-(--nebula-muted)">
-                              Activité principale
-                            </dt>
-                            <dd className="font-medium text-primary">
-                              {ficheGroup.mainActivity}
-                            </dd>
-                          </>
-                        )}
                         {ficheGroup.country && (
                           <>
                             <dt className="text-(--nebula-muted)">Pays</dt>
@@ -5050,44 +5317,15 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code APE *
+                Description
               </label>
-              <ApeCodeSelect
-                value={addGroupForm.ape_code}
-                onChange={(value) =>
-                  setAddGroupForm((f) => ({ ...f, ape_code: value }))
-                }
-                onDescriptionChange={(description) =>
-                  setAddGroupForm((f) => ({ ...f, mainActivity: description }))
-                }
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Activité principale
-              </label>
-              <Input
-                value={addGroupForm.mainActivity}
+              <Textarea
+                value={addGroupForm.description}
                 onChange={(e) =>
-                  setAddGroupForm((f) => ({
-                    ...f,
-                    mainActivity: e.target.value,
-                  }))
+                  setAddGroupForm((f) => ({ ...f, description: e.target.value }))
                 }
-                placeholder="Activité principale"
-                readOnly
-                className="bg-white/5 cursor-not-allowed"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                SIRET *
-              </label>
-              <SiretInput
-                value={addGroupForm.siret}
-                onChange={(value) =>
-                  setAddGroupForm((f) => ({ ...f, siret: value }))
-                }
+                placeholder="Description du groupe"
+                rows={3}
               />
             </div>
             <div>
@@ -5112,13 +5350,127 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Pays *
               </label>
-              <CountrySelect
-                value={addGroupForm.country}
-                onChange={(value) =>
-                  setAddGroupForm((f) => ({ ...f, country: value }))
+              <button
+                type="button"
+                onClick={() => setAddGroupCountryModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+              >
+                <span className={addGroupForm.country ? "text-foreground" : "text-muted-foreground"}>
+                  {addGroupForm.country ? getCountryName(addGroupForm.country) : "Sélectionner un pays..."}
+                </span>
+                <Globe className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Rue
+              </label>
+              <Input
+                value={addGroupForm.street}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({ ...f, street: e.target.value }))
                 }
-                placeholder="Pays du groupe"
+                placeholder="123 rue de la République"
               />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Code postal
+                </label>
+                <Input
+                  value={addGroupForm.postalCode}
+                  onChange={(e) =>
+                    setAddGroupForm((f) => ({ ...f, postalCode: e.target.value }))
+                  }
+                  placeholder="75001"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Ville
+                </label>
+                <Input
+                  value={addGroupForm.city}
+                  onChange={(e) =>
+                    setAddGroupForm((f) => ({ ...f, city: e.target.value }))
+                  }
+                  placeholder="Paris"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Email de contact
+              </label>
+              <Input
+                type="email"
+                value={addGroupForm.contact_email}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({ ...f, contact_email: e.target.value }))
+                }
+                placeholder="contact@groupe.com"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Téléphone mobile
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="FR"
+                  value={addGroupForm.phoneMobile}
+                  onChange={(value) =>
+                    handleAddGroupPhoneChange(value || "", "phoneMobile")
+                  }
+                  className={
+                    addGroupErrors.phoneMobile
+                      ? "border-red-500"
+                      : ""
+                  }
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addGroupErrors.phoneMobile ? "border-red-500" : ""}`,
+                  }}
+                />
+                {addGroupErrors.phoneMobile && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {addGroupErrors.phoneMobile}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Téléphone fixe
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="FR"
+                  value={addGroupForm.phoneLandline}
+                  onChange={(value) =>
+                    handleAddGroupPhoneChange(value || "", "phoneLandline")
+                  }
+                  className={
+                    addGroupErrors.phoneLandline
+                      ? "border-red-500"
+                      : ""
+                  }
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addGroupErrors.phoneLandline ? "border-red-500" : ""}`,
+                  }}
+                />
+                {addGroupErrors.phoneLandline && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {addGroupErrors.phoneLandline}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -5158,19 +5510,7 @@ export default function StructurePage() {
                 />
               </div>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code d'entité
-              </label>
-              <Input
-                value={addGroupForm.entity_code}
-                onChange={(e) =>
-                  setAddGroupForm((f) => ({ ...f, entity_code: e.target.value }))
-                }
-                placeholder="Ex: GRP-001"
-                maxLength={50}
-              />
-            </div>
+
           </DialogBody>
 
           <DialogFooter>
@@ -5195,6 +5535,15 @@ export default function StructurePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Country Select Modal for Add Group */}
+      <CountrySelectModal
+        open={addGroupCountryModalOpen}
+        onOpenChange={setAddGroupCountryModalOpen}
+        value={addGroupForm.country}
+        onChange={(value) => setAddGroupForm((f) => ({ ...f, country: value }))}
+        title="Sélectionner un pays pour le groupe"
+      />
 
       {/* Add BU Standalone Modal */}
       <Dialog open={addBUStandaloneOpen} onOpenChange={setAddBUStandaloneOpen}>
@@ -5299,19 +5648,7 @@ export default function StructurePage() {
                 placeholder="Pays de la Business Unit"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code d'entité
-              </label>
-              <Input
-                value={addBUStandaloneForm.entity_code}
-                onChange={(e) =>
-                  setAddBUStandaloneForm((f) => ({ ...f, entity_code: e.target.value }))
-                }
-                placeholder="Ex: BU-001"
-                maxLength={50}
-              />
-            </div>
+
           </DialogBody>
           <DialogFooter>
             <Button
@@ -5518,19 +5855,7 @@ export default function StructurePage() {
                 accept="image/*"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code d'entité
-              </label>
-              <Input
-                value={addCompanyForm.entity_code}
-                onChange={(e) =>
-                  setAddCompanyForm((f) => ({ ...f, entity_code: e.target.value }))
-                }
-                placeholder="Ex: ENT-001"
-                maxLength={50}
-              />
-            </div>
+
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
@@ -5684,19 +6009,7 @@ export default function StructurePage() {
                 accept="image/*"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code d'entité
-              </label>
-              <Input
-                value={addBUForm.entity_code}
-                onChange={(e) =>
-                  setAddBUForm((f) => ({ ...f, entity_code: e.target.value }))
-                }
-                placeholder="Ex: BU-001"
-                maxLength={50}
-              />
-            </div>
+
           </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddBUOpen(false)}>
@@ -5939,6 +6252,17 @@ export default function StructurePage() {
           setAddworkspaceForm((f) => ({ ...f, country: value }))
         }
         title="Sélectionner le pays du workspace"
+      />
+
+      {/* Modal de sélection de pays pour le groupe */}
+      <CountrySelectModal
+        open={groupCountryModalOpen}
+        onOpenChange={setGroupCountryModalOpen}
+        value={editGroup.country}
+        onChange={(value) =>
+          setEditGroup((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays du groupe"
       />
 
     </AppLayout>
