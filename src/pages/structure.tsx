@@ -134,10 +134,10 @@ type BusinessUnit = {
   logo?: string;
   company_id?: string;
   street?: string;
-  postalCode?: string;
+  postal_code?: string;
   city?: string;
-  phoneLandline?: string;
-  phoneMobile?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
   contact_email?: string;
 };
 
@@ -152,10 +152,10 @@ type GroupFull = {
   country?: string;
   logo?: string;
   street?: string;
-  postalCode?: string;
+  postal_code?: string;
   city?: string;
-  phoneLandline?: string;
-  phoneMobile?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
   contact_email?: string;
 };
 
@@ -165,12 +165,12 @@ type workspaceFull = {
   description?: string;
   logo?: string;
   street?: string;
-  postalCode?: string;
+  postal_code?: string;
   city?: string;
   country?: string;
   contact_email?: string;
-  phoneLandline?: string;
-  phoneMobile?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
   manager_id?: string;
   manager?: {
     id: string;
@@ -188,11 +188,11 @@ type CompanyFull = {
   fiscal_year_start: string;
   last_closed_fiscal_year?: number | null;
   street?: string;
-  postalCode?: string;
+  postal_code?: string;
   city?: string;
   country?: string;
-  phoneLandline?: string;
-  phoneMobile?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
   contact_email?: string;
   ape_code?: string;
   main_activity?: string;
@@ -617,12 +617,12 @@ export default function StructurePage() {
     description: "",
     logo: undefined as string | undefined,
     street: "",
-    postalCode: "",
+    postal_code: "",
     city: "",
     country: "",
     contact_email: "",
-    phoneMobile: "",
-    phoneLandline: "",
+    phone_mobile: "",
+    phone_landline: "",
     manager_id: "",
   });
   const [addworkspaceLoading, setAddworkspaceLoading] = useState(false);
@@ -630,13 +630,13 @@ export default function StructurePage() {
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [workspaceErrors, setWorkspaceErrors] = useState({
     contact_email: "",
-    phoneMobile: "",
-    phoneLandline: "",
+    phone_mobile: "",
+    phone_landline: "",
   });
   const [editWorkspaceErrors, setEditWorkspaceErrors] = useState({
     contact_email: "",
-    phoneMobile: "",
-    phoneLandline: "",
+    phone_mobile: "",
+    phone_landline: "",
   });
   const [countryModalOpen, setCountryModalOpen] = useState(false);
   const [createCountryModalOpen, setCreateCountryModalOpen] = useState(false);
@@ -701,7 +701,7 @@ export default function StructurePage() {
   const handlePhoneChange = (
     value: string,
     formType: 'addworkspace' | 'editworkspace' | 'editGroup' | 'addGroup' | 'editCompany',
-    field?: 'phoneMobile' | 'phoneLandline' | 'contact_phone'
+    field?: 'phone_mobile' | 'phone_landline' | 'contact_phone'
   ) => {
     // Validation du téléphone
     const isValid = validatePhone(value);
@@ -717,7 +717,7 @@ export default function StructurePage() {
         break;
 
       case 'editworkspace':
-        setEditworkspace((f) => ({ ...f, phoneMobile: value }));
+        setEditworkspace((f) => ({ ...f, phone_mobile: value }));
         setEditWorkspaceErrors((prev) => ({ ...prev, contact_phone: errorMessage }));
         break;
 
@@ -756,11 +756,11 @@ export default function StructurePage() {
     last_closed_fiscal_year: "",
 
     street: "",
-    postalCode: "",
+    postal_code: "",
     city: "",
     country: "",
-    phoneLandline: "",
-    phoneMobile: "",
+    phone_landline: "",
+    phone_mobile: "",
     contact_email: "",
     ape_code: "",
     main_activity: "",
@@ -783,10 +783,10 @@ export default function StructurePage() {
     siret: "",
     country: "",
     street: "",
-    postalCode: "",
+    postal_code: "",
     city: "",
-    phoneLandline: "",
-    phoneMobile: "",
+    phone_landline: "",
+    phone_mobile: "",
     contact_email: "",
     logo: undefined as string | undefined,
   });
@@ -802,15 +802,15 @@ export default function StructurePage() {
 
     country: "",
     street: "",
-    postalCode: "",
+    postal_code: "",
     city: "",
-    phoneLandline: "",
-    phoneMobile: "",
+    phone_landline: "",
+    phone_mobile: "",
     contact_email: "",
     workspaceId: "",
     logo: undefined as string | undefined,
   });
-  const [addGroupErrors, setAddGroupErrors] = useState({ contact_email: "", phoneLandline: "", phoneMobile: "" });
+  const [addGroupErrors, setAddGroupErrors] = useState({ contact_email: "", phone_landline: "", phone_mobile: "" });
   const [addGroupCountryModalOpen, setAddGroupCountryModalOpen] = useState(false);
   const [addGroupLoading, setAddGroupLoading] = useState(false);
 
@@ -824,10 +824,10 @@ export default function StructurePage() {
     siret: "",
     country: "",
     street: "",
-    postalCode: "",
+    postal_code: "",
     city: "",
-    phoneLandline: "",
-    phoneMobile: "",
+    phone_landline: "",
+    phone_mobile: "",
     contact_email: "",
     companyId: "",
   });
@@ -838,12 +838,12 @@ export default function StructurePage() {
     description: "",
     logo: undefined as string | undefined,
     street: "",
-    postalCode: "",
+    postal_code: "",
     city: "",
     country: "",
     contact_email: "",
-    phoneLandline: "",
-    phoneMobile: "",
+    phone_landline: "",
+    phone_mobile: "",
     manager_id: "",
     completionPercentage: 0,
   });
@@ -860,27 +860,27 @@ export default function StructurePage() {
 
     country: "",
     street: "",
-    postalCode: "",
+    postal_code: "",
     city: "",
-    phoneLandline: "",
-    phoneMobile: "",
+    phone_landline: "",
+    phone_mobile: "",
     contact_email: "",
     logo: undefined as string | undefined,
     completionPercentage: 0,
 
   });
-  const [groupErrors, setGroupErrors] = useState({ contact_email: "", phoneLandline: "", phoneMobile: "" });
+  const [groupErrors, setGroupErrors] = useState({ contact_email: "", phone_landline: "", phone_mobile: "" });
   const [editCompany, setEditCompany] = useState({
     name: "",
     description: "",
     siret: "",
 
     street: "",
-    postalCode: "",
+    postal_code: "",
     city: "",
     country: "",
-    phoneLandline: "",
-    phoneMobile: "",
+    phone_landline: "",
+    phone_mobile: "",
     contact_email: "",
     ape_code: "",
     main_activity: "",
@@ -891,7 +891,7 @@ export default function StructurePage() {
     logo: undefined as string | undefined,
     completionPercentage: 0,
   });
-  const [companyErrors, setCompanyErrors] = useState({ contact_email: "", phoneLandline: "", phoneMobile: "" });
+  const [companyErrors, setCompanyErrors] = useState({ contact_email: "", phone_landline: "", phone_mobile: "" });
   const [companyCountryModalOpen, setCompanyCountryModalOpen] = useState(false);
   const [editBU, setEditBU] = useState({
     name: "",
@@ -901,10 +901,10 @@ export default function StructurePage() {
     siret: "",
     country: "",
     street: "",
-    postalCode: "",
+    postal_code: "",
     city: "",
-    phoneLandline: "",
-    phoneMobile: "",
+    phone_landline: "",
+    phone_mobile: "",
     contact_email: "",
     logo: undefined as string | undefined,
   });
@@ -1430,10 +1430,10 @@ export default function StructurePage() {
         country: "",
         logo: undefined as string | undefined,
         street: "",
-        postalCode: "",
+        postal_code: "",
         city: "",
-        phoneLandline: "",
-        phoneMobile: "",
+        phone_landline: "",
+        phone_mobile: "",
         contact_email: "",
       });
 
@@ -1447,34 +1447,34 @@ export default function StructurePage() {
             description: org.description ?? "",
             logo: org.logo ?? "",
             street: org.street ?? "",
-            postalCode: org.postalCode ?? "",
+            postal_code: org.postal_code ?? "",
             city: org.city ?? "",
             country: org.country ?? "",
             contact_email: org.contact_email ?? "",
-            phoneLandline: org.phoneLandline ?? "",
-            phoneMobile: org.phoneMobile ?? "",
+            phone_landline: org.phone_landline ?? "",
+            phone_mobile: org.phone_mobile ?? "",
             manager_id: org.manager_id ?? "",
             completionPercentage: org.completionPercentage || 0,
           });
           setEditworkspaceLogoFile(null);
-          setEditWorkspaceErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
+          setEditWorkspaceErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
         } catch {
           setEditworkspace({
             name: node.name,
             description: "",
             logo: undefined as string | undefined,
             street: "",
-            postalCode: "",
+            postal_code: "",
             city: "",
             country: "",
             contact_email: "",
-            phoneLandline: "",
-            phoneMobile: "",
+            phone_landline: "",
+            phone_mobile: "",
             manager_id: "",
             completionPercentage: 0,
           });
           setEditworkspaceLogoFile(null);
-          setEditWorkspaceErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
+          setEditWorkspaceErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
         }
       } else if (node.type === "group") {
         try {
@@ -1492,16 +1492,16 @@ export default function StructurePage() {
                 : "",
             country: g.country ?? "",
             street: "",
-            postalCode: "",
+            postal_code: "",
             city: "",
-            phoneLandline: "",
-            phoneMobile: "",
+            phone_landline: "",
+            phone_mobile: "",
             contact_email: "",
             logo: g.logo ?? "",
             completionPercentage: g.completionPercentage || 0,
           });
           setEditGroupLogoFile(null);
-          setGroupErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
+          setGroupErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
         } catch {
           setEditGroup({
             name: node.name,
@@ -1510,16 +1510,16 @@ export default function StructurePage() {
             last_closed_fiscal_year: "",
             country: "",
             street: "",
-            postalCode: "",
+            postal_code: "",
             city: "",
-            phoneLandline: "",
-            phoneMobile: "",
+            phone_landline: "",
+            phone_mobile: "",
             contact_email: "",
             logo: undefined as string | undefined,
             completionPercentage: 0,
           });
           setEditGroupLogoFile(null);
-          setGroupErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
+          setGroupErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
         }
       } else if (node.type === "company") {
         try {
@@ -1531,11 +1531,11 @@ export default function StructurePage() {
             description: c.description ?? "",
             siret: c.siret ?? "",
             street: c.street ?? "",
-            postalCode: c.postalCode ?? "",
+            postal_code: c.postal_code ?? "",
             city: c.city ?? "",
             country: c.country ?? "",
-            phoneLandline: c.phoneLandline ?? "",
-            phoneMobile: c.phoneMobile ?? "",
+            phone_landline: c.phone_landline ?? "",
+            phone_mobile: c.phone_mobile ?? "",
             contact_email: c.contact_email ?? "",
             ape_code: c.ape_code ?? "",
             main_activity: c.main_activity ?? "",
@@ -1556,11 +1556,11 @@ export default function StructurePage() {
             description: "",
             siret: "",
             street: "",
-            postalCode: "",
+            postal_code: "",
             city: "",
             country: "",
-            phoneLandline: "",
-            phoneMobile: "",
+            phone_landline: "",
+            phone_mobile: "",
             contact_email: "",
             ape_code: "",
             main_activity: "",
@@ -1590,10 +1590,10 @@ export default function StructurePage() {
             siret: bu.siret || "",
             country: bu.country || "",
             street: "",
-            postalCode: "",
+            postal_code: "",
             city: "",
-            phoneLandline: "",
-            phoneMobile: "",
+            phone_landline: "",
+            phone_mobile: "",
             contact_email: "",
             logo: bu.logo || "",
           };
@@ -1609,10 +1609,10 @@ export default function StructurePage() {
             siret: "",
             country: "",
             street: "",
-            postalCode: "",
+            postal_code: "",
             city: "",
-            phoneLandline: "",
-            phoneMobile: "",
+            phone_landline: "",
+            phone_mobile: "",
             contact_email: "",
             logo: undefined as string | undefined,
           });
@@ -1651,14 +1651,14 @@ export default function StructurePage() {
     if (selectedNode.type === "workspace") {
       // Valider l'email et le téléphone
       const emailValid = validateEmail(editworkspace.contact_email);
-      const phoneValid = validatePhone(editworkspace?.phoneMobile || "");
+      const phoneValid = validatePhone(editworkspace?.phone_mobile || "");
 
       if (!emailValid || !phoneValid) {
         // Mettre à jour les erreurs
         setEditWorkspaceErrors({
           contact_email: emailValid ? "" : "Veuillez entrer un email valide",
-          phoneMobile: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
-          phoneLandline: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+          phone_mobile: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+          phone_landline: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
         });
         return;
       }
@@ -1674,8 +1674,8 @@ export default function StructurePage() {
       if (editworkspace.contact_email) {
         formData.append('contact_email', editworkspace.contact_email);
       }
-      if (editworkspace.phoneMobile) {
-        formData.append('contact_phone', editworkspace.phoneMobile);
+      if (editworkspace.phone_mobile) {
+        formData.append('contact_phone', editworkspace.phone_mobile);
       }
       if (editworkspace.manager_id) {
         formData.append('manager_id', editworkspace.manager_id);
@@ -1691,7 +1691,7 @@ export default function StructurePage() {
         snackbar: { showSuccess: true, successMessage: "Workspace mise à jour" },
       });
       setEditworkspaceLogoFile(null);
-      setEditWorkspaceErrors({ contact_email: "", phoneMobile: "", phoneLandline: "" });
+      setEditWorkspaceErrors({ contact_email: "", phone_mobile: "", phone_landline: "" });
       // Mettre à jour l'état local avec le logo retourné par le serveur
       if (updatedOrg) {
         setEditworkspace(prev => ({
@@ -1702,15 +1702,15 @@ export default function StructurePage() {
     } else if (selectedNode.type === "group") {
       // Valider l'email et les téléphones
       const emailValid = validateEmail(editGroup.contact_email);
-      const phoneMobileValid = validatePhone(editGroup.phoneMobile || "");
-      const phoneLandlineValid = validatePhone(editGroup.phoneLandline || "");
+      const phone_mobileValid = validatePhone(editGroup.phone_mobile || "");
+      const phone_landlineValid = validatePhone(editGroup.phone_landline || "");
 
-      if (!emailValid || !phoneMobileValid || !phoneLandlineValid) {
+      if (!emailValid || !phone_mobileValid || !phone_landlineValid) {
         // Mettre à jour les erreurs
         setGroupErrors({
           contact_email: emailValid ? "" : "Veuillez entrer un email valide",
-          phoneMobile: phoneMobileValid ? "" : "Veuillez entrer un numéro de téléphone valide",
-          phoneLandline: phoneLandlineValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+          phone_mobile: phone_mobileValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+          phone_landline: phone_landlineValid ? "" : "Veuillez entrer un numéro de téléphone valide",
         });
         return;
       }
@@ -1731,8 +1731,8 @@ export default function StructurePage() {
       if (editGroup.street) {
         formData.append('street', editGroup.street);
       }
-      if (editGroup.postalCode) {
-        formData.append('postalCode', editGroup.postalCode);
+      if (editGroup.postal_code) {
+        formData.append('postal_code', editGroup.postal_code);
       }
       if (editGroup.city) {
         formData.append('city', editGroup.city);
@@ -1740,11 +1740,11 @@ export default function StructurePage() {
       if (editGroup.contact_email) {
         formData.append('contact_email', editGroup.contact_email);
       }
-      if (editGroup.phoneMobile) {
-        formData.append('phoneMobile', editGroup.phoneMobile);
+      if (editGroup.phone_mobile) {
+        formData.append('phone_mobile', editGroup.phone_mobile);
       }
-      if (editGroup.phoneLandline) {
-        formData.append('phoneLandline', editGroup.phoneLandline);
+      if (editGroup.phone_landline) {
+        formData.append('phone_landline', editGroup.phone_landline);
       }
       if (editGroupLogoFile) {
         formData.append('logo', editGroupLogoFile);
@@ -1758,7 +1758,7 @@ export default function StructurePage() {
         snackbar: { showSuccess: true, successMessage: "Groupe mis à jour" },
       });
       setEditGroupLogoFile(null);
-      setGroupErrors({ contact_email: "", phoneMobile: "", phoneLandline: "" });
+      setGroupErrors({ contact_email: "", phone_mobile: "", phone_landline: "" });
       // Mettre à jour l'état local avec le logo retourné par le serveur
       if (updatedGroup) {
         setEditGroup(prev => ({
@@ -1775,8 +1775,8 @@ export default function StructurePage() {
       if (editCompany.street) {
         formData.append('street', editCompany.street);
       }
-      if (editCompany.postalCode) {
-        formData.append('postalCode', editCompany.postalCode);
+      if (editCompany.postal_code) {
+        formData.append('postal_code', editCompany.postal_code);
       }
       if (editCompany.city) {
         formData.append('city', editCompany.city);
@@ -1784,11 +1784,11 @@ export default function StructurePage() {
       if (editCompany.country) {
         formData.append('country', editCompany.country);
       }
-      if (editCompany.phoneLandline) {
-        formData.append('phoneLandline', editCompany.phoneLandline);
+      if (editCompany.phone_landline) {
+        formData.append('phone_landline', editCompany.phone_landline);
       }
-      if (editCompany.phoneMobile) {
-        formData.append('phoneMobile', editCompany.phoneMobile);
+      if (editCompany.phone_mobile) {
+        formData.append('phone_mobile', editCompany.phone_mobile);
       }
       if (editCompany.ape_code) {
         formData.append('ape_code', editCompany.ape_code);
@@ -1895,14 +1895,14 @@ export default function StructurePage() {
 
     // Valider l'email et le téléphone
     const emailValid = validateEmail(addworkspaceForm.contact_email);
-    const phoneValid = validatePhone(addworkspaceForm.phoneMobile) && validatePhone(addworkspaceForm.phoneLandline);
+    const phoneValid = validatePhone(addworkspaceForm.phone_mobile) && validatePhone(addworkspaceForm.phone_landline);
 
     if (!emailValid || !phoneValid) {
       // Mettre à jour les erreurs
       setWorkspaceErrors({
         contact_email: emailValid ? "" : "Veuillez entrer un email valide",
-        phoneLandline: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
-        phoneMobile: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        phone_landline: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        phone_mobile: phoneValid ? "" : "Veuillez entrer un numéro de téléphone valide",
       });
       return;
     }
@@ -1914,12 +1914,12 @@ export default function StructurePage() {
       formData.append('name', addworkspaceForm.name.trim());
       formData.append('description', addworkspaceForm.description.trim() || '');
       formData.append('street', addworkspaceForm.street.trim() || '');
-      formData.append('postalCode', addworkspaceForm.postalCode.trim() || '');
+      formData.append('postal_code', addworkspaceForm.postal_code.trim() || '');
       formData.append('city', addworkspaceForm.city.trim() || '');
       formData.append('country', addworkspaceForm.country.trim() || '');
       formData.append('contact_email', addworkspaceForm.contact_email.trim() || '');
-      formData.append('phoneMobile', addworkspaceForm.phoneMobile.trim() || '');
-      formData.append('phoneLandline', addworkspaceForm.phoneLandline.trim() || '');
+      formData.append('phone_mobile', addworkspaceForm.phone_mobile.trim() || '');
+      formData.append('phone_landline', addworkspaceForm.phone_landline.trim() || '');
 
       // Ajouter le fichier logo s'il existe
       if (logoFile) {
@@ -1940,17 +1940,17 @@ export default function StructurePage() {
         description: "",
         logo: undefined as string | undefined,
         street: "",
-        postalCode: "",
+        postal_code: "",
         city: "",
         country: "",
         contact_email: "",
-        phoneMobile: "",
-        phoneLandline: "",
+        phone_mobile: "",
+        phone_landline: "",
         manager_id: "",
       });
       setLogoFile(null);
       setLogoPreview("");
-      setWorkspaceErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
+      setWorkspaceErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
       void loadTree();
     } finally {
       setAddworkspaceLoading(false);
@@ -2066,17 +2066,17 @@ export default function StructurePage() {
       if (addCompanyForm.street) {
         formData.append('street', addCompanyForm.street);
       }
-      if (addCompanyForm.postalCode) {
-        formData.append('postalCode', addCompanyForm.postalCode);
+      if (addCompanyForm.postal_code) {
+        formData.append('postal_code', addCompanyForm.postal_code);
       }
       if (addCompanyForm.city) {
         formData.append('city', addCompanyForm.city);
       }
-      if (addCompanyForm.phoneLandline) {
-        formData.append('phoneLandline', addCompanyForm.phoneLandline);
+      if (addCompanyForm.phone_landline) {
+        formData.append('phone_landline', addCompanyForm.phone_landline);
       }
-      if (addCompanyForm.phoneMobile) {
-        formData.append('phoneMobile', addCompanyForm.phoneMobile);
+      if (addCompanyForm.phone_mobile) {
+        formData.append('phone_mobile', addCompanyForm.phone_mobile);
       }
       if (addCompanyForm.contact_email) {
         formData.append('contact_email', addCompanyForm.contact_email);
@@ -2111,11 +2111,11 @@ export default function StructurePage() {
         last_closed_fiscal_year: "",
 
         street: "",
-        postalCode: "",
+        postal_code: "",
         city: "",
         country: "",
-        phoneLandline: "",
-        phoneMobile: "",
+        phone_landline: "",
+        phone_mobile: "",
         contact_email: "",
         ape_code: "",
         main_activity: "",
@@ -2165,17 +2165,17 @@ export default function StructurePage() {
       if (addBUForm.street) {
         formData.append('street', addBUForm.street);
       }
-      if (addBUForm.postalCode) {
-        formData.append('postalCode', addBUForm.postalCode);
+      if (addBUForm.postal_code) {
+        formData.append('postal_code', addBUForm.postal_code);
       }
       if (addBUForm.city) {
         formData.append('city', addBUForm.city);
       }
-      if (addBUForm.phoneLandline) {
-        formData.append('phoneLandline', addBUForm.phoneLandline);
+      if (addBUForm.phone_landline) {
+        formData.append('phone_landline', addBUForm.phone_landline);
       }
-      if (addBUForm.phoneMobile) {
-        formData.append('phoneMobile', addBUForm.phoneMobile);
+      if (addBUForm.phone_mobile) {
+        formData.append('phone_mobile', addBUForm.phone_mobile);
       }
       if (addBUForm.contact_email) {
         formData.append('contact_email', addBUForm.contact_email);
@@ -2194,7 +2194,7 @@ export default function StructurePage() {
       await loadTree();
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
-      setAddBUForm({ name: "", description: "", code: "", activity: "", siret: "", country: "", street: "", postalCode: "", city: "", phoneLandline: "", phoneMobile: "", contact_email: "", logo: undefined });
+      setAddBUForm({ name: "", description: "", code: "", activity: "", siret: "", country: "", street: "", postal_code: "", city: "", phone_landline: "", phone_mobile: "", contact_email: "", logo: undefined });
       setAddBULogoFile(null);
     } catch {
       /* snackbar handles */
@@ -2208,15 +2208,15 @@ export default function StructurePage() {
 
     // Valider l'email et les téléphones
     const emailValid = validateEmail(addGroupForm.contact_email);
-    const phoneMobileValid = validatePhone(addGroupForm.phoneMobile || "");
-    const phoneLandlineValid = validatePhone(addGroupForm.phoneLandline || "");
+    const phone_mobileValid = validatePhone(addGroupForm.phone_mobile || "");
+    const phone_landlineValid = validatePhone(addGroupForm.phone_landline || "");
 
-    if (!emailValid || !phoneMobileValid || !phoneLandlineValid) {
+    if (!emailValid || !phone_mobileValid || !phone_landlineValid) {
       // Mettre à jour les erreurs
       setAddGroupErrors({
         contact_email: emailValid ? "" : "Veuillez entrer un email valide",
-        phoneMobile: phoneMobileValid ? "" : "Veuillez entrer un numéro de téléphone valide",
-        phoneLandline: phoneLandlineValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        phone_mobile: phone_mobileValid ? "" : "Veuillez entrer un numéro de téléphone valide",
+        phone_landline: phone_landlineValid ? "" : "Veuillez entrer un numéro de téléphone valide",
       });
       return;
     }
@@ -2250,17 +2250,17 @@ export default function StructurePage() {
       if (addGroupForm.street) {
         formData.append('street', addGroupForm.street);
       }
-      if (addGroupForm.postalCode) {
-        formData.append('postalCode', addGroupForm.postalCode);
+      if (addGroupForm.postal_code) {
+        formData.append('postal_code', addGroupForm.postal_code);
       }
       if (addGroupForm.city) {
         formData.append('city', addGroupForm.city);
       }
-      if (addGroupForm.phoneLandline) {
-        formData.append('phoneLandline', addGroupForm.phoneLandline);
+      if (addGroupForm.phone_landline) {
+        formData.append('phone_landline', addGroupForm.phone_landline);
       }
-      if (addGroupForm.phoneMobile) {
-        formData.append('phoneMobile', addGroupForm.phoneMobile);
+      if (addGroupForm.phone_mobile) {
+        formData.append('phone_mobile', addGroupForm.phone_mobile);
       }
       if (addGroupForm.contact_email) {
         formData.append('contact_email', addGroupForm.contact_email);
@@ -2290,16 +2290,16 @@ export default function StructurePage() {
 
         country: "",
         street: "",
-        postalCode: "",
+        postal_code: "",
         city: "",
-        phoneLandline: "",
-        phoneMobile: "",
+        phone_landline: "",
+        phone_mobile: "",
         contact_email: "",
         workspaceId: "",
         logo: undefined as string | undefined,
       });
       setAddGroupLogoFile(null);
-      setAddGroupErrors({ contact_email: "", phoneLandline: "", phoneMobile: "" });
+      setAddGroupErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
     } catch {
       /* snackbar handles */
     } finally {
@@ -2348,10 +2348,10 @@ export default function StructurePage() {
         siret: "",
         country: "",
         street: "",
-        postalCode: "",
+        postal_code: "",
         city: "",
-        phoneLandline: "",
-        phoneMobile: "",
+        phone_landline: "",
+        phone_mobile: "",
         contact_email: "",
         companyId: "",
       });
@@ -2750,11 +2750,11 @@ export default function StructurePage() {
                                 fiscal_year_start: "",
                                 last_closed_fiscal_year: "",
                                 street: "",
-                                postalCode: "",
+                                postal_code: "",
                                 city: "",
                                 country: "",
-                                phoneLandline: "",
-                                phoneMobile: "",
+                                phone_landline: "",
+                                phone_mobile: "",
                                 contact_email: "",
                                 ape_code: "",
                                 main_activity: "",
@@ -3112,10 +3112,10 @@ export default function StructurePage() {
                                           name: "",
                                           description: "",
                                           street: "",
-                                          postalCode: "",
+                                          postal_code: "",
                                           city: "",
-                                          phoneLandline: "",
-                                          phoneMobile: "",
+                                          phone_landline: "",
+                                          phone_mobile: "",
                                           country: "",
                                           contact_email: "",
                                           fiscal_year_start: "",
@@ -3157,10 +3157,10 @@ export default function StructurePage() {
                                             fiscal_year_start: "",
                                             last_closed_fiscal_year: "",
                                             street: "",
-                                            postalCode: "",
+                                            postal_code: "",
                                             city: "",
-                                            phoneLandline: "",
-                                            phoneMobile: "",
+                                            phone_landline: "",
+                                            phone_mobile: "",
                                             contact_email: "",
                                             country: "",
                                             ape_code: "",
@@ -3200,11 +3200,11 @@ export default function StructurePage() {
                                             activity: "",
                                             siret: "",
                                             street: "",
-                                            postalCode: "",
+                                            postal_code: "",
                                             city: "",
                                             country: "",
-                                            phoneLandline: "",
-                                            phoneMobile: "",
+                                            phone_landline: "",
+                                            phone_mobile: "",
                                             contact_email: "",
                                             logo: undefined as string | undefined,
                                           });
@@ -3374,14 +3374,14 @@ export default function StructurePage() {
                           {editworkspace.contact_email}
                         </DetailPill>
                       )}
-                      {editworkspace.phoneMobile && (
+                      {editworkspace.phone_mobile && (
                         <DetailPill icon={Phone}>
-                          {editworkspace.phoneMobile}
+                          {editworkspace.phone_mobile}
                         </DetailPill>
                       )}
-                      {editworkspace.phoneLandline && (
+                      {editworkspace.phone_landline && (
                         <DetailPill icon={Phone}>
-                          {editworkspace.phoneLandline}
+                          {editworkspace.phone_landline}
                         </DetailPill>
                       )}
                     </>
@@ -3442,10 +3442,10 @@ export default function StructurePage() {
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <Field
                           label="Code postal"
-                          value={editworkspace.postalCode}
+                          value={editworkspace.postal_code}
                           editing={editing}
                           onChange={(v) =>
-                            setEditworkspace((f) => ({ ...f, postalCode: v }))
+                            setEditworkspace((f) => ({ ...f, postal_code: v }))
                           }
                         />
                         <Field
@@ -3522,23 +3522,23 @@ export default function StructurePage() {
                             international
                             countryCallingCodeEditable={false}
                             defaultCountry="FR"
-                            value={editworkspace.phoneMobile}
+                            value={editworkspace.phone_mobile}
                             onChange={(value) =>
-                              handlePhoneChange(value || "", "editworkspace", "phoneMobile")
+                              handlePhoneChange(value || "", "editworkspace", "phone_mobile")
                             }
                             className={
-                              editWorkspaceErrors.phoneLandline && editWorkspaceErrors.phoneMobile && editWorkspaceErrors.contact_email
+                              editWorkspaceErrors.phone_landline && editWorkspaceErrors.phone_mobile && editWorkspaceErrors.contact_email
                                 ? "border-red-500"
                                 : ""
                             }
                             numberInputProps={{
-                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.phoneMobile ? "border-red-500" : ""}`,
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.phone_mobile ? "border-red-500" : ""}`,
                             }}
                           />
 
-                          {editWorkspaceErrors.phoneMobile && (
+                          {editWorkspaceErrors.phone_mobile && (
                             <p className="mt-1 text-xs text-red-500">
-                              {editWorkspaceErrors.phoneMobile}
+                              {editWorkspaceErrors.phone_mobile}
                             </p>
                           )}
 
@@ -3551,22 +3551,22 @@ export default function StructurePage() {
                             international
                             countryCallingCodeEditable={false}
                             defaultCountry="FR"
-                            value={editworkspace.phoneLandline}
+                            value={editworkspace.phone_landline}
                             onChange={(value) =>
-                              handlePhoneChange(value || "", "editworkspace", "phoneLandline")
+                              handlePhoneChange(value || "", "editworkspace", "phone_landline")
                             }
                             className={
-                              editWorkspaceErrors.phoneLandline
+                              editWorkspaceErrors.phone_landline
                                 ? "border-red-500"
                                 : ""
                             }
                             numberInputProps={{
-                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.phoneLandline ? "border-red-500" : ""}`,
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.phone_landline ? "border-red-500" : ""}`,
                             }}
                           />
-                          {editWorkspaceErrors.phoneLandline && (
+                          {editWorkspaceErrors.phone_landline && (
                             <p className="mt-1 text-xs text-red-500">
-                              {editWorkspaceErrors.phoneLandline}
+                              {editWorkspaceErrors.phone_landline}
                             </p>
                           )}
                         </div>
@@ -3581,7 +3581,7 @@ export default function StructurePage() {
                       />
                       <ReadField
                         label="Code postal"
-                        value={editworkspace.postalCode}
+                        value={editworkspace.postal_code}
                       />
                       <ReadField
                         label="Ville"
@@ -3599,12 +3599,12 @@ export default function StructurePage() {
                       <ReadField
                         label="Téléphone mobile"
                         icon={Phone}
-                        value={editworkspace.phoneMobile}
+                        value={editworkspace.phone_mobile}
                       />
                       <ReadField
                         label="Téléphone fixe"
                         icon={Phone}
-                        value={editworkspace.phoneLandline}
+                        value={editworkspace.phone_landline}
                       />
                     </DetailGrid>
                   )}
@@ -3712,9 +3712,9 @@ export default function StructurePage() {
                       />
                       <Field
                         label="Code postal"
-                        value={editGroup.postalCode}
+                        value={editGroup.postal_code}
                         editing={editing}
-                        onChange={(v) => setEditGroup((f) => ({ ...f, postalCode: v }))}
+                        onChange={(v) => setEditGroup((f) => ({ ...f, postal_code: v }))}
                         placeholder="75001"
                       />
                       <Field
@@ -3770,22 +3770,22 @@ export default function StructurePage() {
                           international
                           countryCallingCodeEditable={false}
                           defaultCountry="FR"
-                          value={editGroup.phoneMobile}
+                          value={editGroup.phone_mobile}
                           onChange={(value) =>
-                            handlePhoneChange(value || "", "editGroup", "phoneMobile")
+                            handlePhoneChange(value || "", "editGroup", "phone_mobile")
                           }
                           className={
-                            groupErrors.phoneMobile
+                            groupErrors.phone_mobile
                               ? "border-red-500"
                               : ""
                           }
                           numberInputProps={{
-                            className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${groupErrors.phoneMobile ? "border-red-500" : ""}`,
+                            className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${groupErrors.phone_mobile ? "border-red-500" : ""}`,
                           }}
                         />
-                        {groupErrors.phoneMobile && (
+                        {groupErrors.phone_mobile && (
                           <p className="mt-1 text-xs text-red-500">
-                            {groupErrors.phoneMobile}
+                            {groupErrors.phone_mobile}
                           </p>
                         )}
                       </div>
@@ -3797,22 +3797,22 @@ export default function StructurePage() {
                           international
                           countryCallingCodeEditable={false}
                           defaultCountry="FR"
-                          value={editGroup.phoneLandline}
+                          value={editGroup.phone_landline}
                           onChange={(value) =>
-                            handlePhoneChange(value || "", "editGroup", "phoneLandline")
+                            handlePhoneChange(value || "", "editGroup", "phone_landline")
                           }
                           className={
-                            groupErrors.phoneLandline
+                            groupErrors.phone_landline
                               ? "border-red-500"
                               : ""
                           }
                           numberInputProps={{
-                            className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${groupErrors.phoneLandline ? "border-red-500" : ""}`,
+                            className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${groupErrors.phone_landline ? "border-red-500" : ""}`,
                           }}
                         />
-                        {groupErrors.phoneLandline && (
+                        {groupErrors.phone_landline && (
                           <p className="mt-1 text-xs text-red-500">
-                            {groupErrors.phoneLandline}
+                            {groupErrors.phone_landline}
                           </p>
                         )}
                       </div>
@@ -3827,7 +3827,7 @@ export default function StructurePage() {
                       <ReadField
                         label="Code postal"
                         icon={MapPin}
-                        value={editGroup.postalCode}
+                        value={editGroup.postal_code}
                       />
                       <ReadField
                         label="Ville"
@@ -3847,12 +3847,12 @@ export default function StructurePage() {
                       <ReadField
                         label="Téléphone fixe"
                         icon={Phone}
-                        value={editGroup.phoneLandline}
+                        value={editGroup.phone_landline}
                       />
                       <ReadField
                         label="Téléphone mobile"
                         icon={Phone}
-                        value={editGroup.phoneMobile}
+                        value={editGroup.phone_mobile}
                       />
                     </DetailGrid>
                   )}
@@ -4052,9 +4052,9 @@ export default function StructurePage() {
                         />
                         <Field
                           label="Code postal"
-                          value={editCompany.postalCode}
+                          value={editCompany.postal_code}
                           editing={editing}
-                          onChange={(v) => setEditCompany((f) => ({ ...f, postalCode: v }))}
+                          onChange={(v) => setEditCompany((f) => ({ ...f, postal_code: v }))}
                           placeholder="75001"
                         />
                         <Field
@@ -4095,22 +4095,22 @@ export default function StructurePage() {
                             international
                             countryCallingCodeEditable={false}
                             defaultCountry="FR"
-                            value={editCompany.phoneMobile}
+                            value={editCompany.phone_mobile}
                             onChange={(value) =>
-                              handlePhoneChange(value || "", "editCompany", "phoneMobile")
+                              handlePhoneChange(value || "", "editCompany", "phone_mobile")
                             }
                             className={
-                              companyErrors?.phoneMobile
+                              companyErrors?.phone_mobile
                                 ? "border-red-500"
                                 : ""
                             }
                             numberInputProps={{
-                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phoneMobile ? "border-red-500" : ""}`,
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phone_mobile ? "border-red-500" : ""}`,
                             }}
                           />
-                          {companyErrors?.phoneMobile && (
+                          {companyErrors?.phone_mobile && (
                             <p className="mt-1 text-xs text-red-500">
-                              {companyErrors.phoneMobile}
+                              {companyErrors.phone_mobile}
                             </p>
                           )}
                         </div>
@@ -4122,22 +4122,22 @@ export default function StructurePage() {
                             international
                             countryCallingCodeEditable={false}
                             defaultCountry="FR"
-                            value={editCompany.phoneLandline}
+                            value={editCompany.phone_landline}
                             onChange={(value) =>
-                              handlePhoneChange(value || "", "editCompany", "phoneLandline")
+                              handlePhoneChange(value || "", "editCompany", "phone_landline")
                             }
                             className={
-                              companyErrors?.phoneLandline
+                              companyErrors?.phone_landline
                                 ? "border-red-500"
                                 : ""
                             }
                             numberInputProps={{
-                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phoneLandline ? "border-red-500" : ""}`,
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phone_landline ? "border-red-500" : ""}`,
                             }}
                           />
-                          {companyErrors?.phoneLandline && (
+                          {companyErrors?.phone_landline && (
                             <p className="mt-1 text-xs text-red-500">
-                              {companyErrors.phoneLandline}
+                              {companyErrors.phone_landline}
                             </p>
                           )}
                         </div>
@@ -4153,7 +4153,7 @@ export default function StructurePage() {
                       <ReadField
                         label="Code postal"
                         icon={MapPin}
-                        value={editCompany.postalCode}
+                        value={editCompany.postal_code}
                       />
                       <ReadField
                         label="Ville"
@@ -4173,12 +4173,12 @@ export default function StructurePage() {
                       <ReadField
                         label="Téléphone fixe"
                         icon={Phone}
-                        value={editCompany.phoneLandline}
+                        value={editCompany.phone_landline}
                       />
                       <ReadField
                         label="Téléphone mobile"
                         icon={Phone}
-                        value={editCompany.phoneMobile}
+                        value={editCompany.phone_mobile}
                       />
                     </DetailGrid>
                   )}
@@ -5484,9 +5484,9 @@ export default function StructurePage() {
                   Code postal
                 </label>
                 <Input
-                  value={addGroupForm.postalCode}
+                  value={addGroupForm.postal_code}
                   onChange={(e) =>
-                    setAddGroupForm((f) => ({ ...f, postalCode: e.target.value }))
+                    setAddGroupForm((f) => ({ ...f, postal_code: e.target.value }))
                   }
                   placeholder="75001"
                 />
@@ -5528,22 +5528,22 @@ export default function StructurePage() {
                   international
                   countryCallingCodeEditable={false}
                   defaultCountry="FR"
-                  value={addGroupForm.phoneMobile}
+                  value={addGroupForm.phone_mobile}
                   onChange={(value) =>
-                    handlePhoneChange(value || "", "addGroup", "phoneMobile")
+                    handlePhoneChange(value || "", "addGroup", "phone_mobile")
                   }
                   className={
-                    addGroupErrors.phoneMobile
+                    addGroupErrors.phone_mobile
                       ? "border-red-500"
                       : ""
                   }
                   numberInputProps={{
-                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addGroupErrors.phoneMobile ? "border-red-500" : ""}`,
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addGroupErrors.phone_mobile ? "border-red-500" : ""}`,
                   }}
                 />
-                {addGroupErrors.phoneMobile && (
+                {addGroupErrors.phone_mobile && (
                   <p className="mt-1 text-xs text-red-500">
-                    {addGroupErrors.phoneMobile}
+                    {addGroupErrors.phone_mobile}
                   </p>
                 )}
               </div>
@@ -5555,22 +5555,22 @@ export default function StructurePage() {
                   international
                   countryCallingCodeEditable={false}
                   defaultCountry="FR"
-                  value={addGroupForm.phoneLandline}
+                  value={addGroupForm.phone_landline}
                   onChange={(value) =>
-                    handlePhoneChange(value || "", "addGroup", "phoneLandline")
+                    handlePhoneChange(value || "", "addGroup", "phone_landline")
                   }
                   className={
-                    addGroupErrors.phoneLandline
+                    addGroupErrors.phone_landline
                       ? "border-red-500"
                       : ""
                   }
                   numberInputProps={{
-                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addGroupErrors.phoneLandline ? "border-red-500" : ""}`,
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addGroupErrors.phone_landline ? "border-red-500" : ""}`,
                   }}
                 />
-                {addGroupErrors.phoneLandline && (
+                {addGroupErrors.phone_landline && (
                   <p className="mt-1 text-xs text-red-500">
-                    {addGroupErrors.phoneLandline}
+                    {addGroupErrors.phone_landline}
                   </p>
                 )}
               </div>
@@ -5902,9 +5902,9 @@ export default function StructurePage() {
                   Code postal
                 </label>
                 <Input
-                  value={addCompanyForm.postalCode}
+                  value={addCompanyForm.postal_code}
                   onChange={(e) =>
-                    setAddCompanyForm((f) => ({ ...f, postalCode: e.target.value }))
+                    setAddCompanyForm((f) => ({ ...f, postal_code: e.target.value }))
                   }
                   placeholder="Code postal"
                 />
@@ -5948,17 +5948,17 @@ export default function StructurePage() {
                   international
                   countryCallingCodeEditable={false}
                   defaultCountry="FR"
-                  value={addCompanyForm.phoneMobile}
+                  value={addCompanyForm.phone_mobile}
                   onChange={(value) =>
-                    setAddCompanyForm((f) => ({ ...f, phoneMobile: value || "" }))
+                    setAddCompanyForm((f) => ({ ...f, phone_mobile: value || "" }))
                   }
-                  className={companyErrors?.phoneMobile ? "border-red-500" : ""}
+                  className={companyErrors?.phone_mobile ? "border-red-500" : ""}
                   numberInputProps={{
-                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phoneMobile ? "border-red-500" : ""}`
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phone_mobile ? "border-red-500" : ""}`
                   }}
                 />
-                {companyErrors?.phoneMobile && (
-                  <p className="mt-1 text-xs text-red-500">{companyErrors.phoneMobile}</p>
+                {companyErrors?.phone_mobile && (
+                  <p className="mt-1 text-xs text-red-500">{companyErrors.phone_mobile}</p>
                 )}
               </div>
               <div>
@@ -5969,17 +5969,17 @@ export default function StructurePage() {
                   international
                   countryCallingCodeEditable={false}
                   defaultCountry="FR"
-                  value={addCompanyForm.phoneLandline}
+                  value={addCompanyForm.phone_landline}
                   onChange={(value) =>
-                    setAddCompanyForm((f) => ({ ...f, phoneLandline: value || "" }))
+                    setAddCompanyForm((f) => ({ ...f, phone_landline: value || "" }))
                   }
-                  className={companyErrors?.phoneLandline ? "border-red-500" : ""}
+                  className={companyErrors?.phone_landline ? "border-red-500" : ""}
                   numberInputProps={{
-                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phoneLandline ? "border-red-500" : ""}`
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${companyErrors?.phone_landline ? "border-red-500" : ""}`
                   }}
                 />
-                {companyErrors?.phoneLandline && (
-                  <p className="mt-1 text-xs text-red-500">{companyErrors.phoneLandline}</p>
+                {companyErrors?.phone_landline && (
+                  <p className="mt-1 text-xs text-red-500">{companyErrors.phone_landline}</p>
                 )}
               </div>
             </div>
@@ -6317,9 +6317,9 @@ export default function StructurePage() {
                 Code postal
               </label>
               <Input
-                value={addworkspaceForm.postalCode}
+                value={addworkspaceForm.postal_code}
                 onChange={(e) =>
-                  setAddworkspaceForm((f) => ({ ...f, postalCode: e.target.value }))
+                  setAddworkspaceForm((f) => ({ ...f, postal_code: e.target.value }))
                 }
                 placeholder="Code postal"
               />
@@ -6381,15 +6381,15 @@ export default function StructurePage() {
                   international
                   countryCallingCodeEditable={false}
                   defaultCountry="FR"
-                  value={addworkspaceForm.phoneMobile}
-                  onChange={(value) => handlePhoneChange(value || "", "addworkspace", "phoneMobile")}
-                  className={workspaceErrors.phoneMobile ? "border-red-500" : ""}
+                  value={addworkspaceForm.phone_mobile}
+                  onChange={(value) => handlePhoneChange(value || "", "addworkspace", "phone_mobile")}
+                  className={workspaceErrors.phone_mobile ? "border-red-500" : ""}
                   numberInputProps={{
-                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.phoneMobile ? "border-red-500" : ""}`
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.phone_mobile ? "border-red-500" : ""}`
                   }}
                 />
-                {workspaceErrors.phoneMobile && (
-                  <p className="text-xs text-red-500">{workspaceErrors.phoneMobile}</p>
+                {workspaceErrors.phone_mobile && (
+                  <p className="text-xs text-red-500">{workspaceErrors.phone_mobile}</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -6400,15 +6400,15 @@ export default function StructurePage() {
                   international
                   countryCallingCodeEditable={false}
                   defaultCountry="FR"
-                  value={addworkspaceForm.phoneLandline}
-                  onChange={(value) => handlePhoneChange(value || "", "addworkspace", "phoneLandline")}
-                  className={workspaceErrors.phoneLandline ? "border-red-500" : ""}
+                  value={addworkspaceForm.phone_landline}
+                  onChange={(value) => handlePhoneChange(value || "", "addworkspace", "phone_landline")}
+                  className={workspaceErrors.phone_landline ? "border-red-500" : ""}
                   numberInputProps={{
-                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.phoneLandline ? "border-red-500" : ""}`
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.phone_landline ? "border-red-500" : ""}`
                   }}
                 />
-                {workspaceErrors.phoneLandline && (
-                  <p className="text-xs text-red-500">{workspaceErrors.phoneLandline}</p>
+                {workspaceErrors.phone_landline && (
+                  <p className="text-xs text-red-500">{workspaceErrors.phone_landline}</p>
                 )}
               </div>
             </div>
@@ -6420,7 +6420,7 @@ export default function StructurePage() {
                 setAddworkspaceOpen(false);
                 setLogoFile(null);
                 setLogoPreview("");
-                setWorkspaceErrors({ contact_email: "", phoneMobile: "", phoneLandline: "", });
+                setWorkspaceErrors({ contact_email: "", phone_mobile: "", phone_landline: "", });
               }}
             >
               Annuler

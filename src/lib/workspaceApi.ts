@@ -13,12 +13,12 @@ export interface Workspace {
   };
   logo?: string;
   street?: string;
-  postalCode?: string;
+  postal_code?: string;
   city?: string;
   country?: string;
   contact_email?: string;
-  phoneLandline?: string;
-  phoneMobile?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
   created_at: string;
   updated_at: string;
 }

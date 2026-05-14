@@ -7,12 +7,12 @@ export type Workspace = {
   description?: string;
   logo?: string;
   street?: string;
-  postalCode?: string;
+  postal_code?: string;
   city?: string;
   country?: string;
   contact_email?: string;
-  phoneLandline?: string;
-  phoneMobile?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
   manager_id?: string;
   manager?: {
     id: string;
