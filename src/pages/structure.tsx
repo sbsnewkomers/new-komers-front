@@ -1787,6 +1787,9 @@ export default function StructurePage() {
     } else if (selectedNode.type === "company") {
       const formData = new FormData();
       formData.append('name', editCompany.name);
+      if (editCompany.description) {
+        formData.append('description', editCompany.description);
+      }
       if (editCompany.siret) {
         formData.append('siret', editCompany.siret);
       }
@@ -1807,6 +1810,9 @@ export default function StructurePage() {
       }
       if (editCompany.phone_mobile) {
         formData.append('phone_mobile', editCompany.phone_mobile);
+      }
+      if (editCompany.contact_email) {
+        formData.append('contact_email', editCompany.contact_email);
       }
       if (editCompany.ape_code) {
         formData.append('ape_code', editCompany.ape_code);
@@ -2065,6 +2071,9 @@ export default function StructurePage() {
       }
 
       formData.append('name', addCompanyForm.name);
+      if (addCompanyForm.description) {
+        formData.append('description', addCompanyForm.description);
+      }
       if (addCompanyForm.siret) {
         formData.append('siret', addCompanyForm.siret);
       }
@@ -3564,7 +3573,7 @@ export default function StructurePage() {
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                            Email de contact
+                            Email
                           </label>
                           <Input
                             type="email"
@@ -3836,7 +3845,7 @@ export default function StructurePage() {
                   {editing ? (
                     <DetailGrid>
                       <Field
-                        label="Email de contact"
+                        label="Email"
                         value={editGroup.contact_email}
                         editing={editing}
                         type="email"
@@ -3901,7 +3910,7 @@ export default function StructurePage() {
                   ) : (
                     <DetailGrid>
                       <ReadField
-                        label="Email de contact"
+                        label="Email"
                         icon={Mail}
                         value={editGroup.contact_email}
                       />
@@ -4177,7 +4186,7 @@ export default function StructurePage() {
                     <div className="space-y-4">
                       <DetailGrid>
                         <Field
-                          label="Email de contact"
+                          label="Email"
                           value={editCompany.contact_email}
                           editing={editing}
                           type="email"
@@ -4243,7 +4252,7 @@ export default function StructurePage() {
                   ) : (
                     <DetailGrid>
                       <ReadField
-                        label="Email de contact"
+                        label="Email"
                         icon={Mail}
                         value={editCompany.contact_email}
                       />
@@ -4752,7 +4761,7 @@ export default function StructurePage() {
                 <DetailSection
                   icon={Phone}
                   title="Contact"
-                  description="Téléphones et email de contact."
+                  description="Téléphones et email."
                 >
                   {editing ? (
                     <div className="space-y-4">
@@ -5771,7 +5780,7 @@ export default function StructurePage() {
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Email de contact
+                Email
               </label>
               <Input
                 type="email"
@@ -6140,7 +6149,7 @@ export default function StructurePage() {
                     onChange={(e) =>
                       setAddBUStandaloneForm((f) => ({ ...f, contact_email: e.target.value }))
                     }
-                    placeholder="Email de contact"
+                    placeholder="Email"
                   />
                   {addBUStandaloneErrors?.contact_email && (
                     <p className="mt-1 text-xs text-red-500">
@@ -6237,7 +6246,19 @@ export default function StructurePage() {
               />
             </div>
 
-
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Description
+              </label>
+              <textarea
+                value={addCompanyForm.description}
+                onChange={(e) =>
+                  setAddCompanyForm((f) => ({ ...f, description: e.target.value }))
+                }
+                placeholder="Description de l'entreprise"
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 border-white/10 bg-white/5 text-white placeholder:text-white/45"
+              />
+            </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
