@@ -126,23 +126,55 @@ export function DropdownMenuContent({
     if (!trigger || typeof window === "undefined") return;
     const rect = trigger.getBoundingClientRect();
     const gap = 4;
-    const top = rect.bottom + gap;
+    const pad = 8;
+    const vh = window.innerHeight;
+
+    const menuEl = menuRef.current;
+    const measuredH = menuEl?.getBoundingClientRect().height ?? 0;
+    const menuHeight = measuredH > 0 ? measuredH : 220;
+
+    let top = rect.bottom + gap;
+    const fitsBelow = top + menuHeight <= vh - pad;
+    const spaceAbove = rect.top - gap - pad;
+    const fitsAbove = menuHeight <= spaceAbove;
+
+    let maxHeight: number | undefined;
+    let overflowY: "auto" | undefined;
+
+    if (!fitsBelow && fitsAbove) {
+      top = rect.top - gap - menuHeight;
+    } else if (!fitsBelow && !fitsAbove) {
+      const belowSpace = vh - rect.bottom - gap - pad;
+      const aboveSpace = rect.top - gap - pad;
+      if (belowSpace >= aboveSpace) {
+        top = rect.bottom + gap;
+        maxHeight = Math.max(120, belowSpace);
+        overflowY = "auto";
+      } else {
+        top = pad;
+        maxHeight = Math.max(120, aboveSpace);
+        overflowY = "auto";
+      }
+    }
+
+    const base: React.CSSProperties = {
+      position: "fixed",
+      top,
+      zIndex: 300,
+      minWidth: Math.max(rect.width, 128),
+      ...(maxHeight != null ? { maxHeight, overflowY } : {}),
+    };
+
     if (align === "end") {
       setPortalStyle({
-        position: "fixed",
-        top,
+        ...base,
         left: rect.right,
         transform: "translateX(-100%)",
-        zIndex: 300,
-        minWidth: Math.max(rect.width, 128),
       });
     } else {
       setPortalStyle({
-        position: "fixed",
-        top,
+        ...base,
         left: rect.left,
-        zIndex: 300,
-        minWidth: Math.max(rect.width, 128),
       });
     }
   }, [triggerEl, align]);
@@ -153,6 +185,8 @@ export function DropdownMenuContent({
       return;
     }
     updatePosition();
+    const id = window.requestAnimationFrame(() => updatePosition());
+    return () => window.cancelAnimationFrame(id);
   }, [open, updatePosition]);
 
   React.useLayoutEffect(() => {

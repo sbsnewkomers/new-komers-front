@@ -88,8 +88,8 @@ import { useRouter } from "next/navigation";
 import { useImpersonation } from "@/hooks/useImpersonation";
 import { UserCheck } from "lucide-react";
 
-/** Actions shown or grantable in the permissions modal; CREATE / UPDATE / DELETE are hidden. */
-const PERMISSION_MODAL_ACTIONS: PermissionAction[] = ALL_ACTIONS.filter(
+/** Actions grantable in the permissions modal for END_USER (read-only). Staff roles see all actions. */
+const END_USER_PERMISSION_MODAL_ACTIONS: PermissionAction[] = ALL_ACTIONS.filter(
   (a) => a !== "CREATE" && a !== "UPDATE" && a !== "DELETE",
 );
 
@@ -455,6 +455,11 @@ export default function UsersPage() {
         addNodeType === "WORKSPACE" ? (structureTree?.workspaces ?? []) :
           (busHook.list ?? []);
   }, [addNodeType, groupsHook.list, companiesHook.list, structureTree, busHook.list, permUser?.role]);
+
+  const permissionModalActions = useMemo<PermissionAction[]>(() => {
+    if (permUser?.role === "END_USER") return END_USER_PERMISSION_MODAL_ACTIONS;
+    return ALL_ACTIONS;
+  }, [permUser?.role]);
 
   // ── Filtered data ──
   const filtered = users.filter((u) => {
@@ -1248,7 +1253,7 @@ export default function UsersPage() {
                     <div key={nt} className="rounded-lg border border-white/10 bg-white/5 p-3">
                       <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">{nodeTypeLabel(nt)}</p>
                       <div className="flex flex-wrap gap-2">
-                        {PERMISSION_MODAL_ACTIONS.map((action) => {
+                        {permissionModalActions.map((action) => {
                           const granted = hasEntityPerm(nt, action);
                           return (
                             <button key={action} type="button" onClick={() => granted ? handleRevokeEntity(nt, action) : handleGrantEntity(nt, action)}
@@ -1277,9 +1282,7 @@ export default function UsersPage() {
                             <span className="mx-1.5 text-white/25">|</span>
                             <span className="text-sm font-medium text-white">{nodeName ?? na.nodeId.slice(0, 8)}</span>
                             <div className="mt-1 flex flex-wrap gap-1">
-                              {na.actions
-                                .filter((a) => PERMISSION_MODAL_ACTIONS.includes(a))
-                                .map((a) => (
+                              {na.actions.map((a) => (
                                   <span key={a} className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-medium text-(--nebula-muted) ring-1 ring-white/10">
                                     {actionLabel(a)}
                                   </span>
@@ -1328,7 +1331,7 @@ export default function UsersPage() {
                     <div>
                       <label className="mb-1 block text-[10px] font-medium uppercase text-white/45">Actions</label>
                       <div className="flex flex-wrap gap-1.5">
-                        {PERMISSION_MODAL_ACTIONS.map((a) => (
+                        {permissionModalActions.map((a) => (
                           <label
                             key={a}
                             className="relative flex cursor-pointer select-none items-center gap-1 rounded border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-medium text-(--nebula-muted) transition-colors has-checked:border-white/20 has-checked:bg-white/10 has-checked:text-(--nebula-gold-light)"
