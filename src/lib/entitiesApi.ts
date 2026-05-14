@@ -1,4 +1,5 @@
 import { apiFetch } from './apiClient';
+import type { BusinessUnitApi } from '@/types/business-unit';
 
 interface Group {
     id: string;
@@ -10,12 +11,6 @@ interface Company {
     id: string;
     name: string;
     // autres champs de l'entreprise...
-}
-
-interface BusinessUnit {
-    id: string;
-    name: string;
-    // autres champs de l'unité commerciale...
 }
 
 class EntitiesApi {
@@ -35,16 +30,16 @@ class EntitiesApi {
         return apiFetch<Company[]>('/companies');
     }
 
-    async getBusinessUnit(companyId: string, buId: string): Promise<BusinessUnit> {
-        return apiFetch<BusinessUnit>(`/companies/${companyId}/business-units/${buId}`);
+    async getBusinessUnit(companyId: string, buId: string): Promise<BusinessUnitApi> {
+        return apiFetch<BusinessUnitApi>(`/companies/${companyId}/business-units/${buId}`);
     }
 
-    async getBusinessUnits(companyId: string): Promise<BusinessUnit[]> {
-        return apiFetch<BusinessUnit[]>(`/companies/${companyId}/business-units`);
+    async getBusinessUnits(companyId: string): Promise<BusinessUnitApi[]> {
+        return apiFetch<BusinessUnitApi[]>(`/companies/${companyId}/business-units`);
     }
 
-    async getBusinessUnitsForUser(): Promise<BusinessUnit[]> {
-        return apiFetch<BusinessUnit[]>(`/business-units/user`);
+    async getBusinessUnitsForUser(): Promise<BusinessUnitApi[]> {
+        return apiFetch<BusinessUnitApi[]>(`/business-units/user`);
     }
 
     async getEntityName(entityType: string, entityId: string): Promise<string> {
@@ -59,7 +54,7 @@ class EntitiesApi {
                 case 'business unit':
                     try {
                         // Utiliser le nouvel endpoint direct pour récupérer la business unit par son ID
-                        const businessUnit = await apiFetch<BusinessUnit>(`/business-units/${entityId}`);
+                        const businessUnit = await apiFetch<BusinessUnitApi>(`/business-units/${entityId}`);
                         return businessUnit?.name || `Business Unit #${entityId.slice(0, 8)}...`;
                     } catch (error) {
                         console.error('Erreur lors de la récupération de la business unit:', error);
@@ -76,4 +71,4 @@ class EntitiesApi {
 }
 
 export const entitiesApi = new EntitiesApi();
-export type { Group, Company, BusinessUnit };
+export type { Group, Company, BusinessUnitApi as BusinessUnit };

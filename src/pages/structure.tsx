@@ -11,6 +11,7 @@ import {
 import Head from "next/head";
 import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
+import { emitSnackbar } from "@/ui/snackbarBus";
 import { COUNTRIES } from "@/lib/countriesData";
 import {
   fetchStructureTree,
@@ -106,6 +107,15 @@ import {
   type ShareholderFormValues,
 } from "@/components/shareholders/ShareholderFormDialog";
 import Image from "next/image";
+import type { BusinessUnitApi, BUManagerFormFields } from "@/types/business-unit";
+import {
+  defaultBUManagerFormFields,
+  mapApiBuToManagerFormFields,
+  appendBuManagerToFormData,
+  buildBuCreateManagerJson,
+} from "@/types/business-unit";
+import { BuManagerFormFields } from "@/components/structure/BuManagerFormFields";
+import { BuManagerReadBlock } from "@/components/structure/BuManagerReadBlock";
 
 type Emprunt = {
   id: string;
@@ -116,17 +126,117 @@ type Emprunt = {
   duration_months?: number;
 };
 
-type BusinessUnit = {
-  id: string;
+type EditBUFormState = {
   name: string;
   code: string;
   activity: string;
   siret: string;
   country: string;
   logo?: string;
-  company_id?: string;
-  entity_code?: string | null;
-};
+  entity_code: string;
+} & BUManagerFormFields;
+
+type AddBUFormState = {
+  name: string;
+  code: string;
+  activity: string;
+  siret: string;
+  country: string;
+  logo?: string;
+  entity_code: string;
+} & BUManagerFormFields;
+
+function createEmptyAddBUForm(): AddBUFormState {
+  return {
+    name: "",
+    code: "",
+    activity: "",
+    siret: "",
+    country: "",
+    logo: undefined,
+    entity_code: "",
+    ...defaultBUManagerFormFields(),
+  };
+}
+
+function createEmptyStandaloneBUForm(): AddBUFormState & { companyId: string } {
+  return { ...createEmptyAddBUForm(), companyId: "" };
+}
+
+function validateBuManagerForSubmit(m: BUManagerFormFields): string | null {
+  if (m.managerKind === "USER" && !m.manager_user_id.trim()) {
+    return "Sélectionnez un utilisateur responsable ou choisissez « Aucun responsable ».";
+  }
+  if (m.managerKind === "EXTERNAL_PERSON") {
+    if (!m.manager_last_name.trim() || !m.manager_first_name.trim()) {
+      return "Nom et prénom obligatoires pour un responsable externe.";
+    }
+  }
+  return null;
+}
+
+function managerFieldsFromForm(
+  s: EditBUFormState | AddBUFormState,
+): BUManagerFormFields {
+  return {
+    managerKind: s.managerKind,
+    manager_user_id: s.manager_user_id,
+    manager_last_name: s.manager_last_name,
+    manager_first_name: s.manager_first_name,
+    manager_email: s.manager_email,
+    manager_phone: s.manager_phone,
+  };
+}
+
+function createEmptyEditBUForm(): EditBUFormState {
+  return {
+    name: "",
+    code: "",
+    activity: "",
+    siret: "",
+    country: "",
+    logo: undefined,
+    entity_code: "",
+    ...defaultBUManagerFormFields(),
+  };
+}
+
+/** Aperçu lecture responsable depuis le formulaire détail BU. */
+function previewBuFromEditForm(edit: EditBUFormState, users: UserItem[]): BusinessUnitApi {
+  const base: BusinessUnitApi = {
+    id: "",
+    name: edit.name,
+    code: edit.code,
+    activity: edit.activity,
+    siret: edit.siret,
+    country: edit.country,
+    entity_code: edit.entity_code,
+  };
+  if (edit.managerKind === "USER" && edit.manager_user_id.trim()) {
+    const u = users.find((x) => x.id === edit.manager_user_id);
+    return {
+      ...base,
+      manager_type: "USER",
+      manager_user_id: edit.manager_user_id,
+      managerUser: u
+        ? { id: u.id, email: u.email, firstName: u.firstName, lastName: u.lastName }
+        : { id: edit.manager_user_id, email: "" },
+    };
+  }
+  if (edit.managerKind === "EXTERNAL_PERSON") {
+    return {
+      ...base,
+      manager_type: "EXTERNAL_PERSON",
+      managerExternalPerson: {
+        first_name: edit.manager_first_name,
+        last_name: edit.manager_last_name,
+        contact_email: edit.manager_email.trim() || undefined,
+        phone: edit.manager_phone.trim() || undefined,
+      },
+    };
+  }
+  return base;
+}
 
 type GroupFull = {
   id: string;
@@ -541,10 +651,11 @@ export default function StructurePage() {
   const [treeError, setTreeError] = useState<string | null>(null);
   const [isTreeLoaded, setIsTreeLoaded] = useState(false);
   const [busByCompany, setBusByCompany] = useState<
-    Record<string, BusinessUnit[]>
+    Record<string, BusinessUnitApi[]>
   >({});
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
+  const [buPickerUsers, setBuPickerUsers] = useState<UserItem[]>([]);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [ficheOpen, setFicheOpen] = useState(false);
@@ -569,7 +680,7 @@ export default function StructurePage() {
   // Fiche BU states
   const [ficheBUOpen, setFicheBUOpen] = useState(false);
   const [ficheBUId, setFicheBUId] = useState<string | null>(null);
-  const [ficheBU, setFicheBU] = useState<BusinessUnit | null>(null);
+  const [ficheBU, setFicheBU] = useState<BusinessUnitApi | null>(null);
   const [ficheBUTab, setFicheBUTab] = useState("informations");
   const [ficheBUEmprunts, setFicheBUEmprunts] = useState<Emprunt[]>([]);
   const [ficheBUActifs, setFicheBUActifs] = useState<Asset[]>([]);
@@ -721,15 +832,7 @@ export default function StructurePage() {
 
   const [addBUOpen, setAddBUOpen] = useState(false);
   const [addBUCompanyId, setAddBUCompanyId] = useState<string | null>(null);
-  const [addBUForm, setAddBUForm] = useState({
-    name: "",
-    code: "",
-    activity: "",
-    siret: "",
-    country: "",
-    logo: undefined as string | undefined,
-    entity_code: "",
-  });
+  const [addBUForm, setAddBUForm] = useState<AddBUFormState>(() => createEmptyAddBUForm());
   const [addBULoading, setAddBULoading] = useState(false);
   const [addBULogoFile, setAddBULogoFile] = useState<File | null>(null);
 
@@ -749,15 +852,9 @@ export default function StructurePage() {
   const [addGroupLoading, setAddGroupLoading] = useState(false);
 
   const [addBUStandaloneOpen, setAddBUStandaloneOpen] = useState(false);
-  const [addBUStandaloneForm, setAddBUStandaloneForm] = useState({
-    name: "",
-    code: "",
-    activity: "",
-    siret: "",
-    country: "",
-    companyId: "",
-    entity_code: "",
-  });
+  const [addBUStandaloneForm, setAddBUStandaloneForm] = useState<
+    AddBUFormState & { companyId: string }
+  >(() => createEmptyStandaloneBUForm());
   const [addBUStandaloneLoading, setAddBUStandaloneLoading] = useState(false);
 
   const [editworkspace, setEditworkspace] = useState({
@@ -800,15 +897,7 @@ export default function StructurePage() {
     completionPercentage: 0,
     entity_code: "",
   });
-  const [editBU, setEditBU] = useState({
-    name: "",
-    code: "",
-    activity: "",
-    siret: "",
-    country: "",
-    logo: undefined as string | undefined,
-    entity_code: "",
-  });
+  const [editBU, setEditBU] = useState<EditBUFormState>(() => createEmptyEditBUForm());
   const [nodeUsers, setNodeUsers] = useState<NodeUsersByRole | null>(null);
   const [nodeUsersOpen, setNodeUsersOpen] = useState(false);
   const [ficheShareholders, setFicheShareholders] = useState<ShareholderDto[]>(
@@ -889,11 +978,10 @@ export default function StructurePage() {
 
   const loadBUsForCompany = useCallback(async (companyId: string) => {
     try {
-      const data = await apiFetch<BusinessUnit[]>(
+      const data = await apiFetch<BusinessUnitApi[]>(
         `/companies/${companyId}/business-units`,
         { snackbar: { showSuccess: false, showError: true } },
       );
-      console.log('Raw BU data from API:', data); // Debug log
       setBusByCompany((prev) => ({ ...prev, [companyId]: data }));
       return data;
     } catch {
@@ -1297,26 +1385,50 @@ export default function StructurePage() {
     return rows;
   }, [filteredTreeData, expandedCompanyIds, user]);
 
+  useEffect(() => {
+    const needUsers =
+      addBUOpen ||
+      addBUStandaloneOpen ||
+      (detailOpen && selectedNode?.type === "bu");
+    if (!needUsers || buPickerUsers.length > 0) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const list = await fetchUsers();
+        if (!cancelled) setBuPickerUsers(list);
+      } catch {
+        /* silencieux */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    addBUOpen,
+    addBUStandaloneOpen,
+    detailOpen,
+    selectedNode?.type,
+    buPickerUsers.length,
+  ]);
+
+  const buUserOptionsForManager = useMemo(
+    () =>
+      buPickerUsers.map((u) => ({
+        id: u.id,
+        label: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email,
+        secondary: u.email,
+      })),
+    [buPickerUsers],
+  );
+
   const openDetail = useCallback(
     async (node: TreeNode) => {
-      console.log('=== OUVERTURE MODAL ===');
-      console.log('Node clicked:', node);
-      console.log('Current editBU before update:', editBU);
-
       setSelectedNode(node);
       setEditing(false);
       setNodeUsers(null);
 
       // Réinitialiser editBU avec des valeurs vides AVANT de charger les nouvelles données
-      setEditBU({
-        name: "",
-        code: "",
-        activity: "",
-        siret: "",
-        country: "",
-        logo: undefined as string | undefined,
-        entity_code: "",
-      });
+      setEditBU(createEmptyEditBUForm());
 
       if (node.type === "workspace") {
         try {
@@ -1424,15 +1536,11 @@ export default function StructurePage() {
         }
         loadBUsForCompany(node.id);
       } else if (node.type === "bu") {
-        // Forcer toujours le rechargement depuis l'API pour avoir les données complètes
         const freshBUs = await loadBUsForCompany(node.companyId);
-        console.log('All BUs from API:', freshBUs); // Debug log
-        console.log('Looking for BU with ID:', node.id); // Debug log
         const bu = freshBUs.find((b) => b.id === node.id);
-        console.log('Found BU:', bu); // Debug log
 
         if (bu) {
-          const updatedEditBU = {
+          setEditBU({
             name: bu.name,
             code: bu.code,
             activity: bu.activity || "",
@@ -1440,11 +1548,9 @@ export default function StructurePage() {
             country: bu.country || "",
             logo: bu.logo || "",
             entity_code: bu.entity_code ?? "",
-          };
-          console.log('Setting editBU to:', updatedEditBU); // Debug log
-          setEditBU(updatedEditBU);
+            ...mapApiBuToManagerFormFields(bu),
+          });
         } else {
-          // Valeurs par défaut seulement si la BU n'est pas trouvée
           setEditBU({
             name: node.name,
             code: node.code,
@@ -1453,6 +1559,7 @@ export default function StructurePage() {
             country: "",
             logo: undefined as string | undefined,
             entity_code: "",
+            ...defaultBUManagerFormFields(),
           });
         }
         loadBUsForCompany(node.id);
@@ -1640,6 +1747,11 @@ export default function StructurePage() {
         }));
       }
     } else if (selectedNode.type === "bu") {
+      const mgrErr = validateBuManagerForSubmit(managerFieldsFromForm(editBU));
+      if (mgrErr) {
+        emitSnackbar({ message: mgrErr, variant: "error" });
+        return;
+      }
       const formData = new FormData();
       formData.append('name', editBU.name);
       if (editBU.code) {
@@ -1660,8 +1772,11 @@ export default function StructurePage() {
       if (editBU.entity_code?.trim()) {
         formData.append('entity_code', editBU.entity_code.trim());
       }
+      appendBuManagerToFormData(formData, managerFieldsFromForm(editBU), {
+        mode: "update",
+      });
 
-      const updatedBU = await apiFetch<BusinessUnit>(
+      const updatedBU = await apiFetch<BusinessUnitApi>(
         `/companies/${selectedNode.companyId}/business-units/${selectedNode.id}`,
         {
           method: "PUT",
@@ -1676,14 +1791,16 @@ export default function StructurePage() {
 
       // Mettre à jour l'état local avec les données retournées par le serveur
       if (updatedBU) {
-        setEditBU(prev => ({
+        setEditBU((prev) => ({
           ...prev,
           name: updatedBU.name,
           code: updatedBU.code,
-          activity: updatedBU.activity,
-          siret: updatedBU.siret,
+          activity: updatedBU.activity ?? "",
+          siret: updatedBU.siret ?? "",
+          country: updatedBU.country ?? "",
           logo: updatedBU.logo || "",
           entity_code: updatedBU.entity_code ?? "",
+          ...mapApiBuToManagerFormFields(updatedBU),
         }));
 
         // Recharger les BUs pour mettre à jour l'affichage dans l'arbre
@@ -1931,9 +2048,16 @@ export default function StructurePage() {
       return;
     }
 
+    const mgrErr = validateBuManagerForSubmit(managerFieldsFromForm(addBUForm));
+    if (mgrErr) {
+      emitSnackbar({ message: mgrErr, variant: "error" });
+      return;
+    }
+
     setAddBULoading(true);
     try {
       const formData = new FormData();
+      formData.append("company_id", addBUCompanyId);
       formData.append('name', addBUForm.name);
       if (addBUForm.code) {
         formData.append('code', addBUForm.code);
@@ -1953,6 +2077,9 @@ export default function StructurePage() {
       if (addBUForm.entity_code?.trim()) {
         formData.append('entity_code', addBUForm.entity_code.trim());
       }
+      appendBuManagerToFormData(formData, managerFieldsFromForm(addBUForm), {
+        mode: "create",
+      });
 
       await apiFetch(`/companies/${addBUCompanyId}/business-units`, {
         method: "POST",
@@ -1963,7 +2090,7 @@ export default function StructurePage() {
       await loadTree();
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
-      setAddBUForm({ name: "", code: "", activity: "", siret: "", country: "", logo: undefined, entity_code: "" });
+      setAddBUForm(createEmptyAddBUForm());
       setAddBULogoFile(null);
     } catch {
       /* snackbar handles */
@@ -2057,6 +2184,14 @@ export default function StructurePage() {
       return;
     }
 
+    const mgrErr = validateBuManagerForSubmit(
+      managerFieldsFromForm(addBUStandaloneForm),
+    );
+    if (mgrErr) {
+      emitSnackbar({ message: mgrErr, variant: "error" });
+      return;
+    }
+
     setAddBUStandaloneLoading(true);
     try {
       await apiFetch(
@@ -2070,6 +2205,8 @@ export default function StructurePage() {
             siret: addBUStandaloneForm.siret,
             country: addBUStandaloneForm.country,
             entity_code: addBUStandaloneForm.entity_code,
+            company_id: addBUStandaloneForm.companyId,
+            ...buildBuCreateManagerJson(managerFieldsFromForm(addBUStandaloneForm)),
           }),
           snackbar: {
             showSuccess: true,
@@ -2082,15 +2219,7 @@ export default function StructurePage() {
         new Set(prev).add(addBUStandaloneForm.companyId),
       );
       setAddBUStandaloneOpen(false);
-      setAddBUStandaloneForm({
-        name: "",
-        code: "",
-        activity: "",
-        siret: "",
-        country: "",
-        companyId: "",
-        entity_code: "",
-      });
+      setAddBUStandaloneForm(createEmptyStandaloneBUForm());
     } catch {
       /* snackbar handles */
     } finally {
@@ -2160,7 +2289,7 @@ export default function StructurePage() {
     try {
       // Si companyId est fourni, l'utiliser directement
       if (companyId) {
-        const bu = await apiFetch<BusinessUnit>(
+        const bu = await apiFetch<BusinessUnitApi>(
           `/companies/${companyId}/business-units/${buId}`,
           {
             snackbar: { showSuccess: false, showError: true },
@@ -2169,20 +2298,18 @@ export default function StructurePage() {
         setFicheBU(bu);
       } else {
         // Sinon, chercher la BU dans toutes les entreprises pour trouver son companyId
-        let foundBU: BusinessUnit | null = null;
-        let foundCompanyId = "";
+        let foundBU: BusinessUnitApi | null = null;
 
         // Parcourir toutes les entreprises pour trouver la BU
         for (const company of allTreeCompanies) {
           try {
-            const bus = await apiFetch<BusinessUnit[]>(
+            const bus = await apiFetch<BusinessUnitApi[]>(
               `/companies/${company.id}/business-units`,
               { snackbar: { showSuccess: false, showError: false } }
             );
             const bu = bus.find(b => b.id === buId);
             if (bu) {
               foundBU = bu;
-              foundCompanyId = company.id;
               break;
             }
           } catch {
@@ -2914,15 +3041,7 @@ export default function StructurePage() {
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setAddBUCompanyId(node.id);
-                                          setAddBUForm({
-                                            name: "",
-                                            code: "",
-                                            activity: "",
-                                            siret: "",
-                                            country: "",
-                                            logo: undefined as string | undefined,
-                                            entity_code: "",
-                                          });
+                                          setAddBUForm(createEmptyAddBUForm());
                                           setAddBULogoFile(null);
                                           setAddBUOpen(true);
                                         }}
@@ -4009,6 +4128,32 @@ export default function StructurePage() {
                 </DetailSection>
 
                 <DetailSection
+                  icon={UsersIcon}
+                  title="Responsable"
+                  description="Utilisateur plateforme ou personne externe (nom, prénom, email, téléphone)."
+                >
+                  {editing ? (
+                    <BuManagerFormFields
+                      value={managerFieldsFromForm(editBU)}
+                      onChange={(m) =>
+                        setEditBU((prev) => ({
+                          ...prev,
+                          managerKind: m.managerKind,
+                          manager_user_id: m.manager_user_id,
+                          manager_last_name: m.manager_last_name,
+                          manager_first_name: m.manager_first_name,
+                          manager_email: m.manager_email,
+                          manager_phone: m.manager_phone,
+                        }))
+                      }
+                      userOptions={buUserOptionsForManager}
+                    />
+                  ) : (
+                    <BuManagerReadBlock bu={previewBuFromEditForm(editBU, buPickerUsers)} />
+                  )}
+                </DetailSection>
+
+                <DetailSection
                   icon={Hash}
                   title="Informations légales"
                   description="Identifiants et pays d'exercice."
@@ -4828,6 +4973,10 @@ export default function StructurePage() {
                         )}
                       </dl>
                     </div>
+                    <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
+                      <h3 className="mb-2 text-sm font-semibold text-white">Responsable</h3>
+                      <BuManagerReadBlock bu={ficheBU} />
+                    </div>
                   </TabsContent>
                   <TabsContent value="donnees-extracomptables" className="mt-0">
                     <div className="space-y-6">
@@ -5022,7 +5171,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code d'entité
+                Code d&apos;entité
               </label>
               <Input
                 value={addGroupForm.entity_code}
@@ -5163,7 +5312,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code d'entité
+                Code d&apos;entité
               </label>
               <Input
                 value={addBUStandaloneForm.entity_code}
@@ -5174,6 +5323,21 @@ export default function StructurePage() {
                 maxLength={50}
               />
             </div>
+            <BuManagerFormFields
+              value={managerFieldsFromForm(addBUStandaloneForm)}
+              onChange={(m) =>
+                setAddBUStandaloneForm((prev) => ({
+                  ...prev,
+                  managerKind: m.managerKind,
+                  manager_user_id: m.manager_user_id,
+                  manager_last_name: m.manager_last_name,
+                  manager_first_name: m.manager_first_name,
+                  manager_email: m.manager_email,
+                  manager_phone: m.manager_phone,
+                }))
+              }
+              userOptions={buUserOptionsForManager}
+            />
           </DialogBody>
           <DialogFooter>
             <Button
@@ -5382,7 +5546,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code d'entité
+                Code d&apos;entité
               </label>
               <Input
                 value={addCompanyForm.entity_code}
@@ -5548,7 +5712,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code d'entité
+                Code d&apos;entité
               </label>
               <Input
                 value={addBUForm.entity_code}
@@ -5559,6 +5723,21 @@ export default function StructurePage() {
                 maxLength={50}
               />
             </div>
+            <BuManagerFormFields
+              value={managerFieldsFromForm(addBUForm)}
+              onChange={(m) =>
+                setAddBUForm((prev) => ({
+                  ...prev,
+                  managerKind: m.managerKind,
+                  manager_user_id: m.manager_user_id,
+                  manager_last_name: m.manager_last_name,
+                  manager_first_name: m.manager_first_name,
+                  manager_email: m.manager_email,
+                  manager_phone: m.manager_phone,
+                }))
+              }
+              userOptions={buUserOptionsForManager}
+            />
           </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddBUOpen(false)}>

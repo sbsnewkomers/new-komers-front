@@ -1,18 +1,6 @@
 import { useState, useCallback } from "react";
 import { apiFetch } from "@/lib/apiClient";
-
-type BusinessUnit = {
-  id: string;
-  name: string;
-  code: string;
-  activity: string;
-  siret: string;
-  country: string;
-  logo?: string;
-  company_id?: string;
-  createdAt?: string;
-  updatedAt?: string;
-};
+import type { BusinessUnitApi } from "@/types/business-unit";
 
 type CreateBusinessUnitDto = {
   name: string;
@@ -30,8 +18,8 @@ const defaultSnackbar = {
 };
 
 export function useBusinessUnits(companyId: string | null) {
-  const [list, setList] = useState<BusinessUnit[] | null>(null);
-  const [one, setOne] = useState<BusinessUnit | null>(null);
+  const [list, setList] = useState<BusinessUnitApi[] | null>(null);
+  const [one, setOne] = useState<BusinessUnitApi | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +32,7 @@ export function useBusinessUnits(companyId: string | null) {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch<BusinessUnit[]>(basePath, {
+      const data = await apiFetch<BusinessUnitApi[]>(basePath, {
         snackbar: { ...defaultSnackbar, showSuccess: false },
       });
       setList(data);
@@ -64,7 +52,7 @@ export function useBusinessUnits(companyId: string | null) {
       setLoading(true);
       setError(null);
       try {
-        const data = await apiFetch<BusinessUnit>(`${basePath}/${buId}`, {
+        const data = await apiFetch<BusinessUnitApi>(`${basePath}/${buId}`, {
           snackbar: { ...defaultSnackbar, showSuccess: false },
         });
         setOne(data);
@@ -86,7 +74,7 @@ export function useBusinessUnits(companyId: string | null) {
       setLoading(true);
       setError(null);
       try {
-        const created = await apiFetch<BusinessUnit>(basePath, {
+        const created = await apiFetch<BusinessUnitApi>(basePath, {
           method: "POST",
           body: JSON.stringify(dto),
           snackbar: {
@@ -113,7 +101,7 @@ export function useBusinessUnits(companyId: string | null) {
       setLoading(true);
       setError(null);
       try {
-        const updated = await apiFetch<BusinessUnit>(`${basePath}/${buId}`, {
+        const updated = await apiFetch<BusinessUnitApi>(`${basePath}/${buId}`, {
           method: "PUT",
           body: JSON.stringify(dto),
           snackbar: {
