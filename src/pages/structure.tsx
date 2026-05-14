@@ -3456,8 +3456,8 @@ export default function StructurePage() {
 
                 <DetailSection
                   icon={MapPin}
-                  title="Coordonnées"
-                  description="Adresse postale et points de contact."
+                  title="Adresse"
+                  description="Adresse postale de l'espace de travail."
                 >
                   {editing ? (
                     <div className="space-y-4">
@@ -3520,6 +3520,37 @@ export default function StructurePage() {
                           )}
                         </div>
                       </div>
+                    </div>
+                  ) : (
+                    <DetailGrid>
+                      <ReadField
+                        label="Rue"
+                        icon={MapPin}
+                        value={editworkspace.street}
+                      />
+                      <ReadField
+                        label="Code postal"
+                        value={editworkspace.postal_code}
+                      />
+                      <ReadField
+                        label="Ville"
+                        value={editworkspace.city}
+                      />
+                      <ReadField
+                        label="Pays"
+                        value={editworkspace.country}
+                      />
+                    </DetailGrid>
+                  )}
+                </DetailSection>
+
+                <DetailSection
+                  icon={Phone}
+                  title="Contact"
+                  description="Coordonnées pour contacter l'espace de travail."
+                >
+                  {editing ? (
+                    <div className="space-y-4">
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -3604,23 +3635,6 @@ export default function StructurePage() {
                     </div>
                   ) : (
                     <DetailGrid>
-                      <ReadField
-                        label="Rue"
-                        icon={MapPin}
-                        value={editworkspace.street}
-                      />
-                      <ReadField
-                        label="Code postal"
-                        value={editworkspace.postal_code}
-                      />
-                      <ReadField
-                        label="Ville"
-                        value={editworkspace.city}
-                      />
-                      <ReadField
-                        label="Pays"
-                        value={editworkspace.country}
-                      />
                       <ReadField
                         label="Email"
                         icon={Mail}
@@ -3728,8 +3742,8 @@ export default function StructurePage() {
 
                 <DetailSection
                   icon={MapPin}
-                  title="Adresse et contact"
-                  description="Coordonnées et localisation du groupe."
+                  title="Adresse"
+                  description="Adresse postale du groupe."
                 >
                   {editing ? (
                     <DetailGrid>
@@ -3754,13 +3768,6 @@ export default function StructurePage() {
                         onChange={(v) => setEditGroup((f) => ({ ...f, city: v }))}
                         placeholder="Paris"
                       />
-                      <Field
-                        label="Pays"
-                        value={editGroup.country}
-                        editing={editing}
-                        onChange={(v) => setEditGroup((f) => ({ ...f, country: v }))}
-                        placeholder="France"
-                      />
                       {editing ? (
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -3784,6 +3791,40 @@ export default function StructurePage() {
                           value={editGroup.country ? getCountryName(editGroup.country) : ""}
                         />
                       )}
+                    </DetailGrid>
+                  ) : (
+                    <DetailGrid>
+                      <ReadField
+                        label="Rue"
+                        icon={MapPin}
+                        value={editGroup.street}
+                      />
+                      <ReadField
+                        label="Code postal"
+                        icon={MapPin}
+                        value={editGroup.postal_code}
+                      />
+                      <ReadField
+                        label="Ville"
+                        icon={MapPin}
+                        value={editGroup.city}
+                      />
+                      <ReadField
+                        label="Pays"
+                        icon={Globe}
+                        value={editGroup.country ? getCountryName(editGroup.country) : ""}
+                      />
+                    </DetailGrid>
+                  )}
+                </DetailSection>
+
+                <DetailSection
+                  icon={Phone}
+                  title="Contact"
+                  description="Coordonnées pour contacter le groupe."
+                >
+                  {editing ? (
+                    <DetailGrid>
                       <Field
                         label="Email de contact"
                         value={editGroup.contact_email}
@@ -3849,26 +3890,6 @@ export default function StructurePage() {
                     </DetailGrid>
                   ) : (
                     <DetailGrid>
-                      <ReadField
-                        label="Rue"
-                        icon={MapPin}
-                        value={editGroup.street}
-                      />
-                      <ReadField
-                        label="Code postal"
-                        icon={MapPin}
-                        value={editGroup.postal_code}
-                      />
-                      <ReadField
-                        label="Ville"
-                        icon={MapPin}
-                        value={editGroup.city}
-                      />
-                      <ReadField
-                        label="Pays"
-                        icon={Globe}
-                        value={editGroup.country ? getCountryName(editGroup.country) : ""}
-                      />
                       <ReadField
                         label="Email de contact"
                         icon={Mail}
@@ -4067,8 +4088,8 @@ export default function StructurePage() {
 
                 <DetailSection
                   icon={MapPin}
-                  title="Adresse et contact"
-                  description="Coordonnées et localisation de l'entreprise."
+                  title="Adresse"
+                  description="Adresse postale de l'entreprise."
                 >
                   {editing ? (
                     <div className="space-y-4">
@@ -4109,6 +4130,42 @@ export default function StructurePage() {
                             <Globe className="h-4 w-4 text-muted-foreground" />
                           </button>
                         </div>
+                      </DetailGrid>
+                    </div>
+                  ) : (
+                    <DetailGrid>
+                      <ReadField
+                        label="Rue"
+                        icon={MapPin}
+                        value={editCompany.street}
+                      />
+                      <ReadField
+                        label="Code postal"
+                        icon={MapPin}
+                        value={editCompany.postal_code}
+                      />
+                      <ReadField
+                        label="Ville"
+                        icon={MapPin}
+                        value={editCompany.city}
+                      />
+                      <ReadField
+                        label="Pays"
+                        icon={Globe}
+                        value={editCompany.country ? getCountryName(editCompany.country) : ""}
+                      />
+                    </DetailGrid>
+                  )}
+                </DetailSection>
+
+                <DetailSection
+                  icon={Phone}
+                  title="Contact"
+                  description="Coordonnées pour contacter l'entreprise."
+                >
+                  {editing ? (
+                    <div className="space-y-4">
+                      <DetailGrid>
                         <Field
                           label="Email de contact"
                           value={editCompany.contact_email}
@@ -4175,26 +4232,6 @@ export default function StructurePage() {
                     </div>
                   ) : (
                     <DetailGrid>
-                      <ReadField
-                        label="Rue"
-                        icon={MapPin}
-                        value={editCompany.street}
-                      />
-                      <ReadField
-                        label="Code postal"
-                        icon={MapPin}
-                        value={editCompany.postal_code}
-                      />
-                      <ReadField
-                        label="Ville"
-                        icon={MapPin}
-                        value={editCompany.city}
-                      />
-                      <ReadField
-                        label="Pays"
-                        icon={Globe}
-                        value={editCompany.country ? getCountryName(editCompany.country) : ""}
-                      />
                       <ReadField
                         label="Email de contact"
                         icon={Mail}
