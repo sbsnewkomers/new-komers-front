@@ -4,22 +4,36 @@ import { apiFetch } from "@/lib/apiClient";
 type BusinessUnit = {
   id: string;
   name: string;
+  description?: string;
   code: string;
   activity: string;
   siret: string;
   country: string;
   logo?: string;
   company_id?: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
+  contact_email?: string;
   createdAt?: string;
   updatedAt?: string;
 };
 
 type CreateBusinessUnitDto = {
   name: string;
+  description?: string;
   code: string;
   activity: string;
   siret: string;
   country: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
+  contact_email?: string;
 };
 
 type UpdateBusinessUnitDto = Partial<CreateBusinessUnitDto>;

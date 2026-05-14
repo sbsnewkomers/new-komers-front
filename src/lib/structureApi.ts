@@ -3,8 +3,15 @@ import { apiFetch } from "@/lib/apiClient";
 export type TreeBU = {
   id: string;
   name: string;
+  description?: string;
   code: string;
   country: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  phone_landline?: string;
+  phone_mobile?: string;
+  contact_email?: string;
   completionPercentage?: number;
 };
 
