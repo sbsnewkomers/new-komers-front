@@ -5168,171 +5168,81 @@ export default function StructurePage() {
                     <TabsTrigger value="donnees-extracomptables">Données extracomptables</TabsTrigger>
                   </TabsList>
                   <TabsContent value="informations" className="mt-0">
-                    <div className="space-y-4">
-                      <DetailHero
-                        type="company"
-                        name={ficheCompany.name}
-                        logo={ficheCompany.logo}
-                        pills={
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                        <dt className="text-(--nebula-muted)">Description</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheCompany.description || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">SIRET</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.siret ? formatSiret(ficheCompany.siret) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">SIREN</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.siret ? formatSiren(ficheCompany.siret) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Code APE</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.ape_code || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Activité principale</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheCompany.main_activity || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Taille</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.size || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Modèle</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.model || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Rue</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheCompany.street || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Code Postal</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.postal_code || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Ville</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.city || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Pays</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.country ? getCountryName(ficheCompany.country) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Téléphone Fixe</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.phone_landline || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Téléphone Mobile</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.phone_mobile || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Email</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.contact_email || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Début exercice</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.fiscal_year_start ? formatMonthDayForDisplay(ficheCompany.fiscal_year_start) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Dernier exercice clôturé</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheCompany.last_closed_fiscal_year ? String(ficheCompany.last_closed_fiscal_year) : "—"}
+                        </dd>
+                        {ficheCompany.group_id && (
                           <>
-                            {ficheCompany.siret && (
-                              <DetailPill icon={Hash} mono>
-                                SIRET {formatSiret(ficheCompany.siret)}
-                              </DetailPill>
-                            )}
-                            {ficheCompany.ape_code && (
-                              <DetailPill icon={BadgeCheck} mono>
-                                APE {ficheCompany.ape_code}
-                              </DetailPill>
-                            )}
-                            {ficheCompany.country && (
-                              <DetailPill icon={Globe}>{ficheCompany.country}</DetailPill>
-                            )}
-                            {ficheCompany.size && (
-                              <DetailPill icon={UsersIcon}>{ficheCompany.size}</DetailPill>
-                            )}
+                            <dt className="text-(--nebula-muted)">Groupe</dt>
+                            <dd className="font-medium text-primary">
+                              {groupList.find(g => g.id === ficheCompany.group_id)?.name || ficheCompany.group_id}
+                            </dd>
                           </>
-                        }
-                      />
-
-                      {typeof ficheCompany.completionPercentage === "number" && (
-                        <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 nebula-blob">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                              <h4 className="text-sm font-semibold text-white">
-                                Complétion du profil
-                              </h4>
-                              <p className="text-[11px] leading-snug text-(--nebula-muted)">
-                                Pourcentage d&apos;informations renseignées sur cette entreprise.
-                              </p>
-                            </div>
-                            <span className="text-xl font-semibold tabular-nums text-white font-mono">
-                              {Math.round(ficheCompany.completionPercentage)}
-                              <span className="text-sm text-(--nebula-muted)">%</span>
-                            </span>
-                          </div>
-                          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
-                            <div
-                              className="h-full rounded-full bg-linear-to-r from-(--nebula-gold-light) to-(--nebula-gold) transition-all"
-                              style={{
-                                width: `${Math.max(
-                                  0,
-                                  Math.min(100, ficheCompany.completionPercentage),
-                                )}%`,
-                              }}
-                            />
-                          </div>
-                        </section>
-                      )}
-
-                      <DetailSection
-                        icon={Info}
-                        title="Identité"
-                        description="Informations générales de l'entreprise."
-                      >
-                        <DetailGrid>
-                          <ReadField label="Nom" value={ficheCompany.name} />
-                          <ReadField label="Pays" icon={Globe} value={ficheCompany.country} />
-                          <ReadField
-                            label="Adresse"
-                            icon={MapPin}
-                            value={ficheCompany.address}
-                            full
-                          />
-                        </DetailGrid>
-                      </DetailSection>
-
-                      <DetailSection
-                        icon={Hash}
-                        title="Informations légales"
-                        description="Identifiants d'immatriculation et activité principale."
-                      >
-                        <DetailGrid>
-                          <ReadField
-                            label="SIRET"
-                            icon={Hash}
-                            value={formatSiret(ficheCompany.siret)}
-                            mono
-                            hint="Identifiant d'établissement à 14 chiffres."
-                          />
-                          <ReadField
-                            label="SIREN"
-                            icon={Hash}
-                            value={formatSiren(ficheCompany.siret)}
-                            mono
-                            hint="Identifiant d'établissement à 9 chiffres."
-                          />
-                          <ReadField
-                            label="Code APE"
-                            icon={BadgeCheck}
-                            value={ficheCompany.ape_code}
-                            mono
-                          />
-                          <ReadField
-                            label="Activité principale"
-                            icon={FileText}
-                            value={ficheCompany.main_activity}
-                            full
-                          />
-                        </DetailGrid>
-                      </DetailSection>
-
-                      <DetailSection
-                        icon={Calendar}
-                        title="Exercice fiscal"
-                        description="Dates clés de la période comptable."
-                      >
-                        <DetailGrid>
-                          <ReadField
-                            label="Début d'exercice"
-                            icon={Calendar}
-                            value={formatMonthDayForDisplay(ficheCompany.fiscal_year_start)}
-                            mono
-                            hint="Jour/mois de début de l'exercice fiscal."
-                          />
-                          <ReadField
-                            label="Dernier exercice clôturé"
-                            icon={Calendar}
-                            value={
-                              ficheCompany.last_closed_fiscal_year === null ||
-                                ficheCompany.last_closed_fiscal_year === undefined
-                                ? undefined
-                                : String(ficheCompany.last_closed_fiscal_year)
-                            }
-                            mono
-                          />
-                        </DetailGrid>
-                      </DetailSection>
-
-                      <DetailSection
-                        icon={Briefcase}
-                        title="Profil commercial"
-                        description="Taille et positionnement de l'entreprise."
-                      >
-                        <DetailGrid>
-                          <ReadField label="Taille" icon={UsersIcon} value={ficheCompany.size} />
-                          <ReadField label="Modèle" value={ficheCompany.model} />
-                        </DetailGrid>
-                      </DetailSection>
-
-                      <DetailSection
-                        icon={ImageIcon}
-                        title="Identité visuelle"
-                        description="Logo affiché dans les interfaces."
-                      >
-                        {ficheCompany.logo ? (
-                          <div className="flex items-center gap-3">
-                            <DetailLogoPreview logo={ficheCompany.logo} alt="Logo" size={72} />
-                            <p className="truncate text-xs text-(--nebula-muted)">
-                              {ficheCompany.logo}
-                            </p>
-                          </div>
-                        ) : (
-                          <p className="text-sm italic text-(--nebula-muted)">
-                            Aucun logo renseigné
-                          </p>
                         )}
-                      </DetailSection>
+                      </dl>
                     </div>
                   </TabsContent>
                   <TabsContent value="business-units" className="mt-0">
