@@ -5843,9 +5843,6 @@ export default function StructurePage() {
                 addGroupLoading ||
                 !addGroupForm.name.trim() ||
                 !addGroupForm.workspaceId.trim() ||
-                !addGroupForm.ape_code.trim() ||
-                !addGroupForm.siret.trim() ||
-                (addGroupForm.siret && !validateSiret(addGroupForm.siret)) ||
                 !addGroupForm.country.trim() ||
                 !isValidMonthDay(toMonthDay(addGroupForm.fiscal_year_start))
               }
