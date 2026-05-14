@@ -704,8 +704,10 @@ export default function StructurePage() {
         break;
 
       case 'editworkspace':
-        setEditworkspace((f) => ({ ...f, phone_mobile: value }));
-        setEditWorkspaceErrors((prev) => ({ ...prev, contact_phone: errorMessage }));
+        if (field) {
+          setEditworkspace((f) => ({ ...f, [field]: value }));
+          setEditWorkspaceErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
         break;
 
       case 'editGroup':
@@ -1687,13 +1689,25 @@ export default function StructurePage() {
         formData.append('description', editworkspace.description);
       }
       if (editworkspace.street) {
-        formData.append('address', editworkspace.street);
+        formData.append('street', editworkspace.street);
+      }
+      if (editworkspace.postal_code) {
+        formData.append('postal_code', editworkspace.postal_code);
+      }
+      if (editworkspace.city) {
+        formData.append('city', editworkspace.city);
+      }
+      if (editworkspace.country) {
+        formData.append('country', editworkspace.country);
+      }
+      if (editworkspace.phone_landline) {
+        formData.append('phone_landline', editworkspace.phone_landline);
+      }
+      if (editworkspace.phone_mobile) {
+        formData.append('phone_mobile', editworkspace.phone_mobile);
       }
       if (editworkspace.contact_email) {
         formData.append('contact_email', editworkspace.contact_email);
-      }
-      if (editworkspace.phone_mobile) {
-        formData.append('contact_phone', editworkspace.phone_mobile);
       }
       if (editworkspace.manager_id) {
         formData.append('manager_id', editworkspace.manager_id);
@@ -3613,7 +3627,7 @@ export default function StructurePage() {
                             type="email"
                             value={editworkspace.contact_email}
                             onChange={(e) =>
-                              handleEditEmailChange(e.target.value)
+                              setEditworkspace((f) => ({ ...f, contact_email: e.target.value }))
                             }
                             placeholder="email@exemple.com"
                             className={
