@@ -1602,17 +1602,17 @@ export default function StructurePage() {
         if (bu) {
           const updatedEditBU = {
             name: bu.name,
-            description: "",
+            description: bu.description || "",
             code: bu.code,
             activity: bu.activity || "",
             siret: bu.siret || "",
             country: bu.country || "",
-            street: "",
-            postal_code: "",
-            city: "",
-            phone_landline: "",
-            phone_mobile: "",
-            contact_email: "",
+            street: bu.street || "",
+            postal_code: bu.postal_code || "",
+            city: bu.city || "",
+            phone_landline: bu.phone_landline || "",
+            phone_mobile: bu.phone_mobile || "",
+            contact_email: bu.contact_email || "",
             logo: bu.logo || "",
           };
           console.log('Setting editBU to:', updatedEditBU); // Debug log
@@ -1863,6 +1863,9 @@ export default function StructurePage() {
     } else if (selectedNode.type === "bu") {
       const formData = new FormData();
       formData.append('name', editBU.name);
+      if (editBU.description) {
+        formData.append('description', editBU.description);
+      }
       if (editBU.code) {
         formData.append('code', editBU.code);
       }
@@ -1874,6 +1877,24 @@ export default function StructurePage() {
       }
       if (editBU.country) {
         formData.append('country', editBU.country);
+      }
+      if (editBU.street) {
+        formData.append('street', editBU.street);
+      }
+      if (editBU.postal_code) {
+        formData.append('postal_code', editBU.postal_code);
+      }
+      if (editBU.city) {
+        formData.append('city', editBU.city);
+      }
+      if (editBU.phone_landline) {
+        formData.append('phone_landline', editBU.phone_landline);
+      }
+      if (editBU.phone_mobile) {
+        formData.append('phone_mobile', editBU.phone_mobile);
+      }
+      if (editBU.contact_email) {
+        formData.append('contact_email', editBU.contact_email);
       }
       if (editBULogoFile) {
         formData.append('logo', editBULogoFile);
@@ -2355,10 +2376,17 @@ export default function StructurePage() {
           method: "POST",
           body: JSON.stringify({
             name: addBUStandaloneForm.name,
+            description: addBUStandaloneForm.description,
             code: addBUStandaloneForm.code,
             activity: addBUStandaloneForm.activity,
             siret: addBUStandaloneForm.siret,
             country: addBUStandaloneForm.country,
+            street: addBUStandaloneForm.street,
+            postal_code: addBUStandaloneForm.postal_code,
+            city: addBUStandaloneForm.city,
+            phone_landline: addBUStandaloneForm.phone_landline,
+            phone_mobile: addBUStandaloneForm.phone_mobile,
+            contact_email: addBUStandaloneForm.contact_email,
           }),
           snackbar: {
             showSuccess: true,
@@ -6408,7 +6436,7 @@ export default function StructurePage() {
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Email de contact
+                Email
               </label>
               <Input
                 type="email"
@@ -6749,7 +6777,7 @@ export default function StructurePage() {
                     onChange={(e) =>
                       setAddBUForm((f) => ({ ...f, contact_email: e.target.value }))
                     }
-                    placeholder="Email de contact"
+                    placeholder="Email"
                   />
                   {addBUErrors?.contact_email && (
                     <p className="mt-1 text-xs text-red-500">
@@ -6923,7 +6951,7 @@ export default function StructurePage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/90">
-                Email de contact
+                Email
               </label>
               <Input
                 type="email"
