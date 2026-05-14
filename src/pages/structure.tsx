@@ -5631,6 +5631,10 @@ export default function StructurePage() {
                   <TabsContent value="informations" className="mt-0">
                     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                       <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                        <dt className="text-(--nebula-muted)">Description</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheBU.description || "—"}
+                        </dd>
                         <dt className="text-(--nebula-muted)">Code</dt>
                         <dd className="font-medium text-primary">
                           {ficheBU.code || "—"}
@@ -5643,9 +5647,33 @@ export default function StructurePage() {
                         <dd className="font-medium text-primary">
                           {ficheBU.activity || "—"}
                         </dd>
+                        <dt className="text-(--nebula-muted)">Rue</dt>
+                        <dd className="font-medium text-primary sm:col-span-1">
+                          {ficheBU.street || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Code Postal</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.postal_code || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Ville</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.city || "—"}
+                        </dd>
                         <dt className="text-(--nebula-muted)">Pays</dt>
                         <dd className="font-medium text-primary">
-                          {ficheBU.country || "—"}
+                          {ficheBU.country ? getCountryName(ficheBU.country) : "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Téléphone Fixe</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.phone_landline || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Téléphone Mobile</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.phone_mobile || "—"}
+                        </dd>
+                        <dt className="text-(--nebula-muted)">Email</dt>
+                        <dd className="font-medium text-primary">
+                          {ficheBU.contact_email || "—"}
                         </dd>
                         {ficheBU.company_id && (
                           <>
