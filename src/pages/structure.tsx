@@ -687,7 +687,7 @@ export default function StructurePage() {
 
   const handlePhoneChange = (
     value: string,
-    formType: 'addworkspace' | 'editworkspace' | 'editGroup' | 'addGroup' | 'editCompany' | 'editBU' | 'addBU' | 'addBUStandalone',
+    formType: 'addworkspace' | 'editworkspace' | 'editGroup' | 'addGroup' | 'editCompany' | 'addCompany' | 'editBU' | 'addBU' | 'addBUStandalone',
     field?: 'phone_mobile' | 'phone_landline' | 'contact_phone'
   ) => {
     // Validation du téléphone
@@ -725,6 +725,13 @@ export default function StructurePage() {
       case 'editCompany':
         if (field) {
           setEditCompany((f) => ({ ...f, [field]: value }));
+          setCompanyErrors((prev) => ({ ...prev, [field]: errorMessage }));
+        }
+        break;
+
+      case 'addCompany':
+        if (field) {
+          setAddCompanyForm((f) => ({ ...f, [field]: value }));
           setCompanyErrors((prev) => ({ ...prev, [field]: errorMessage }));
         }
         break;
@@ -2028,11 +2035,8 @@ export default function StructurePage() {
       return;
     }
 
-    // Validation pour le mode standalone : un groupe est requis
-    if (!addCompanyGroupId && !finalGroupId) {
-      console.error('Un groupe est requis');
-      return;
-    }
+    // En mode standalone, le groupe est optionnel
+    // La création est possible sans groupe
 
     // Validation supplémentaire
     const normalizedCompanyFiscalYearStart = toMonthDay(addCompanyForm.fiscal_year_start);
@@ -2091,6 +2095,12 @@ export default function StructurePage() {
       }
       if (addCompanyForm.contact_email) {
         formData.append('contact_email', addCompanyForm.contact_email);
+      }
+      if (addCompanyForm.ape_code) {
+        formData.append('ape_code', addCompanyForm.ape_code);
+      }
+      if (addCompanyForm.main_activity) {
+        formData.append('main_activity', addCompanyForm.main_activity);
       }
       formData.append('size', addCompanyForm.size);
       formData.append('model', addCompanyForm.model);
@@ -6341,7 +6351,7 @@ export default function StructurePage() {
                   defaultCountry="FR"
                   value={addCompanyForm.phone_mobile}
                   onChange={(value) =>
-                    setAddCompanyForm((f) => ({ ...f, phone_mobile: value || "" }))
+                    handlePhoneChange(value || "", 'addCompany', 'phone_mobile')
                   }
                   className={companyErrors?.phone_mobile ? "border-red-500" : ""}
                   numberInputProps={{
@@ -6362,7 +6372,7 @@ export default function StructurePage() {
                   defaultCountry="FR"
                   value={addCompanyForm.phone_landline}
                   onChange={(value) =>
-                    setAddCompanyForm((f) => ({ ...f, phone_landline: value || "" }))
+                    handlePhoneChange(value || "", 'addCompany', 'phone_landline')
                   }
                   className={companyErrors?.phone_landline ? "border-red-500" : ""}
                   numberInputProps={{
@@ -6496,7 +6506,9 @@ export default function StructurePage() {
                 (addCompanyForm.siret && !validateSiret(addCompanyForm.siret)) ||
                 !addCompanyForm.ape_code.trim() ||
                 !addCompanyForm.country.trim() ||
-                !isValidMonthDay(toMonthDay(addCompanyForm.fiscal_year_start))
+                !isValidMonthDay(toMonthDay(addCompanyForm.fiscal_year_start)) ||
+                companyErrors?.phone_mobile ||
+                companyErrors?.phone_landline
               }
             >
               {addCompanyLoading ? "Création..." : "Créer"}
