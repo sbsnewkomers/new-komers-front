@@ -546,23 +546,7 @@ export default function StructurePage() {
     user?.role === "MANAGER";
   const canCreateCompany = can("companies", CRUD_ACTION.CREATE);
 
-  useEffect(() => {
-    if (!isAuthReady || user) return;
-
-    const returnTo = router.asPath || "/structure";
-    try {
-      window.localStorage.setItem("nk-return-to", returnTo);
-    } catch {
-      // ignore storage write errors
-    }
-
-    void router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`);
-  }, [isAuthReady, user, router]);
-
-  if (!isAuthReady || !user) {
-    return null;
-  }
-
+  // Move ALL hooks here before any conditional returns
   const [tree, setTree] = useState<StructureTree | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeError, setTreeError] = useState<string | null>(null);
@@ -2654,6 +2638,24 @@ export default function StructurePage() {
       setFicheCompanyDataLoading(false);
     }
   };
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthReady || user) return;
+
+    const returnTo = router.asPath || "/structure";
+    try {
+      window.localStorage.setItem("nk-return-to", returnTo);
+    } catch {
+      // ignore storage write errors
+    }
+
+    void router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+  }, [isAuthReady, user, router]);
+
+  if (!isAuthReady || !user) {
+    return null;
+  }
 
   const typeLabel =
     selectedNode?.type === "workspace"
