@@ -10,29 +10,29 @@ interface CountrySelectProps {
   disabled?: boolean;
 }
 
-export function CountrySelect({ 
-  value, 
-  onChange, 
-  placeholder = "Sélectionner un pays", 
-  disabled 
+export function CountrySelect({
+  value,
+  onChange,
+  placeholder = "Sélectionner un pays",
+  disabled
 }: CountrySelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredCountries = useMemo(() => {
     if (!searchTerm) return COUNTRIES;
-    
+
     const term = searchTerm.toLowerCase();
-    return COUNTRIES.filter(country => 
-      country.label.toLowerCase().includes(term) || 
+    return COUNTRIES.filter(country =>
+      country.label.toLowerCase().includes(term) ||
       country.code.toLowerCase().includes(term)
     );
   }, [searchTerm]);
 
   const selectedCountry = useMemo(() => {
-  return COUNTRIES.find(country => 
-    country.value === value || country.label === value
-  );
+    return COUNTRIES.find(country =>
+      country.value === value || country.label === value
+    );
   }, [value]);
 
   const handleSelect = useCallback((countryValue: string) => {
@@ -80,18 +80,16 @@ export function CountrySelect({
                     key={country.value}
                     type="button"
                     onClick={() => handleSelect(country.value)}
-                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 ${
-                      value === country.value || value === country.label
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 ${value === country.value || value === country.label
                         ? "bg-muted/80 text-(--nebula-gold-light)"
                         : "text-popover-foreground"
-                    }`}
+                      }`}
                   >
                     <Check
-                      className={`h-4 w-4 shrink-0 ${
-                        value === country.value || value === country.label 
-                        ? "text-(--nebula-gold-light)" 
-                        : "text-transparent"
-                      }`}
+                      className={`h-4 w-4 shrink-0 ${value === country.value || value === country.label
+                          ? "text-(--nebula-gold-light)"
+                          : "text-transparent"
+                        }`}
                     />
                     <div className="min-w-0 flex-1">
                       <div className="truncate">{country.label}</div>
@@ -106,7 +104,7 @@ export function CountrySelect({
           </div>
         )}
       </div>
-      
+
       {/* Fermer le dropdown quand on clique ailleurs */}
       {isOpen && (
         <div

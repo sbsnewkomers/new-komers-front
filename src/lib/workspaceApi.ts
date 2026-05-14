@@ -12,9 +12,13 @@ export interface Workspace {
     lastName?: string;
   };
   logo?: string;
-  address?: string;
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
   contact_email?: string;
-  contact_phone?: string;
+  phoneLandline?: string;
+  phoneMobile?: string;
   created_at: string;
   updated_at: string;
 }

@@ -32,6 +32,7 @@ import { SiretInput, validateSiret } from "@/components/ui/SiretInput";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { ApeCodeSelect } from "@/components/structure/ApeCodeSelect";
 import { CountrySelect } from "@/components/structure/CountrySelect";
+import { CountrySelectModal } from "@/components/structure/CountrySelectModal";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { isValidPhoneNumber } from "react-phone-number-input";
@@ -144,9 +145,13 @@ type workspaceFull = {
   name: string;
   description?: string;
   logo?: string;
-  address?: string;
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
   contact_email?: string;
-  contact_phone?: string;
+  phoneLandline?: string;
+  phoneMobile?: string;
   manager_id?: string;
   manager?: {
     id: string;
@@ -481,12 +486,12 @@ function ReadField({
         {label}
       </dt>
       <dd
-        className={`mt-1 wrap-break-word text-sm ${display ? "italic text-white/45" : "font-medium text-white"} ${mono && !display ? "font-mono tracking-tight" : ""}`}
+        className={`mt-1 wrap-break-word text-sm ${display ? "italic text-(--nebula-muted)" : "font-medium text-(--nebula-ink)"} ${mono && !display ? "font-mono tracking-tight" : ""}`}
       >
         {display ? "Non renseigné" : value}
       </dd>
       {hint && !display && (
-        <p className="mt-0.5 text-[11px] leading-snug text-white/45">{hint}</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-(--nebula-muted)">{hint}</p>
       )}
     </div>
   );
@@ -588,9 +593,13 @@ export default function StructurePage() {
     name: "",
     description: "",
     logo: undefined as string | undefined,
-    address: "",
+    street: "",
+    postalCode: "",
+    city: "",
+    country: "",
     contact_email: "",
-    contact_phone: "",
+    phoneMobile: "",
+    phoneLandline: "",
     manager_id: "",
   });
   const [addworkspaceLoading, setAddworkspaceLoading] = useState(false);
@@ -604,6 +613,8 @@ export default function StructurePage() {
     contact_email: "",
     contact_phone: "",
   });
+  const [countryModalOpen, setCountryModalOpen] = useState(false);
+  const [createCountryModalOpen, setCreateCountryModalOpen] = useState(false);
 
   // Gérer le changement de fichier logo
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -762,9 +773,13 @@ export default function StructurePage() {
     name: "",
     description: "",
     logo: undefined as string | undefined,
-    address: "",
+    street: "",
+    postalCode: "",
+    city: "",
+    country: "",
     contact_email: "",
-    contact_phone: "",
+    phoneLandline: "",
+    phoneMobile: "",
     manager_id: "",
   });
   const [editworkspaceLogoFile, setEditworkspaceLogoFile] = useState<File | null>(null);
@@ -1325,9 +1340,13 @@ export default function StructurePage() {
             name: org.name,
             description: org.description ?? "",
             logo: org.logo ?? "",
-            address: org.address ?? "",
+            street: org.street ?? "",
+            postalCode: org.postalCode ?? "",
+            city: org.city ?? "",
+            country: org.country ?? "",
             contact_email: org.contact_email ?? "",
-            contact_phone: org.contact_phone ?? "",
+            phoneLandline: org.phoneLandline ?? "",
+            phoneMobile: org.phoneMobile ?? "",
             manager_id: org.manager_id ?? "",
           });
           setEditworkspaceLogoFile(null);
@@ -1337,9 +1356,13 @@ export default function StructurePage() {
             name: node.name,
             description: "",
             logo: undefined as string | undefined,
-            address: "",
+            street: "",
+            postalCode: "",
+            city: "",
+            country: "",
             contact_email: "",
-            contact_phone: "",
+            phoneLandline: "",
+            phoneMobile: "",
             manager_id: "",
           });
           setEditworkspaceLogoFile(null);
@@ -1699,7 +1722,7 @@ export default function StructurePage() {
 
     // Valider l'email et le téléphone
     const emailValid = validateEmail(addworkspaceForm.contact_email);
-    const phoneValid = validatePhone(addworkspaceForm.contact_phone);
+    const phoneValid = validatePhone(addworkspaceForm.phoneMobile) && validatePhone(addworkspaceForm.phoneLandline);
 
     if (!emailValid || !phoneValid) {
       // Mettre à jour les erreurs
@@ -1716,9 +1739,13 @@ export default function StructurePage() {
       const formData = new FormData();
       formData.append('name', addworkspaceForm.name.trim());
       formData.append('description', addworkspaceForm.description.trim() || '');
-      formData.append('address', addworkspaceForm.address.trim() || '');
+      formData.append('street', addworkspaceForm.street.trim() || '');
+      formData.append('postalCode', addworkspaceForm.postalCode.trim() || '');
+      formData.append('city', addworkspaceForm.city.trim() || '');
+      formData.append('country', addworkspaceForm.country.trim() || '');
       formData.append('contact_email', addworkspaceForm.contact_email.trim() || '');
-      formData.append('contact_phone', addworkspaceForm.contact_phone.trim() || '');
+      formData.append('phoneMobile', addworkspaceForm.phoneMobile.trim() || '');
+      formData.append('phoneLandline', addworkspaceForm.phoneLandline.trim() || '');
 
       // Ajouter le fichier logo s'il existe
       if (logoFile) {
@@ -1738,9 +1765,13 @@ export default function StructurePage() {
         name: "",
         description: "",
         logo: undefined as string | undefined,
-        address: "",
+        street: "",
+        postalCode: "",
+        city: "",
+        country: "",
         contact_email: "",
-        contact_phone: "",
+        phoneMobile: "",
+        phoneLandline: "",
         manager_id: "",
       });
       setLogoFile(null);
@@ -3090,9 +3121,14 @@ export default function StructurePage() {
                           {editworkspace.contact_email}
                         </DetailPill>
                       )}
-                      {editworkspace.contact_phone && (
+                      {editworkspace.phoneMobile && (
                         <DetailPill icon={Phone}>
-                          {editworkspace.contact_phone}
+                          {editworkspace.phoneMobile}
+                        </DetailPill>
+                      )}
+                      {editworkspace.phoneLandline && (
+                        <DetailPill icon={Phone}>
+                          {editworkspace.phoneLandline}
                         </DetailPill>
                       )}
                     </>
@@ -3142,15 +3178,66 @@ export default function StructurePage() {
                 >
                   {editing ? (
                     <div className="space-y-4">
-                      <FieldTextarea
-                        label="Adresse"
-                        value={editworkspace.address}
+                      <Field
+                        label="Rue"
+                        value={editworkspace.street}
                         editing={editing}
                         onChange={(v) =>
-                          setEditworkspace((f) => ({ ...f, address: v }))
+                          setEditworkspace((f) => ({ ...f, street: v }))
                         }
                       />
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <Field
+                          label="Code postal"
+                          value={editworkspace.postalCode}
+                          editing={editing}
+                          onChange={(v) =>
+                            setEditworkspace((f) => ({ ...f, postalCode: v }))
+                          }
+                        />
+                        <Field
+                          label="Ville"
+                          value={editworkspace.city}
+                          editing={editing}
+                          onChange={(v) =>
+                            setEditworkspace((f) => ({ ...f, city: v }))
+                          }
+                        />
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Pays
+                          </label>
+                          {editing ? (
+                            <button
+                              type="button"
+                              onClick={() => setCountryModalOpen(true)}
+                              className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                            >
+                              <span className={editworkspace.country ? "text-foreground" : "text-muted-foreground"}>
+                                {editworkspace.country ?
+                                  (() => {
+                                    const country = COUNTRIES.find(c => c.value === editworkspace.country || c.label === editworkspace.country);
+                                    return country ? `${country.label} (${country.code})` : editworkspace.country;
+                                  })()
+                                  : "Sélectionner un pays"
+                                }
+                              </span>
+                              <Search className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                          ) : (
+                            <div className="min-h-10 flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm">
+                              {editworkspace.country ?
+                                (() => {
+                                  const country = COUNTRIES.find(c => c.value === editworkspace.country || c.label === editworkspace.country);
+                                  return country ? `${country.label} (${country.code})` : editworkspace.country;
+                                })()
+                                : "Non renseigné"
+                              }
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                             Email de contact
@@ -3176,13 +3263,40 @@ export default function StructurePage() {
                         </div>
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                            Téléphone de contact
+                            Téléphone mobile
                           </label>
                           <PhoneInput
                             international
                             countryCallingCodeEditable={false}
                             defaultCountry="FR"
-                            value={editworkspace.contact_phone}
+                            value={editworkspace.phoneMobile}
+                            onChange={(value) =>
+                              handleEditPhoneChange(value || "")
+                            }
+                            className={
+                              editWorkspaceErrors.contact_phone
+                                ? "border-red-500"
+                                : ""
+                            }
+                            numberInputProps={{
+                              className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${editWorkspaceErrors.contact_phone ? "border-red-500" : ""}`,
+                            }}
+                          />
+                          {editWorkspaceErrors.contact_phone && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {editWorkspaceErrors.contact_phone}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Téléphone fixe
+                          </label>
+                          <PhoneInput
+                            international
+                            countryCallingCodeEditable={false}
+                            defaultCountry="FR"
+                            value={editworkspace.phoneLandline}
                             onChange={(value) =>
                               handleEditPhoneChange(value || "")
                             }
@@ -3206,10 +3320,21 @@ export default function StructurePage() {
                   ) : (
                     <DetailGrid>
                       <ReadField
-                        label="Adresse"
+                        label="Rue"
                         icon={MapPin}
-                        value={editworkspace.address}
-                        full
+                        value={editworkspace.street}
+                      />
+                      <ReadField
+                        label="Code postal"
+                        value={editworkspace.postalCode}
+                      />
+                      <ReadField
+                        label="Ville"
+                        value={editworkspace.city}
+                      />
+                      <ReadField
+                        label="Pays"
+                        value={editworkspace.country}
                       />
                       <ReadField
                         label="Email"
@@ -3217,9 +3342,14 @@ export default function StructurePage() {
                         value={editworkspace.contact_email}
                       />
                       <ReadField
-                        label="Téléphone"
+                        label="Téléphone mobile"
                         icon={Phone}
-                        value={editworkspace.contact_phone}
+                        value={editworkspace.phoneMobile}
+                      />
+                      <ReadField
+                        label="Téléphone fixe"
+                        icon={Phone}
+                        value={editworkspace.phoneLandline}
                       />
                     </DetailGrid>
                   )}
@@ -3261,7 +3391,7 @@ export default function StructurePage() {
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-white/45">
+                    <p className="text-sm italic text-(--nebula-muted)">
                       Aucun logo renseigné
                     </p>
                   )}
@@ -5625,7 +5755,7 @@ export default function StructurePage() {
                     description: e.target.value,
                   }))
                 }
-                placeholder="Description de l&apos;workspace"
+                placeholder="Description du workspace"
                 rows={3}
               />
             </div>
@@ -5655,15 +5785,60 @@ export default function StructurePage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/90">
-                Adresse
+                Rue
               </label>
               <Input
-                value={addworkspaceForm.address}
+                value={addworkspaceForm.street}
                 onChange={(e) =>
-                  setAddworkspaceForm((f) => ({ ...f, address: e.target.value }))
+                  setAddworkspaceForm((f) => ({ ...f, street: e.target.value }))
                 }
-                placeholder="Adresse de l&apos;workspace"
+                placeholder="Rue"
               />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white/90">
+                Code postal
+              </label>
+              <Input
+                value={addworkspaceForm.postalCode}
+                onChange={(e) =>
+                  setAddworkspaceForm((f) => ({ ...f, postalCode: e.target.value }))
+                }
+                placeholder="Code postal"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white/90">
+                Ville
+              </label>
+              <Input
+                value={addworkspaceForm.city}
+                onChange={(e) =>
+                  setAddworkspaceForm((f) => ({ ...f, city: e.target.value }))
+                }
+                placeholder="Ville"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white/90">
+                Pays
+              </label>
+              <button
+                type="button"
+                onClick={() => setCreateCountryModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+              >
+                <span className={addworkspaceForm.country ? "text-foreground" : "text-muted-foreground"}>
+                  {addworkspaceForm.country ?
+                    (() => {
+                      const country = COUNTRIES.find(c => c.value === addworkspaceForm.country || c.label === addworkspaceForm.country);
+                      return country ? `${country.label} (${country.code})` : addworkspaceForm.country;
+                    })()
+                    : "Sélectionner un pays"
+                  }
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/90">
@@ -5680,24 +5855,45 @@ export default function StructurePage() {
                 <p className="text-xs text-red-500">{workspaceErrors.contact_email}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-white/90">
-                Téléphone de contact
-              </label>
-              <PhoneInput
-                international
-                countryCallingCodeEditable={false}
-                defaultCountry="FR"
-                value={addworkspaceForm.contact_phone}
-                onChange={(value) => handlePhoneChange(value || "")}
-                className={workspaceErrors.contact_phone ? "border-red-500" : ""}
-                numberInputProps={{
-                  className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.contact_phone ? "border-red-500" : ""}`
-                }}
-              />
-              {workspaceErrors.contact_phone && (
-                <p className="text-xs text-red-500">{workspaceErrors.contact_phone}</p>
-              )}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/90">
+                  Téléphone mobile
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="FR"
+                  value={addworkspaceForm.phoneMobile}
+                  onChange={(value) => handlePhoneChange(value || "")}
+                  className={workspaceErrors.contact_phone ? "border-red-500" : ""}
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.contact_phone ? "border-red-500" : ""}`
+                  }}
+                />
+                {workspaceErrors.contact_phone && (
+                  <p className="text-xs text-red-500">{workspaceErrors.contact_phone}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/90">
+                  Téléphone fixe
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="FR"
+                  value={addworkspaceForm.phoneLandline}
+                  onChange={(value) => handlePhoneChange(value || "")}
+                  className={workspaceErrors.contact_phone ? "border-red-500" : ""}
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${workspaceErrors.contact_phone ? "border-red-500" : ""}`
+                  }}
+                />
+                {workspaceErrors.contact_phone && (
+                  <p className="text-xs text-red-500">{workspaceErrors.contact_phone}</p>
+                )}
+              </div>
             </div>
           </DialogBody>
           <DialogFooter>
@@ -5722,6 +5918,28 @@ export default function StructurePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de sélection de pays */}
+      <CountrySelectModal
+        open={countryModalOpen}
+        onOpenChange={setCountryModalOpen}
+        value={editworkspace.country}
+        onChange={(value) =>
+          setEditworkspace((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays du workspace"
+      />
+
+      {/* Modal de sélection de pays pour la création */}
+      <CountrySelectModal
+        open={createCountryModalOpen}
+        onOpenChange={setCreateCountryModalOpen}
+        value={addworkspaceForm.country}
+        onChange={(value) =>
+          setAddworkspaceForm((f) => ({ ...f, country: value }))
+        }
+        title="Sélectionner le pays du workspace"
+      />
 
     </AppLayout>
   );
