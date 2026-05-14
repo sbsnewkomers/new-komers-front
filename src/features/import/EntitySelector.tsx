@@ -3,6 +3,7 @@ import { Building, Users, Briefcase, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchStructureTree } from "@/lib/structureApi";
 import { apiFetch } from "@/lib/apiClient";
+import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 
 interface Entity {
   id: string;
@@ -47,17 +48,29 @@ export function EntitySelector({
   includeDescendants,
   onIncludeDescendantsChange,
 }: EntitySelectorProps) {
+  const { user } = usePermissionsContext();
+  const [workspaces, setWorkspaces] = useState<Entity[]>([]);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>('');
   const [groups, setGroups] = useState<Entity[]>([]);
   const [companies, setCompanies] = useState<Entity[]>([]);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingData, setIsCheckingData] = useState(false);
 
+  // Vérifier si l'utilisateur est super admin ou admin
+  const isSuperAdminOrAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
+
   useEffect(() => {
     const fetchEntities = async () => {
       setIsLoading(true);
       try {
         const tree = await fetchStructureTree();
+
+        // Charger les workspaces pour les super admin/admin
+        if (isSuperAdminOrAdmin && tree.workspaces?.length) {
+          const wsList = tree.workspaces.map(ws => ({ id: ws.id, name: ws.name }));
+          setWorkspaces(wsList);
+        }
 
         const allGroups: Entity[] = [];
         const allCompanies: Entity[] = [];
@@ -70,16 +83,21 @@ export function EntitySelector({
           }
         };
 
-        if (tree.workspaces?.length) {
-          for (const ws of tree.workspaces) {
-            for (const group of ws.groups ?? []) {
-              allGroups.push({ id: group.id, name: group.name });
-              for (const company of group.companies ?? []) collectCompany(company);
-            }
-            for (const company of ws.standaloneCompanies ?? []) collectCompany(company);
+        // Pour les super admin/admin, filtrer par workspace sélectionné
+        // Pour les autres, utiliser toutes les entités disponibles
+        const workspacesToProcess = isSuperAdminOrAdmin && selectedWorkspaceId
+          ? tree.workspaces?.filter(ws => ws.id === selectedWorkspaceId) || []
+          : tree.workspaces || [];
+
+        for (const ws of workspacesToProcess) {
+          for (const group of ws.groups ?? []) {
+            allGroups.push({ id: group.id, name: group.name });
+            for (const company of group.companies ?? []) collectCompany(company);
           }
+          for (const company of ws.standaloneCompanies ?? []) collectCompany(company);
         }
 
+        // Ajouter les entités globales (non workspace)
         if (tree.groups?.length) {
           for (const group of tree.groups) {
             allGroups.push({ id: group.id, name: group.name });
@@ -99,12 +117,15 @@ export function EntitySelector({
         setGroups([]);
         setCompanies([]);
         setBusinessUnits([]);
+        if (isSuperAdminOrAdmin) {
+          setWorkspaces([]);
+        }
       } finally {
         setIsLoading(false);
       }
     };
     fetchEntities();
-  }, []);
+  }, [selectedWorkspaceId, isSuperAdminOrAdmin]);
 
   const selectedLabel = () => {
     if (!selectedEntityId || !selectedEntityType) return null;
@@ -160,146 +181,292 @@ export function EntitySelector({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Type d'entité */}
-        <div>
-          <label className="block text-xs font-medium mb-1.5">
-            Type d&apos;entité
-          </label>
-          <div className="flex gap-2">
-            {typeButtons.map(({ type, label, icon, extraDisabled }) => {
-              const isActive = selectedEntityType === type;
-              const isDisabled = disabled || extraDisabled;
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => {
-                    if (isDisabled) return;
-                    if (isActive) {
-                      // Reclique sur le type actif → reset complet
-                      onEntityChange('', type);
-                      onHasDataChange(null);
-                      onPeriodChange('', '');
-                    } else {
-                      onEntityChange('', type);
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Pour Super Admin et Admin : 3 selects sur la même ligne */}
+        {isSuperAdminOrAdmin ? (
+          <>
+            {/* Sélection du workspace */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5">
+                Workspace
+              </label>
+              <select
+                value={selectedWorkspaceId}
+                onChange={(e) => {
+                  setSelectedWorkspaceId(e.target.value);
+                  // Reset la sélection d'entité quand on change de workspace
+                  onEntityChange('', selectedEntityType || 'Group');
+                  onHasDataChange(null);
+                  onPeriodChange('', '');
+                }}
+                disabled={disabled || isLoading}
+                className={[
+                  "w-full px-3 py-2 text-[13px] rounded-xl transition-all",
+                  "nebula-glass border border-white/10 text-white",
+                  "hover:border-white/15 hover:bg-white/5",
+                  "focus-visible:outline-none",
+                  disabled || isLoading
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer",
+                ].join(" ")}
+              >
+                <option value="" className="">
+                  {isLoading ? 'Chargement...' : 'Sélectionner un workspace'}
+                </option>
+                {workspaces.map(ws => (
+                  <option key={ws.id} value={ws.id}>{ws.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Type d'entité */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5">
+                Type d&apos;entité
+              </label>
+              <select
+                value={selectedEntityType || ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value && !disabled && (!isSuperAdminOrAdmin || selectedWorkspaceId)) {
+                    // Reset la sélection d'entité quand on change de type
+                    onEntityChange('', value as 'Group' | 'Company' | 'BusinessUnit');
+                    onHasDataChange(null);
+                    onPeriodChange('', '');
+                  }
+                }}
+                disabled={disabled || isLoading || (isSuperAdminOrAdmin && !selectedWorkspaceId)}
+                className={[
+                  "w-full px-3 py-2 text-[13px] rounded-xl transition-all",
+                  "nebula-glass border border-white/10 text-white",
+                  "hover:border-white/15 hover:bg-white/5",
+                  "focus-visible:outline-none",
+                  disabled || isLoading || (isSuperAdminOrAdmin && !selectedWorkspaceId)
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer",
+                ].join(" ")}
+              >
+                <option value="" className="">
+                  {isLoading
+                    ? 'Chargement...'
+                    : isSuperAdminOrAdmin && !selectedWorkspaceId
+                      ? "Sélectionnez d'abord un workspace"
+                      : 'Sélectionner un type'}
+                </option>
+                {typeButtons.map(({ type, label }) => (
+                  <option key={type} value={type}>{label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Entité spécifique */}
+            <div>
+              <label className="block text-xs font-medium text-(--nebula-muted) mb-1.5">
+                {selectedEntityType === 'Company'
+                  ? 'Entreprise'
+                  : selectedEntityType === 'Group'
+                    ? 'Groupe'
+                    : selectedEntityType === 'BusinessUnit'
+                      ? 'Business Unit'
+                      : 'Entité'}
+              </label>
+              <select
+                value={selectedEntityId || ''}
+                onChange={async (e) => {
+                  const value = e.target.value;
+                  if (value && selectedEntityType && !disabled) {
+                    let selectedEntity: Entity | BusinessUnit | undefined;
+                    if (selectedEntityType === 'Company')
+                      selectedEntity = companies.find(c => c.id === value);
+                    else if (selectedEntityType === 'Group')
+                      selectedEntity = groups.find(g => g.id === value);
+                    else if (selectedEntityType === 'BusinessUnit')
+                      selectedEntity = businessUnits.find(b => b.id === value);
+
+                    onEntityChange(value, selectedEntityType, selectedEntity);
+
+                    setIsCheckingData(true);
+                    onHasDataChange(null);
+                    onPeriodChange('', '');
+
+                    try {
+                      const response = await apiFetch<{ hasData: boolean }>(
+                        `/generic-import/entityType/${value}/has-data?entityType=${selectedEntityType}`,
+                        { snackbar: { showSuccess: false, showError: false } }
+                      );
+                      onHasDataChange(response.hasData);
+                    } catch {
+                      onHasDataChange(false);
+                    } finally {
+                      setIsCheckingData(false);
                     }
-                  }}
-                  disabled={isDisabled}
-                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-all ${isDisabled
-                    ? 'opacity-50 cursor-not-allowed bg-white/5 border-white/10 text-(--nebula-muted)'
-                    : isActive
-                      ? 'bg-white/10 border-(--nebula-gold-light)/40 text-(--nebula-gold-light) font-medium ring-1 ring-(--nebula-gold-light)/25 cursor-pointer'
-                      : 'bg-white/5 border-white/10 text-(--nebula-muted) hover:bg-white/10 hover:text-white cursor-pointer'
-                    }`}
-                >
-                  {icon}
-                  {label}
-                  {isActive && (
-                    <span className="ml-1 text-xs text-white/50">✕</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+                  }
+                }}
+                disabled={disabled || !selectedEntityType || isLoading || (isSuperAdminOrAdmin && !selectedWorkspaceId)}
+                className={[
+                  "w-full px-3 py-2 text-[13px] rounded-xl transition-all",
+                  "nebula-glass border border-white/10 text-white",
+                  "hover:border-white/15 hover:bg-white/5",
+                  "focus-visible:outline-none",
+                  disabled || !selectedEntityType || isLoading || (isSuperAdminOrAdmin && !selectedWorkspaceId)
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer",
+                ].join(" ")}
+              >
+                <option value="" className="">
+                  {isLoading
+                    ? 'Chargement...'
+                    : !selectedEntityType
+                      ? "Sélectionnez d'abord le type"
+                      : isSuperAdminOrAdmin && !selectedWorkspaceId
+                        ? "Sélectionnez d'abord un workspace"
+                        : selectedEntityType === 'Company'
+                          ? 'Sélectionner une entreprise'
+                          : selectedEntityType === 'Group'
+                            ? 'Sélectionner un groupe'
+                            : 'Sélectionner une BU'}
+                </option>
+                {selectedEntityType === 'Company' &&
+                  companies.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                {selectedEntityType === 'Group' &&
+                  groups.map(g => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                {selectedEntityType === 'BusinessUnit' &&
+                  businessUnits.map(bu => (
+                    <option key={bu.id} value={bu.id}>{bu.name}</option>
+                  ))}
+              </select>
+            </div>
+          </>
+        ) : (
+          /* Pour les autres rôles : Type d'entité + Entité sur la même ligne */
+          <>
+            {/* Type d'entité */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5">
+                Type d&apos;entité
+              </label>
+              <select
+                value={selectedEntityType || ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value && !disabled) {
+                    // Reset la sélection d'entité quand on change de type
+                    onEntityChange('', value as 'Group' | 'Company' | 'BusinessUnit');
+                    onHasDataChange(null);
+                    onPeriodChange('', '');
+                  }
+                }}
+                disabled={disabled || isLoading}
+                className={[
+                  "w-full px-3 py-2 text-[13px] rounded-xl transition-all",
+                  "nebula-glass border border-white/10 text-white",
+                  "hover:border-white/15 hover:bg-white/5",
+                  "focus-visible:outline-none",
+                  disabled || isLoading
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer",
+                ].join(" ")}
+              >
+                <option value="" className="">
+                  {isLoading ? 'Chargement...' : 'Sélectionner un type'}
+                </option>
+                {typeButtons.map(({ type, label }) => (
+                  <option key={type} value={type}>{label}</option>
+                ))}
+              </select>
+            </div>
 
-        {/* Entité spécifique */}
-        <div>
-          <label className="block text-xs font-medium text-(--nebula-muted) mb-1.5">
-            {selectedEntityType === 'Company'
-              ? 'Entreprise'
-              : selectedEntityType === 'Group'
-                ? 'Groupe'
-                : selectedEntityType === 'BusinessUnit'
-                  ? 'Business Unit'
-                  : 'Entité'}
-          </label>
-          <select
-            value={selectedEntityId || ''}
-            onChange={async (e) => {
-              const value = e.target.value;
-              if (value && selectedEntityType && !disabled) {
-                let selectedEntity: Entity | BusinessUnit | undefined;
-                if (selectedEntityType === 'Company')
-                  selectedEntity = companies.find(c => c.id === value);
-                else if (selectedEntityType === 'Group')
-                  selectedEntity = groups.find(g => g.id === value);
-                else if (selectedEntityType === 'BusinessUnit')
-                  selectedEntity = businessUnits.find(b => b.id === value);
+            {/* Entité spécifique */}
+            <div>
+              <label className="block text-xs font-medium text-(--nebula-muted) mb-1.5">
+                {selectedEntityType === 'Company'
+                  ? 'Entreprise'
+                  : selectedEntityType === 'Group'
+                    ? 'Groupe'
+                    : selectedEntityType === 'BusinessUnit'
+                      ? 'Business Unit'
+                      : 'Entité'}
+              </label>
+              <select
+                value={selectedEntityId || ''}
+                onChange={async (e) => {
+                  const value = e.target.value;
+                  if (value && selectedEntityType && !disabled) {
+                    let selectedEntity: Entity | BusinessUnit | undefined;
+                    if (selectedEntityType === 'Company')
+                      selectedEntity = companies.find(c => c.id === value);
+                    else if (selectedEntityType === 'Group')
+                      selectedEntity = groups.find(g => g.id === value);
+                    else if (selectedEntityType === 'BusinessUnit')
+                      selectedEntity = businessUnits.find(b => b.id === value);
 
-                onEntityChange(value, selectedEntityType, selectedEntity);
+                    onEntityChange(value, selectedEntityType, selectedEntity);
 
-                setIsCheckingData(true);
-                onHasDataChange(null);
-                onPeriodChange('', '');
+                    setIsCheckingData(true);
+                    onHasDataChange(null);
+                    onPeriodChange('', '');
 
-                try {
-                  const response = await apiFetch<{ hasData: boolean }>(
-                    `/generic-import/entityType/${value}/has-data?entityType=${selectedEntityType}`,
-                    { snackbar: { showSuccess: false, showError: false } }
-                  );
-                  onHasDataChange(response.hasData);
-                } catch {
-                  onHasDataChange(false);
-                } finally {
-                  setIsCheckingData(false);
-                }
-              }
-            }}
-            disabled={disabled || !selectedEntityType || isLoading}
-            className={[
-              "w-full px-3 py-2 text-[13px] rounded-xl transition-all",
-              "nebula-glass border border-white/10 text-white",
-              "hover:border-white/15 hover:bg-white/5",
-              "focus-visible:outline-none",
-              disabled || !selectedEntityType || isLoading
-                ? "cursor-not-allowed opacity-50"
-                : "cursor-pointer",
-            ].join(" ")}
-          >
-            <option value="" className="">
-              {isLoading
-                ? 'Chargement...'
-                : !selectedEntityType
-                  ? "Sélectionnez d'abord le type"
-                  : selectedEntityType === 'Company'
-                    ? 'Sélectionner une entreprise'
-                    : selectedEntityType === 'Group'
-                      ? 'Sélectionner un groupe'
-                      : 'Sélectionner une BU'}
-            </option>
-            {selectedEntityType === 'Company' &&
-              companies.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            {selectedEntityType === 'Group' &&
-              groups.map(g => (
-                <option key={g.id} value={g.id}>{g.name}</option>
-              ))}
-            {selectedEntityType === 'BusinessUnit' &&
-              businessUnits.map(bu => (
-                <option key={bu.id} value={bu.id}>{bu.name}</option>
-              ))}
-          </select>
-        </div>
+                    try {
+                      const response = await apiFetch<{ hasData: boolean }>(
+                        `/generic-import/entityType/${value}/has-data?entityType=${selectedEntityType}`,
+                        { snackbar: { showSuccess: false, showError: false } }
+                      );
+                      onHasDataChange(response.hasData);
+                    } catch {
+                      onHasDataChange(false);
+                    } finally {
+                      setIsCheckingData(false);
+                    }
+                  }
+                }}
+                disabled={disabled || !selectedEntityType || isLoading}
+                className={[
+                  "w-full px-3 py-2 text-[13px] rounded-xl transition-all",
+                  "nebula-glass border border-white/10 text-white",
+                  "hover:border-white/15 hover:bg-white/5",
+                  "focus-visible:outline-none",
+                  disabled || !selectedEntityType || isLoading
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer",
+                ].join(" ")}
+              >
+                <option value="" className="">
+                  {isLoading
+                    ? 'Chargement...'
+                    : !selectedEntityType
+                      ? "Sélectionnez d'abord le type"
+                      : selectedEntityType === 'Company'
+                        ? 'Sélectionner une entreprise'
+                        : selectedEntityType === 'Group'
+                          ? 'Sélectionner un groupe'
+                          : 'Sélectionner une BU'}
+                </option>
+                {selectedEntityType === 'Company' &&
+                  companies.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                {selectedEntityType === 'Group' &&
+                  groups.map(g => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                {selectedEntityType === 'BusinessUnit' &&
+                  businessUnits.map(bu => (
+                    <option key={bu.id} value={bu.id}>{bu.name}</option>
+                  ))}
+              </select>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Entité sélectionnée — message de confirmation */}
       {selectedEntityId && selectedEntityType && (
-        <div className="
-          mt-3 flex items-center gap-2 text-xs
-          text-emerald-900
-          border border-emerald-400
-          bg-emerald-100
-          p-2 rounded-xl
-        ">
-          <div className="
-            rounded-full
-            bg-white dark:bg-emerald-500/10
-            border border-emerald-400
-            p-1.5
-          ">
+        <div className="mt-3 flex items-center gap-2 text-xs text-emerald-900 border border-emerald-400 bg-emerald-100 p-2 rounded-xl">
+          <div className="rounded-full bg-white dark:bg-emerald-500/10 border border-emerald-400 p-1.5">
             <Building className="h-4 w-4 text-emerald-400 dark:text-black" />
           </div>
           <span>
