@@ -103,7 +103,6 @@ import {
   Trash2,
   ExternalLink,
   BadgeCheck,
-  Search,
 } from "lucide-react";
 import {
   fetchShareholdersByCompany,
