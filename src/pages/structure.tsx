@@ -103,6 +103,7 @@ import {
   Trash2,
   ExternalLink,
   BadgeCheck,
+  Search,
 } from "lucide-react";
 import {
   fetchShareholdersByCompany,
@@ -7824,21 +7825,38 @@ function FieldCountry({
   editing: boolean;
   onChange: (v: string) => void;
 }) {
+  const [modalOpen, setModalOpen] = useState(false);
+
   return (
-    <div>
-      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-        {label}
-      </label>
-      {editing ? (
-        <CountrySelect
-          value={value}
-          onChange={onChange}
-          placeholder="Sélectionner un pays"
-        />
-      ) : (
-        <p className="text-sm font-medium text-primary">{value || "—"}</p>
-      )}
-    </div>
+    <>
+      <div>
+        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+          {label}
+        </label>
+        {editing ? (
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+          >
+            <span className={value ? "text-foreground" : "text-muted-foreground"}>
+              {value ? getCountryWithCode(value) : "Sélectionner un pays"}
+            </span>
+            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+          </button>
+        ) : (
+          <p className="text-sm font-medium text-primary">{value ? getCountryWithCode(value) : "—"}</p>
+        )}
+      </div>
+
+      <CountrySelectModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        value={value}
+        onChange={onChange}
+        title={`Sélectionner un pays - ${label}`}
+      />
+    </>
   );
 }
 
