@@ -14,23 +14,64 @@ export type ShareholderOwnerKind =
   | "COMPANY_LINKED"
   | "COMPANY_EXTERNAL";
 
+/** Adresse + téléphones (partagé personne / société externe). */
+export type ExternalContactFields = {
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
+  phoneLandline?: string;
+  phoneMobile?: string;
+};
+
 /** Champs personne externe (formulaire camelCase). */
 export type ExternalPersonInput = {
   lastName: string;
   firstName: string;
-  address?: string;
   email?: string;
-  phone?: string;
-};
+} & ExternalContactFields;
 
 /** Champs société externe (formulaire camelCase). */
 export type ExternalCompanyInput = {
   companyName: string;
   siret?: string;
   email?: string;
-  phone?: string;
-  address?: string;
-};
+} & ExternalContactFields;
+
+export const emptyExternalContactFields = (): ExternalContactFields => ({
+  street: "",
+  postalCode: "",
+  city: "",
+  country: "",
+  phoneLandline: "",
+  phoneMobile: "",
+});
+
+function contactFieldsToApi(c: ExternalContactFields): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (c.street?.trim()) out.street = c.street.trim();
+  if (c.postalCode?.trim()) out.postal_code = c.postalCode.trim();
+  if (c.city?.trim()) out.city = c.city.trim();
+  if (c.country?.trim()) out.country = c.country.trim();
+  if (c.phoneLandline?.trim()) out.phone_landline = c.phoneLandline.trim();
+  if (c.phoneMobile?.trim()) out.phone_mobile = c.phoneMobile.trim();
+  return out;
+}
+
+function parseExternalContactFromRecord(r: Record<string, unknown>): ExternalContactFields {
+  const street =
+    String(r.street ?? r.address ?? "").trim() || undefined;
+  const postalCode =
+    String(r.postalCode ?? r.postal_code ?? "").trim() || undefined;
+  const city = String(r.city ?? "").trim() || undefined;
+  const country = String(r.country ?? "").trim() || undefined;
+  const phoneLandline =
+    String(r.phoneLandline ?? r.phone_landline ?? "").trim() || undefined;
+  const legacyPhone = String(r.phone ?? "").trim();
+  const phoneMobile =
+    String(r.phoneMobile ?? r.phone_mobile ?? legacyPhone).trim() || undefined;
+  return { street, postalCode, city, country, phoneLandline, phoneMobile };
+}
 
 /** Utilisateur plateforme (réponse API enrichie). */
 export type ShareholderPlatformUser = {
@@ -76,23 +117,33 @@ export type ShareholderFormValues = {
 };
 
 function trimPerson(e: ExternalPersonInput): ExternalPersonInput {
+  const contact = contactFieldsToApi(e);
   return {
     lastName: e.lastName.trim(),
     firstName: e.firstName.trim(),
-    ...(e.address?.trim() ? { address: e.address.trim() } : {}),
     ...(e.email?.trim() ? { email: e.email.trim() } : {}),
-    ...(e.phone?.trim() ? { phone: e.phone.trim() } : {}),
+    street: contact.street,
+    postalCode: contact.postal_code,
+    city: contact.city,
+    country: contact.country,
+    phoneLandline: contact.phone_landline,
+    phoneMobile: contact.phone_mobile,
   };
 }
 
 function trimCompany(e: ExternalCompanyInput): ExternalCompanyInput {
   const siretDigits = e.siret?.replace(/\D/g, "") ?? "";
+  const contact = contactFieldsToApi(e);
   return {
     companyName: e.companyName.trim(),
     ...(siretDigits.length ? { siret: siretDigits } : {}),
     ...(e.email?.trim() ? { email: e.email.trim() } : {}),
-    ...(e.phone?.trim() ? { phone: e.phone.trim() } : {}),
-    ...(e.address?.trim() ? { address: e.address.trim() } : {}),
+    street: contact.street,
+    postalCode: contact.postal_code,
+    city: contact.city,
+    country: contact.country,
+    phoneLandline: contact.phone_landline,
+    phoneMobile: contact.phone_mobile,
   };
 }
 
@@ -118,8 +169,7 @@ export function toCreateShareholderInput(v: Omit<ShareholderFormValues, "id">): 
         last_name: e.lastName,
         first_name: e.firstName,
         ...(e.email ? { contact_email: e.email } : {}),
-        ...(e.phone ? { phone: e.phone } : {}),
-        ...(e.address ? { street: e.address } : {}),
+        ...contactFieldsToApi(e),
       };
     }
     case "COMPANY_EXTERNAL": {
@@ -130,8 +180,7 @@ export function toCreateShareholderInput(v: Omit<ShareholderFormValues, "id">): 
         company_name: c.companyName,
         ...(c.siret ? { siret: c.siret } : {}),
         ...(c.email ? { contact_email: c.email } : {}),
-        ...(c.phone ? { phone: c.phone } : {}),
-        ...(c.address ? { street: c.address } : {}),
+        ...contactFieldsToApi(c),
       };
     }
   }
@@ -179,9 +228,8 @@ export function normalizeShareholderDto(raw: unknown): ShareholderDto {
       externalPerson = {
         firstName: fn,
         lastName: ln,
-        address: String(epR.address ?? epR.street ?? "").trim() || undefined,
         email: String(epR.email ?? epR.contact_email ?? "").trim() || undefined,
-        phone: String(epR.phone ?? "").trim() || undefined,
+        ...parseExternalContactFromRecord(epR),
       };
     }
   }
@@ -197,8 +245,7 @@ export function normalizeShareholderDto(raw: unknown): ShareholderDto {
         companyName,
         ...(siretRaw ? { siret: siretRaw } : {}),
         email: String(ecR.email ?? ecR.contact_email ?? "").trim() || undefined,
-        phone: String(ecR.phone ?? "").trim() || undefined,
-        address: String(ecR.address ?? ecR.street ?? "").trim() || undefined,
+        ...parseExternalContactFromRecord(ecR),
       };
     }
   }
@@ -257,11 +304,31 @@ export function getShareholderSearchText(s: ShareholderDto): string {
   }
   const ep = n.externalPerson;
   if (ep) {
-    parts.push(ep.firstName, ep.lastName, ep.email ?? "", ep.phone ?? "", ep.address ?? "");
+    parts.push(
+      ep.firstName,
+      ep.lastName,
+      ep.email ?? "",
+      ep.street ?? "",
+      ep.postalCode ?? "",
+      ep.city ?? "",
+      ep.country ?? "",
+      ep.phoneLandline ?? "",
+      ep.phoneMobile ?? "",
+    );
   }
   const ec = n.externalCompany;
   if (ec) {
-    parts.push(ec.companyName, ec.siret ?? "", ec.email ?? "", ec.phone ?? "", ec.address ?? "");
+    parts.push(
+      ec.companyName,
+      ec.siret ?? "",
+      ec.email ?? "",
+      ec.street ?? "",
+      ec.postalCode ?? "",
+      ec.city ?? "",
+      ec.country ?? "",
+      ec.phoneLandline ?? "",
+      ec.phoneMobile ?? "",
+    );
   }
   (n.companies ?? []).forEach((c) => {
     if (c.name) parts.push(c.name);

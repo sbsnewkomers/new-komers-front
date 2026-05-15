@@ -43,7 +43,7 @@ export default function ShareholdersPage() {
 
   const [users, setUsers] = useState<UserItem[]>([]);
   const [formMetaLoaded, setFormMetaLoaded] = useState(false);
-  const companiesHook = useCompanies();
+  const { list: companiesList, fetchList: fetchCompaniesList } = useCompanies();
 
   const [formOpen, setFormOpen] = useState(false);
   const [formInitial, setFormInitial] = useState<Partial<ShareholderFormValues> | undefined>();
@@ -72,29 +72,25 @@ export default function ShareholdersPage() {
     void loadShareholdersOnly();
   }, [loadShareholdersOnly]);
 
-  /** Listes utilisateurs / entreprises pour le formulaire uniquement (lazy). */
+  /** Listes utilisateurs / entreprises pour le formulaire (lazy, une seule fois). */
   useEffect(() => {
     if (!formOpen || formMetaLoaded) return;
-    let cancelled = false;
+
     void (async () => {
       try {
-        const [us] = await Promise.all([fetchUsers(), companiesHook.fetchList()]);
-        if (!cancelled) {
-          setUsers(us);
-          setFormMetaLoaded(true);
-        }
+        const [us] = await Promise.all([fetchUsers(), fetchCompaniesList()]);
+        setUsers(us);
       } catch {
-        if (!cancelled) setFormMetaLoaded(true);
+        /* snackbar / erreur globale */
+      } finally {
+        setFormMetaLoaded(true);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [formOpen, formMetaLoaded, companiesHook]);
+  }, [formOpen, formMetaLoaded, fetchCompaniesList]);
 
   const companyOptions = useMemo(
-    () => (companiesHook.list ?? []).map((c) => ({ id: c.id, name: c.name })),
-    [companiesHook.list],
+    () => (companiesList ?? []).map((c) => ({ id: c.id, name: c.name })),
+    [companiesList],
   );
 
   const userOptionsForDialog = useMemo(
@@ -123,16 +119,24 @@ export default function ShareholdersPage() {
     const emptyPerson = {
       lastName: "",
       firstName: "",
-      address: "",
       email: "",
-      phone: "",
+      street: "",
+      postalCode: "",
+      city: "",
+      country: "",
+      phoneLandline: "",
+      phoneMobile: "",
     };
     const emptyCo = {
       companyName: "",
       siret: "",
       email: "",
-      phone: "",
-      address: "",
+      street: "",
+      postalCode: "",
+      city: "",
+      country: "",
+      phoneLandline: "",
+      phoneMobile: "",
     };
     if (s.ownerType === "USER") {
       setFormInitial({

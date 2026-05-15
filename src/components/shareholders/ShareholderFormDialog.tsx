@@ -18,6 +18,8 @@ import type {
   ExternalPersonInput,
   ExternalCompanyInput,
 } from "@/lib/shareholdersApi";
+import { emptyExternalContactFields } from "@/lib/shareholdersApi";
+import { ExternalPartyContactFields } from "@/components/shareholders/ExternalPartyContactFields";
 
 export type { ShareholderFormValues, ShareholderOwnerKind } from "@/lib/shareholdersApi";
 
@@ -27,17 +29,15 @@ type CompanyOption = { id: string; name: string };
 const emptyExternal: ExternalPersonInput = {
   lastName: "",
   firstName: "",
-  address: "",
   email: "",
-  phone: "",
+  ...emptyExternalContactFields(),
 };
 
 const emptyExternalCompany: ExternalCompanyInput = {
   companyName: "",
   siret: "",
   email: "",
-  phone: "",
-  address: "",
+  ...emptyExternalContactFields(),
 };
 
 type Props = {
@@ -202,19 +202,26 @@ export function ShareholderFormDialog({
   );
   const [companySearch, setCompanySearch] = useState("");
 
+  const initialId = initial?.id;
+  const initialOwnerKind = initial?.ownerKind;
+  const initialOwnerId = initial?.ownerId;
+  const initialPercentage = initial?.percentage;
+  const initialCompanyIdsKey = (initial?.companyIds ?? []).join(",");
+
   useEffect(() => {
-    if (open) {
-      setOwnerKind(initial?.ownerKind ?? "USER_LINKED");
-      setOwnerId(initial?.ownerId ?? "");
-      setExternal({ ...emptyExternal, ...initial?.externalPerson });
-      setExternalCompany({ ...emptyExternalCompany, ...initial?.externalCompany });
-      setPercentage(initial?.percentage?.toString() ?? "");
-      setSelectedCompanyIds(
-        initial?.companyIds ?? (lockedCompanyId ? [lockedCompanyId] : []),
-      );
-      setCompanySearch("");
-    }
-  }, [open, initial, lockedCompanyId]);
+    if (!open) return;
+    setOwnerKind(initialOwnerKind ?? "USER_LINKED");
+    setOwnerId(initialOwnerId ?? "");
+    setExternal({ ...emptyExternal, ...initial?.externalPerson });
+    setExternalCompany({ ...emptyExternalCompany, ...initial?.externalCompany });
+    setPercentage(initialPercentage?.toString() ?? "");
+    setSelectedCompanyIds(
+      initial?.companyIds ?? (lockedCompanyId ? [lockedCompanyId] : []),
+    );
+    setCompanySearch("");
+    // Reset form when dialog opens or when editing a different shareholder — not on every parent re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- external person/company blobs keyed via initialId
+  }, [open, initialId, initialOwnerKind, initialOwnerId, initialPercentage, initialCompanyIdsKey, lockedCompanyId]);
 
   const filteredCompanies = useMemo(() => {
     const q = companySearch.toLowerCase();
@@ -427,7 +434,7 @@ export function ShareholderFormDialog({
           {personExternal && (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Nom et prénom obligatoires ; adresse, mail et téléphone optionnels.
+                Nom et prénom obligatoires ; adresse, mail et téléphones optionnels.
               </p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
@@ -453,15 +460,6 @@ export function ShareholderFormDialog({
                   />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-sm font-medium text-foreground">Adresse</label>
-                  <Input
-                    value={external.address ?? ""}
-                    onChange={(e) => setExternal((p) => ({ ...p, address: e.target.value }))}
-                    placeholder="Adresse"
-                    autoComplete="street-address"
-                  />
-                </div>
-                <div className="space-y-1.5">
                   <label className="text-sm font-medium text-foreground">Mail</label>
                   <Input
                     type="email"
@@ -471,16 +469,11 @@ export function ShareholderFormDialog({
                     autoComplete="email"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Téléphone</label>
-                  <Input
-                    type="tel"
-                    value={external.phone ?? ""}
-                    onChange={(e) => setExternal((p) => ({ ...p, phone: e.target.value }))}
-                    placeholder="Téléphone"
-                    autoComplete="tel"
-                  />
-                </div>
+                <ExternalPartyContactFields
+                  value={external}
+                  onChange={(contact) => setExternal((p) => ({ ...p, ...contact }))}
+                  countryModalTitle="Pays (personne externe)"
+                />
               </div>
             </div>
           )}
@@ -503,7 +496,7 @@ export function ShareholderFormDialog({
           {companyExternal && (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Raison sociale obligatoire ; SIRET, adresse, mail et téléphone optionnels.
+                Raison sociale obligatoire ; SIRET, adresse, mail et téléphones optionnels.
               </p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5 sm:col-span-2">
@@ -531,16 +524,6 @@ export function ShareholderFormDialog({
                   />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-sm font-medium text-foreground">Adresse</label>
-                  <Input
-                    value={externalCompany.address ?? ""}
-                    onChange={(e) =>
-                      setExternalCompany((p) => ({ ...p, address: e.target.value }))
-                    }
-                    placeholder="Adresse"
-                  />
-                </div>
-                <div className="space-y-1.5">
                   <label className="text-sm font-medium text-foreground">Mail</label>
                   <Input
                     type="email"
@@ -551,17 +534,13 @@ export function ShareholderFormDialog({
                     placeholder="email@exemple.com"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Téléphone</label>
-                  <Input
-                    type="tel"
-                    value={externalCompany.phone ?? ""}
-                    onChange={(e) =>
-                      setExternalCompany((p) => ({ ...p, phone: e.target.value }))
-                    }
-                    placeholder="Téléphone"
-                  />
-                </div>
+                <ExternalPartyContactFields
+                  value={externalCompany}
+                  onChange={(contact) =>
+                    setExternalCompany((p) => ({ ...p, ...contact }))
+                  }
+                  countryModalTitle="Pays (entreprise externe)"
+                />
               </div>
             </div>
           )}
