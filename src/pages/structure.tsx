@@ -3319,7 +3319,7 @@ export default function StructurePage() {
                           </div>
 
                           <div>
-                            {completion !== null && (
+                            {node.type === "company" && completion !== null && (
                               <div className="flex items-center gap-2">
                                 <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden border border-primary">
                                   <div
@@ -6081,19 +6081,6 @@ export default function StructurePage() {
                 />
               </div>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code d&apos;entité
-              </label>
-              <Input
-                value={addGroupForm.entity_code}
-                onChange={(e) =>
-                  setAddGroupForm((f) => ({ ...f, entity_code: e.target.value }))
-                }
-                placeholder="Ex: GRP-001"
-                maxLength={50}
-              />
-            </div>
           </DialogBody>
 
           <DialogFooter>
@@ -6737,19 +6724,6 @@ export default function StructurePage() {
                 }}
                 placeholder="Uploader une image de logo"
                 accept="image/*"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code d&apos;entité
-              </label>
-              <Input
-                value={addCompanyForm.entity_code}
-                onChange={(e) =>
-                  setAddCompanyForm((f) => ({ ...f, entity_code: e.target.value }))
-                }
-                placeholder="Ex: ENT-001"
-                maxLength={50}
               />
             </div>
 
