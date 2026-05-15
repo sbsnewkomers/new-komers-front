@@ -26,13 +26,17 @@ const TEMPLATE_SHEETS = [
     cols: [
       { name: "Nom du groupe", key: "name", req: true, type: "Texte", note: "Unique" },
       { name: "Début exercice (DD-MM)", key: "fiscal_year_start", req: true, type: "Date", note: "ex: 01-01" },
-      { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
-      { name: "Activité", key: "mainActivity", req: true, type: "Texte", note: "" },
       { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
       { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
-      { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 15/06/2010" },
+      { name: "Date immatriculation", key: "registrationDate", req: false, type: "Date", note: "ex: 15/06/2010" },
+      { name: "Rue", key: "street", req: false, type: "Texte", note: "Adresse" },
+      { name: "Code postal", key: "postal_code", req: false, type: "Texte", note: "ex: 75001" },
+      { name: "Ville", key: "city", req: false, type: "Texte", note: "ex: Paris" },
+      { name: "Téléphone fixe", key: "phone_landline", req: false, type: "Texte", note: "ex: 0123456789" },
+      { name: "Téléphone mobile", key: "phone_mobile", req: false, type: "Texte", note: "ex: 0612345678" },
+      { name: "Email de contact", key: "contact_email", req: false, type: "Email", note: "ex: contact@exemple.com" },
     ],
-    example: { name: "Groupe Alpha", fiscal_year_start: "01-01", siret: "12345678901234", mainActivity: "Secteur Technologique", country: "France", entity_code: "GRP-ALPHA", registrationDate: "15/06/2010" },
+    example: { name: "Groupe Alpha", fiscal_year_start: "01-01", country: "France", entity_code: "GRP-ALPHA", registrationDate: "15/06/2010", street: "15 Rue Paix", postal_code: "75001", city: "Paris", phone_landline: "0123456789", phone_mobile: "0612345678", contact_email: "contact@groupealpha.com" },
   },
   {
     id: "companies",
@@ -42,7 +46,12 @@ const TEMPLATE_SHEETS = [
       { name: "Nom entreprise", key: "name", req: true, type: "Texte", note: "Unique" },
       { name: "Début exercice (DD-MM)", key: "fiscal_year_start", req: true, type: "Date", note: "ex: 01-01" },
       { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
-      { name: "Adresse", key: "address", req: false, type: "Texte", note: "" },
+      { name: "Rue", key: "street", req: false, type: "Texte", note: "Adresse" },
+      { name: "Code postal", key: "postal_code", req: false, type: "Texte", note: "ex: 75001" },
+      { name: "Ville", key: "city", req: false, type: "Texte", note: "ex: Paris" },
+      { name: "Téléphone fixe", key: "phone_landline", req: false, type: "Texte", note: "ex: 0123456789" },
+      { name: "Téléphone mobile", key: "phone_mobile", req: false, type: "Texte", note: "ex: 0612345678" },
+      { name: "Email de contact", key: "contact_email", req: false, type: "Email", note: "ex: contact@exemple.com" },
       { name: "Code APE", key: "ape_code", req: true, type: "Texte", note: "ex: 6201Z" },
       { name: "Activité", key: "main_activity", req: true, type: "Texte", note: "" },
       { name: "Taille", key: "size", req: false, type: "Enum", note: "SMALL / MEDIUM / LARGE" },
@@ -50,9 +59,9 @@ const TEMPLATE_SHEETS = [
       { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
       { name: "Nom du groupe", key: "group_name", req: false, type: "Référence", note: "Doit exister dans onglet 1" },
       { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
-      { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 01/03/2015" },
+      { name: "Date immatriculation", key: "registrationDate", req: false, type: "Date", note: "ex: 01/03/2015" },
     ],
-    example: { name: "Alpha Digital SAS", fiscal_year_start: "01-01", siret: "98765432100012", address: "15 Rue de la Paix", ape_code: "6201Z", main_activity: "Édition de logiciels", size: "MEDIUM", model: "SUBSIDIARY", country: "France", group_name: "Groupe Alpha", entity_code: "ENT-ALPHA", registrationDate: "01/03/2015" },
+    example: { name: "Alpha Digital SAS", fiscal_year_start: "01-01", siret: "98765432100012", street: "15 Rue Paix", postal_code: "75001", city: "Paris", phone_landline: "0123456789", phone_mobile: "0612345678", contact_email: "contact@alphadigital.com", ape_code: "6201Z", main_activity: "Édition logiciels", size: "MEDIUM", model: "SUBSIDIARY", country: "France", group_name: "Groupe Alpha", entity_code: "ENT-ALPHA", registrationDate: "01/03/2015" },
   },
   {
     id: "bu",
@@ -64,11 +73,17 @@ const TEMPLATE_SHEETS = [
       { name: "Code BU", key: "code", req: true, type: "Texte", note: "ex: BU-FINANCE" },
       { name: "Activité", key: "activity", req: false, type: "Texte", note: "" },
       { name: "SIRET", key: "siret", req: true, type: "Numérique", note: "14 chiffres" },
+      { name: "Date immatriculation", key: "registrationDate", req: false, type: "Date", note: "ex: 20/09/2018" },
+      { name: "Rue", key: "street", req: false, type: "Texte", note: "Adresse" },
+      { name: "Code postal", key: "postal_code", req: false, type: "Texte", note: "ex: 75001" },
+      { name: "Ville", key: "city", req: false, type: "Texte", note: "ex: Paris" },
+      { name: "Téléphone fixe", key: "phone_landline", req: false, type: "Texte", note: "ex: 0123456789" },
+      { name: "Téléphone mobile", key: "phone_mobile", req: false, type: "Texte", note: "ex: 0612345678" },
+      { name: "Email de contact", key: "contact_email", req: false, type: "Email", note: "ex: contact@exemple.com" },
       { name: "Pays", key: "country", req: true, type: "Texte", note: "ex: France" },
       { name: "Code entité", key: "entity_code", req: false, type: "Texte", note: "Code unique optionnel" },
-      { name: "Date d'enregistrement", key: "registrationDate", req: false, type: "Date", note: "ex: 20/09/2018" },
     ],
-    example: { name: "Finance Alpha", company_name: "Alpha Digital SAS", code: "BU-FINANCE", activity: "Gestion Comptable", siret: "98765432100012", country: "France", entity_code: "BU-FIN-ALPHA", registrationDate: "20/09/2018" },
+    example: { name: "Finance Alpha", company_name: "Alpha Digital SAS", code: "BU-FINANCE", activity: "Gestion Comptable", siret: "98765432100012", registrationDate: "20/09/2018", street: "15 Rue Paix", postal_code: "75001", city: "Paris", phone_landline: "0123456789", phone_mobile: "0612345678", contact_email: "finance@alphadigital.com", country: "France", entity_code: "BU-FIN-ALPHA" },
   },
 ] as const;
 
@@ -358,80 +373,80 @@ export default function StructureImportUploadPage() {
         )}
 
         <div
-  onDrop={handleDrop}
-  onDragOver={handleDragOver}
-  onDragLeave={handleDragLeave}
-  className={
-    "nebula-glass nebula-blob rounded-3xl border-2 border-dashed p-8 text-center transition-all " +
-    (dragOver
-      ? "border-(--nebula-gold-light) bg-white/10"
-      : "border-gray-300 dark:border-white/15 bg-gray-50 dark:bg-white/5")
-  }
->
-  <input
-    type="file"
-    accept=".xlsx"
-    onChange={handleFileInput}
-    className="hidden"
-    id="file-upload"
-  />
-  
-  {file ? (
-    // Affichage quand un fichier est sélectionné
-    <div className="flex flex-col items-center gap-4">
-      <div className="flex items-center gap-2 text-lg font-medium text-(--nebula-gold-light)">
-        <Upload className="h-5 w-5" />
-        <span className="font-mono break-all">{file.name}</span>
-      </div>
-      <div className="flex gap-3">
-        <label 
-          htmlFor="file-upload" 
-          className="cursor-pointer inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20 transition-colors"
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          className={
+            "nebula-glass nebula-blob rounded-3xl border-2 border-dashed p-8 text-center transition-all " +
+            (dragOver
+              ? "border-(--nebula-gold-light) bg-white/10"
+              : "border-gray-300 dark:border-white/15 bg-gray-50 dark:bg-white/5")
+          }
         >
-          Changer de fichier
-        </label>
-        <button
-          type="button"
-          onClick={() => {
-            setFile(null);
-            setReport(null);
-            setExecuteResult(null);
-            setError(null);
-            // Reset l'input file
-            const input = document.getElementById('file-upload') as HTMLInputElement;
-            if (input) input.value = '';
-          }}
-          className="inline-flex items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-colors"
-        >
-          <X className="h-4 w-4 mr-1" />
-          Supprimer
-        </button>
-      </div>
-    </div>
-  ) : (
-    // Affichage quand aucun fichier n'est sélectionné
-    <>
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-16 w-16 rounded-full bg-(--nebula-gold)/20 flex items-center justify-center">
-          <Upload className="h-8 w-8 text-(--nebula-gold-light)" />
+          <input
+            type="file"
+            accept=".xlsx"
+            onChange={handleFileInput}
+            className="hidden"
+            id="file-upload"
+          />
+
+          {file ? (
+            // Affichage quand un fichier est sélectionné
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-center gap-2 text-lg font-medium text-(--nebula-gold-light)">
+                <Upload className="h-5 w-5" />
+                <span className="font-mono break-all">{file.name}</span>
+              </div>
+              <div className="flex gap-3">
+                <label
+                  htmlFor="file-upload"
+                  className="cursor-pointer inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20 transition-colors"
+                >
+                  Changer de fichier
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFile(null);
+                    setReport(null);
+                    setExecuteResult(null);
+                    setError(null);
+                    // Reset l'input file
+                    const input = document.getElementById('file-upload') as HTMLInputElement;
+                    if (input) input.value = '';
+                  }}
+                  className="inline-flex items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-colors"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Affichage quand aucun fichier n'est sélectionné
+            <>
+              <div className="flex flex-col items-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-(--nebula-gold)/20 flex items-center justify-center">
+                  <Upload className="h-8 w-8 text-(--nebula-gold-light)" />
+                </div>
+                <label
+                  htmlFor="file-upload"
+                  className="cursor-pointer inline-flex items-center justify-center rounded-xl bg-(--nebula-gold-light) px-6 py-3 text-sm font-semibold text-black hover:bg-(--nebula-gold) transition-colors"
+                >
+                  <Upload className="h-5 w-5 mr-2" />
+                  Sélectionner un fichier Excel
+                </label>
+                <p className="text-gray-600 dark:text-(--nebula-muted) text-sm">
+                  Format .xlsx uniquement
+                </p>
+              </div>
+              <div className="mt-4 text-center text-xs text-(--nebula-muted)">
+                ou glissez-déposez votre fichier ici
+              </div>
+            </>
+          )}
         </div>
-        <label 
-          htmlFor="file-upload" 
-          className="cursor-pointer inline-flex items-center justify-center rounded-xl bg-(--nebula-gold-light) px-6 py-3 text-sm font-semibold text-black hover:bg-(--nebula-gold) transition-colors"
-        >
-          <Upload className="h-5 w-5 mr-2" />
-          Sélectionner un fichier Excel
-        </label>
-        <p className="text-gray-600 dark:text-(--nebula-muted) text-sm">
-          Format .xlsx uniquement
-        </p>
-      </div>
-      <div className="mt-4 text-center text-xs text-(--nebula-muted)">
-        ou glissez-déposez votre fichier ici
-      </div>
-    </>
-  )}
-</div>
 
         {error && <p className="text-sm text-red-400">{error}</p>}
 
@@ -618,43 +633,57 @@ function TemplatePreviewTabs({
       <div className="flex-1 overflow-auto p-6 space-y-4">
         <p className="text-sm text-muted-foreground">{sheet.desc}</p>
 
-        <div className="rounded-xl border border-border overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="rounded-xl border border-border/50 overflow-hidden shadow-sm">
+          <div className="bg-gradient-to-r from-muted/50 to-muted/30 px-6 py-3 border-b border-border/50">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+              Structure des colonnes
+            </h3>
+          </div>
+          <table className="w-full">
             <thead>
-              <tr className="bg-muted border-b border-border">
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs w-8">#</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Colonne Excel</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Type</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Note</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Statut</th>
+              <tr className="bg-muted/30 border-b border-border/30">
+                <th className="px-6 py-4 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider w-12">#</th>
+                <th className="px-6 py-4 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Colonne Excel</th>
+                <th className="px-6 py-4 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider w-24">Type</th>
+                <th className="px-6 py-4 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider w-32">Note</th>
+                <th className="px-6 py-4 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider w-20">Statut</th>
+                <th className="px-6 py-4 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider w-36">Valeur exemple</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border/30">
               {sheet.cols.map((col, i) => (
-                <tr key={col.key} className="border-b border-border hover:bg-muted/50">
-                  <td className="px-4 py-2.5 text-xs text-muted-foreground font-mono">{i + 1}</td>
-                  <td className="px-4 py-2.5 font-medium text-foreground">{col.name}</td>
-                  <td className="px-4 py-2.5 text-foreground/80">{col.type}</td>
-                  <td className="px-4 py-2.5 text-xs text-muted-foreground">{col.note || "—"}</td>
-                  <td className="px-4 py-2.5">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${col.req
-                      ? "bg-destructive/10 text-destructive"
-                      : "bg-muted text-muted-foreground"
+                <tr key={col.key} className="hover:bg-muted/20 transition-colors duration-150">
+                  <td className="px-6 py-4 text-sm font-mono text-muted-foreground/70 font-medium">{i + 1}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-1 rounded-full bg-foreground/40"></div>
+                      <span className="text-sm font-medium text-foreground">{col.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-blue-200 dark:bg-blue-500/10 text-blue-900 dark:text-blue-300 text-xs font-semibold border border-blue-400 dark:border-blue-500/20">
+                      {col.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground/80">{col.note || <span className="text-muted-foreground/40">—</span>}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${col.req
+                      ? "bg-red-200 dark:bg-red-500/10 text-red-900 dark:text-red-300 border-red-400 dark:border-red-500/20"
+                      : "bg-gray-200 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-400 dark:border-gray-500/20"
                       }`}>
                       {col.req ? "Requis" : "Facultatif"}
                     </span>
                   </td>
+                  <td className="px-6 py-4">
+                    <div className="bg-muted/50 rounded-lg px-3 py-2 border border-border/30">
+                      <code className="text-xs text-muted-foreground font-mono">
+                        {(sheet.example as Record<string, string>)[col.key] || <span className="text-muted-foreground/40">—</span>}
+                      </code>
+                    </div>
+                  </td>
                 </tr>
               ))}
-              {/* Exemple row */}
-              <tr className="bg-muted/60">
-                <td className="px-4 py-2.5 text-xs text-muted-foreground font-medium">ex.</td>
-                {sheet.cols.map((col) => (
-                  <td key={col.key} className="px-4 py-2.5 text-xs text-muted-foreground italic">
-                    {(sheet.example as Record<string, string>)[col.key] ?? "—"}
-                  </td>
-                ))}
-              </tr>
             </tbody>
           </table>
         </div>
@@ -665,11 +694,7 @@ function TemplatePreviewTabs({
             <span className="w-2 h-2 rounded-full bg-destructive inline-block" />
             Champ requis — l'import échoue si absent
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-muted-foreground/30 inline-block" />
-            Facultatif
-          </span>
-          <span className="ml-auto italic">Dernière ligne = exemple de données</span>
+
         </div>
       </div>
 
