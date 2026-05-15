@@ -3319,7 +3319,7 @@ export default function StructurePage() {
                           </div>
 
                           <div>
-                            {completion !== null && (
+                            {node.type === "company" && completion !== null && (
                               <div className="flex items-center gap-2">
                                 <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden border border-primary">
                                   <div
