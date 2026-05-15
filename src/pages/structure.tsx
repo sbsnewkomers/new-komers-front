@@ -6441,28 +6441,59 @@ export default function StructurePage() {
           <DialogBody className="space-y-4">
             {/* Champ de sélection du groupe - seulement en mode standalone */}
             {!addCompanyGroupId && (
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                  Groupe
-                </label>
-                <Select
-                  value={addCompanyForm.groupId || ""}
-                  onValueChange={(value) => {
-                    const selectedGroup = groupList.find(g => g.id === value);
-                    setAddCompanyForm((f) => ({
-                      ...f,
-                      groupId: value,
-                      workspaceId: selectedGroup?.workspaceId || ""
-                    }));
-                  }}
-                  className="h-11"
-                >
-                  <option value="">Sélectionner un groupe (optionnel)</option>
-                  {groupList.map((g) => (
-                    <option key={g.id} value={g.id}>{g.name}</option>
-                  ))}
-                </Select>
-              </div>
+              <>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                    Groupe
+                  </label>
+                  <Select
+                    value={addCompanyForm.groupId || ""}
+                    onValueChange={(value) => {
+                      const selectedGroup = groupList.find(g => g.id === value);
+                      setAddCompanyForm((f) => ({
+                        ...f,
+                        groupId: value,
+                        workspaceId: selectedGroup?.workspaceId || ""
+                      }));
+                    }}
+                    className="h-11"
+                  >
+                    <option value="">Sélectionner un groupe (optionnel)</option>
+                    {groupList.map((g) => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </Select>
+                </div>
+
+                {/* Champ de sélection du workspace - seulement pour les super admin et admin si aucun groupe n'est sélectionné */}
+                {(user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") && (
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                      Workspace {(!addCompanyForm.groupId || addCompanyForm.groupId === "") && "*"}
+                    </label>
+                    <Select
+                      value={addCompanyForm.workspaceId || ""}
+                      onValueChange={(value) => {
+                        setAddCompanyForm((f) => ({
+                          ...f,
+                          workspaceId: value
+                        }));
+                      }}
+                      className="h-11"
+                    >
+                      <option value="">Sélectionner un workspace</option>
+                      {tree?.workspaces?.map((workspace) => (
+                        <option key={workspace.id} value={workspace.id}>{workspace.name}</option>
+                      ))}
+                    </Select>
+                    {(!addCompanyForm.groupId || addCompanyForm.groupId === "") && (
+                      <p className="mt-1 text-xs text-amber-400">
+                        Le workspace est obligatoire lorsque vous créez une entreprise indépendante
+                      </p>
+                    )}
+                  </div>
+                )}
+              </>
             )}
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -6775,7 +6806,12 @@ export default function StructurePage() {
                 !addCompanyForm.country.trim() ||
                 !isValidMonthDay(toMonthDay(addCompanyForm.fiscal_year_start)) ||
                 !!companyErrors?.phone_mobile ||
-                !!companyErrors?.phone_landline
+                !!companyErrors?.phone_landline ||
+                // Pour les super admin et admin, si aucun groupe n'est sélectionné, le workspace est obligatoire
+                ((user?.role === "SUPER_ADMIN" || user?.role === "ADMIN") &&
+                  !addCompanyGroupId &&
+                  !addCompanyForm.groupId &&
+                  !addCompanyForm.workspaceId.trim())
               }
             >
               {addCompanyLoading ? "Création..." : "Créer"}
