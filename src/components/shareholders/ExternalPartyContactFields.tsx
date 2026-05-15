@@ -6,6 +6,7 @@ import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { Input } from "@/components/ui/Input";
 import { CountrySelectModal } from "@/components/City-Country/CountrySelectModal";
+import { CitySelectModal } from "@/components/City-Country/CitySelectModal";
 import { locationService } from "@/lib/locationService";
 import type { ExternalContactFields } from "@/lib/shareholdersApi";
 
@@ -28,6 +29,7 @@ export function ExternalPartyContactFields({
   countryModalTitle = "Sélectionner un pays",
 }: Props) {
   const [countryModalOpen, setCountryModalOpen] = useState(false);
+  const [cityModalOpen, setCityModalOpen] = useState(false);
 
   const patch = (partial: Partial<ExternalContactFields>) =>
     onChange({ ...value, ...partial });
@@ -54,12 +56,16 @@ export function ExternalPartyContactFields({
       </div>
       <div className="space-y-1.5">
         <label className="text-sm font-medium text-foreground">Ville</label>
-        <Input
-          value={value.city ?? ""}
-          onChange={(e) => patch({ city: e.target.value })}
-          placeholder="Ville"
-          autoComplete="address-level2"
-        />
+        <button
+          type="button"
+          onClick={() => setCityModalOpen(true)}
+          className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-muted transition-colors"
+        >
+          <span className={value.city ? "text-foreground" : "text-muted-foreground"}>
+            {value.city || "Sélectionner une ville"}
+          </span>
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+        </button>
       </div>
       <div className="space-y-1.5 sm:col-span-2">
         <label className="text-sm font-medium text-foreground">Pays</label>
@@ -108,6 +114,14 @@ export function ExternalPartyContactFields({
         value={value.country ?? ""}
         onChange={(country) => patch({ country })}
         title={countryModalTitle}
+      />
+      <CitySelectModal
+        countryCode={value.country ?? ""}
+        open={cityModalOpen}
+        onOpenChange={setCityModalOpen}
+        value={value.city ?? ""}
+        onChange={(city) => patch({ city })}
+        title="Sélectionner une ville"
       />
     </>
   );
