@@ -209,15 +209,11 @@ export default function ImportPage() {
     };
     reader.readAsArrayBuffer(file);
   };
-  const handleDrop = useCallback((e: React.DragEvent, type: "excel") => {
+  const handleDrop = useCallback(async (e: React.DragEvent, type: "excel") => {
     e.preventDefault();
     setDragOver(false);
     const f = e.dataTransfer.files[0];
     if (!f) return;
-
-    setCsvFile(null);
-    setCsvHeaders([]);
-    setMapping({});
 
     const isCsv = f.name.endsWith(".csv");
     const isExcel = f.name.endsWith(".xlsx") || f.name.endsWith(".xls");
@@ -227,59 +223,18 @@ export default function ImportPage() {
 
     if (type === "excel") {
       setCsvFile(f);
-      const reader = new FileReader();
-
-      reader.onload = (event) => {
-        let headers: string[] = [];
-
-        if (isExcel) {
-          // Pour les fichiers binaire .xlsx ou .xls, SheetJS gère très bien tout seul
-          const data = new Uint8Array(event.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: "array", codepage: 65001 });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-          headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
-        } else {
-          // POUR LE CSV / TXT : On gère l'encodage NOUS-MÊMES
-          const buffer = event.target?.result as ArrayBuffer;
-          const text = decodeBuffer(buffer); // Utilise la fonction améliorée ci-dessus
-
-          // On passe le texte décodé à SheetJS au lieu du buffer brut
-          const workbook = XLSX.read(text, { type: "string" });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-          headers = (jsonData[0] as string[]).map(h => h?.toString().trim() || "");
-        }
-
-        setCsvHeaders(headers);
-
-        let initialMapping: Record<string, string> = {};
-
-        if (selectedSavedMapping) {
-          headers.forEach((h) => {
-            if (selectedSavedMapping.rules[h]) {
-              initialMapping[h] = selectedSavedMapping.rules[h];
-            } else {
-              const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
-              initialMapping[h] = match ? match.name : "";
-            }
-          });
-          setSelectedSavedMapping(null);
-        } else {
-          headers.forEach((h) => {
-            const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
-            initialMapping[h] = match ? match.name : "";
-          });
-        }
-
-        setMapping(initialMapping);
-        setMappingOpen(true);
-      };
-
-      // FIX : toujours lire en ArrayBuffer (plus readAsText)
-      reader.readAsArrayBuffer(f);
+      setPendingFile(f);
+      const headers = await parseHeaders(f);
+      setCsvHeaders(headers);
+      const initialMapping: Record<string, string> = {};
+      headers.forEach((h) => {
+        const match = Basic_COLUMNS.find(col => col.name.toLowerCase() === h.toLowerCase());
+        initialMapping[h] = match ? match.name : "";
+      });
+      setMapping(initialMapping);
+      setSavedMappingModalOpen(true);
     }
-  }, [selectedSavedMapping]);
+  }, []);
 
   const parseHeaders = (file: File): Promise<string[]> => {
     return new Promise((resolve) => {

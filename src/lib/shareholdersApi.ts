@@ -153,7 +153,7 @@ function trimCompany(e: ExternalCompanyInput): ExternalCompanyInput {
 export function toCreateShareholderInput(v: Omit<ShareholderFormValues, "id">): Record<string, unknown> {
   const base: Record<string, unknown> = {
     percentage: v.percentage,
-    ...(v.companyIds?.length ? { companyIds: v.companyIds } : {}),
+    companyIds: v.companyIds,
   };
 
   switch (v.ownerKind) {

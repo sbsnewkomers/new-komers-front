@@ -238,8 +238,11 @@ export function ShareholderFormDialog({
   const isEditing = !!initial?.id;
   const pctNum = Number(percentage);
   const pctOk = percentage !== "" && !Number.isNaN(pctNum);
+  const companiesOk =
+    !!lockedCompanyId || selectedCompanyIds.length > 0;
+
   const isValid = useMemo(() => {
-    if (!pctOk) return false;
+    if (!pctOk || !companiesOk) return false;
     switch (ownerKind) {
       case "USER_LINKED":
         return !!ownerId;
@@ -254,7 +257,15 @@ export function ShareholderFormDialog({
       default:
         return false;
     }
-  }, [ownerKind, ownerId, external.lastName, external.firstName, externalCompany.companyName, pctOk]);
+  }, [
+    ownerKind,
+    ownerId,
+    external.lastName,
+    external.firstName,
+    externalCompany.companyName,
+    pctOk,
+    companiesOk,
+  ]);
 
   const handleSubmit = async () => {
     if (!isValid) return;
@@ -575,7 +586,7 @@ export function ShareholderFormDialog({
           {!lockedCompanyId && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
-                Entreprises liées
+                Entreprises liées <span className="text-red-500">*</span>
                 {selectedCompanyIds.length > 0 && (
                   <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                     {selectedCompanyIds.length}
@@ -591,7 +602,9 @@ export function ShareholderFormDialog({
                   onChange={(e) => setCompanySearch(e.target.value)}
                 />
               )}
-              <div className="max-h-40 overflow-auto rounded-lg border border-border bg-card">
+              <div
+                className={`max-h-40 overflow-auto rounded-lg border bg-card ${selectedCompanyIds.length === 0 ? "border-red-300" : "border-border"}`}
+              >
                 {filteredCompanies.length === 0 && (
                   <div className="px-3 py-4 text-center text-xs text-slate-400">
                     Aucune entreprise disponible.
@@ -623,6 +636,9 @@ export function ShareholderFormDialog({
                   );
                 })}
               </div>
+              {selectedCompanyIds.length === 0 && (
+                <p className="text-xs text-red-500">Sélectionnez au moins une entreprise.</p>
+              )}
             </div>
           )}
         </DialogBody>
