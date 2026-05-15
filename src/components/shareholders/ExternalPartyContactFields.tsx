@@ -5,8 +5,8 @@ import { Search } from "lucide-react";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { Input } from "@/components/ui/Input";
-import { CountrySelectModal } from "@/components/structure/CountrySelectModal";
-import { COUNTRIES } from "@/lib/countriesData";
+import { CountrySelectModal } from "@/components/City-Country/CountrySelectModal";
+import { locationService } from "@/lib/locationService";
 import type { ExternalContactFields } from "@/lib/shareholdersApi";
 
 type Props = {
@@ -17,8 +17,8 @@ type Props = {
 
 function countryLabel(code: string): string {
   if (!code) return "";
-  const c = COUNTRIES.find((x) => x.value === code || x.label === code);
-  return c ? `${c.label} (${c.code})` : code;
+  const country = locationService.getCountryByCode(code);
+  return country ? `${country.label} (${country.code})` : code;
 }
 
 /** Adresse (rue, CP, ville, pays) + téléphones fixe / mobile — actionnaires externes. */
