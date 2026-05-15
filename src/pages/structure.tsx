@@ -11,12 +11,18 @@ import {
 import Head from "next/head";
 import { apiFetch } from "@/lib/apiClient";
 import { emitSnackbar } from "@/ui/snackbarBus";
-import { COUNTRIES } from "@/lib/countriesData";
+import { locationService } from "@/lib/locationService";
 
 // Fonction pour trouver le nom du pays à partir du code
 const getCountryName = (code: string) => {
-  const country = COUNTRIES.find((c) => c.value === code || c.code === code);
+  const country = locationService.getCountryByCode(code);
   return country ? country.label : code;
+};
+
+// Fonction pour obtenir le pays formaté avec code
+const getCountryWithCode = (code: string) => {
+  const country = locationService.getCountryByCode(code);
+  return country ? `${country.label} (${country.code})` : code;
 };
 import {
   fetchStructureTree,
@@ -39,8 +45,8 @@ import { FileUpload } from "@/components/ui/FileUpload";
 import { ApeCodeSelect } from "@/components/structure/ApeCodeSelect";
 import { ApeCodeSelectModal } from "@/components/structure/ApeCodeSelectModal";
 import { APE_CODES } from "@/lib/nafApeData";
-import { CountrySelect } from "@/components/structure/CountrySelect";
-import { CountrySelectModal } from "@/components/structure/CountrySelectModal";
+import { CountrySelectModal } from "@/components/City-Country/CountrySelectModal";
+import { CitySelectModal } from "@/components/City-Country/CitySelectModal";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { isValidPhoneNumber } from "react-phone-number-input";
@@ -763,12 +769,19 @@ export default function StructurePage() {
   });
   const [countryModalOpen, setCountryModalOpen] = useState(false);
   const [createCountryModalOpen, setCreateCountryModalOpen] = useState(false);
+  const [cityModalOpen, setCityModalOpen] = useState(false);
+  const [createCityModalOpen, setCreateCityModalOpen] = useState(false);
   const [groupCountryModalOpen, setGroupCountryModalOpen] = useState(false);
+  const [groupCityModalOpen, setGroupCityModalOpen] = useState(false);
+  const [addGroupCityModalOpen, setAddGroupCityModalOpen] = useState(false);
   const [companyApeModalOpen, setCompanyApeModalOpen] = useState(false);
   const [editBUApeModalOpen, setEditBUApeModalOpen] = useState(false);
   const [editBUCountryModalOpen, setEditBUCountryModalOpen] = useState(false);
   const [addBUCountryModalOpen, setAddBUCountryModalOpen] = useState(false);
+  const [editBUCityModalOpen, setEditBUCityModalOpen] = useState(false);
+  const [addBUCityModalOpen, setAddBUCityModalOpen] = useState(false);
   const [addBUStandaloneCountryModalOpen, setAddBUStandaloneCountryModalOpen] = useState(false);
+  const [addBUStandaloneCityModalOpen, setAddBUStandaloneCityModalOpen] = useState(false);
   const [addBUStandaloneApeModalOpen, setAddBUStandaloneApeModalOpen] = useState(false);
   const [addCompanyApeModalOpen, setAddCompanyApeModalOpen] = useState(false);
   const [addBUApeModalOpen, setAddBUApeModalOpen] = useState(false);
@@ -1027,6 +1040,8 @@ export default function StructurePage() {
   const [addBUErrors, setAddBUErrors] = useState({ contact_email: "", phone_landline: "", phone_mobile: "" });
   const [addBUStandaloneErrors, setAddBUStandaloneErrors] = useState({ contact_email: "", phone_landline: "", phone_mobile: "" });
   const [companyCountryModalOpen, setCompanyCountryModalOpen] = useState(false);
+  const [companyCityModalOpen, setCompanyCityModalOpen] = useState(false);
+  const [addCompanyCityModalOpen, setAddCompanyCityModalOpen] = useState(false);
   const [editBU, setEditBU] = useState<EditBUFormState>(() => createEmptyEditBUForm());
   const [nodeUsers, setNodeUsers] = useState<NodeUsersByRole | null>(null);
   const [nodeUsersOpen, setNodeUsersOpen] = useState(false);
@@ -3599,25 +3614,7 @@ export default function StructurePage() {
                   type="workspace"
                   name={editworkspace.name}
                   logo={editworkspace.logo}
-                  pills={
-                    <>
-                      {editworkspace.contact_email && (
-                        <DetailPill icon={Mail}>
-                          {editworkspace.contact_email}
-                        </DetailPill>
-                      )}
-                      {editworkspace.phone_mobile && (
-                        <DetailPill icon={Phone}>
-                          {editworkspace.phone_mobile}
-                        </DetailPill>
-                      )}
-                      {editworkspace.phone_landline && (
-                        <DetailPill icon={Phone}>
-                          {editworkspace.phone_landline}
-                        </DetailPill>
-                      )}
-                    </>
-                  }
+
                 />
 
                 <DetailSection
@@ -3680,14 +3677,28 @@ export default function StructurePage() {
                             setEditworkspace((f) => ({ ...f, postal_code: v }))
                           }
                         />
-                        <Field
-                          label="Ville"
-                          value={editworkspace.city}
-                          editing={editing}
-                          onChange={(v) =>
-                            setEditworkspace((f) => ({ ...f, city: v }))
-                          }
-                        />
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Ville
+                          </label>
+                          {editing ? (
+                            <button
+                              type="button"
+                              onClick={() => setCityModalOpen(true)}
+                              className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                            >
+                              <span className={editworkspace.city ? "text-foreground" : "text-muted-foreground"}>
+                                {editworkspace.city || "Sélectionner une ville"}
+                              </span>
+                              <Search className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                          ) : (
+                            <ReadField
+                              label="Ville"
+                              value={editworkspace.city}
+                            />
+                          )}
+                        </div>
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                             Pays
@@ -3699,25 +3710,13 @@ export default function StructurePage() {
                               className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
                             >
                               <span className={editworkspace.country ? "text-foreground" : "text-muted-foreground"}>
-                                {editworkspace.country ?
-                                  (() => {
-                                    const country = COUNTRIES.find(c => c.value === editworkspace.country || c.label === editworkspace.country);
-                                    return country ? `${country.label} (${country.code})` : editworkspace.country;
-                                  })()
-                                  : "Sélectionner un pays"
-                                }
+                                {editworkspace.country ? getCountryWithCode(editworkspace.country) : "Sélectionner un pays"}
                               </span>
                               <Search className="h-4 w-4 text-muted-foreground" />
                             </button>
                           ) : (
                             <div className="min-h-10 flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm">
-                              {editworkspace.country ?
-                                (() => {
-                                  const country = COUNTRIES.find(c => c.value === editworkspace.country || c.label === editworkspace.country);
-                                  return country ? `${country.label} (${country.code})` : editworkspace.country;
-                                })()
-                                : "Non renseigné"
-                              }
+                              {editworkspace.country ? getCountryWithCode(editworkspace.country) : "Non renseigné"}
                             </div>
                           )}
                         </div>
@@ -3740,7 +3739,7 @@ export default function StructurePage() {
                       />
                       <ReadField
                         label="Pays"
-                        value={editworkspace.country}
+                        value={getCountryName(editworkspace.country)}
                       />
                     </DetailGrid>
                   )}
@@ -3963,13 +3962,29 @@ export default function StructurePage() {
                         onChange={(v) => setEditGroup((f) => ({ ...f, postal_code: v }))}
                         placeholder="75001"
                       />
-                      <Field
-                        label="Ville"
-                        value={editGroup.city}
-                        editing={editing}
-                        onChange={(v) => setEditGroup((f) => ({ ...f, city: v }))}
-                        placeholder="Paris"
-                      />
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Ville
+                        </label>
+                        {editing ? (
+                          <button
+                            type="button"
+                            onClick={() => setGroupCityModalOpen(true)}
+                            className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                          >
+                            <span className={editGroup.city ? "text-foreground" : "text-muted-foreground"}>
+                              {editGroup.city || "Sélectionner une ville"}
+                            </span>
+                            <Search className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        ) : (
+                          <ReadField
+                            label="Ville"
+                            icon={MapPin}
+                            value={editGroup.city}
+                          />
+                        )}
+                      </div>
                       {editing ? (
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -4310,13 +4325,29 @@ export default function StructurePage() {
                           onChange={(v) => setEditCompany((f) => ({ ...f, postal_code: v }))}
                           placeholder="75001"
                         />
-                        <Field
-                          label="Ville"
-                          value={editCompany.city}
-                          editing={editing}
-                          onChange={(v) => setEditCompany((f) => ({ ...f, city: v }))}
-                          placeholder="Paris"
-                        />
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                            Ville
+                          </label>
+                          {editing ? (
+                            <button
+                              type="button"
+                              onClick={() => setCompanyCityModalOpen(true)}
+                              className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                            >
+                              <span className={editCompany.city ? "text-foreground" : "text-muted-foreground"}>
+                                {editCompany.city || "Sélectionner une ville"}
+                              </span>
+                              <Search className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                          ) : (
+                            <ReadField
+                              label="Ville"
+                              icon={MapPin}
+                              value={editCompany.city}
+                            />
+                          )}
+                        </div>
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                             Pays
@@ -4720,23 +4751,7 @@ export default function StructurePage() {
                   type="bu"
                   name={editBU.name}
                   logo={editBU.logo}
-                  pills={
-                    <>
-                      {editBU.code && (
-                        <DetailPill icon={BadgeCheck} mono>
-                          APE {editBU.code}
-                        </DetailPill>
-                      )}
-                      {editBU.siret && (
-                        <DetailPill icon={Hash} mono>
-                          SIRET {formatSiret(editBU.siret)}
-                        </DetailPill>
-                      )}
-                      {editBU.country && (
-                        <DetailPill icon={Globe}>{editBU.country}</DetailPill>
-                      )}
-                    </>
-                  }
+
                 />
 
                 <DetailSection
@@ -4909,13 +4924,16 @@ export default function StructurePage() {
                         <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                           Ville
                         </label>
-                        <Input
-                          value={editBU.city}
-                          onChange={(e) =>
-                            setEditBU((f) => ({ ...f, city: e.target.value }))
-                          }
-                          placeholder="Ville"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => setEditBUCityModalOpen(true)}
+                          className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                        >
+                          <span className={editBU.city ? "text-foreground" : "text-muted-foreground"}>
+                            {editBU.city || "Sélectionner une ville"}
+                          </span>
+                          <Search className="h-4 w-4 text-muted-foreground" />
+                        </button>
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -4927,13 +4945,7 @@ export default function StructurePage() {
                           className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
                         >
                           <span className={editBU.country ? "text-foreground" : "text-muted-foreground"}>
-                            {editBU.country ?
-                              (() => {
-                                const country = COUNTRIES.find(c => c.value === editBU.country || c.label === editBU.country);
-                                return country ? `${country.label} (${country.code})` : editBU.country;
-                              })()
-                              : "Sélectionner un pays"
-                            }
+                            {editBU.country ? getCountryWithCode(editBU.country) : "Sélectionner un pays"}
                           </span>
                           <Search className="h-4 w-4 text-muted-foreground" />
                         </button>
@@ -5914,7 +5926,7 @@ export default function StructurePage() {
                 <span className={addGroupForm.country ? "text-foreground" : "text-muted-foreground"}>
                   {addGroupForm.country ? getCountryName(addGroupForm.country) : "Sélectionner un pays..."}
                 </span>
-                <Globe className="h-4 w-4 text-muted-foreground" />
+                <Search className="h-4 w-4 text-muted-foreground" />
               </button>
             </div>
 
@@ -5948,13 +5960,16 @@ export default function StructurePage() {
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   Ville
                 </label>
-                <Input
-                  value={addGroupForm.city}
-                  onChange={(e) =>
-                    setAddGroupForm((f) => ({ ...f, city: e.target.value }))
-                  }
-                  placeholder="Paris"
-                />
+                <button
+                  type="button"
+                  onClick={() => setAddGroupCityModalOpen(true)}
+                  className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+                >
+                  <span className={addGroupForm.city ? "text-foreground" : "text-muted-foreground"}>
+                    {addGroupForm.city || "Sélectionner une ville"}
+                  </span>
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                </button>
               </div>
             </div>
 
@@ -6106,7 +6121,7 @@ export default function StructurePage() {
         open={addGroupCountryModalOpen}
         onOpenChange={setAddGroupCountryModalOpen}
         value={addGroupForm.country}
-        onChange={(value) => setAddGroupForm((f) => ({ ...f, country: value }))}
+        onChange={(value) => setAddGroupForm((f) => ({ ...f, country: value, city: "" }))}
         title="Sélectionner un pays pour le groupe"
       />
 
@@ -6209,13 +6224,7 @@ export default function StructurePage() {
                 className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
               >
                 <span className={addBUStandaloneForm.country ? "text-foreground" : "text-muted-foreground"}>
-                  {addBUStandaloneForm.country ?
-                    (() => {
-                      const country = COUNTRIES.find(c => c.value === addBUStandaloneForm.country || c.label === addBUStandaloneForm.country);
-                      return country ? `${country.label} (${country.code})` : addBUStandaloneForm.country;
-                    })()
-                    : "Sélectionner un pays"
-                  }
+                  {addBUStandaloneForm.country ? getCountryWithCode(addBUStandaloneForm.country) : "Sélectionner un pays"}
                 </span>
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -6249,7 +6258,7 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Adresse
+                Rue
               </label>
               <Input
                 value={addBUStandaloneForm.street}
@@ -6277,14 +6286,16 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Ville
               </label>
-              <Input
-                value={addBUStandaloneForm.city}
-                onChange={(e) =>
-                  setAddBUStandaloneForm((f) => ({ ...f, city: e.target.value }))
-                }
-                placeholder="Ville"
-                className="mb-4"
-              />
+              <button
+                type="button"
+                onClick={() => setAddBUStandaloneCityModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors mb-4"
+              >
+                <span className={addBUStandaloneForm.city ? "text-foreground" : "text-muted-foreground"}>
+                  {addBUStandaloneForm.city || "Sélectionner une ville"}
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -6527,7 +6538,7 @@ export default function StructurePage() {
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Adresse
+                Rue
               </label>
               <Input
                 value={addCompanyForm.street}
@@ -6555,13 +6566,16 @@ export default function StructurePage() {
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                   Ville
                 </label>
-                <Input
-                  value={addCompanyForm.city}
-                  onChange={(e) =>
-                    setAddCompanyForm((f) => ({ ...f, city: e.target.value }))
-                  }
-                  placeholder="Ville"
-                />
+                <button
+                  type="button"
+                  onClick={() => setAddCompanyCityModalOpen(true)}
+                  className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+                >
+                  <span className={addCompanyForm.city ? "text-foreground" : "text-muted-foreground"}>
+                    {addCompanyForm.city || "Sélectionner une ville"}
+                  </span>
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                </button>
               </div>
             </div>
 
@@ -6575,7 +6589,7 @@ export default function StructurePage() {
                 className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
               >
                 <span className={addCompanyForm.country ? "text-foreground" : "text-muted-foreground"}>
-                  {addCompanyForm.country ? addCompanyForm.country : "Sélectionner un pays"}
+                  {addCompanyForm.country ? getCountryName(addCompanyForm.country) : "Sélectionner un pays"}
                 </span>
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -6849,13 +6863,7 @@ export default function StructurePage() {
                 className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
               >
                 <span className={addBUForm.country ? "text-foreground" : "text-muted-foreground"}>
-                  {addBUForm.country ?
-                    (() => {
-                      const country = COUNTRIES.find(c => c.value === addBUForm.country || c.label === addBUForm.country);
-                      return country ? `${country.label} (${country.code})` : addBUForm.country;
-                    })()
-                    : "Sélectionner un pays"
-                  }
+                  {addBUForm.country ? getCountryWithCode(addBUForm.country) : "Sélectionner un pays"}
                 </span>
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -6904,14 +6912,16 @@ export default function StructurePage() {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Ville
               </label>
-              <Input
-                value={addBUForm.city}
-                onChange={(e) =>
-                  setAddBUForm((f) => ({ ...f, city: e.target.value }))
-                }
-                placeholder="Ville"
-                className="mb-4"
-              />
+              <button
+                type="button"
+                onClick={() => setAddBUCityModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors mb-4"
+              >
+                <span className={addBUForm.city ? "text-foreground" : "text-muted-foreground"}>
+                  {addBUForm.city || "Sélectionner une ville"}
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -7152,13 +7162,16 @@ export default function StructurePage() {
               <label className="text-sm font-medium text-white/90">
                 Ville
               </label>
-              <Input
-                value={addworkspaceForm.city}
-                onChange={(e) =>
-                  setAddworkspaceForm((f) => ({ ...f, city: e.target.value }))
-                }
-                placeholder="Ville"
-              />
+              <button
+                type="button"
+                onClick={() => setCreateCityModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+              >
+                <span className={addworkspaceForm.city ? "text-foreground" : "text-muted-foreground"}>
+                  {addworkspaceForm.city || "Sélectionner une ville"}
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/90">
@@ -7170,13 +7183,7 @@ export default function StructurePage() {
                 className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
               >
                 <span className={addworkspaceForm.country ? "text-foreground" : "text-muted-foreground"}>
-                  {addworkspaceForm.country ?
-                    (() => {
-                      const country = COUNTRIES.find(c => c.value === addworkspaceForm.country || c.label === addworkspaceForm.country);
-                      return country ? `${country.label} (${country.code})` : addworkspaceForm.country;
-                    })()
-                    : "Sélectionner un pays"
-                  }
+                  {addworkspaceForm.country ? getCountryWithCode(addworkspaceForm.country) : "Sélectionner un pays"}
                 </span>
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -7272,7 +7279,7 @@ export default function StructurePage() {
         onOpenChange={setCountryModalOpen}
         value={editworkspace.country}
         onChange={(value) =>
-          setEditworkspace((f) => ({ ...f, country: value }))
+          setEditworkspace((f) => ({ ...f, country: value, city: "" }))
         }
         title="Sélectionner le pays du workspace"
       />
@@ -7283,9 +7290,33 @@ export default function StructurePage() {
         onOpenChange={setCreateCountryModalOpen}
         value={addworkspaceForm.country}
         onChange={(value) =>
-          setAddworkspaceForm((f) => ({ ...f, country: value }))
+          setAddworkspaceForm((f) => ({ ...f, country: value, city: "" }))
         }
         title="Sélectionner le pays du workspace"
+      />
+
+      {/* Modal de sélection de ville */}
+      <CitySelectModal
+        open={cityModalOpen}
+        onOpenChange={setCityModalOpen}
+        value={editworkspace.city}
+        onChange={(value) =>
+          setEditworkspace((f) => ({ ...f, city: value }))
+        }
+        title="Sélectionner la ville du workspace"
+        countryCode={editworkspace.country}
+      />
+
+      {/* Modal de sélection de ville pour la création */}
+      <CitySelectModal
+        open={createCityModalOpen}
+        onOpenChange={setCreateCityModalOpen}
+        value={addworkspaceForm.city}
+        onChange={(value) =>
+          setAddworkspaceForm((f) => ({ ...f, city: value }))
+        }
+        title="Sélectionner la ville du workspace"
+        countryCode={addworkspaceForm.country}
       />
 
       {/* Modal de sélection de pays pour le groupe */}
@@ -7294,9 +7325,33 @@ export default function StructurePage() {
         onOpenChange={setGroupCountryModalOpen}
         value={editGroup.country}
         onChange={(value) =>
-          setEditGroup((f) => ({ ...f, country: value }))
+          setEditGroup((f) => ({ ...f, country: value, city: "" }))
         }
         title="Sélectionner le pays du groupe"
+      />
+
+      {/* Modal de sélection de ville pour le groupe */}
+      <CitySelectModal
+        open={groupCityModalOpen}
+        onOpenChange={setGroupCityModalOpen}
+        value={editGroup.city}
+        onChange={(value) =>
+          setEditGroup((f) => ({ ...f, city: value }))
+        }
+        title="Sélectionner la ville du groupe"
+        countryCode={editGroup.country}
+      />
+
+      {/* Modal de sélection de ville pour l'ajout de groupe */}
+      <CitySelectModal
+        open={addGroupCityModalOpen}
+        onOpenChange={setAddGroupCityModalOpen}
+        value={addGroupForm.city}
+        onChange={(value) =>
+          setAddGroupForm((f) => ({ ...f, city: value }))
+        }
+        title="Sélectionner la ville du groupe"
+        countryCode={addGroupForm.country}
       />
 
       {/* Modal de sélection de pays pour l'entreprise */}
@@ -7305,9 +7360,33 @@ export default function StructurePage() {
         onOpenChange={setCompanyCountryModalOpen}
         value={editCompany.country}
         onChange={(value) =>
-          setEditCompany((f) => ({ ...f, country: value }))
+          setEditCompany((f) => ({ ...f, country: value, city: "" }))
         }
         title="Sélectionner le pays de l'entreprise"
+      />
+
+      {/* Modal de sélection de ville pour l'entreprise */}
+      <CitySelectModal
+        open={companyCityModalOpen}
+        onOpenChange={setCompanyCityModalOpen}
+        value={editCompany.city}
+        onChange={(value) =>
+          setEditCompany((f) => ({ ...f, city: value }))
+        }
+        title="Sélectionner la ville de l'entreprise"
+        countryCode={editCompany.country}
+      />
+
+      {/* Modal de sélection de ville pour la création d'entreprise */}
+      <CitySelectModal
+        open={addCompanyCityModalOpen}
+        onOpenChange={setAddCompanyCityModalOpen}
+        value={addCompanyForm.city}
+        onChange={(value) =>
+          setAddCompanyForm((f) => ({ ...f, city: value }))
+        }
+        title="Sélectionner la ville de l'entreprise"
+        countryCode={addCompanyForm.country}
       />
 
       {/* Modal de sélection de code APE pour l'entreprise */}
@@ -7350,7 +7429,7 @@ export default function StructurePage() {
         onOpenChange={setEditBUCountryModalOpen}
         value={editBU.country}
         onChange={(value) =>
-          setEditBU((f) => ({ ...f, country: value }))
+          setEditBU((f) => ({ ...f, country: value, city: "" }))
         }
         title="Sélectionner le pays de la BU"
       />
@@ -7361,9 +7440,33 @@ export default function StructurePage() {
         onOpenChange={setAddBUCountryModalOpen}
         value={addBUForm.country}
         onChange={(value) =>
-          setAddBUForm((f) => ({ ...f, country: value }))
+          setAddBUForm((f) => ({ ...f, country: value, city: "" }))
         }
         title="Sélectionner le pays de la BU"
+      />
+
+      {/* Modal de sélection de ville pour la BU */}
+      <CitySelectModal
+        open={editBUCityModalOpen}
+        onOpenChange={setEditBUCityModalOpen}
+        value={editBU.city}
+        onChange={(value) =>
+          setEditBU((f) => ({ ...f, city: value }))
+        }
+        title="Sélectionner la ville de la BU"
+        countryCode={editBU.country}
+      />
+
+      {/* Modal de sélection de ville pour la création de BU */}
+      <CitySelectModal
+        open={addBUCityModalOpen}
+        onOpenChange={setAddBUCityModalOpen}
+        value={addBUForm.city}
+        onChange={(value) =>
+          setAddBUForm((f) => ({ ...f, city: value }))
+        }
+        title="Sélectionner la ville de la BU"
+        countryCode={addBUForm.country}
       />
 
       {/* Modal de sélection de pays pour la création de BU standalone */}
@@ -7372,9 +7475,21 @@ export default function StructurePage() {
         onOpenChange={setAddBUStandaloneCountryModalOpen}
         value={addBUStandaloneForm.country}
         onChange={(value) =>
-          setAddBUStandaloneForm((f) => ({ ...f, country: value }))
+          setAddBUStandaloneForm((f) => ({ ...f, country: value, city: "" }))
         }
         title="Sélectionner le pays de la BU"
+      />
+
+      {/* Modal de sélection de ville pour la création de BU standalone */}
+      <CitySelectModal
+        open={addBUStandaloneCityModalOpen}
+        onOpenChange={setAddBUStandaloneCityModalOpen}
+        value={addBUStandaloneForm.city}
+        onChange={(value) =>
+          setAddBUStandaloneForm((f) => ({ ...f, city: value }))
+        }
+        title="Sélectionner la ville de la BU"
+        countryCode={addBUStandaloneForm.country}
       />
 
       {/* Modal de sélection de code APE pour la création de BU standalone */}
@@ -7427,7 +7542,7 @@ export default function StructurePage() {
         onOpenChange={setAddCompanyCountryModalOpen}
         value={addCompanyForm.country}
         onChange={(value) =>
-          setAddCompanyForm((f) => ({ ...f, country: value }))
+          setAddCompanyForm((f) => ({ ...f, country: value, city: "" }))
         }
         title="Sélectionner le pays de l'entreprise"
       />
