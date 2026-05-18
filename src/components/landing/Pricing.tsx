@@ -105,7 +105,16 @@ export default function Pricing({ billingYearly, setBillingYearly }: PricingProp
   ];
 
   return (
-    <section id="pricing" className="relative overflow-hidden py-24 px-6">
+    <section
+      id="pricing"
+      className="relative overflow-hidden py-24 px-6"
+      style={{
+        backgroundImage: "url('/landing/pricing.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
       {/* Large gold glow at bottom-right — matches Figma Ellipse 854 */}
       <div
         className="pointer-events-none absolute right-[-120px] bottom-[-200px] h-[600px] w-[600px] rounded-full"
