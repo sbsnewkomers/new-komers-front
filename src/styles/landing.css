@@ -1,0 +1,420 @@
+/* =============================================================================
+   LANDING PAGE STYLES - NK Software
+   Styles spécifiques à la page marketing, centralisés pour alléger les composants
+   ============================================================================= */
+
+/* Variables spécifiques à la landing page */
+.landing {
+    --primary: #080808;
+    --primary-light: #111111;
+    --accent: #d4b06a;
+    --accent-soft: rgba(212, 176, 106, 0.12);
+    --text-main: #e8e8e8;
+    --text-muted: #888888;
+    --text-dim: #555555;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-accent: rgba(212, 176, 106, 0.3);
+    --glass: rgba(8, 8, 8, 0.85);
+    font-family: "Inter", sans-serif;
+    background-color: var(--primary);
+    color: var(--text-main);
+    scroll-behavior: smooth;
+}
+
+/* Force dark theme for landing page */
+.force-dark {
+    --nebula-bg: #0a0a0a !important;
+    --nebula-ink: #f5ecd7 !important;
+    --nebula-muted: #9a8f78 !important;
+    --background: #0a0a0a !important;
+    --foreground: #f5ecd7 !important;
+    --muted: rgba(255, 255, 255, 0.06) !important;
+    --muted-foreground: #9a8f78 !important;
+    --border: rgba(245, 236, 215, 0.12) !important;
+    --input: rgba(245, 236, 215, 0.12) !important;
+    --card: rgba(255, 255, 255, 0.04) !important;
+    --card-foreground: #f5ecd7 !important;
+    --popover: rgba(10, 10, 10, 0.92) !important;
+    --popover-foreground: #f5ecd7 !important;
+    color-scheme: dark !important;
+}
+
+/* Override light mode completely */
+.nebula-light .force-dark,
+body.nebula-light .force-dark {
+    background-color: #0a0a0a !important;
+    color: #f5ecd7 !important;
+    color-scheme: dark !important;
+}
+
+/* Force landing components to use dark colors */
+.force-dark .text-white {
+    color: #f5ecd7 !important;
+}
+
+.force-dark .text-white\/60 {
+    color: rgba(245, 236, 215, 0.6) !important;
+}
+
+.force-dark .text-white\/70 {
+    color: rgba(245, 236, 215, 0.7) !important;
+}
+
+.force-dark .text-white\/80 {
+    color: rgba(245, 236, 215, 0.8) !important;
+}
+
+.force-dark .text-white\/90 {
+    color: rgba(245, 236, 215, 0.9) !important;
+}
+
+.force-dark .bg-white\/5 {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.force-dark .bg-white\/10 {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.force-dark .bg-white\/20 {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.force-dark .border-white\/10 {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.force-dark .border-white\/15 {
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.force-dark .border-white\/20 {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.force-dark nav {
+    background-color: rgba(0, 0, 0, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.force-dark footer {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Animations */
+@keyframes landingMarquee {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.landing .landing-marquee-track {
+    display: flex;
+    width: max-content;
+    animation: landingMarquee 22s linear infinite;
+}
+
+.landing .landing-marquee-track:hover {
+    animation-play-state: paused;
+}
+
+@keyframes spin-slow {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin-slow {
+    animation: spin-slow 35s linear infinite;
+}
+
+/* Loading animations */
+.landing.loaded .opacity-0 {
+    opacity: 1 !important;
+}
+
+.landing.loaded .translate-y-8 {
+    transform: translateY(0) !important;
+}
+
+/* Navigation styles */
+.landing-nav-logo {
+    transition: all 0.7s ease;
+}
+
+.landing-nav-logo:hover {
+    transform: scale(1.05);
+}
+
+.landing-nav-link {
+    position: relative;
+    transition: all 0.5s ease;
+}
+
+.landing-nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(to right, #d4b06a, #f5ecd7, #d4b06a);
+    transition: all 0.5s ease;
+    transform: translateX(-50%);
+}
+
+.landing-nav-link:hover::after {
+    width: 100%;
+    left: 0;
+    transform: translateX(0);
+}
+
+.landing-nav-link:hover {
+    color: #d4b06a;
+    transform: scale(1.05);
+}
+
+/* Hero section */
+.landing-hero-title {
+    transition: all 1s ease;
+}
+
+.landing-hero-title .text-yellow-400 {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.landing-hero-title .text-yellow-400:hover {
+    transform: scale(1.1);
+}
+
+.landing-hero-content {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: all 1s ease;
+}
+
+.landing.loaded .landing-hero-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.landing-hero-content.delay-300 {
+    transition-delay: 300ms;
+}
+
+.landing-hero-content.delay-500 {
+    transition-delay: 500ms;
+}
+
+/* Stats section */
+.landing-stat-item {
+    transition: all 0.3s ease;
+}
+
+.landing-stat-item:hover .text-white {
+    color: #d4b06a !important;
+    transform: scale(1.05);
+}
+
+.landing-stat-item:hover .text-yellow-400 {
+    color: #f5ecd7 !important;
+}
+
+/* Features section */
+.landing-feature-card {
+    transition: all 0.5s ease;
+}
+
+.landing-feature-card:hover {
+    transform: scale(1.01);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.landing-feature-arrow {
+    transition: transform 0.3s ease;
+}
+
+.landing-feature-card:hover .landing-feature-arrow {
+    transform: translate(4px, -4px);
+}
+
+/* About section */
+.landing-about-stat {
+    transition: all 0.3s ease;
+}
+
+.landing-about-line {
+    position: relative;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+    flex-grow: 1;
+}
+
+.landing-about-line::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    width: 6px;
+    height: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.4);
+    border-right: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Pricing section */
+.landing-pricing-card {
+    transition: all 0.5s ease;
+}
+
+.landing-pricing-card:hover {
+    transform: scale(1.02);
+}
+
+.landing-pricing-card.highlighted:hover {
+    transform: scale(1.03);
+}
+
+.landing-pricing-badge {
+    position: relative;
+}
+
+.landing-pricing-badge::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #d4b06a;
+    border-radius: 9999px;
+    filter: blur(16px);
+    opacity: 0.5;
+}
+
+/* FAQ section */
+.landing-faq-item {
+    transition: all 0.3s ease;
+}
+
+.landing-faq-item:hover {
+    border-color: rgba(212, 176, 106, 0.3);
+}
+
+.landing-faq-icon {
+    transition: transform 0.3s ease;
+}
+
+.landing-faq-item.open .landing-faq-icon {
+    transform: rotate(180deg);
+}
+
+/* Utility classes */
+.landing .serif-heading {
+    font-family: "Playfair Display", serif;
+}
+
+.landing .glass-panel {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+}
+
+.landing .gradient-bg {
+    background: var(--primary);
+}
+
+.landing .feature-ui-card {
+    background: linear-gradient(145deg, #101010, #080808);
+    border: 1px solid var(--border);
+}
+
+.landing .pricing-card {
+    transition: transform 0.3s ease;
+}
+
+.landing .pricing-card:hover {
+    transform: translateY(-8px);
+}
+
+.landing .material-symbols-outlined {
+    font-variation-settings:
+        "FILL" 0,
+        "wght" 400,
+        "GRAD" 0,
+        "opsz" 24;
+}
+
+/* Mouse follower effect */
+.landing-mouse-follower {
+    pointer-events: none;
+    position: fixed;
+    z-index: 50;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(250, 204, 21, 0.2);
+    filter: blur(4px);
+    transition: transform 0.1s ease-out;
+}
+
+/* Mobile menu animations */
+.landing-mobile-menu-line {
+    transition: all 0.5s ease;
+}
+
+.landing-mobile-menu.open .landing-mobile-menu-line:nth-child(1) {
+    transform: rotate(45deg) translateY(8px);
+    background: #000;
+}
+
+.landing-mobile-menu.open .landing-mobile-menu-line:nth-child(2) {
+    opacity: 0;
+}
+
+.landing-mobile-menu.open .landing-mobile-menu-line:nth-child(3) {
+    transform: rotate(-45deg) translateY(-8px);
+    background: #000;
+}
+
+.landing-mobile-menu:hover .landing-mobile-menu-line {
+    background: #d4b06a;
+}
+
+.landing-mobile-menu.open:hover .landing-mobile-menu-line {
+    background: #000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .landing-hero-title {
+        font-size: clamp(38px, 5.5vw, 72px);
+    }
+
+    .landing-feature-card {
+        min-height: 200px;
+    }
+
+    .landing-about-stat {
+        padding-top: 3rem;
+    }
+}
+
+/* Performance optimizations */
+.landing-feature-card,
+.landing-pricing-card,
+.landing-faq-item {
+    will-change: transform;
+}
+
+.landing-feature-card:hover,
+.landing-pricing-card:hover {
+    will-change: auto;
+}
