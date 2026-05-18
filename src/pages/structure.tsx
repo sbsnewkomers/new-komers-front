@@ -35,6 +35,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { useRouter } from "next/router";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import { usePermissions } from "@/permissions/usePermissions";
+import { useWorkspaceContext } from "@/providers/WorkspaceProvider";
 import { CRUD_ACTION } from "@/permissions/actions";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -683,6 +684,7 @@ export default function StructurePage() {
   const { user, isAuthReady } = usePermissionsContext();
   const router = useRouter();
   const { can } = usePermissions();
+  const { workspaces: userWorkspaces } = useWorkspaceContext();
   const canImportStructure =
     user?.role === "SUPER_ADMIN" ||
     user?.role === "ADMIN" ||
@@ -1068,32 +1070,32 @@ export default function StructurePage() {
   );
 
 
-const loadTree = useCallback(async () => {
-  if (treeLoading) return;
-  setTreeLoading(true);
-  setTreeError(null);
-  try {
-    const data = await fetchStructureTree();
-    setTree(data);
-    setIsTreeLoaded(true);
-  } catch (e) {
-    if (e instanceof Error) {
-      try {
-        const parsed = JSON.parse(e.message) as { message?: string | string[] } | undefined;
-        const m = parsed?.message;
-        const msg = Array.isArray(m) ? m.join(", ") : m;
-        setTreeError(msg || e.message || "Erreur");
-      } catch {
-        setTreeError(e.message || "Erreur");
+  const loadTree = useCallback(async () => {
+    if (treeLoading) return;
+    setTreeLoading(true);
+    setTreeError(null);
+    try {
+      const data = await fetchStructureTree();
+      setTree(data);
+      setIsTreeLoaded(true);
+    } catch (e) {
+      if (e instanceof Error) {
+        try {
+          const parsed = JSON.parse(e.message) as { message?: string | string[] } | undefined;
+          const m = parsed?.message;
+          const msg = Array.isArray(m) ? m.join(", ") : m;
+          setTreeError(msg || e.message || "Erreur");
+        } catch {
+          setTreeError(e.message || "Erreur");
+        }
+      } else {
+        setTreeError("Erreur");
       }
-    } else {
-      setTreeError("Erreur");
+    } finally {
+      setTreeLoading(false);
     }
-  } finally {
-    setTreeLoading(false);
-  }
-}, [treeLoading]);
-       
+  }, [treeLoading]);
+
 
   // Only load the structure tree once auth bootstrap is done and we have a user.
   useEffect(() => {
@@ -2205,9 +2207,16 @@ const loadTree = useCallback(async () => {
 
     // Déterminer le groupId et workspaceId finaux
     const finalGroupId = addCompanyGroupId || addCompanyForm.groupId;
-    const finalWorkspaceId = addCompanyGroupId
+    let finalWorkspaceId = addCompanyGroupId
       ? groupList.find(g => g.id === addCompanyGroupId)?.workspaceId
       : addCompanyForm.workspaceId;
+
+    // Pour les utilisateurs non-admin, assigner automatiquement leur workspace
+    if (!finalWorkspaceId && user?.role !== "SUPER_ADMIN" && user?.role !== "ADMIN") {
+      // Un utilisateur non-admin n'a accès qu'à un seul workspace
+      console.log('userWorkspaces:', userWorkspaces);
+      finalWorkspaceId = userWorkspaces?.[0]?.id;
+    }
 
     // Validation
     if (!addCompanyForm.name?.trim()) {
