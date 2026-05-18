@@ -1,5 +1,5 @@
 // features/import/EntitySelector.tsx
-import { Building, Briefcase, AlertCircle, Layers, Unlink } from "lucide-react";
+import { Building, AlertCircle, Layers, Unlink } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { fetchStructureTree } from "@/lib/structureApi";
 import { apiFetch } from "@/lib/apiClient";
@@ -96,8 +96,8 @@ export function EntitySelector({
 
   // ── Dérivés standalone filtrés par workspace (admins) ─────────────────────
   // Pour les admins : on utilise le workspace sélectionné comme clé.
-  // Pour les autres rôles : clé '' (standalone globaux).
-  const standaloneKey = isSuperAdminOrAdmin ? selectedWorkspaceId : '';
+  // Pour les autres rôles : on utilise le premier workspace disponible ou '' si aucun.
+  const standaloneKey = isSuperAdminOrAdmin ? selectedWorkspaceId : (workspaces.length > 0 ? workspaces[0].id : '');
   const standaloneCompanies: Entity[] = standaloneByWorkspace[standaloneKey]?.companies ?? [];
   const standaloneBus: BusinessUnit[] = standaloneByWorkspace[standaloneKey]?.bus ?? [];
 
@@ -111,8 +111,9 @@ export function EntitySelector({
       try {
         const tree = await fetchStructureTree();
 
-        if (isSuperAdminOrAdmin && tree.workspaces?.length) {
-          setWorkspaces(tree.workspaces.map((ws: any) => ({ id: ws.id, name: ws.name })));
+        // Toujours charger les workspaces pour le mode standalone
+        if (tree.workspaces?.length) {
+          setWorkspaces(tree.workspaces.map((ws: { id: string; name: string }) => ({ id: ws.id, name: ws.name })));
         }
 
         const groups: GroupNode[] = [];
@@ -150,7 +151,7 @@ export function EntitySelector({
         // ── Standalone : indexés par workspaceId ──────────────────────────────
         const byWs: Record<string, { companies: Entity[]; bus: BusinessUnit[] }> = {};
 
-        const addToWs = (wsId: string, company: any) => {
+        const addToWs = (wsId: string, company: { id: string; name: string; businessUnits?: Array<{ id: string; name: string; code?: string | null }> }) => {
           if (!byWs[wsId]) byWs[wsId] = { companies: [], bus: [] };
           byWs[wsId].companies.push({ id: company.id, name: company.name });
           for (const bu of company.businessUnits ?? []) {
@@ -302,7 +303,7 @@ export function EntitySelector({
             if (mode !== 'standalone') {
               setMode('standalone');
               resetAll(true);
-    
+
             }
           }}
           disabled={disabled}
@@ -462,66 +463,66 @@ export function EntitySelector({
 
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
 
-          {/* 1. Type d'entité */}
-          <div>
-            <label className="block text-xs font-medium mb-1.5">Type d&apos;entité</label>
-            <select
-              value={selectedEntityType || ''}
-              onChange={e => {
-                const value = e.target.value as 'Company' | 'BusinessUnit';
-                if (!disabled) {
-                  onEntityChange('', value);
-                  onHasDataChange(null);
-                  onPeriodChange('', '');
-                }
-              }}
-              disabled={disabled || isLoading || !standaloneAvailable}
-              className={selectClass(disabled || isLoading || !standaloneAvailable)}
-            >
-              <option value="">
-                {isLoading ? 'Chargement...' : !standaloneAvailable ? "Sélectionnez d'abord un workspace" : 'Sélectionner un type'}
-              </option>
-              <option value="Company">Entreprise</option>
-              <option value="BusinessUnit" disabled={standaloneBus.length === 0}>
-                Business Unit{standaloneBus.length === 0 ? ' (aucune)' : ''}
-              </option>
-            </select>
-          </div>
+            {/* 1. Type d'entité */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5">Type d&apos;entité</label>
+              <select
+                value={selectedEntityType || ''}
+                onChange={e => {
+                  const value = e.target.value as 'Company' | 'BusinessUnit';
+                  if (!disabled) {
+                    onEntityChange('', value);
+                    onHasDataChange(null);
+                    onPeriodChange('', '');
+                  }
+                }}
+                disabled={disabled || isLoading || !standaloneAvailable}
+                className={selectClass(disabled || isLoading || !standaloneAvailable)}
+              >
+                <option value="">
+                  {isLoading ? 'Chargement...' : !standaloneAvailable ? "Sélectionnez d'abord un workspace" : 'Sélectionner un type'}
+                </option>
+                <option value="Company">Entreprise</option>
+                <option value="BusinessUnit" disabled={standaloneBus.length === 0}>
+                  Business Unit{standaloneBus.length === 0 ? ' (aucune)' : ''}
+                </option>
+              </select>
+            </div>
 
-          {/* 2. Entité */}
-          <div>
-            <label className="block text-xs font-medium text-(--nebula-muted) mb-1.5">
-              {selectedEntityType === 'BusinessUnit' ? 'Business Unit' : 'Entreprise'}
-            </label>
-            <select
-              value={selectedEntityId || ''}
-              onChange={e => handleEntitySelect(
-                e.target.value,
-                selectedEntityType ?? 'Company',
-                selectedEntityType === 'BusinessUnit' ? standaloneBus : standaloneCompanies,
-              )}
-              disabled={disabled || !selectedEntityType || isLoading || !standaloneAvailable}
-              className={selectClass(disabled || !selectedEntityType || isLoading || !standaloneAvailable)}
-            >
-              <option value="">
-                {isLoading
-                  ? 'Chargement...'
-                  : !selectedEntityType
-                    ? "Sélectionnez d'abord le type"
-                    : selectedEntityType === 'Company'
-                      ? 'Sélectionner une entreprise'
-                      : 'Sélectionner une BU'}
-              </option>
-              {selectedEntityType === 'Company' &&
-                standaloneCompanies.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              {selectedEntityType === 'BusinessUnit' &&
-                standaloneBus.map(bu => (
-                  <option key={bu.id} value={bu.id}>{bu.name}</option>
-                ))}
-            </select>
-          </div>
+            {/* 2. Entité */}
+            <div>
+              <label className="block text-xs font-medium text-(--nebula-muted) mb-1.5">
+                {selectedEntityType === 'BusinessUnit' ? 'Business Unit' : 'Entreprise'}
+              </label>
+              <select
+                value={selectedEntityId || ''}
+                onChange={e => handleEntitySelect(
+                  e.target.value,
+                  selectedEntityType ?? 'Company',
+                  selectedEntityType === 'BusinessUnit' ? standaloneBus : standaloneCompanies,
+                )}
+                disabled={disabled || !selectedEntityType || isLoading || !standaloneAvailable}
+                className={selectClass(disabled || !selectedEntityType || isLoading || !standaloneAvailable)}
+              >
+                <option value="">
+                  {isLoading
+                    ? 'Chargement...'
+                    : !selectedEntityType
+                      ? "Sélectionnez d'abord le type"
+                      : selectedEntityType === 'Company'
+                        ? 'Sélectionner une entreprise'
+                        : 'Sélectionner une BU'}
+                </option>
+                {selectedEntityType === 'Company' &&
+                  standaloneCompanies.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                {selectedEntityType === 'BusinessUnit' &&
+                  standaloneBus.map(bu => (
+                    <option key={bu.id} value={bu.id}>{bu.name}</option>
+                  ))}
+              </select>
+            </div>
           </div>
         </div>
       )}
