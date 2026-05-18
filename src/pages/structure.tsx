@@ -6001,7 +6001,7 @@ export default function StructurePage() {
                 <PhoneInput
                   international
                   countryCallingCodeEditable={false}
-                  defaultCountry="FR"
+                  defaultCountry={addGroupForm.country || "FR"}
                   value={addGroupForm.phone_mobile}
                   onChange={(value) =>
                     handlePhoneChange(value || "", "addGroup", "phone_mobile")
@@ -6028,7 +6028,7 @@ export default function StructurePage() {
                 <PhoneInput
                   international
                   countryCallingCodeEditable={false}
-                  defaultCountry="FR"
+                  defaultCountry={addGroupForm.country || "FR"}
                   value={addGroupForm.phone_landline}
                   onChange={(value) =>
                     handlePhoneChange(value || "", "addGroup", "phone_landline")
@@ -6114,7 +6114,13 @@ export default function StructurePage() {
         open={addGroupCountryModalOpen}
         onOpenChange={setAddGroupCountryModalOpen}
         value={addGroupForm.country}
-        onChange={(value) => setAddGroupForm((f) => ({ ...f, country: value, city: "" }))}
+        onChange={(value) => setAddGroupForm((f) => ({
+          ...f,
+          country: value,
+          city: "",
+          phone_mobile: "",  // Clear phone numbers when country changes
+          phone_landline: "" // Clear phone numbers when country changes
+        }))}
         title="Sélectionner un pays pour le groupe"
       />
 
@@ -6302,7 +6308,7 @@ export default function StructurePage() {
                   <PhoneInput
                     international
                     countryCallingCodeEditable={false}
-                    defaultCountry="FR"
+                    defaultCountry={addBUStandaloneForm.country || "FR"}
                     value={addBUStandaloneForm.phone_mobile}
                     onChange={(value) =>
                       handlePhoneChange(value || "", "addBUStandalone", "phone_mobile")
@@ -6329,7 +6335,7 @@ export default function StructurePage() {
                   <PhoneInput
                     international
                     countryCallingCodeEditable={false}
-                    defaultCountry="FR"
+                    defaultCountry={addBUStandaloneForm.country || "FR"}
                     value={addBUStandaloneForm.phone_landline}
                     onChange={(value) =>
                       handlePhoneChange(value || "", "addBUStandalone", "phone_landline")
@@ -6627,7 +6633,7 @@ export default function StructurePage() {
                 <PhoneInput
                   international
                   countryCallingCodeEditable={false}
-                  defaultCountry="FR"
+                  defaultCountry={addCompanyForm.country || "FR"}
                   value={addCompanyForm.phone_mobile}
                   onChange={(value) =>
                     handlePhoneChange(value || "", 'addCompany', 'phone_mobile')
@@ -6648,7 +6654,7 @@ export default function StructurePage() {
                 <PhoneInput
                   international
                   countryCallingCodeEditable={false}
-                  defaultCountry="FR"
+                  defaultCountry={addCompanyForm.country || "FR"}
                   value={addCompanyForm.phone_landline}
                   onChange={(value) =>
                     handlePhoneChange(value || "", 'addCompany', 'phone_landline')
@@ -6951,7 +6957,7 @@ export default function StructurePage() {
                   <PhoneInput
                     international
                     countryCallingCodeEditable={false}
-                    defaultCountry="FR"
+                    defaultCountry={addBUForm.country || "FR"}
                     value={addBUForm.phone_mobile}
                     onChange={(value) =>
                       handlePhoneChange(value || "", "addBU", "phone_mobile")
@@ -6978,7 +6984,7 @@ export default function StructurePage() {
                   <PhoneInput
                     international
                     countryCallingCodeEditable={false}
-                    defaultCountry="FR"
+                    defaultCountry={addBUForm.country || "FR"}
                     value={addBUForm.phone_landline}
                     onChange={(value) =>
                       handlePhoneChange(value || "", "addBU", "phone_landline")
@@ -7227,7 +7233,7 @@ export default function StructurePage() {
                 <PhoneInput
                   international
                   countryCallingCodeEditable={false}
-                  defaultCountry="FR"
+                  defaultCountry={addworkspaceForm.country || "FR"}
                   value={addworkspaceForm.phone_mobile}
                   onChange={(value) => handlePhoneChange(value || "", "addworkspace", "phone_mobile")}
                   className={workspaceErrors.phone_mobile ? "border-red-500" : ""}
@@ -7246,7 +7252,7 @@ export default function StructurePage() {
                 <PhoneInput
                   international
                   countryCallingCodeEditable={false}
-                  defaultCountry="FR"
+                  defaultCountry={addworkspaceForm.country || "FR"}
                   value={addworkspaceForm.phone_landline}
                   onChange={(value) => handlePhoneChange(value || "", "addworkspace", "phone_landline")}
                   className={workspaceErrors.phone_landline ? "border-red-500" : ""}
@@ -7306,7 +7312,13 @@ export default function StructurePage() {
         onOpenChange={setCreateCountryModalOpen}
         value={addworkspaceForm.country}
         onChange={(value) =>
-          setAddworkspaceForm((f) => ({ ...f, country: value, city: "" }))
+          setAddworkspaceForm((f) => ({
+            ...f,
+            country: value,
+            city: "",
+            phone_mobile: "",  // Clear phone numbers when country changes
+            phone_landline: "" // Clear phone numbers when country changes
+          }))
         }
         title="Sélectionner le pays du workspace"
       />
@@ -7456,7 +7468,13 @@ export default function StructurePage() {
         onOpenChange={setAddBUCountryModalOpen}
         value={addBUForm.country}
         onChange={(value) =>
-          setAddBUForm((f) => ({ ...f, country: value, city: "" }))
+          setAddBUForm((f) => ({
+            ...f,
+            country: value,
+            city: "",
+            phone_mobile: "",  // Clear phone numbers when country changes
+            phone_landline: "" // Clear phone numbers when country changes
+          }))
         }
         title="Sélectionner le pays de la BU"
       />
@@ -7491,7 +7509,13 @@ export default function StructurePage() {
         onOpenChange={setAddBUStandaloneCountryModalOpen}
         value={addBUStandaloneForm.country}
         onChange={(value) =>
-          setAddBUStandaloneForm((f) => ({ ...f, country: value, city: "" }))
+          setAddBUStandaloneForm((f) => ({
+            ...f,
+            country: value,
+            city: "",
+            phone_mobile: "",  // Clear phone numbers when country changes
+            phone_landline: "" // Clear phone numbers when country changes
+          }))
         }
         title="Sélectionner le pays de la BU"
       />
@@ -7558,7 +7582,13 @@ export default function StructurePage() {
         onOpenChange={setAddCompanyCountryModalOpen}
         value={addCompanyForm.country}
         onChange={(value) =>
-          setAddCompanyForm((f) => ({ ...f, country: value, city: "" }))
+          setAddCompanyForm((f) => ({
+            ...f,
+            country: value,
+            city: "",
+            phone_mobile: "",  // Clear phone numbers when country changes
+            phone_landline: "" // Clear phone numbers when country changes
+          }))
         }
         title="Sélectionner le pays de l'entreprise"
       />
