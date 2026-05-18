@@ -1067,35 +1067,33 @@ export default function StructurePage() {
     [ficheShareholderUsers],
   );
 
-  const loadTree = useCallback(async () => {
-    // Éviter les rechargements multiples
-    if (treeLoading) return;
 
-    setTreeLoading(true);
-    setTreeError(null);
-    try {
-      const data = await fetchStructureTree();
-      setTree(data);
-      setIsTreeLoaded(true);
-    } catch (e) {
-      if (e instanceof Error) {
-        try {
-          const parsed = JSON.parse(e.message) as
-            | { message?: string | string[] }
-            | undefined;
-          const m = parsed?.message;
-          const msg = Array.isArray(m) ? m.join(", ") : m;
-          setTreeError(msg || e.message || "Erreur");
-        } catch {
-          setTreeError(e.message || "Erreur");
-        }
-      } else {
-        setTreeError("Erreur");
+const loadTree = useCallback(async () => {
+  if (treeLoading) return;
+  setTreeLoading(true);
+  setTreeError(null);
+  try {
+    const data = await fetchStructureTree();
+    setTree(data);
+    setIsTreeLoaded(true);
+  } catch (e) {
+    if (e instanceof Error) {
+      try {
+        const parsed = JSON.parse(e.message) as { message?: string | string[] } | undefined;
+        const m = parsed?.message;
+        const msg = Array.isArray(m) ? m.join(", ") : m;
+        setTreeError(msg || e.message || "Erreur");
+      } catch {
+        setTreeError(e.message || "Erreur");
       }
-    } finally {
-      setTreeLoading(false);
+    } else {
+      setTreeError("Erreur");
     }
-  }, [treeLoading]);
+  } finally {
+    setTreeLoading(false);
+  }
+}, [treeLoading]);
+       
 
   // Only load the structure tree once auth bootstrap is done and we have a user.
   useEffect(() => {
@@ -1990,7 +1988,6 @@ export default function StructurePage() {
         formData.append('logo', editCompanyLogoFile);
       }
 
-      formData.append('completionPercentage', String(editCompany.completionPercentage || 0));
 
       const updatedCompany = await apiFetch<CompanyFull>(`/companies/${selectedNode.id}`, {
         method: "PUT",
@@ -2095,7 +2092,7 @@ export default function StructurePage() {
     setEditing(false);
     setDetailOpen(false);
     // Recharger l'arbre pour refléter les changements
-    void loadTree();
+    void setIsTreeLoaded(false);
   };
 
   const handleCreateworkspace = async () => {
@@ -2159,7 +2156,7 @@ export default function StructurePage() {
       setLogoFile(null);
       setLogoPreview("");
       setWorkspaceErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
-      void loadTree();
+      void setIsTreeLoaded(false);
     } finally {
       setAddworkspaceLoading(false);
     }
@@ -2196,7 +2193,7 @@ export default function StructurePage() {
     }
     setConfirmDeleteOpen(false);
     setDetailOpen(false);
-    await loadTree();
+    await setIsTreeLoaded(false);
   };
 
 
@@ -2318,7 +2315,7 @@ export default function StructurePage() {
       });
 
       console.log('Company created successfully:', response);
-      await loadTree();
+      await setIsTreeLoaded(false);
       setAddCompanyOpen(false);
       setAddCompanyForm({
         name: "",
@@ -2424,7 +2421,7 @@ export default function StructurePage() {
         headers: {}, // Important: ne pas définir Content-Type pour FormData
         snackbar: { showSuccess: true, successMessage: "Business unit créée" },
       });
-      await loadTree();
+      await setIsTreeLoaded(false);
       setExpandedCompanyIds((prev) => new Set(prev).add(addBUCompanyId!));
       setAddBUOpen(false);
       setAddBUForm(createEmptyAddBUForm());
@@ -2519,7 +2516,7 @@ export default function StructurePage() {
         headers: {}, // Important: ne pas définir Content-Type pour FormData
         snackbar: { showSuccess: true, successMessage: "Groupe créé" },
       });
-      await loadTree();
+      await setIsTreeLoaded(false);
       setAddGroupOpen(false);
       setAddGroupForm({
         name: "",
@@ -2594,7 +2591,7 @@ export default function StructurePage() {
           },
         },
       );
-      await loadTree();
+      await setIsTreeLoaded(false);
       setExpandedCompanyIds((prev) =>
         new Set(prev).add(addBUStandaloneForm.companyId),
       );
