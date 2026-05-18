@@ -17,6 +17,10 @@
     --glass: rgba(8, 8, 8, 0.85);
     font-family: "Inter", sans-serif;
     background-color: var(--primary);
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 44px 44px;
     color: var(--text-main);
     scroll-behavior: smooth;
 }
@@ -93,13 +97,13 @@ body.nebula-light .force-dark {
 }
 
 .force-dark nav {
-    background-color: rgba(0, 0, 0, 0.9) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
 }
 
 .force-dark footer {
-    background-color: rgba(0, 0, 0, 0.7) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
 }
 
 /* Animations */

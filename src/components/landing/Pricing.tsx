@@ -6,190 +6,326 @@ interface PricingProps {
   setBillingYearly: (yearly: boolean) => void;
 }
 
+function TickIcon({ gold }: { gold?: boolean }) {
+  return (
+    <svg
+      className="h-6 w-6 shrink-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        stroke={gold ? "#EAB308" : "rgba(255,255,255,0.8)"}
+        strokeWidth="1.5"
+      />
+      <path
+        d="M8 12l3 3 5-5"
+        stroke={gold ? "#EAB308" : "rgba(255,255,255,0.8)"}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function Separator() {
+  return (
+    <div
+      className="w-full"
+      style={{
+        height: 1,
+        background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%)",
+      }}
+    />
+  );
+}
+
+function GlowButton({ href, children }: { href: string; children: React.ReactNode }) {
+  const inner = (
+    <div className="relative isolate flex h-11 w-40 items-center gap-3 rounded-[10px]" style={{ borderRadius: 10 }}>
+      {/* Glow blur behind */}
+      <div
+        className="pointer-events-none absolute -inset-2.5 rounded-[10px]"
+        style={{
+          background: "conic-gradient(from 196deg at 50% 50%, #EAB308 0deg, #EAB308 95deg, #EAB308 186deg, #EAB308 275deg, #EAB308 360deg)",
+          mixBlendMode: "screen",
+          opacity: 0.2,
+          filter: "blur(10px)",
+        }}
+        aria-hidden
+      />
+      {/* Button surface */}
+      <div
+        className="relative z-10 flex w-full items-center gap-3 rounded-[8px] px-5 py-2.5"
+        style={{
+          background: "rgba(0,0,0,0.5)",
+          backdropFilter: "blur(10px)",
+          boxShadow: "0 1px 0 rgba(0,0,0,0.05), 0 4px 4px rgba(0,0,0,0.05), 0 10px 10px rgba(0,0,0,0.1)",
+        }}
+      >
+        <span className="text-[18px] leading-[22px] text-white">{children}</span>
+        <svg className="h-5 w-5 shrink-0 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+    </div>
+  );
+
+  if (href.startsWith("/")) {
+    return <Link href={href}>{inner}</Link>;
+  }
+  return <a href={href}>{inner}</a>;
+}
+
 export default function Pricing({ billingYearly, setBillingYearly }: PricingProps) {
-  const plans = [
-    {
-      name: "Starter",
-      description: "Pour les groupes en croissance",
-      price: billingYearly ? "$4 704" : "$490",
-      period: billingYearly ? "an" : "month",
-      features: [
-        "Jusqu'à 5 SIREN liées",
-        "Consolidation basique quotidienne",
-        "Reporting standard (P&L, Bilan)",
-        "Options de personnalisation limitées",
-      ],
-      highlighted: false,
-      cta: "Commencer",
-      href: "/login"
-    },
-    {
-      name: "Pro",
-      description: "Puissance maximale",
-      price: billingYearly ? "$12 384" : "$1290",
-      period: billingYearly ? "an" : "month",
-      features: [
-        "SIREN illimitées",
-        "Consolidation automatique",
-        "Module de projection cash (12 mois)",
-        "Outils d'IA avancés",
-        "Format Expert-Comptable",
-      ],
-      highlighted: true,
-      badge: "POPULAIRE",
-      cta: "Choisir Pro",
-      href: "/login"
-    },
-    {
-      name: "Enterprise",
-      description: "Pour les grandes organisations",
-      price: "Sur devis",
-      period: "",
-      features: [
-        "Tout le plan Pro inclus",
-        "Accès API complet (REST)",
-        "Key Account Manager dédié",
-        "Sécurité ISO / SAML",
-        "SLA personnalisé",
-      ],
-      highlighted: false,
-      cta: "Nous contacter",
-      href: "#contact"
-    }
+  const starterFeatures = [
+    "Jusqu'à 5 SIREN liées",
+    "Consolidation basique quotidienne",
+    "Reporting standard (P&L, Bilan)",
+    "Limited customization options",
+  ];
+
+  const proFeatures = [
+    "SIREN illimitées",
+    "Consolidation automatique",
+    "Module de projection cash (12 mois)",
+    "Outils de l'IA",
+    "Expert-format Expert-Comptable",
+  ];
+
+  const enterpriseFeatures = [
+    "Tout le plan Business",
+    "Accès API complet (REST)",
+    "Key Account Manager dédié",
+    "ISO / SAML enforcement",
   ];
 
   return (
-    <section id="pricing" className="relative py-24 px-6 overflow-hidden">
-      {/* Background image */}
+    <section id="pricing" className="relative overflow-hidden py-24 px-6">
+      {/* Large gold glow at bottom-right — matches Figma Ellipse 854 */}
       <div
-        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/landing/pricing.png)' }}
+        className="pointer-events-none absolute right-[-120px] bottom-[-200px] h-[600px] w-[600px] rounded-full"
+        style={{
+          background: "#EAB308",
+          filter: "blur(200px)",
+          opacity: 0.18,
+        }}
+        aria-hidden
       />
-      <div className="absolute inset-0 bg-black/60 z-10"></div>
-      <div className="mx-auto max-w-6xl relative z-20">
-        <div className="mb-14 text-center">
-          <h2 className="text-[clamp(30px,4vw,52px)] font-black leading-tight text-white">
-            Choisissez le Plan qui
-            <br />
-            Vous Convient
+
+      <div className="mx-auto max-w-[1200px] relative z-10">
+        {/* Heading */}
+        <div className="mb-[45px] flex flex-col items-center gap-5 text-center">
+          <h2
+            className="font-bold text-white"
+            style={{ fontSize: 70, lineHeight: "84px", maxWidth: 711 }}
+          >
+            Choisissez le Plan qui Vous Convient
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-(--text-muted)">
-            Vous donnez accès aux fonctionnalités essentielles et à plus de 1000 outils créatifs. Passez du Pro
-            pour débloquer des capacités d&apos;IA puissantes, la synchronisation dans le cloud et un tout
-            nouveau niveau de liberté créative.
+          <p
+            className="text-center"
+            style={{ maxWidth: 780, fontSize: 20, lineHeight: "24px", color: "#D9D9D9" }}
+          >
+            Vous donner accès aux fonctionnalités essentielles et à plus de 1 000 outils créatifs.
+            Passez au plan Pro pour débloquer des capacités d&apos;IA puissantes, la synchronisation dans le cloud
+            et un tout nouveau niveau de liberté créative.
           </p>
 
-          {/* Billing toggle */}
-          <div className="mt-8 inline-flex items-center rounded-full border border-white/10 bg-white/5 p-1">
-            <button
-              type="button"
-              onClick={() => setBillingYearly(false)}
-              className={`rounded-full px-5 py-2 text-[13px] font-semibold transition-colors ${!billingYearly ? "bg-(--accent) text-black" : "text-(--text-muted) hover:text-white"
-                }`}
-            >
-              Monthly
-            </button>
+          {/* Toggle — Yearly first (active by default), then Monthly */}
+          <div
+            className="flex items-center p-[10px]"
+            style={{ background: "rgba(255,255,255,0.1)", borderRadius: 333 }}
+          >
             <button
               type="button"
               onClick={() => setBillingYearly(true)}
-              className={`rounded-full px-5 py-2 text-[13px] font-semibold transition-colors ${billingYearly ? "bg-(--accent) text-black" : "text-(--text-muted) hover:text-white"
-                }`}
+              className="flex items-center justify-center transition-colors"
+              style={{
+                padding: "5px 32px",
+                borderRadius: 20,
+                fontSize: 16,
+                lineHeight: "24px",
+                background: billingYearly ? "rgba(255,255,255,0.2)" : "transparent",
+                color: billingYearly ? "#ffffff" : "#919191",
+              }}
             >
               Yearly
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingYearly(false)}
+              className="flex items-center justify-center transition-colors"
+              style={{
+                padding: "5px 32px",
+                borderRadius: 20,
+                fontSize: 16,
+                lineHeight: "24px",
+                background: !billingYearly ? "rgba(255,255,255,0.2)" : "transparent",
+                color: !billingYearly ? "#ffffff" : "#919191",
+              }}
+            >
+              Monthly
             </button>
           </div>
         </div>
 
-        <div className="grid items-start gap-6 lg:grid-cols-3">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`landing-pricing-card ${plan.highlighted ? 'highlighted' : ''} group relative flex flex-col rounded-3xl border ${plan.highlighted
-                ? "border-2 border-yellow-400/30 bg-gradient-to-br from-black/90 via-black/80 to-black/90"
-                : "border-white/10 bg-black/80"
-                } backdrop-blur-sm p-8`}
-            >
-              {/* Badge POPULAIRE */}
-              {plan.badge && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <div className="landing-pricing-badge relative">
-                    <span className="relative rounded-full bg-yellow-400 px-4 py-1.5 text-[11px] font-black uppercase tracking-wider text-black">
-                      {plan.badge}
-                    </span>
-                  </div>
-                </div>
-              )}
+        {/* Cards — stacked on mobile, connected row on desktop */}
+        <div className="pricing-row flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-center lg:gap-0">
 
-              <div className="mb-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div>
-                    <h4 className="text-[22px] font-bold text-white">{plan.name}</h4>
-                    <p className="text-[13px] text-white/50">{plan.description}</p>
-                  </div>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[56px] font-black text-white leading-none">
-                    {plan.price}
-                  </span>
-                  {plan.period && (
-                    <span className="text-[16px] text-white/50">/{plan.period}</span>
-                  )}
-                </div>
+          {/* Starter */}
+          <div className="pricing-starter flex flex-col gap-[35px] p-6">
+            <div className="flex flex-col gap-6 px-2">
+              <div className="flex flex-col gap-[6px]">
+                <span style={{ fontSize: 18, lineHeight: "22px", color: "#fff" }}>Starter</span>
+                <span style={{ fontSize: 14, lineHeight: "20px", color: "#9CA3AF" }}>
+                  Idéal pour les jeunes groupes en croissance.
+                </span>
               </div>
-
-              <ul className="mb-8 flex-1 space-y-4 text-[14px]">
-                {plan.features.map((f) => (
-                  <li key={f} className={`flex items-center gap-3 ${plan.highlighted ? "text-white/80" : "text-white/70"
-                    }`}>
-                    {plan.highlighted ? (
-                      <div className="w-5 h-5 rounded-full bg-yellow-400/30 border border-yellow-400/50 flex items-center justify-center flex-shrink-0">
-                        <svg className="w-2.5 h-2.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-yellow-400/20 border border-yellow-400/40 flex items-center justify-center flex-shrink-0">
-                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
-                      </div>
-                    )}
-                    {f}
+              <div className="flex items-baseline gap-2">
+                <span className="font-bold text-white" style={{ fontSize: 40, lineHeight: "48px", letterSpacing: "-0.04em" }}>
+                  {billingYearly ? "$4 704" : "$490"}
+                </span>
+                <span style={{ fontSize: 16, color: "rgba(255,255,255,0.75)" }}>
+                  / {billingYearly ? "an" : "month"}
+                </span>
+              </div>
+            </div>
+            <Separator />
+            <div className="flex flex-col gap-[15px] px-2">
+              <span style={{ fontSize: 16, lineHeight: "24px", color: "rgba(255,255,255,0.75)" }}>Ce qui est inclus</span>
+              <ul className="flex flex-col gap-[14px]">
+                {starterFeatures.map((f) => (
+                  <li key={f} className="flex items-start gap-3">
+                    <TickIcon />
+                    <span style={{ fontSize: 16, lineHeight: "24px", color: "#C6C6C6" }}>{f}</span>
                   </li>
                 ))}
               </ul>
-
-              {plan.href.startsWith("/") ? (
-                <Link
-                  href={plan.href}
-                  className={`group/btn relative overflow-hidden rounded-2xl ${plan.highlighted
-                    ? "bg-gradient-to-r from-yellow-400 to-yellow-300 text-black font-bold hover:shadow-xl hover:shadow-yellow-400/30 hover:scale-105"
-                    : "border border-white/20 bg-white/5 text-white font-semibold hover:bg-white/10 hover:border-white/30 hover:shadow-lg hover:shadow-white/10"
-                    } py-4 text-center text-[14px] transition-all duration-300`}
-                >
-                  <span className="relative z-10">{plan.cta}</span>
-                  <div className={`absolute inset-0 ${plan.highlighted
-                    ? "bg-gradient-to-r from-yellow-300 to-yellow-400 opacity-0 group-hover/btn:opacity-100"
-                    : "bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover/btn:opacity-100"
-                    } transition-opacity duration-300`}></div>
-                </Link>
-              ) : (
-                <a
-                  href={plan.href}
-                  className={`group/btn relative overflow-hidden rounded-2xl ${plan.highlighted
-                    ? "bg-gradient-to-r from-yellow-400 to-yellow-300 text-black font-bold hover:shadow-xl hover:shadow-yellow-400/30 hover:scale-105"
-                    : "border border-white/20 bg-white/5 text-white font-semibold hover:bg-white/10 hover:border-white/30 hover:shadow-lg hover:shadow-white/10"
-                    } py-4 text-center text-[14px] transition-all duration-300`}
-                >
-                  <span className="relative z-10">{plan.cta}</span>
-                  <div className={`absolute inset-0 ${plan.highlighted
-                    ? "bg-gradient-to-r from-yellow-300 to-yellow-400 opacity-0 group-hover/btn:opacity-100"
-                    : "bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover/btn:opacity-100"
-                    } transition-opacity duration-300`}></div>
-                </a>
-              )}
             </div>
-          ))}
+            <div className="px-2">
+              <GlowButton href="/login">Subscribe</GlowButton>
+            </div>
+          </div>
+
+          {/* Pro */}
+          <div className="pricing-pro relative flex flex-col gap-[35px] p-6">
+            <div className="flex flex-col gap-6 px-2">
+              <div className="flex flex-col gap-[6px]">
+                <span className="font-bold" style={{ fontSize: 30, lineHeight: "36px", color: "#EAB308" }}>Pro</span>
+                <span style={{ fontSize: 16, lineHeight: "24px", color: "rgba(255,255,255,0.75)" }}>
+                  La puissance de la consolidation automatique.
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="font-bold text-white" style={{ fontSize: 40, lineHeight: "48px", letterSpacing: "-0.04em" }}>
+                  {billingYearly ? "$12 384" : "$1290"}
+                </span>
+                <span style={{ fontSize: 16, color: "rgba(255,255,255,0.75)" }}>
+                  / {billingYearly ? "an" : "month"}
+                </span>
+                {billingYearly && (
+                  <span className="flex items-center justify-center font-bold text-black"
+                    style={{ padding: "5px 8px", background: "#EAB308", borderRadius: 24, fontSize: 12, lineHeight: "14px" }}>
+                    -20%
+                  </span>
+                )}
+              </div>
+            </div>
+            <Separator />
+            <div className="flex flex-col gap-[15px] px-2">
+              <span style={{ fontSize: 16, lineHeight: "24px", color: "rgba(255,255,255,0.75)" }}>Ce qui est inclus</span>
+              <ul className="flex flex-col gap-[14px]">
+                {proFeatures.map((f) => (
+                  <li key={f} className="flex items-start gap-3">
+                    <TickIcon gold />
+                    <span style={{ fontSize: 16, lineHeight: "24px", color: "#C6C6C6" }}>{f}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="px-2">
+              <GlowButton href="/login">Subscribe</GlowButton>
+            </div>
+          </div>
+
+          {/* Enterprise */}
+          <div className="pricing-enterprise flex flex-col gap-[35px] p-6">
+            <div className="flex flex-col gap-6 px-2">
+              <div className="flex flex-col gap-[6px]">
+                <span style={{ fontSize: 18, lineHeight: "22px", color: "#fff" }}>Enterprise</span>
+                <span style={{ fontSize: 14, lineHeight: "20px", color: "#9CA3AF" }}>
+                  Pour les ETI et directions financières exigeantes.
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="font-bold text-white" style={{ fontSize: 36, lineHeight: "44px" }}>Sur devis</span>
+              </div>
+            </div>
+            <Separator />
+            <div className="flex flex-col gap-[15px] px-2">
+              <span style={{ fontSize: 16, lineHeight: "24px", color: "rgba(255,255,255,0.75)" }}>Ce qui est inclus</span>
+              <ul className="flex flex-col gap-[14px]">
+                {enterpriseFeatures.map((f) => (
+                  <li key={f} className="flex items-start gap-3">
+                    <TickIcon />
+                    <span style={{ fontSize: 16, lineHeight: "24px", color: "#C6C6C6" }}>{f}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="px-2">
+              <GlowButton href="#faq">Subscribe</GlowButton>
+            </div>
+          </div>
+
         </div>
       </div>
+
+      <style jsx>{`
+        /* Mobile: all cards fully rounded and stacked */
+        .pricing-starter,
+        .pricing-pro,
+        .pricing-enterprise {
+          background: #1B1B1C;
+          border-radius: 20px;
+        }
+        .pricing-starter,
+        .pricing-enterprise {
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          min-height: 400px;
+        }
+        .pricing-pro {
+          min-height: 500px;
+          box-shadow: 0 0 60px rgba(234, 179, 8, 0.12);
+          z-index: 10;
+        }
+
+        /* Desktop: connected card layout, Pro stands taller */
+        @media (min-width: 1024px) {
+          .pricing-starter {
+            width: 400px;
+            min-height: 529px;
+            flex-shrink: 0;
+            border-radius: 20px 0 0 20px;
+          }
+          .pricing-pro {
+            width: 400px;
+            min-height: 609px;
+            flex-shrink: 0;
+            border-radius: 20px;
+          }
+          .pricing-enterprise {
+            width: 400px;
+            min-height: 529px;
+            flex-shrink: 0;
+            border-radius: 0 20px 20px 0;
+          }
+        }
+      `}</style>
     </section>
   );
 }

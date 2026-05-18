@@ -13,18 +13,10 @@ import Footer from "@/components/landing/Footer";
 export default function LandingPage() {
   const { } = usePermissionsContext();
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [navScrolled, setNavScrolled] = React.useState(false);
   const [billingYearly, setBillingYearly] = React.useState(false);
   const [openFAQ, setOpenFAQ] = React.useState<number | null>(null);
   const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
   const [isLoaded, setIsLoaded] = React.useState(false);
-
-  React.useEffect(() => {
-    const onScroll = () => setNavScrolled(window.scrollY > 40);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   React.useEffect(() => {
     if (!mobileOpen) return;
@@ -50,7 +42,9 @@ export default function LandingPage() {
 
 
   return (
-    <div className={`landing force-dark min-h-screen selection:bg-(--accent)/20 ${isLoaded ? 'loaded' : ''}`}>
+    <div
+      className={`landing force-dark min-h-screen selection:bg-(--accent)/20 ${isLoaded ? 'loaded' : ''}`}
+    >
       <Head>
         <title>NK Software — La Clarté Financière pour les Holdings &amp; Groupes</title>
         <meta
@@ -68,7 +62,7 @@ export default function LandingPage() {
       />
 
       {/* ── Navigation ── */}
-      <Navigation navScrolled={navScrolled} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
+      <Navigation mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
 
       <main className="relative overflow-hidden">
         {/* ── Hero ── */}
@@ -91,19 +85,27 @@ export default function LandingPage() {
 
         {/* ── CTA banner ── */}
         <section className="relative py-24 px-6 text-center">
-          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(212,176,106,0.09)_0%,transparent_70%)] blur-[80px]" />
-          <div className="relative z-10 mx-auto max-w-3xl">
-            <h2 className="text-[clamp(30px,4vw,52px)] font-black leading-tight text-white">
+          <div
+            className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl px-12 py-20"
+            style={{
+              backgroundImage: "url('/landing/background-beforefooter.png')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+              border: "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
+            <h2 className="relative z-10 text-[clamp(30px,4vw,52px)] font-black leading-tight text-white">
               Prêt à piloter votre structure?
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-(--text-muted)">
+            <p className="relative z-10 mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-(--text-muted)">
               Que vous soyez une holding en croissance, une direction financière multi-entités ou un grand groupe —
               notre cockpit s&apos;adapte à votre écosystème.
             </p>
-            <div className="mt-10">
+            <div className="relative z-10 mt-10">
               <a
                 href="#pricing"
-                className="inline-flex items-center gap-2 rounded-full bg-(--accent) px-10 py-4 text-sm font-bold text-black shadow-[0_8px_40px_rgba(212,176,106,0.3)] hover:opacity-90 transition-opacity"
+                className="inline-flex items-center gap-2 rounded-[10px] bg-[#EAB308] px-10 py-4 text-sm font-bold text-black hover:opacity-90 transition-opacity"
               >
                 Voir la démo →
               </a>
