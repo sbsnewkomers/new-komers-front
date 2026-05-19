@@ -2684,7 +2684,7 @@ export default function StructurePage() {
       snackbar: { showSuccess: true, successMessage: "Business unit créée" },
     });
 
-    await setIsTreeLoaded(false);
+    await loadTree();
     setExpandedCompanyIds((prev) => new Set(prev).add(addBUStandaloneForm.companyId));
     setAddBUStandaloneOpen(false);
     setAddBUStandaloneForm(createEmptyStandaloneBUForm());
