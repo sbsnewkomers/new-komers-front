@@ -5923,20 +5923,41 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Logo
+                Email
               </label>
-              <FileUpload
-                value={addGroupForm.logo}
-                onChange={(file) => {
-                  setAddGroupLogoFile(file);
-                  if (file) {
-                    setAddGroupForm((f) => ({ ...f, logo: file.name }));
-                  } else {
-                    setAddGroupForm((f) => ({ ...f, logo: undefined }));
-                  }
-                }}
-                placeholder="Uploader une image de logo"
-                accept="image/*"
+              <Input
+                type="email"
+                value={addGroupForm.contact_email}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({ ...f, contact_email: e.target.value }))
+                }
+                placeholder="contact@groupe.com"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Rue
+              </label>
+              <Input
+                value={addGroupForm.street}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({ ...f, street: e.target.value }))
+                }
+                placeholder="123 rue de la République"
+              />
+            </div>
+
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Code postal
+              </label>
+              <Input
+                value={addGroupForm.postal_code}
+                onChange={(e) =>
+                  setAddGroupForm((f) => ({ ...f, postal_code: e.target.value }))
+                }
+                placeholder="75001"
               />
             </div>
             <div>
@@ -5954,62 +5975,20 @@ export default function StructurePage() {
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
             </div>
-
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Rue
+                Ville
               </label>
-              <Input
-                value={addGroupForm.street}
-                onChange={(e) =>
-                  setAddGroupForm((f) => ({ ...f, street: e.target.value }))
-                }
-                placeholder="123 rue de la République"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                  Code postal
-                </label>
-                <Input
-                  value={addGroupForm.postal_code}
-                  onChange={(e) =>
-                    setAddGroupForm((f) => ({ ...f, postal_code: e.target.value }))
-                  }
-                  placeholder="75001"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                  Ville
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setAddGroupCityModalOpen(true)}
-                  className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
-                >
-                  <span className={addGroupForm.city ? "text-foreground" : "text-muted-foreground"}>
-                    {addGroupForm.city || "Sélectionner une ville"}
-                  </span>
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Email
-              </label>
-              <Input
-                type="email"
-                value={addGroupForm.contact_email}
-                onChange={(e) =>
-                  setAddGroupForm((f) => ({ ...f, contact_email: e.target.value }))
-                }
-                placeholder="contact@groupe.com"
-              />
+              <button
+                type="button"
+                onClick={() => setAddGroupCityModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+              >
+                <span className={addGroupForm.city ? "text-foreground" : "text-muted-foreground"}>
+                  {addGroupForm.city || "Sélectionner une ville"}
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -6106,6 +6085,24 @@ export default function StructurePage() {
                 />
               </div>
             </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Logo
+              </label>
+              <FileUpload
+                value={addGroupForm.logo}
+                onChange={(file) => {
+                  setAddGroupLogoFile(file);
+                  if (file) {
+                    setAddGroupForm((f) => ({ ...f, logo: file.name }));
+                  } else {
+                    setAddGroupForm((f) => ({ ...f, logo: undefined }));
+                  }
+                }}
+                placeholder="Uploader une image de logo"
+                accept="image/*"
+              />
+            </div>
           </DialogBody>
 
           <DialogFooter>
@@ -6188,6 +6185,48 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Description
+              </label>
+              <textarea
+                value={addBUStandaloneForm.description}
+                onChange={(e) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, description: e.target.value }))
+                }
+                placeholder="Description de la Business Unit"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+                rows={3}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
+                Email
+              </label>
+              <Input
+                value={addBUStandaloneForm.contact_email}
+                onChange={(e) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, contact_email: e.target.value }))
+                }
+                placeholder="Email"
+              />
+              {addBUStandaloneErrors?.contact_email && (
+                <p className="mt-1 text-xs text-red-500">
+                  {addBUStandaloneErrors.contact_email}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                SIRET *
+              </label>
+              <SiretInput
+                value={addBUStandaloneForm.siret}
+                onChange={(value) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, siret: value }))
+                }
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Code APE *
               </label>
               <button
@@ -6223,59 +6262,6 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                SIRET *
-              </label>
-              <SiretInput
-                value={addBUStandaloneForm.siret}
-                onChange={(value) =>
-                  setAddBUStandaloneForm((f) => ({ ...f, siret: value }))
-                }
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Pays *
-              </label>
-              <button
-                type="button"
-                onClick={() => setAddBUStandaloneCountryModalOpen(true)}
-                className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
-              >
-                <span className={addBUStandaloneForm.country ? "text-foreground" : "text-muted-foreground"}>
-                  {addBUStandaloneForm.country ? getCountryWithCode(addBUStandaloneForm.country) : "Sélectionner un pays"}
-                </span>
-                <Search className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Description
-              </label>
-              <textarea
-                value={addBUStandaloneForm.description}
-                onChange={(e) =>
-                  setAddBUStandaloneForm((f) => ({ ...f, description: e.target.value }))
-                }
-                placeholder="Description de la Business Unit"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
-                rows={3}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Code d&apos;entité
-              </label>
-              <Input
-                value={addBUStandaloneForm.entity_code}
-                onChange={(e) =>
-                  setAddBUStandaloneForm((f) => ({ ...f, entity_code: e.target.value }))
-                }
-                placeholder="Ex: BU-001"
-                maxLength={50}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Rue
               </label>
               <Input
@@ -6302,6 +6288,21 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Pays *
+              </label>
+              <button
+                type="button"
+                onClick={() => setAddBUStandaloneCountryModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+              >
+                <span className={addBUStandaloneForm.country ? "text-foreground" : "text-muted-foreground"}>
+                  {addBUStandaloneForm.country ? getCountryWithCode(addBUStandaloneForm.country) : "Sélectionner un pays"}
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Ville
               </label>
               <button
@@ -6315,85 +6316,78 @@ export default function StructurePage() {
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Contact
-              </label>
-              <div className="space-y-2">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
-                    Téléphone mobile
-                  </label>
-                  <PhoneInput
-                    international
-                    countryCallingCodeEditable={false}
-                    defaultCountry={(addBUStandaloneForm.country || "FR") as any}
-                    value={addBUStandaloneForm.phone_mobile}
-                    onChange={(value) =>
-                      handlePhoneChange(value || "", "addBUStandalone", "phone_mobile")
-                    }
-                    className={
-                      addBUStandaloneErrors?.phone_mobile
-                        ? "border-red-500"
-                        : ""
-                    }
-                    numberInputProps={{
-                      className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addBUStandaloneErrors?.phone_mobile ? "border-red-500" : ""}`,
-                    }}
-                  />
-                  {addBUStandaloneErrors?.phone_mobile && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {addBUStandaloneErrors.phone_mobile}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
-                    Téléphone fixe
-                  </label>
-                  <PhoneInput
-                    international
-                    countryCallingCodeEditable={false}
-                    defaultCountry={(addBUStandaloneForm.country || "FR") as any}
-                    value={addBUStandaloneForm.phone_landline}
-                    onChange={(value) =>
-                      handlePhoneChange(value || "", "addBUStandalone", "phone_landline")
-                    }
-                    className={
-                      addBUStandaloneErrors?.phone_landline
-                        ? "border-red-500"
-                        : ""
-                    }
-                    numberInputProps={{
-                      className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addBUStandaloneErrors?.phone_landline ? "border-red-500" : ""}`,
-                    }}
-                  />
-                  {addBUStandaloneErrors?.phone_landline && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {addBUStandaloneErrors.phone_landline}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
-                    Email
-                  </label>
-                  <Input
-                    value={addBUStandaloneForm.contact_email}
-                    onChange={(e) =>
-                      setAddBUStandaloneForm((f) => ({ ...f, contact_email: e.target.value }))
-                    }
-                    placeholder="Email"
-                  />
-                  {addBUStandaloneErrors?.contact_email && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {addBUStandaloneErrors.contact_email}
-                    </p>
-                  )}
-                </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Téléphone mobile
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry={(addBUStandaloneForm.country || "FR") as any}
+                  value={addBUStandaloneForm.phone_mobile}
+                  onChange={(value) =>
+                    handlePhoneChange(value || "", "addBUStandalone", "phone_mobile")
+                  }
+                  className={
+                    addBUStandaloneErrors?.phone_mobile
+                      ? "border-red-500"
+                      : ""
+                  }
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addBUStandaloneErrors?.phone_mobile ? "border-red-500" : ""}`,
+                  }}
+                />
+                {addBUStandaloneErrors?.phone_mobile && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {addBUStandaloneErrors.phone_mobile}
+                  </p>
+                )}
+
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                  Téléphone fixe
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry={(addBUStandaloneForm.country || "FR") as any}
+                  value={addBUStandaloneForm.phone_landline}
+                  onChange={(value) =>
+                    handlePhoneChange(value || "", "addBUStandalone", "phone_landline")
+                  }
+                  className={
+                    addBUStandaloneErrors?.phone_landline
+                      ? "border-red-500"
+                      : ""
+                  }
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addBUStandaloneErrors?.phone_landline ? "border-red-500" : ""}`,
+                  }}
+                />
+                {addBUStandaloneErrors?.phone_landline && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {addBUStandaloneErrors.phone_landline}
+                  </p>
+                )}
+
               </div>
             </div>
-
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Code d&apos;entité
+              </label>
+              <Input
+                value={addBUStandaloneForm.entity_code}
+                onChange={(e) =>
+                  setAddBUStandaloneForm((f) => ({ ...f, entity_code: e.target.value }))
+                }
+                placeholder="Ex: BU-001"
+                maxLength={50}
+              />
+            </div>
             <BuManagerFormFields
               value={managerFieldsFromForm(addBUStandaloneForm)}
               onChange={(m) =>
@@ -6441,7 +6435,7 @@ export default function StructurePage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
               <Building2 className="h-5 w-5 shrink-0 text-(--nebula-gold-light)" />
-              Ajouter une entreprise
+              Nouvelle Entreprise
             </DialogTitle>
           </DialogHeader>
           {addCompanyGroupId ? (
@@ -6539,39 +6533,52 @@ export default function StructurePage() {
                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 border-white/10 bg-white/5 text-white placeholder:text-white/45"
               />
             </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                  SIRET *
-                </label>
-                <SiretInput
-                  value={addCompanyForm.siret}
-                  onChange={(value) =>
-                    setAddCompanyForm((f) => ({ ...f, siret: value }))
-                  }
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                  Code APE *
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setAddCompanyApeModalOpen(true)}
-                  className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
-                >
-                  <span className={addCompanyForm.ape_code ? "text-foreground" : "text-muted-foreground"}>
-                    {addCompanyForm.ape_code ?
-                      APE_CODES.find(code => code.value === addCompanyForm.ape_code)?.label || addCompanyForm.ape_code
-                      : "Sélectionner un code APE"
-                    }
-                  </span>
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Email
+              </label>
+              <Input
+                type="email"
+                value={addCompanyForm.contact_email}
+                onChange={(e) =>
+                  setAddCompanyForm((f) => ({ ...f, contact_email: e.target.value }))
+                }
+                placeholder="email@exemple.com"
+                className={companyErrors?.contact_email ? "border-red-500" : ""}
+              />
+              {companyErrors?.contact_email && (
+                <p className="mt-1 text-xs text-red-500">{companyErrors.contact_email}</p>
+              )}
             </div>
-
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                SIRET *
+              </label>
+              <SiretInput
+                value={addCompanyForm.siret}
+                onChange={(value) =>
+                  setAddCompanyForm((f) => ({ ...f, siret: value }))
+                }
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Code APE *
+              </label>
+              <button
+                type="button"
+                onClick={() => setAddCompanyApeModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+              >
+                <span className={addCompanyForm.ape_code ? "text-foreground" : "text-muted-foreground"}>
+                  {addCompanyForm.ape_code ?
+                    APE_CODES.find(code => code.value === addCompanyForm.ape_code)?.label || addCompanyForm.ape_code
+                    : "Sélectionner un code APE"
+                  }
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Activité principale
@@ -6598,36 +6605,19 @@ export default function StructurePage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                  Code postal
-                </label>
-                <Input
-                  value={addCompanyForm.postal_code}
-                  onChange={(e) =>
-                    setAddCompanyForm((f) => ({ ...f, postal_code: e.target.value }))
-                  }
-                  placeholder="Code postal"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                  Ville
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setAddCompanyCityModalOpen(true)}
-                  className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
-                >
-                  <span className={addCompanyForm.city ? "text-foreground" : "text-muted-foreground"}>
-                    {addCompanyForm.city || "Sélectionner une ville"}
-                  </span>
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </div>
-            </div>
 
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Code postal
+              </label>
+              <Input
+                value={addCompanyForm.postal_code}
+                onChange={(e) =>
+                  setAddCompanyForm((f) => ({ ...f, postal_code: e.target.value }))
+                }
+                placeholder="Code postal"
+              />
+            </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Pays *
@@ -6639,6 +6629,21 @@ export default function StructurePage() {
               >
                 <span className={addCompanyForm.country ? "text-foreground" : "text-muted-foreground"}>
                   {addCompanyForm.country ? getCountryName(addCompanyForm.country) : "Sélectionner un pays"}
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Ville
+              </label>
+              <button
+                type="button"
+                onClick={() => setAddCompanyCityModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+              >
+                <span className={addCompanyForm.city ? "text-foreground" : "text-muted-foreground"}>
+                  {addCompanyForm.city || "Sélectionner une ville"}
                 </span>
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -6689,24 +6694,6 @@ export default function StructurePage() {
               </div>
             </div>
 
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Email
-              </label>
-              <Input
-                type="email"
-                value={addCompanyForm.contact_email}
-                onChange={(e) =>
-                  setAddCompanyForm((f) => ({ ...f, contact_email: e.target.value }))
-                }
-                placeholder="email@exemple.com"
-                className={companyErrors?.contact_email ? "border-red-500" : ""}
-              />
-              {companyErrors?.contact_email && (
-                <p className="mt-1 text-xs text-red-500">{companyErrors.contact_email}</p>
-              )}
-            </div>
-
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -6737,25 +6724,6 @@ export default function StructurePage() {
                   <option value="SUBSIDIARY">SUBSIDIARY</option>
                 </Select>
               </div>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Logo
-              </label>
-              <FileUpload
-                value={addCompanyForm.logo}
-                onChange={(file) => {
-                  setAddCompanyLogoFile(file);
-                  if (file) {
-                    setAddCompanyForm((f) => ({ ...f, logo: file.name }));
-                  } else {
-                    setAddCompanyForm((f) => ({ ...f, logo: undefined }));
-                  }
-                }}
-                placeholder="Uploader une image de logo"
-                accept="image/*"
-              />
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -6794,6 +6762,24 @@ export default function StructurePage() {
                   placeholder="Ex: 2024"
                 />
               </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Logo
+              </label>
+              <FileUpload
+                value={addCompanyForm.logo}
+                onChange={(file) => {
+                  setAddCompanyLogoFile(file);
+                  if (file) {
+                    setAddCompanyForm((f) => ({ ...f, logo: file.name }));
+                  } else {
+                    setAddCompanyForm((f) => ({ ...f, logo: undefined }));
+                  }
+                }}
+                placeholder="Uploader une image de logo"
+                accept="image/*"
+              />
             </div>
           </DialogBody>
           <DialogFooter>
@@ -6855,6 +6841,49 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Description
+              </label>
+              <textarea
+                value={addBUForm.description}
+                onChange={(e) =>
+                  setAddBUForm((f) => ({ ...f, description: e.target.value }))
+                }
+                placeholder="Description de la Business Unit"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+                rows={3}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
+                Email
+              </label>
+              <Input
+                value={addBUForm.contact_email}
+                onChange={(e) =>
+                  setAddBUForm((f) => ({ ...f, contact_email: e.target.value }))
+                }
+                placeholder="Email"
+              />
+              {addBUErrors?.contact_email && (
+                <p className="mt-1 text-xs text-red-500">
+                  {addBUErrors.contact_email}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                SIRET *
+              </label>
+              <SiretInput
+                value={addBUForm.siret}
+                onChange={(value) =>
+                  setAddBUForm((f) => ({ ...f, siret: value }))
+                }
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Code APE *
               </label>
               <button
@@ -6871,6 +6900,7 @@ export default function StructurePage() {
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
             </div>
+
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Activité principale
@@ -6881,46 +6911,6 @@ export default function StructurePage() {
                 onChange={(e) => setAddBUForm((f) => ({ ...f, activity: e.target.value }))}
                 readOnly
                 className="bg-white/5 cursor-not-allowed"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                SIRET *
-              </label>
-              <SiretInput
-                value={addBUForm.siret}
-                onChange={(value) =>
-                  setAddBUForm((f) => ({ ...f, siret: value }))
-                }
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Pays *
-              </label>
-              <button
-                type="button"
-                onClick={() => setAddBUCountryModalOpen(true)}
-                className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
-              >
-                <span className={addBUForm.country ? "text-foreground" : "text-muted-foreground"}>
-                  {addBUForm.country ? getCountryWithCode(addBUForm.country) : "Sélectionner un pays"}
-                </span>
-                <Search className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Description
-              </label>
-              <textarea
-                value={addBUForm.description}
-                onChange={(e) =>
-                  setAddBUForm((f) => ({ ...f, description: e.target.value }))
-                }
-                placeholder="Description de la Business Unit"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
-                rows={3}
               />
             </div>
             <div>
@@ -6951,6 +6941,22 @@ export default function StructurePage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Pays *
+              </label>
+              <button
+                type="button"
+                onClick={() => setAddBUCountryModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-white/5 transition-colors"
+              >
+                <span className={addBUForm.country ? "text-foreground" : "text-muted-foreground"}>
+                  {addBUForm.country ? getCountryWithCode(addBUForm.country) : "Sélectionner un pays"}
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                 Ville
               </label>
               <button
@@ -6964,101 +6970,62 @@ export default function StructurePage() {
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Contact
-              </label>
-              <div className="space-y-2">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
-                    Téléphone mobile
-                  </label>
-                  <PhoneInput
-                    international
-                    countryCallingCodeEditable={false}
-                    defaultCountry={(addBUForm.country || "FR") as any}
-                    value={addBUForm.phone_mobile}
-                    onChange={(value) =>
-                      handlePhoneChange(value || "", "addBU", "phone_mobile")
-                    }
-                    className={
-                      addBUErrors?.phone_mobile
-                        ? "border-red-500"
-                        : ""
-                    }
-                    numberInputProps={{
-                      className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addBUErrors?.phone_mobile ? "border-red-500" : ""}`,
-                    }}
-                  />
-                  {addBUErrors?.phone_mobile && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {addBUErrors.phone_mobile}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
-                    Téléphone fixe
-                  </label>
-                  <PhoneInput
-                    international
-                    countryCallingCodeEditable={false}
-                    defaultCountry={(addBUForm.country || "FR") as any}
-                    value={addBUForm.phone_landline}
-                    onChange={(value) =>
-                      handlePhoneChange(value || "", "addBU", "phone_landline")
-                    }
-                    className={
-                      addBUErrors?.phone_landline
-                        ? "border-red-500"
-                        : ""
-                    }
-                    numberInputProps={{
-                      className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addBUErrors?.phone_landline ? "border-red-500" : ""}`,
-                    }}
-                  />
-                  {addBUErrors?.phone_landline && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {addBUErrors.phone_landline}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
-                    Email
-                  </label>
-                  <Input
-                    value={addBUForm.contact_email}
-                    onChange={(e) =>
-                      setAddBUForm((f) => ({ ...f, contact_email: e.target.value }))
-                    }
-                    placeholder="Email"
-                  />
-                  {addBUErrors?.contact_email && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {addBUErrors.contact_email}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
-                Logo
-              </label>
-              <FileUpload
-                value={addBUForm.logo}
-                onChange={(file) => {
-                  setAddBULogoFile(file);
-                  if (file) {
-                    setAddBUForm((f) => ({ ...f, logo: file.name }));
-                  } else {
-                    setAddBUForm((f) => ({ ...f, logo: undefined }));
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="text-sm font-medium text-foreground">
+                  Téléphone mobile
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry={(addBUForm.country || "FR") as any}
+                  value={addBUForm.phone_mobile}
+                  onChange={(value) =>
+                    handlePhoneChange(value || "", "addBU", "phone_mobile")
                   }
-                }}
-                placeholder="Uploader une image de logo"
-                accept="image/*"
-              />
+                  className={
+                    addBUErrors?.phone_mobile
+                      ? "border-red-500"
+                      : ""
+                  }
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addBUErrors?.phone_mobile ? "border-red-500" : ""}`,
+                  }}
+                />
+                {addBUErrors?.phone_mobile && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {addBUErrors.phone_mobile}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground">
+                  Téléphone fixe
+                </label>
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry={(addBUForm.country || "FR") as any}
+                  value={addBUForm.phone_landline}
+                  onChange={(value) =>
+                    handlePhoneChange(value || "", "addBU", "phone_landline")
+                  }
+                  className={
+                    addBUErrors?.phone_landline
+                      ? "border-red-500"
+                      : ""
+                  }
+                  numberInputProps={{
+                    className: `flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${addBUErrors?.phone_landline ? "border-red-500" : ""}`,
+                  }}
+                />
+                {addBUErrors?.phone_landline && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {addBUErrors.phone_landline}
+                  </p>
+                )}
+              </div>
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
@@ -7088,7 +7055,24 @@ export default function StructurePage() {
               }
               userOptions={buUserOptionsForManager}
             />
-
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                Logo
+              </label>
+              <FileUpload
+                value={addBUForm.logo}
+                onChange={(file) => {
+                  setAddBULogoFile(file);
+                  if (file) {
+                    setAddBUForm((f) => ({ ...f, logo: file.name }));
+                  } else {
+                    setAddBUForm((f) => ({ ...f, logo: undefined }));
+                  }
+                }}
+                placeholder="Uploader une image de logo"
+                accept="image/*"
+              />
+            </div>
           </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddBUOpen(false)}>
@@ -7153,27 +7137,18 @@ export default function StructurePage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/90">
-                Logo
+                Email
               </label>
-              <div className="space-y-2">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoChange}
-                  placeholder="Choisir une image"
-                />
-                {logoPreview && (
-                  <div className="mt-2">
-                    <Image
-                      src={logoPreview}
-                      alt="Aperçu du logo"
-                      width={80}
-                      height={80}
-                      className="object-cover rounded-lg border border-white/10"
-                    />
-                  </div>
-                )}
-              </div>
+              <Input
+                type="email"
+                value={addworkspaceForm.contact_email}
+                onChange={(e) => handleEmailChange(e.target.value)}
+                placeholder="email@exemple.com"
+                className={workspaceErrors.contact_email ? "border-red-500" : ""}
+              />
+              {workspaceErrors.contact_email && (
+                <p className="text-xs text-red-500">{workspaceErrors.contact_email}</p>
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/90">
@@ -7201,21 +7176,6 @@ export default function StructurePage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/90">
-                Ville
-              </label>
-              <button
-                type="button"
-                onClick={() => setCreateCityModalOpen(true)}
-                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
-              >
-                <span className={addworkspaceForm.city ? "text-foreground" : "text-muted-foreground"}>
-                  {addworkspaceForm.city || "Sélectionner une ville"}
-                </span>
-                <Search className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-white/90">
                 Pays
               </label>
               <button
@@ -7231,18 +7191,18 @@ export default function StructurePage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/90">
-                Email
+                Ville
               </label>
-              <Input
-                type="email"
-                value={addworkspaceForm.contact_email}
-                onChange={(e) => handleEmailChange(e.target.value)}
-                placeholder="email@exemple.com"
-                className={workspaceErrors.contact_email ? "border-red-500" : ""}
-              />
-              {workspaceErrors.contact_email && (
-                <p className="text-xs text-red-500">{workspaceErrors.contact_email}</p>
-              )}
+              <button
+                type="button"
+                onClick={() => setCreateCityModalOpen(true)}
+                className="min-h-10 w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-[13px] shadow-sm hover:border-white/15 transition-colors"
+              >
+                <span className={addworkspaceForm.city ? "text-foreground" : "text-muted-foreground"}>
+                  {addworkspaceForm.city || "Sélectionner une ville"}
+                </span>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -7281,6 +7241,30 @@ export default function StructurePage() {
                 />
                 {workspaceErrors.phone_landline && (
                   <p className="text-xs text-red-500">{workspaceErrors.phone_landline}</p>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white/90">
+                Logo
+              </label>
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                  placeholder="Choisir une image"
+                />
+                {logoPreview && (
+                  <div className="mt-2">
+                    <Image
+                      src={logoPreview}
+                      alt="Aperçu du logo"
+                      width={80}
+                      height={80}
+                      className="object-cover rounded-lg border border-white/10"
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -7612,7 +7596,7 @@ export default function StructurePage() {
         title="Sélectionner le pays de l'entreprise"
       />
 
-    </AppLayout>
+    </AppLayout >
   );
 }
 
