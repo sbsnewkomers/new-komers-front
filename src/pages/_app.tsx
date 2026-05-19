@@ -6,6 +6,8 @@ import { PermissionsProvider, usePermissionsContext } from "@/permissions/Permis
 
 import { WorkspaceProvider } from "@/providers/WorkspaceProvider";
 
+import { QueryProvider } from "@/providers/QueryProvider";
+
 import { SnackbarProvider } from "@/ui/SnackbarProvider";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -72,15 +74,19 @@ export default function App({ Component, pageProps }: AppProps) {
 
           <PermissionsProvider>
 
-            <WorkspaceProvider>
+            <QueryProvider>
 
-              <AuthBootstrapGate>
+              <WorkspaceProvider>
 
-                <Component {...pageProps} />
+                <AuthBootstrapGate>
 
-              </AuthBootstrapGate>
+                  <Component {...pageProps} />
 
-            </WorkspaceProvider>
+                </AuthBootstrapGate>
+
+              </WorkspaceProvider>
+
+            </QueryProvider>
 
           </PermissionsProvider>
 

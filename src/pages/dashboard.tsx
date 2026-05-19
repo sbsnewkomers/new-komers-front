@@ -114,7 +114,7 @@ const isFiscalYearActiveToday = (fiscalYearStart: string, today: Date): boolean 
 };
 
 export default function DashboardPage() {
-  const { user, isAuthReady } = usePermissionsContext();
+  const { user } = usePermissionsContext();
   const companies = useCompanies();
   const [widgets, setWidgets] = React.useState<Widget[]>([]);
   const [chartWidgets, setChartWidgets] = React.useState<Widget[]>([]);
@@ -124,14 +124,6 @@ export default function DashboardPage() {
   const [drillDownOpen, setDrillDownOpen] = React.useState(false);
   const [selectedWidgetToAdd, setSelectedWidgetToAdd] = React.useState<string | null>(null);
   const [configForm, setConfigForm] = React.useState({ indicator: "", chartType: "bar", scope: "" });
-
-  // Load companies only after auth bootstrap is done and we have a user,
-  // so that /companies does not run before /auth/me on initial load.
-  React.useEffect(() => {
-    if (!isAuthReady || !user) return;
-    void companies.fetchList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthReady, user]);
 
   // Simulate initial loading then rely on real data
   React.useEffect(() => {

@@ -45,7 +45,7 @@ export function ExternalPartyContactFields({
           autoComplete="street-address"
         />
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 sm:col-span-2">
         <label className="text-sm font-medium text-foreground">Code postal</label>
         <Input
           value={value.postalCode ?? ""}
@@ -53,19 +53,6 @@ export function ExternalPartyContactFields({
           placeholder="Code postal"
           autoComplete="postal-code"
         />
-      </div>
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-foreground">Ville</label>
-        <button
-          type="button"
-          onClick={() => setCityModalOpen(true)}
-          className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-muted transition-colors"
-        >
-          <span className={value.city ? "text-foreground" : "text-muted-foreground"}>
-            {value.city || "Sélectionner une ville"}
-          </span>
-          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-        </button>
       </div>
       <div className="space-y-1.5 sm:col-span-2">
         <label className="text-sm font-medium text-foreground">Pays</label>
@@ -80,8 +67,22 @@ export function ExternalPartyContactFields({
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
         </button>
       </div>
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-foreground">Téléphone fixe</label>
+      <div className="space-y-1.5 sm:col-span-2">
+        <label className="text-sm font-medium text-foreground">Ville</label>
+        <button
+          type="button"
+          onClick={() => setCityModalOpen(true)}
+          className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-muted transition-colors"
+        >
+          <span className={value.city ? "text-foreground" : "text-muted-foreground"}>
+            {value.city || "Sélectionner une ville"}
+          </span>
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+        </button>
+      </div>
+
+      <div>
+        <label className="space-y-1.5 sm:col-span-2">Téléphone fixe</label>
         <PhoneInput
           international
           countryCallingCodeEditable={false}
@@ -94,8 +95,9 @@ export function ExternalPartyContactFields({
           }}
         />
       </div>
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-foreground">Téléphone mobile</label>
+      <div>
+
+        <label className="space-y-1.5 sm:col-span-2">Téléphone mobile</label>
         <PhoneInput
           international
           countryCallingCodeEditable={false}

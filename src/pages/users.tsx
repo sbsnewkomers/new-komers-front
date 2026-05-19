@@ -155,7 +155,9 @@ export default function UsersPage() {
 
   const groupsHook = useGroups();
   const companiesHook = useCompanies();
-  const busHook = useBusinessUnits(companyIdForBU || null);
+  const busHook = useBusinessUnits(companyIdForBU || null, {
+    enabled: !!companyIdForBU && permOpen,
+  });
   const workspacesHook = useWorkspaces();
   const [structureTree, setStructureTree] = useState<StructureTree | null>(null);
 
@@ -179,7 +181,9 @@ export default function UsersPage() {
   const [perimNodeType, setPerimNodeType] = useState<NodeType>("GROUP");
   const [perimNodeId, setPerimNodeId] = useState("");
   const [perimCompanyId, setPerimCompanyId] = useState("");
-  const perimBusHook = useBusinessUnits(perimCompanyId || null);
+  const perimBusHook = useBusinessUnits(perimCompanyId || null, {
+    enabled: !!perimCompanyId && inviteOpen,
+  });
   const { canImpersonateUser, impersonate } = useImpersonation();
   const [impersonateLoadingId, setImpersonateLoadingId] = useState<string | null>(null);
   const handleImpersonate = async (targetUser: UserItem) => {
@@ -211,8 +215,6 @@ export default function UsersPage() {
   // and reload when switching to the invitations tab to ensure freshness.
   useEffect(() => { void Promise.resolve().then(loadInvitations); }, [loadInvitations]);
   useEffect(() => { if (activeTab === "invitations") void Promise.resolve().then(loadInvitations); }, [activeTab, loadInvitations]);
-  useEffect(() => { if (companyIdForBU && permOpen) busHook.fetchList(); }, [companyIdForBU, permOpen, busHook]);
-  useEffect(() => { if (perimCompanyId && inviteOpen) perimBusHook.fetchList(); }, [perimCompanyId, inviteOpen, perimBusHook]);
   useEffect(() => {
     if (inviteOpen) {
       // Load structure tree for workspaces and standalone companies
@@ -261,16 +263,17 @@ export default function UsersPage() {
   }, [invitableRoles]);
 
   // ── Invite handlers ──
-  const openInviteModal = () => {
+  const resetInviteForm = useCallback(() => {
     setInviteForm({ email: "", firstName: "", lastName: "", role: defaultInviteRole });
     setInvitePerimeter([]);
-    // Pour HEAD_MANAGER, le type par défaut est WORKSPACE
     const defaultNodeType = defaultInviteRole === "HEAD_MANAGER" ? "WORKSPACE" : "GROUP";
     setPerimNodeType(defaultNodeType);
     setPerimNodeId("");
     setPerimCompanyId("");
-    groupsHook.fetchList();
-    companiesHook.fetchList();
+  }, [defaultInviteRole]);
+
+  const openInviteModal = () => {
+    resetInviteForm();
     setInviteOpen(true);
   };
 
@@ -355,6 +358,7 @@ export default function UsersPage() {
       setInviteConfirmOpen(false);
       setInviteExistingUser(null);
       setInviteOpen(false);
+      resetInviteForm();
       loadInvitations();
       loadUsers();
     } catch { /* snackbar */ } finally {
@@ -425,7 +429,6 @@ export default function UsersPage() {
     // Pour HEAD_MANAGER, le type par défaut est WORKSPACE
     const defaultNodeType = u.role === "HEAD_MANAGER" ? "WORKSPACE" : "GROUP";
     setAddNodeType(defaultNodeType); setAddNodeId(""); setAddActions([]); setCompanyIdForBU("");
-    groupsHook.fetchList(); companiesHook.fetchList();
     try { setPermDetail(await fetchUserPermissionDetail(u.id)); } catch { setPermDetail(null); } finally { setPermLoading(false); }
   };
 
@@ -1114,7 +1117,17 @@ export default function UsersPage() {
               </div>
             )}
           </DialogBody>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetInviteForm}
+              disabled={inviteLoading}
+              className="w-full sm:mr-auto sm:w-auto"
+            >
+              Effacer
+            </Button>
+            <div className="flex w-full flex-col-reverse gap-2 sm:ml-auto sm:w-auto sm:flex-row">
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Annuler</Button>
             <Button
               onClick={handleInvite}
@@ -1129,6 +1142,7 @@ export default function UsersPage() {
             >
               {inviteLoading ? "Envoi\u2026" : "Envoyer l\u2019invitation"}
             </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

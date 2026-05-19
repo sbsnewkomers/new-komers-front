@@ -17,6 +17,7 @@ import {
   APP_NAV_MAIN_ITEMS,
 } from "@/components/layout/appNavConfig";
 import { useImpersonation } from "@/hooks/useImpersonation";
+import { useHasUnreadNotifications } from "@/queries/notifications";
 
 import {
   Bell,
@@ -71,6 +72,7 @@ export function AppLayout({
 
   const { isImpersonating, exitImpersonation } = useImpersonation();
   const [exitLoading, setExitLoading] = React.useState(false);
+  const hasUnreadNotifications = useHasUnreadNotifications();
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -271,7 +273,9 @@ export function AppLayout({
                         aria-label="Notifications"
                       >
                         <Bell className="h-5 w-5" />
-                        <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-(--nebula-gold-light) ring-2 ring-black/40" />
+                        {hasUnreadNotifications ? (
+                          <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-(--nebula-gold-light) ring-2 ring-black/40" />
+                        ) : null}
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent

@@ -80,7 +80,6 @@ export function AlertDialogContent({
     <>
       <div
         className="fixed inset-0 z-50 bg-black/55 backdrop-blur-sm animate-in fade-in-0"
-        onClick={() => ctx.setOpen(false)}
         aria-hidden
       />
       <div

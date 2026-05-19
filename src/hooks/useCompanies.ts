@@ -1,191 +1,78 @@
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
+import { queryClient } from "@/lib/queryClient";
+import {
+  useCompaniesList,
+  useCreateCompany,
+  useUpdateCompany,
+  useDeleteCompany,
+} from "@/queries/companies";
+import { queryKeys } from "@/queries/queryKeys";
+import { readSnackbar } from "@/queries/snackbarDefaults";
+import type {
+  Company,
+  CreateCompanyDto,
+  UpdateCompanyDto,
+} from "@/types/company";
 
-type CompanySize = "SMALL" | "MEDIUM" | "LARGE";
-type CompanyModel = "HOLDING" | "SUBSIDIARY";
-
-type Company = {
-  id: string;
-  name: string;
-  fiscal_year_start: string;
-  last_closed_fiscal_year?: number | null;
-  siret: string;
-  address?: string;
-  ape_code?: string;
-  main_activity?: string;
-  size?: CompanySize;
-  model?: CompanyModel;
-  group_id: string;
-  workspace_id: string;
-  createdAt?: string;
-  updatedAt?: string;
-};
-
-type CreateCompanyDto = {
-  groupId: string;
-  name: string;
-  fiscal_year_start: string;
-  last_closed_fiscal_year?: number | null;
-  siret: string;
-  address?: string;
-  ape_code?: string;
-  main_activity?: string;
-  size?: CompanySize;
-  model?: CompanyModel;
-};
-
-type UpdateCompanyDto = Partial<CreateCompanyDto>;
-
-const defaultSnackbar = {
-  showSuccess: true,
-  showError: true,
-};
+export type { Company, CreateCompanyDto, UpdateCompanyDto };
 
 export function useCompanies() {
-  const [list, setList] = useState<Company[] | null>(null);
   const [one, setOne] = useState<Company | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const listQuery = useCompaniesList();
+  const createMut = useCreateCompany();
+  const updateMut = useUpdateCompany();
+  const removeMut = useDeleteCompany();
+
+  const loading =
+    listQuery.isLoading ||
+    listQuery.isFetching ||
+    createMut.isPending ||
+    updateMut.isPending ||
+    removeMut.isPending;
+
+  const error =
+    listQuery.error instanceof Error
+      ? listQuery.error.message
+      : listQuery.error
+        ? "Erreur"
+        : null;
 
   const fetchList = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await apiFetch<Company[]>("/companies", {
-        snackbar: { ...defaultSnackbar, showSuccess: false },
-      });
-      setList(data);
-      return data;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erreur";
-      setError(msg);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    const result = await listQuery.refetch();
+    return result.data ?? [];
+  }, [listQuery]);
 
-  const fetchListByGroup = useCallback(async (groupId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await apiFetch<Company[]>("/companies", {
-        snackbar: { ...defaultSnackbar, showSuccess: false },
-      });
-      const filtered = data.filter((c) => c.group_id === groupId);
-      setList(filtered);
-      return filtered;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erreur";
-      setError(msg);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchListByGroup = useCallback(
+    async (groupId: string) => {
+      const result = await listQuery.refetch();
+      const data = result.data ?? [];
+      return data.filter((c) => c.group_id === groupId);
+    },
+    [listQuery],
+  );
 
   const fetchOne = useCallback(async (id: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await apiFetch<Company>(`/companies/${id}`, {
-        snackbar: { ...defaultSnackbar, showSuccess: false },
-      });
-      setOne(data);
-      return data;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erreur";
-      setError(msg);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
+    const data = await queryClient.fetchQuery({
+      queryKey: queryKeys.companies.detail(id),
+      queryFn: () =>
+        apiFetch<Company>(`/companies/${id}`, { snackbar: readSnackbar }),
+    });
+    setOne(data);
+    return data;
   }, []);
 
-  const create = useCallback(
-    async (dto: CreateCompanyDto) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const created = await apiFetch<Company>("/companies", {
-          method: "POST",
-          body: JSON.stringify(dto),
-          snackbar: { ...defaultSnackbar, successMessage: "Entreprise créée" },
-        });
-        setList((prev) => (prev ? [...prev, created] : [created]));
-        return created;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Erreur";
-        setError(msg);
-        throw e;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
-
-  const update = useCallback(
-    async (id: string, dto: UpdateCompanyDto) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const updated = await apiFetch<Company>(`/companies/${id}`, {
-          method: "PUT",
-          body: JSON.stringify(dto),
-          snackbar: {
-            ...defaultSnackbar,
-            successMessage: "Entreprise mise à jour",
-          },
-        });
-        setList((prev) =>
-          prev ? prev.map((c) => (c.id === id ? updated : c)) : prev,
-        );
-        if (one?.id === id) setOne(updated);
-        return updated;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Erreur";
-        setError(msg);
-        throw e;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [one?.id],
-  );
-
-  const remove = useCallback(
-    async (id: string) => {
-      setLoading(true);
-      setError(null);
-      try {
-        await apiFetch(`/companies/${id}`, {
-          method: "DELETE",
-          snackbar: { ...defaultSnackbar, successMessage: "Entreprise supprimée" },
-        });
-        setList((prev) => (prev ? prev.filter((c) => c.id !== id) : prev));
-        if (one?.id === id) setOne(null);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Erreur";
-        setError(msg);
-        throw e;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [one?.id],
-  );
-
   return {
-    list,
+    list: listQuery.data ?? null,
     one,
     loading,
     error,
     fetchList,
     fetchListByGroup,
     fetchOne,
-    create,
-    update,
-    remove,
+    create: (dto: CreateCompanyDto) => createMut.mutateAsync(dto),
+    update: (id: string, dto: UpdateCompanyDto) =>
+      updateMut.mutateAsync({ id, dto }),
+    remove: (id: string) => removeMut.mutateAsync(id),
   };
 }

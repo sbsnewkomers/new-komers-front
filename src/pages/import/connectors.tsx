@@ -42,10 +42,6 @@ export default function ImportConnectorsPage() {
     frequency: "manual",
   });
 
-  useEffect(() => {
-    companies.fetchList();
-  }, []);
-
   const companyList = companies.list ?? [];
 
   const openConfig = (connector: typeof CONNECTORS[0]) => {

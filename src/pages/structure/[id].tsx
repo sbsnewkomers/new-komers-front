@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCompanies, useBusinessUnits } from "@/hooks";
+import { useBusinessUnits } from "@/hooks";
+import { useCompany, useCompaniesList } from "@/queries/companies";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
@@ -27,29 +28,24 @@ const formatFiscalMonthDay = (value: string | null | undefined): string => {
 export default function StructureCompanyPage() {
   const router = useRouter();
   const id = typeof router.query.id === "string" ? router.query.id : null;
-  const companies = useCompanies();
-  const businessUnits = useBusinessUnits(id);
+  const companyQuery = useCompany(id);
+  const businessUnits = useBusinessUnits(id, { enabled: !!id });
+  const companiesListQuery = useCompaniesList();
 
   const [activeTab, setActiveTab] = useState("informations");
 
-  useEffect(() => {
-    if (id) companies.fetchOne(id);
-  }, [id]);
-  useEffect(() => {
-    if (id) businessUnits.fetchList();
-  }, [id]);
+  const company = companyQuery.data ?? null;
+  const loading = companyQuery.isLoading || businessUnits.loading;
+  const companiesList = companiesListQuery.data ?? [];
 
-  const company = id && companies.one?.id === id ? companies.one : null;
-  const loading = companies.loading || businessUnits.loading;
-
-  if (id && !company && !companies.loading && !companies.error) {
+  if (id && !company && !companyQuery.isLoading && !companyQuery.error) {
     return null;
   }
 
   return (
     <AppLayout
       title="Structure"
-      companies={companies.list ?? []}
+      companies={companiesList}
       selectedCompanyId={id ?? ""}
       onCompanyChange={() => {}}
     >
@@ -65,8 +61,12 @@ export default function StructureCompanyPage() {
             ← Structure
           </Link>
         </div>
-        {companies.error && (
-          <p className="text-sm text-destructive">{companies.error}</p>
+        {companyQuery.error && (
+          <p className="text-sm text-destructive">
+            {companyQuery.error instanceof Error
+              ? companyQuery.error.message
+              : "Erreur"}
+          </p>
         )}
         {loading && !company && (
           <p className="py-8 text-muted-foreground">Chargement…</p>

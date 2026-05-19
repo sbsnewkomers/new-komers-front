@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Users, Building2, X, Check } from "lucide-react";
+import { Users, Building2, X, Check, Eraser } from "lucide-react";
 import type {
   ShareholderFormValues,
   ShareholderOwnerKind,
@@ -209,7 +209,7 @@ export function ShareholderFormDialog({
   const initialCompanyIdsKey = (initial?.companyIds ?? []).join(",");
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !initialId) return;
     setOwnerKind(initialOwnerKind ?? "USER_LINKED");
     setOwnerId(initialOwnerId ?? "");
     setExternal({ ...emptyExternal, ...initial?.externalPerson });
@@ -219,7 +219,7 @@ export function ShareholderFormDialog({
       initial?.companyIds ?? (lockedCompanyId ? [lockedCompanyId] : []),
     );
     setCompanySearch("");
-    // Reset form when dialog opens or when editing a different shareholder — not on every parent re-render.
+    // Sync from server only when editing; create drafts persist until Effacer or success.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- external person/company blobs keyed via initialId
   }, [open, initialId, initialOwnerKind, initialOwnerId, initialPercentage, initialCompanyIdsKey, lockedCompanyId]);
 
@@ -267,6 +267,21 @@ export function ShareholderFormDialog({
     companiesOk,
   ]);
 
+  const resetCreateForm = useCallback(() => {
+    setOwnerKind("USER_LINKED");
+    setOwnerId("");
+    setExternal({ ...emptyExternal });
+    setExternalCompany({ ...emptyExternalCompany });
+    setPercentage("");
+    setSelectedCompanyIds(lockedCompanyId ? [lockedCompanyId] : []);
+    setCompanySearch("");
+  }, [lockedCompanyId]);
+
+  const clearForm = useCallback(() => {
+    if (saving || isEditing) return;
+    resetCreateForm();
+  }, [saving, isEditing, resetCreateForm]);
+
   const handleSubmit = async () => {
     if (!isValid) return;
     await onSubmit({
@@ -278,6 +293,9 @@ export function ShareholderFormDialog({
       externalPerson: ownerKind === "USER_EXTERNAL" ? { ...external } : null,
       externalCompany: ownerKind === "COMPANY_EXTERNAL" ? { ...externalCompany } : null,
     });
+    if (!isEditing) {
+      resetCreateForm();
+    }
   };
 
   const userAsOwnerOptions: OwnerOption[] = useMemo(
@@ -643,7 +661,20 @@ export function ShareholderFormDialog({
           )}
         </DialogBody>
 
-        <DialogFooter>
+        <DialogFooter className="gap-2 sm:justify-between">
+          {!isEditing && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={clearForm}
+              disabled={saving}
+              className="w-full sm:mr-auto sm:w-auto"
+            >
+              <Eraser className="mr-2 h-4 w-4" aria-hidden />
+              Effacer
+            </Button>
+          )}
+          <div className="flex w-full flex-col-reverse gap-2 sm:ml-auto sm:w-auto sm:flex-row">
           <Button
             type="button"
             variant="ghost"
@@ -664,6 +695,7 @@ export function ShareholderFormDialog({
                 ? "Enregistrer"
                 : "Créer"}
           </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

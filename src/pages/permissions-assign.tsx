@@ -37,7 +37,9 @@ export default function PermissionsAssignPage() {
   const groups = useGroups();
   const companies = useCompanies();
   const [companyIdForBU, setCompanyIdForBU] = useState<string>("");
-  const businessUnits = useBusinessUnits(companyIdForBU || null);
+  const businessUnits = useBusinessUnits(companyIdForBU || null, {
+    enabled: !!companyIdForBU,
+  });
 
   const isAdmin =
     currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "ADMIN";
@@ -85,16 +87,6 @@ export default function PermissionsAssignPage() {
     }
     loadDetail(selectedUserId);
   }, [selectedUserId, loadDetail]);
-
-  useEffect(() => {
-    groups.fetchList();
-  }, []);
-  useEffect(() => {
-    companies.fetchList();
-  }, []);
-  useEffect(() => {
-    if (companyIdForBU) businessUnits.fetchList();
-  }, [companyIdForBU]);
 
   const refreshDetail = useCallback(() => {
     if (selectedUserId) loadDetail(selectedUserId);

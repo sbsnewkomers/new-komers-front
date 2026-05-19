@@ -4,6 +4,7 @@ import { logout as authLogout, refreshTokens, impersonateUser, exitImpersonation
 import type { PermissionGrant, PermissionsUser } from "@/permissions/types";
 import { useAuthRevalidator } from "@/hooks/useAuthRevalidator";
 import { loansApi } from "@/lib/loansApi";
+import { clearQueryCache } from "@/lib/queryClient";
 
 type PermissionsContextValue = {
   user: PermissionsUser | null;
@@ -165,6 +166,7 @@ export function PermissionsProvider(props: {
       setUser(null);
       setGrants([]);
       setTokens(null);
+      clearQueryCache();
     }
   }, [setTokens]);
 
@@ -190,11 +192,13 @@ export function PermissionsProvider(props: {
     setUser(me);
     setGrants(me.permissions ?? []);
     setSessionKey(k => k + 1);
+    clearQueryCache();
     return me;
   } catch {
     setUser(null);
     setGrants([]);
     setSessionKey(k => k + 1);
+    clearQueryCache();
     return null;
   }
 }, [setTokens]);

@@ -1,54 +1,28 @@
-import { useState, useEffect, useCallback } from "react";
-import { apiFetch } from "@/lib/apiClient";
+import { useCallback } from "react";
+import { useWorkspacesList } from "@/queries/workspaces";
+import type { Workspace } from "@/types/workspace";
 
-export type Workspace = {
-  id: string;
-  name: string;
-  description?: string;
-  logo?: string;
-  street?: string;
-  postal_code?: string;
-  city?: string;
-  country?: string;
-  contact_email?: string;
-  phone_landline?: string;
-  phone_mobile?: string;
-  manager_id?: string;
-  manager?: {
-    id: string;
-    firstName?: string | null;
-    lastName?: string | null;
-    email: string;
-  } | null;
-};
+export type { Workspace };
 
-export function useWorkspaces() {
-  const [list, setList] = useState<Workspace[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function useWorkspaces(options?: { enabled?: boolean }) {
+  const listQuery = useWorkspacesList(options);
+
+  const loading = listQuery.isLoading || listQuery.isFetching;
+
+  const error =
+    listQuery.error instanceof Error
+      ? listQuery.error.message
+      : listQuery.error
+        ? "Erreur lors du chargement des workspaces"
+        : null;
 
   const fetchList = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await apiFetch<Workspace[]>("/workspaces", {
-        snackbar: { showSuccess: false, showError: true },
-      });
-      setList(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur lors du chargement des workspaces");
-      setList([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchList();
-  }, [fetchList]);
+    const result = await listQuery.refetch();
+    return result.data ?? [];
+  }, [listQuery]);
 
   return {
-    list,
+    list: listQuery.data ?? [],
     loading,
     error,
     fetchList,

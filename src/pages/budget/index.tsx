@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { useCompanies } from "@/hooks";
@@ -40,10 +40,6 @@ export default function BudgetPage() {
     });
     return init;
   });
-
-  useEffect(() => {
-    companies.fetchList();
-  }, []);
 
   const companyList = companies.list ?? [];
 
