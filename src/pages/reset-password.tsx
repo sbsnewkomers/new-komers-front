@@ -137,13 +137,13 @@ export default function ResetPasswordPage() {
     return (
       <>
         <Head>
-          <title>Lien invalide - NewKomers</title>
+          <title>Lien invalide - Nk SOFTWARE</title>
         </Head>
         <div className="min-h-screen nebula-grid-bg flex flex-col items-center justify-center px-4 py-10">
           {/* Logo */}
           <div className="mb-6 text-center">
             <h1 className="text-3xl font-bold leading-[1.05] tracking-tight">
-              <span className="nebula-grad-text">NEWKOMERS</span>
+              <span className="nebula-grad-text">Nk SOFTWARE</span>
             </h1>
           </div>
 
@@ -172,13 +172,13 @@ export default function ResetPasswordPage() {
   return (
     <>
       <Head>
-        <title>Réinitialiser le mot de passe - NewKomers</title>
+        <title>Réinitialiser le mot de passe - Nk SOFTWARE</title>
       </Head>
       <div className="min-h-screen nebula-grid-bg flex flex-col items-center justify-center px-4 py-10">
         {/* Logo */}
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold leading-[1.05] tracking-tight">
-            <span className="nebula-grad-text">NEWKOMERS</span>
+            <span className="nebula-grad-text">Nk SOFTWARE</span>
           </h1>
         </div>
 

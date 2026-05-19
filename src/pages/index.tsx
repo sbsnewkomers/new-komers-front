@@ -46,6 +46,7 @@ export default function LandingPage() {
       className={`landing force-dark min-h-screen selection:bg-(--accent)/20 ${isLoaded ? 'loaded' : ''}`}
     >
       <Head>
+
         <title>NK Software — La Clarté Financière pour les Holdings &amp; Groupes</title>
         <meta
           name="description"
@@ -60,6 +61,7 @@ export default function LandingPage() {
           transform: `translate(${mousePosition.x - 12}px, ${mousePosition.y - 12}px)`,
         }}
       />
+
 
       {/* ── Navigation ── */}
       <Navigation mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
@@ -138,6 +140,7 @@ export default function LandingPage() {
 
       {/* ── Footer ── */}
       <Footer />
+
     </div>
   );
 }

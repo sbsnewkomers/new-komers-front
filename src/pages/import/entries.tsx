@@ -35,8 +35,8 @@ export default function ImportEntriesPage() {
     return queryFile ?? "";
   }, [queryFile]);
   const selectedDataImportId = useMemo(() => {
-  if (Array.isArray(queryDataImportId)) return queryDataImportId[0] ?? "";
-  return queryDataImportId ?? "";
+    if (Array.isArray(queryDataImportId)) return queryDataImportId[0] ?? "";
+    return queryDataImportId ?? "";
   }, [queryDataImportId]);
 
   const [items, setItems] = useState<ImportedAccountingEntry[]>([]);
@@ -104,7 +104,7 @@ export default function ImportEntriesPage() {
   return (
     <AppLayout title="Ecritures comptables importees">
       <Head>
-        <title>Ecritures importees - NewKomers</title>
+        <title>Ecritures importees - Nk SOFTWARE</title>
       </Head>
 
       <div className="space-y-6 p-1">

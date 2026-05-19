@@ -49,8 +49,8 @@ export default function SettingsPage() {
   const [tab, setTab] = React.useState("general");
 
   // Mock state
-  const [orgName, setOrgName] = React.useState("NewKomers");
-  const [orgWebsite, setOrgWebsite] = React.useState("https://newkomers.com");
+  const [orgName, setOrgName] = React.useState("Nk SOFTWARE");
+  const [orgWebsite, setOrgWebsite] = React.useState("https://nksoftware.com");
   const [locale, setLocale] = React.useState("fr-FR");
   const [timezone, setTimezone] = React.useState("Europe/Paris");
 
