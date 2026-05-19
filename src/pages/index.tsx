@@ -97,13 +97,7 @@ export default function LandingPage() {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 rounded-2xl bg-black/55" />
             {/* Subtle border */}
-            <div className="absolute inset-0 rounded-2xl" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.1)" }} />
-            {/* Top ambient glow */}
-            <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-40 rounded-t-2xl"
-              style={{ background: "radial-gradient(ellipse at 50% -20%, rgba(234,179,8,0.18) 0%, transparent 70%)" }}
-              aria-hidden
-            />
+            <div className="absolute inset-0 rounded-2xl" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)" }} />
 
             {/* Eyebrow badge */}
             <div className="relative z-10 mb-6 flex justify-center">
