@@ -1,5 +1,3 @@
-import * as React from "react";
-
 interface FAQProps {
   openFAQ: number | null;
   setOpenFAQ: (index: number | null) => void;
@@ -35,92 +33,120 @@ export default function FAQ({ openFAQ, setOpenFAQ }: FAQProps) {
   ];
 
   return (
-    <section
-      id="faq"
-      className="relative py-24 px-6 min-h-screen"
-      style={{
-        backgroundImage: 'url(/landing/FAQ.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed'
-      }}
-    >
-      {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+    <section id="faq" className="relative overflow-hidden">
+      {/* Background image — no fixed attachment for smooth scroll */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: "url('/landing/FAQ.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/65" />
+      {/* Top gradient — blends from page background */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-48 bg-gradient-to-b from-[#080808] to-transparent" />
+      {/* Bottom gradient — blends to page background */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-48 bg-gradient-to-t from-[#080808] to-transparent" />
 
-      <div className="relative z-10 mx-auto max-w-4xl">
-        <div className="mb-16 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-full"
-            style={{
-              background: "linear-gradient(90deg, rgba(234,179,8,0.13) 0%, rgba(234,179,8,0.04) 100%)",
-              border: "0.94px solid rgba(255,255,255,0.15)",
-            }}>
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h2 className="text-[clamp(32px,4vw,56px)] font-black leading-tight text-white mb-6">
-            Questions souvent
-            <br />
-            <span style={{ color: "#EAB308" }}>
-              posées
-            </span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed"
-            style={{ color: "rgba(255,255,255,0.7)" }}>
-            Une question ? Nous avons les réponses. Découvrez tout ce que vous devez savoir sur notre plateforme
-            de pilotage, nos abonnements et nos fonctionnalités de consolidation financière.
-          </p>
-        </div>
+      {/* Content */}
+      <div className="relative z-20 px-6 py-28 md:py-36">
+        <div className="mx-auto max-w-4xl">
 
-        <div className="space-y-4">
-          {faqItems.map((item, idx) => (
-            <div
-              key={idx}
-              className={`landing-faq-item ${openFAQ === idx ? 'open' : ''} overflow-hidden rounded-2xl border transition-all duration-300 hover:shadow-xl`}
-              style={{
-                background: "linear-gradient(90deg, rgba(234,179,8,0.05) 0%, rgba(234,179,8,0.02) 100%)",
-                borderColor: "rgba(255,255,255,0.15)",
-                transform: openFAQ === idx ? 'scale(1.02)' : 'scale(1)',
-                boxShadow: openFAQ === idx ? '0 20px 40px rgba(0,0,0,0.3), 0 0 60px rgba(234,179,8,0.1)' : '0 4px 20px rgba(0,0,0,0.1)'
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setOpenFAQ(openFAQ === idx ? null : idx)}
-                className="flex w-full items-center justify-between px-8 py-6 text-left text-[16px] font-semibold text-white transition-colors duration-200 group hover:text-[#EAB308]"
-                aria-expanded={openFAQ === idx}
-              >
-                <span className="flex-1 pr-4">{item.question}</span>
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-300`}
-                  style={{
-                    background: openFAQ === idx ? "#EAB308" : "linear-gradient(90deg, rgba(234,179,8,0.13) 0%, rgba(234,179,8,0.04) 100%)",
-                    borderColor: "rgba(255,255,255,0.15)"
-                  }}>
-                  <svg
-                    className={`landing-faq-icon h-5 w-5 text-white transition-transform duration-300 ${openFAQ === idx ? "rotate-180" : ""}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    aria-hidden
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </button>
-              {openFAQ === idx ? (
-                <div className="px-8 pb-6 text-[15px] leading-relaxed pt-4 animate-fadeIn"
-                  style={{
-                    color: "rgba(255,255,255,0.7)",
-                    borderTop: "1px solid rgba(255,255,255,0.15)"
-                  }}>
-                  {item.answer}
-                </div>
-              ) : null}
+          {/* Header */}
+          <div className="mb-16 text-center">
+            {/* Eyebrow badge */}
+            <div className="mb-6 flex justify-center">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#EAB308]/25 bg-[#EAB308]/8 px-3 py-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#EAB308]" />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#EAB308]">FAQ</span>
+              </span>
             </div>
-          ))}
+
+            <h2 className="text-[clamp(30px,4vw,52px)] font-black leading-tight text-white">
+              Questions souvent
+              <br />
+              <span style={{ color: "#EAB308" }}>posées</span>
+            </h2>
+            <p
+              className="mx-auto mt-5 max-w-2xl text-[16px] leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.55)" }}
+            >
+              Une question ? Nous avons les réponses. Découvrez tout ce que vous devez savoir sur notre plateforme
+              de pilotage, nos abonnements et nos fonctionnalités de consolidation financière.
+            </p>
+          </div>
+
+          {/* Accordion */}
+          <div className="space-y-3">
+            {faqItems.map((item, idx) => {
+              const isOpen = openFAQ === idx;
+              return (
+                <div
+                  key={idx}
+                  className="overflow-hidden rounded-2xl border transition-all duration-300"
+                  style={{
+                    background: isOpen
+                      ? "linear-gradient(135deg, rgba(234,179,8,0.07) 0%, rgba(234,179,8,0.03) 100%)"
+                      : "rgba(10,8,6,0.6)",
+                    backdropFilter: "blur(12px)",
+                    WebkitBackdropFilter: "blur(12px)",
+                    borderColor: isOpen ? "rgba(234,179,8,0.3)" : "rgba(255,255,255,0.1)",
+                    boxShadow: isOpen
+                      ? "0 20px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(234,179,8,0.1)"
+                      : "0 4px 16px rgba(0,0,0,0.2)",
+                    transform: isOpen ? "scale(1.01)" : "scale(1)",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFAQ(isOpen ? null : idx)}
+                    className="flex w-full items-center justify-between px-7 py-5 text-left transition-colors duration-200 hover:text-[#EAB308]"
+                    aria-expanded={isOpen}
+                  >
+                    <span className="flex-1 pr-4 text-[15px] font-semibold leading-snug text-white transition-colors duration-200">
+                      {item.question}
+                    </span>
+                    <div
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-300"
+                      style={{
+                        background: isOpen
+                          ? "#EAB308"
+                          : "rgba(234,179,8,0.08)",
+                        borderColor: isOpen ? "#EAB308" : "rgba(255,255,255,0.12)",
+                      }}
+                    >
+                      <svg
+                        className={`h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180 text-black" : "text-white/70"}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        aria-hidden
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </button>
+
+                  {isOpen ? (
+                    <div
+                      className="px-7 pb-6 pt-4 text-[14px] leading-relaxed"
+                      style={{
+                        color: "rgba(255,255,255,0.65)",
+                        borderTop: "1px solid rgba(255,255,255,0.08)",
+                      }}
+                    >
+                      {item.answer}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+
         </div>
       </div>
     </section>

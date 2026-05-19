@@ -1,33 +1,34 @@
+import * as React from "react";
+
+const items = [
+  { label: "Clients",        value: "100+" },
+  { label: "Projets",        value: "50+"  },
+  { label: "Avis 5 Étoiles", value: "42+"  },
+];
+
 export default function Stats() {
   return (
-    <section
-      className="relative w-full"
-      style={{ borderTop: "1px solid rgba(255,255,255,0.1)", borderBottom: "1px solid rgba(255,255,255,0.1)" }}
-    >
-      <div className="mx-auto flex h-[214px] max-w-[1440px] items-center">
-        {/* Clients */}
-        <div className="flex flex-1 flex-col items-center justify-center gap-2">
-          <span className="text-[23px] leading-[28px] text-[#EAB308]">Clients</span>
-          <span className="text-[46px] font-bold leading-[55px] text-white">100+</span>
-        </div>
+    <section className="relative w-full py-6">
+      {/* Gradient separator lines */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-        {/* Divider */}
-        <div className="h-[134px] w-[2px] shrink-0 bg-white/10" />
-
-        {/* Projects */}
-        <div className="flex flex-1 flex-col items-center justify-center gap-2">
-          <span className="text-[23px] leading-[28px] text-[#EAB308]">Projects</span>
-          <span className="text-[46px] font-bold leading-[55px] text-white">50+</span>
-        </div>
-
-        {/* Divider */}
-        <div className="h-[134px] w-[2px] shrink-0 bg-white/10" />
-
-        {/* 5-Star Reviews */}
-        <div className="flex flex-1 flex-col items-center justify-center gap-2">
-          <span className="text-[23px] leading-[28px] text-[#EAB308]">5-Star Reviews</span>
-          <span className="text-[46px] font-bold leading-[55px] text-white">42+</span>
-        </div>
+      <div className="mx-auto flex h-[180px] max-w-[1200px] items-center px-6">
+        {items.map((item, i) => (
+          <React.Fragment key={item.label}>
+            <div className="group flex flex-1 cursor-default flex-col items-center justify-center gap-2">
+              <span className="text-[18px] font-medium leading-[24px] tracking-wide text-[#EAB308] transition-colors duration-300 group-hover:text-yellow-300">
+                {item.label}
+              </span>
+              <span className="inline-block text-[44px] font-bold leading-[52px] text-white transition-all duration-300 group-hover:scale-110 group-hover:text-[#EAB308]">
+                {item.value}
+              </span>
+            </div>
+            {i < items.length - 1 && (
+              <div className="h-[90px] w-px shrink-0 bg-gradient-to-b from-transparent via-white/15 to-transparent" />
+            )}
+          </React.Fragment>
+        ))}
       </div>
     </section>
   );

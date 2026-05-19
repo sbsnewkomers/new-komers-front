@@ -422,3 +422,67 @@ body.nebula-light .force-dark {
 .landing-pricing-card:hover {
     will-change: auto;
 }
+
+/* =============================================================================
+   Section cohesion utilities
+   ============================================================================= */
+
+/* Shared eyebrow badge — used across all section headers */
+.landing-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 9999px;
+    border: 1px solid rgba(212, 176, 106, 0.25);
+    background: rgba(234, 179, 8, 0.08);
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #EAB308;
+}
+
+/* Section top/bottom gradient overlays (page-bg → transparent → page-bg) */
+.landing-section-fade-top {
+    pointer-events: none;
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 12rem;           /* 192px */
+    background: linear-gradient(to bottom, #080808, transparent);
+    z-index: 10;
+}
+
+.landing-section-fade-bottom {
+    pointer-events: none;
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 12rem;
+    background: linear-gradient(to top, #080808, transparent);
+    z-index: 10;
+}
+
+/* Smooth number scale transition for stat items */
+.landing-stat-number {
+    display: inline-block;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), color 0.3s ease;
+}
+
+/* Consistent hover glow for interactive cards */
+.landing-card-hover-glow:hover {
+    box-shadow: 0 0 40px rgba(234, 179, 8, 0.1), 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Smooth fade-in keyframe reused across sections */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
