@@ -6001,7 +6001,7 @@ export default function StructurePage() {
                 <PhoneInput
                   international
                   countryCallingCodeEditable={false}
-                  defaultCountry={addGroupForm.country || "FR"}
+                  defaultCountry={(addGroupForm.country || "FR") as any}
                   value={addGroupForm.phone_mobile}
                   onChange={(value) =>
                     handlePhoneChange(value || "", "addGroup", "phone_mobile")
@@ -6028,7 +6028,7 @@ export default function StructurePage() {
                 <PhoneInput
                   international
                   countryCallingCodeEditable={false}
-                  defaultCountry={addGroupForm.country || "FR"}
+                  defaultCountry={(addGroupForm.country || "FR") as any}
                   value={addGroupForm.phone_landline}
                   onChange={(value) =>
                     handlePhoneChange(value || "", "addGroup", "phone_landline")
@@ -6308,7 +6308,7 @@ export default function StructurePage() {
                   <PhoneInput
                     international
                     countryCallingCodeEditable={false}
-                    defaultCountry={addBUStandaloneForm.country || "FR"}
+                    defaultCountry={(addBUStandaloneForm.country || "FR") as any}
                     value={addBUStandaloneForm.phone_mobile}
                     onChange={(value) =>
                       handlePhoneChange(value || "", "addBUStandalone", "phone_mobile")
@@ -6335,7 +6335,7 @@ export default function StructurePage() {
                   <PhoneInput
                     international
                     countryCallingCodeEditable={false}
-                    defaultCountry={addBUStandaloneForm.country || "FR"}
+                    defaultCountry={(addBUStandaloneForm.country || "FR") as any}
                     value={addBUStandaloneForm.phone_landline}
                     onChange={(value) =>
                       handlePhoneChange(value || "", "addBUStandalone", "phone_landline")
@@ -6633,7 +6633,7 @@ export default function StructurePage() {
                 <PhoneInput
                   international
                   countryCallingCodeEditable={false}
-                  defaultCountry={addCompanyForm.country || "FR"}
+                  defaultCountry={(addCompanyForm.country || "FR") as any}
                   value={addCompanyForm.phone_mobile}
                   onChange={(value) =>
                     handlePhoneChange(value || "", 'addCompany', 'phone_mobile')
@@ -6654,7 +6654,7 @@ export default function StructurePage() {
                 <PhoneInput
                   international
                   countryCallingCodeEditable={false}
-                  defaultCountry={addCompanyForm.country || "FR"}
+                  defaultCountry={(addCompanyForm.country || "FR") as any}
                   value={addCompanyForm.phone_landline}
                   onChange={(value) =>
                     handlePhoneChange(value || "", 'addCompany', 'phone_landline')
@@ -6957,7 +6957,7 @@ export default function StructurePage() {
                   <PhoneInput
                     international
                     countryCallingCodeEditable={false}
-                    defaultCountry={addBUForm.country || "FR"}
+                    defaultCountry={(addBUForm.country || "FR") as any}
                     value={addBUForm.phone_mobile}
                     onChange={(value) =>
                       handlePhoneChange(value || "", "addBU", "phone_mobile")
@@ -6984,7 +6984,7 @@ export default function StructurePage() {
                   <PhoneInput
                     international
                     countryCallingCodeEditable={false}
-                    defaultCountry={addBUForm.country || "FR"}
+                    defaultCountry={(addBUForm.country || "FR") as any}
                     value={addBUForm.phone_landline}
                     onChange={(value) =>
                       handlePhoneChange(value || "", "addBU", "phone_landline")
@@ -7233,7 +7233,7 @@ export default function StructurePage() {
                 <PhoneInput
                   international
                   countryCallingCodeEditable={false}
-                  defaultCountry={addworkspaceForm.country || "FR"}
+                  defaultCountry={(addworkspaceForm.country || "FR") as any}
                   value={addworkspaceForm.phone_mobile}
                   onChange={(value) => handlePhoneChange(value || "", "addworkspace", "phone_mobile")}
                   className={workspaceErrors.phone_mobile ? "border-red-500" : ""}
@@ -7252,7 +7252,7 @@ export default function StructurePage() {
                 <PhoneInput
                   international
                   countryCallingCodeEditable={false}
-                  defaultCountry={addworkspaceForm.country || "FR"}
+                  defaultCountry={(addworkspaceForm.country || "FR") as any}
                   value={addworkspaceForm.phone_landline}
                   onChange={(value) => handlePhoneChange(value || "", "addworkspace", "phone_landline")}
                   className={workspaceErrors.phone_landline ? "border-red-500" : ""}
