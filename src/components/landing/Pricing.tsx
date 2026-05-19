@@ -9,7 +9,7 @@ interface PricingProps {
 function TickIcon({ gold }: { gold?: boolean }) {
   return (
     <svg
-      className="h-6 w-6 shrink-0"
+      className="h-6 w-6 shrink-0 transition-all duration-300 ease-out"
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden
@@ -20,6 +20,7 @@ function TickIcon({ gold }: { gold?: boolean }) {
         r="10"
         stroke={gold ? "#EAB308" : "rgba(255,255,255,0.8)"}
         strokeWidth="1.5"
+        className="transition-all duration-300"
       />
       <path
         d="M8 12l3 3 5-5"
@@ -27,6 +28,7 @@ function TickIcon({ gold }: { gold?: boolean }) {
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+        className="transition-all duration-300"
       />
     </svg>
   );
@@ -46,10 +48,10 @@ function Separator() {
 
 function GlowButton({ href, children }: { href: string; children: React.ReactNode }) {
   const inner = (
-    <div className="relative isolate flex h-11 w-40 items-center gap-3 rounded-[10px]" style={{ borderRadius: 10 }}>
+    <div className="relative isolate flex h-11 w-40 items-center gap-3 rounded-[10px] transition-all duration-300 hover:scale-105 hover:translate-y-[-2px] group" style={{ borderRadius: 10 }}>
       {/* Glow blur behind */}
       <div
-        className="pointer-events-none absolute -inset-2.5 rounded-[10px]"
+        className="pointer-events-none absolute -inset-2.5 rounded-[10px] transition-all duration-300 group-hover:opacity-40 group-hover:blur-sm"
         style={{
           background: "conic-gradient(from 196deg at 50% 50%, #EAB308 0deg, #EAB308 95deg, #EAB308 186deg, #EAB308 275deg, #EAB308 360deg)",
           mixBlendMode: "screen",
@@ -60,15 +62,15 @@ function GlowButton({ href, children }: { href: string; children: React.ReactNod
       />
       {/* Button surface */}
       <div
-        className="relative z-10 flex w-full items-center gap-3 rounded-[8px] px-5 py-2.5"
+        className="relative z-10 flex w-full items-center gap-3 rounded-[8px] px-5 py-2.5 transition-all duration-300 group-hover:bg-black/70"
         style={{
           background: "rgba(0,0,0,0.5)",
           backdropFilter: "blur(10px)",
           boxShadow: "0 1px 0 rgba(0,0,0,0.05), 0 4px 4px rgba(0,0,0,0.05), 0 10px 10px rgba(0,0,0,0.1)",
         }}
       >
-        <span className="text-[18px] leading-[22px] text-white">{children}</span>
-        <svg className="h-5 w-5 shrink-0 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden>
+        <span className="text-[18px] leading-[22px] text-white transition-colors duration-300 group-hover:text-[#EAB308]">{children}</span>
+        <svg className="h-5 w-5 shrink-0 text-white transition-all duration-300 group-hover:text-[#EAB308] group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </div>
@@ -82,6 +84,12 @@ function GlowButton({ href, children }: { href: string; children: React.ReactNod
 }
 
 export default function Pricing({ billingYearly, setBillingYearly }: PricingProps) {
+  const [isLoaded, setIsLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
   const starterFeatures = [
     "Jusqu'à 5 SIREN liées",
     "Consolidation basique quotidienne",
@@ -128,7 +136,7 @@ export default function Pricing({ billingYearly, setBillingYearly }: PricingProp
 
       <div className="mx-auto max-w-[1200px] relative z-10">
         {/* Heading */}
-        <div className="mb-[45px] flex flex-col items-center gap-5 text-center">
+        <div className={`mb-[45px] flex flex-col items-center gap-5 text-center transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <h2
             className="font-bold text-white"
             style={{ fontSize: 70, lineHeight: "84px", maxWidth: 711 }}
@@ -136,7 +144,7 @@ export default function Pricing({ billingYearly, setBillingYearly }: PricingProp
             Choisissez le Plan qui Vous Convient
           </h2>
           <p
-            className="text-center"
+            className="text-center transition-all duration-700 delay-100"
             style={{ maxWidth: 780, fontSize: 20, lineHeight: "24px", color: "#D9D9D9" }}
           >
             Vous donner accès aux fonctionnalités essentielles et à plus de 1 000 outils créatifs.
@@ -146,13 +154,13 @@ export default function Pricing({ billingYearly, setBillingYearly }: PricingProp
 
           {/* Toggle — Yearly first (active by default), then Monthly */}
           <div
-            className="flex items-center p-[10px]"
+            className="flex items-center p-[10px] transition-all duration-700 delay-200"
             style={{ background: "rgba(255,255,255,0.1)", borderRadius: 333 }}
           >
             <button
               type="button"
               onClick={() => setBillingYearly(true)}
-              className="flex items-center justify-center transition-colors"
+              className="flex items-center justify-center transition-all duration-300 hover:scale-105"
               style={{
                 padding: "5px 32px",
                 borderRadius: 20,
@@ -167,7 +175,7 @@ export default function Pricing({ billingYearly, setBillingYearly }: PricingProp
             <button
               type="button"
               onClick={() => setBillingYearly(false)}
-              className="flex items-center justify-center transition-colors"
+              className="flex items-center justify-center transition-all duration-300 hover:scale-105"
               style={{
                 padding: "5px 32px",
                 borderRadius: 20,
@@ -186,7 +194,7 @@ export default function Pricing({ billingYearly, setBillingYearly }: PricingProp
         <div className="pricing-row flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-center lg:gap-0">
 
           {/* Starter */}
-          <div className="pricing-starter flex flex-col gap-[35px] p-6">
+          <div className={`pricing-starter flex flex-col gap-[35px] p-6 transition-all duration-700 delay-300 hover:scale-105 hover:translate-y-[-6px] hover:shadow-2xl ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <div className="flex flex-col gap-6 px-2">
               <div className="flex flex-col gap-[6px]">
                 <span style={{ fontSize: 18, lineHeight: "22px", color: "#fff" }}>Starter</span>
@@ -207,8 +215,11 @@ export default function Pricing({ billingYearly, setBillingYearly }: PricingProp
             <div className="flex flex-col gap-[15px] px-2">
               <span style={{ fontSize: 16, lineHeight: "24px", color: "rgba(255,255,255,0.75)" }}>Ce qui est inclus</span>
               <ul className="flex flex-col gap-[14px]">
-                {starterFeatures.map((f) => (
-                  <li key={f} className="flex items-start gap-3">
+                {starterFeatures.map((f, index) => (
+                  <li key={f} className="flex items-start gap-3 transition-all duration-500 hover:translate-x-2" style={{
+                    animationDelay: `${index * 100}ms`,
+                    animation: isLoaded ? 'fadeInUp 0.6s ease-out forwards' : 'none'
+                  }}>
                     <TickIcon />
                     <span style={{ fontSize: 16, lineHeight: "24px", color: "#C6C6C6" }}>{f}</span>
                   </li>
@@ -221,7 +232,7 @@ export default function Pricing({ billingYearly, setBillingYearly }: PricingProp
           </div>
 
           {/* Pro */}
-          <div className="pricing-pro relative flex flex-col gap-[35px] p-6">
+          <div className={`pricing-pro relative flex flex-col gap-[35px] p-6 transition-all duration-700 delay-400 hover:scale-105 hover:translate-y-[-6px] hover:shadow-2xl ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <div className="flex flex-col gap-6 px-2">
               <div className="flex flex-col gap-[6px]">
                 <span className="font-bold" style={{ fontSize: 30, lineHeight: "36px", color: "#EAB308" }}>Pro</span>
@@ -248,8 +259,11 @@ export default function Pricing({ billingYearly, setBillingYearly }: PricingProp
             <div className="flex flex-col gap-[15px] px-2">
               <span style={{ fontSize: 16, lineHeight: "24px", color: "rgba(255,255,255,0.75)" }}>Ce qui est inclus</span>
               <ul className="flex flex-col gap-[14px]">
-                {proFeatures.map((f) => (
-                  <li key={f} className="flex items-start gap-3">
+                {proFeatures.map((f, index) => (
+                  <li key={f} className="flex items-start gap-3 transition-all duration-500 hover:translate-x-2" style={{
+                    animationDelay: `${index * 100}ms`,
+                    animation: isLoaded ? 'fadeInUp 0.6s ease-out forwards' : 'none'
+                  }}>
                     <TickIcon gold />
                     <span style={{ fontSize: 16, lineHeight: "24px", color: "#C6C6C6" }}>{f}</span>
                   </li>
@@ -262,7 +276,7 @@ export default function Pricing({ billingYearly, setBillingYearly }: PricingProp
           </div>
 
           {/* Enterprise */}
-          <div className="pricing-enterprise flex flex-col gap-[35px] p-6">
+          <div className={`pricing-enterprise flex flex-col gap-[35px] p-6 transition-all duration-700 delay-500 hover:scale-105 hover:translate-y-[-6px] hover:shadow-2xl ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <div className="flex flex-col gap-6 px-2">
               <div className="flex flex-col gap-[6px]">
                 <span style={{ fontSize: 18, lineHeight: "22px", color: "#fff" }}>Enterprise</span>
@@ -278,8 +292,11 @@ export default function Pricing({ billingYearly, setBillingYearly }: PricingProp
             <div className="flex flex-col gap-[15px] px-2">
               <span style={{ fontSize: 16, lineHeight: "24px", color: "rgba(255,255,255,0.75)" }}>Ce qui est inclus</span>
               <ul className="flex flex-col gap-[14px]">
-                {enterpriseFeatures.map((f) => (
-                  <li key={f} className="flex items-start gap-3">
+                {enterpriseFeatures.map((f, index) => (
+                  <li key={f} className="flex items-start gap-3 transition-all duration-500 hover:translate-x-2" style={{
+                    animationDelay: `${index * 100}ms`,
+                    animation: isLoaded ? 'fadeInUp 0.6s ease-out forwards' : 'none'
+                  }}>
                     <TickIcon />
                     <span style={{ fontSize: 16, lineHeight: "24px", color: "#C6C6C6" }}>{f}</span>
                   </li>
@@ -306,11 +323,20 @@ export default function Pricing({ billingYearly, setBillingYearly }: PricingProp
         .pricing-enterprise {
           border: 1px solid rgba(255, 255, 255, 0.1);
           min-height: 400px;
+          transition: all 0.3s ease;
+        }
+        .pricing-starter:hover,
+        .pricing-enterprise:hover {
+          box-shadow: 0 0 40px rgba(234, 179, 8, 0.15);
         }
         .pricing-pro {
           min-height: 500px;
           box-shadow: 0 0 60px rgba(234, 179, 8, 0.12);
           z-index: 10;
+          transition: all 0.3s ease;
+        }
+        .pricing-pro:hover {
+          box-shadow: 0 0 80px rgba(234, 179, 8, 0.2);
         }
 
         /* Desktop: connected card layout, Pro stands taller */
