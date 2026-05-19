@@ -76,7 +76,7 @@ export default function Footer() {
           className="mt-14 flex flex-col gap-4 pt-6 text-xs md:flex-row md:items-center md:justify-between"
           style={{ borderTop: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.3)" }}
         >
-          <span>© 2026 Newkomers. Tous droits réservés.</span>
+          <span>© 2026 NK Software. Tous droits réservés.</span>
           <div className="flex flex-wrap items-center gap-3">
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px]"
