@@ -648,13 +648,13 @@ body.nebula-light .force-dark {
 }
 
 .force-dark nav {
-  background-color: rgba(0, 0, 0, 0.9) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
 }
 
 .force-dark footer {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
 }
 
 .force-dark .glass-panel {
