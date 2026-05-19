@@ -75,14 +75,16 @@ function ThumbnailStrip({ colors }: { colors: string[] }) {
 
 export default function About() {
   return (
-    <section id="about" className="relative text-white py-24 px-6 overflow-hidden">
-      {/* Golden accent dots */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 right-1/4 w-2 h-2 bg-yellow-500/40 rounded-full" />
-        <div className="absolute top-1/2 left-1/3 w-1.5 h-1.5 bg-yellow-500/30 rounded-full" />
-        <div className="absolute top-1/4 left-1/6 w-2 h-2 bg-yellow-500/20 rounded-full blur-[2px]" />
-        <div className="absolute top-[15%] right-[18%] w-1.5 h-1.5 bg-yellow-500/30 rounded-full" />
-      </div>
+    <section
+      id="about"
+      className="relative text-white py-24 px-6 overflow-hidden"
+      style={{
+        backgroundImage: "url('/landing/AboutUs-background.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
 
       <div className="mx-auto max-w-6xl relative z-10">
 
