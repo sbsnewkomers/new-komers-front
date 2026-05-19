@@ -723,6 +723,7 @@ export default function StructurePage() {
   const [ficheGroupActifs, setFicheGroupActifs] = useState<Asset[]>([]);
   const [ficheGroupDotations, setFicheGroupDotations] = useState<GlobalDotation[]>([]);
   const [ficheGroupDataLoading, setFicheGroupDataLoading] = useState(false);
+  const [addBUStandaloneLogoFile, setAddBUStandaloneLogoFile] = useState<File | null>(null);
 
   // Fiche BU states
   const [ficheBUOpen, setFicheBUOpen] = useState(false);
@@ -950,6 +951,7 @@ export default function StructurePage() {
   const [addBUForm, setAddBUForm] = useState<AddBUFormState>(() => createEmptyAddBUForm());
   const [addBULoading, setAddBULoading] = useState(false);
   const [addBULogoFile, setAddBULogoFile] = useState<File | null>(null);
+  
 
   const [addGroupOpen, setAddGroupOpen] = useState(false);
   const [addGroupForm, setAddGroupForm] = useState({
@@ -2555,63 +2557,49 @@ export default function StructurePage() {
   };
 
   const handleCreateBUStandalone = async () => {
-    if (!addBUStandaloneForm.name.trim() || !addBUStandaloneForm.companyId)
-      return;
+  if (!addBUStandaloneForm.name.trim() || !addBUStandaloneForm.companyId) return;
 
-    // Valider le SIRET avant d'envoyer la requête
-    if (addBUStandaloneForm.siret && !validateSiret(addBUStandaloneForm.siret)) {
-      return;
-    }
+  if (addBUStandaloneForm.siret && !validateSiret(addBUStandaloneForm.siret)) return;
 
-    const mgrErr = validateBuManagerForSubmit(
-      managerFieldsFromForm(addBUStandaloneForm),
-    );
-    if (mgrErr) {
-      emitSnackbar({ message: mgrErr, variant: "error" });
-      return;
-    }
+  const mgrErr = validateBuManagerForSubmit(managerFieldsFromForm(addBUStandaloneForm));
+  if (mgrErr) { emitSnackbar({ message: mgrErr, variant: "error" }); return; }
 
-    setAddBUStandaloneLoading(true);
-    try {
-      await apiFetch(
-        `/companies/${addBUStandaloneForm.companyId}/business-units`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            name: addBUStandaloneForm.name,
-            description: addBUStandaloneForm.description,
-            code: addBUStandaloneForm.code,
-            activity: addBUStandaloneForm.activity,
-            siret: addBUStandaloneForm.siret,
-            country: addBUStandaloneForm.country,
-            street: addBUStandaloneForm.street,
-            postal_code: addBUStandaloneForm.postal_code,
-            city: addBUStandaloneForm.city,
-            phone_landline: addBUStandaloneForm.phone_landline,
-            phone_mobile: addBUStandaloneForm.phone_mobile,
-            contact_email: addBUStandaloneForm.contact_email,
-            entity_code: addBUStandaloneForm.entity_code,
-            company_id: addBUStandaloneForm.companyId,
-            ...buildBuCreateManagerJson(managerFieldsFromForm(addBUStandaloneForm)),
-          }),
-          snackbar: {
-            showSuccess: true,
-            successMessage: "Business unit créée",
-          },
-        },
-      );
-      await setIsTreeLoaded(false);
-      setExpandedCompanyIds((prev) =>
-        new Set(prev).add(addBUStandaloneForm.companyId),
-      );
-      setAddBUStandaloneOpen(false);
-      setAddBUStandaloneForm(createEmptyStandaloneBUForm());
-    } catch {
-      /* snackbar handles */
-    } finally {
-      setAddBUStandaloneLoading(false);
-    }
-  };
+  setAddBUStandaloneLoading(true);
+  try {
+    const formData = new FormData();
+    formData.append("company_id", addBUStandaloneForm.companyId);
+    formData.append("name", addBUStandaloneForm.name);
+    if (addBUStandaloneForm.description?.trim()) formData.append("description", addBUStandaloneForm.description.trim());
+    if (addBUStandaloneForm.code) formData.append("code", addBUStandaloneForm.code);
+    if (addBUStandaloneForm.activity) formData.append("activity", addBUStandaloneForm.activity);
+    if (addBUStandaloneForm.siret) formData.append("siret", addBUStandaloneForm.siret);
+    if (addBUStandaloneForm.country) formData.append("country", addBUStandaloneForm.country);
+    if (addBUStandaloneForm.street) formData.append("street", addBUStandaloneForm.street);
+    if (addBUStandaloneForm.postal_code) formData.append("postal_code", addBUStandaloneForm.postal_code);
+    if (addBUStandaloneForm.city) formData.append("city", addBUStandaloneForm.city);
+    if (addBUStandaloneForm.phone_landline) formData.append("phone_landline", addBUStandaloneForm.phone_landline);
+    if (addBUStandaloneForm.phone_mobile) formData.append("phone_mobile", addBUStandaloneForm.phone_mobile);
+    if (addBUStandaloneForm.contact_email) formData.append("contact_email", addBUStandaloneForm.contact_email);
+    if (addBUStandaloneForm.entity_code?.trim()) formData.append("entity_code", addBUStandaloneForm.entity_code.trim());
+    if (addBUStandaloneLogoFile) formData.append("logo", addBUStandaloneLogoFile);
+    appendBuManagerToFormData(formData, managerFieldsFromForm(addBUStandaloneForm), { mode: "create" });
+
+    await apiFetch(`/companies/${addBUStandaloneForm.companyId}/business-units`, {
+      method: "POST",
+      body: formData,
+      headers: {},
+      snackbar: { showSuccess: true, successMessage: "Business unit créée" },
+    });
+
+    await setIsTreeLoaded(false);
+    setExpandedCompanyIds((prev) => new Set(prev).add(addBUStandaloneForm.companyId));
+    setAddBUStandaloneOpen(false);
+    setAddBUStandaloneForm(createEmptyStandaloneBUForm());
+    setAddBUStandaloneLogoFile(null);
+  } catch { /* snackbar handles */ }
+  finally { setAddBUStandaloneLoading(false); }
+};
+
 
   const toggleExpand = (companyId: string) => {
     setExpandedCompanyIds((prev) => {
@@ -6347,6 +6335,7 @@ export default function StructurePage() {
                     </p>
                   )}
                 </div>
+        
                 <div>
                   <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
                     Téléphone fixe
@@ -6373,6 +6362,24 @@ export default function StructurePage() {
                       {addBUStandaloneErrors.phone_landline}
                     </p>
                   )}
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                    Logo
+                  </label>
+                  <FileUpload
+                    value={addBUStandaloneForm.logo}
+                    onChange={(file) => {
+                      setAddBUStandaloneLogoFile(file);   // ← nouveau state à créer
+                      if (file) {
+                        setAddBUStandaloneForm((f) => ({ ...f, logo: file.name }));
+                      } else {
+                        setAddBUStandaloneForm((f) => ({ ...f, logo: undefined }));
+                      }
+                    }}
+                    placeholder="Uploader une image de logo"
+                    accept="image/*"
+                  />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-(--nebula-muted)">
