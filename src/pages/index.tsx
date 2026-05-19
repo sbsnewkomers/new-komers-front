@@ -31,10 +31,10 @@ export default function LandingPage() {
   return (
     <div className="landing force-dark min-h-screen selection:bg-(--accent)/20">
       <Head>
-        <title>Newkomers — La clarté financière absolue pour les holdings &amp; groupes</title>
+        <title>Nk SOFTWARE — La clarté financière absolue pour les holdings &amp; groupes</title>
         <meta
           name="description"
-          content="Newkomers est la plateforme financière de référence pour les holdings et groupes. Consolidation multi-filiale, projections, cash burn et bien plus."
+          content="Nk SOFTWARE est la plateforme financière de référence pour les holdings et groupes. Consolidation multi-filiale, projections, cash burn et bien plus."
         />
       </Head>
 
@@ -45,7 +45,7 @@ export default function LandingPage() {
       >
         <div className="mx-auto grid h-16 max-w-6xl grid-cols-[auto_1fr_auto] items-center gap-6">
           <a href="#hero" className="text-[15px] font-black tracking-[0.2em] text-white">
-            NEWKOMERS
+            Nk SOFTWARE
           </a>
 
           <ul className="hidden items-center justify-center gap-7 text-[13px] font-medium text-(--text-muted) md:flex">
@@ -215,7 +215,7 @@ export default function LandingPage() {
                     <span className="h-3 w-3 rounded-full bg-[#28c840]" />
                   </div>
                   <div className="flex-1 text-center text-[11px] text-(--text-dim)">
-                    Newkomers — Tableau de bord
+                    Nk SOFTWARE — Tableau de bord
                   </div>
                 </div>
 
@@ -315,7 +315,7 @@ export default function LandingPage() {
             <div className="text-center mb-24">
               <h2 className="serif-heading text-4xl md:text-5xl font-bold text-white mb-6">Précision chirurgicale pour votre groupe</h2>
               <p className="text-(--text-muted) text-lg max-w-2xl mx-auto">
-                Plus qu&apos;un simple dashboard, NEWKOMERS est le cockpit de votre direction financière.
+                Plus qu&apos;un simple dashboard, Nk SOFTWARE est le cockpit de votre direction financière.
               </p>
             </div>
             <div className="grid md:grid-cols-2 gap-20 items-center mb-32">
@@ -517,7 +517,7 @@ export default function LandingPage() {
               Contactez nous via<br /><span className="text-(--accent)">ce formulaire</span>
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-[16px] leading-relaxed text-(--text-muted)">
-              Remplissez ce formulaire et un expert Newkomers vous recontactera dans les 24 heures pour discuter de votre projet.
+              Remplissez ce formulaire et un expert Nk SOFTWARE vous recontactera dans les 24 heures pour discuter de votre projet.
             </p>
 
             <form
@@ -582,8 +582,8 @@ export default function LandingPage() {
                   type="submit"
                   disabled={contactSent}
                   className={`inline-flex items-center justify-center rounded-full px-7 py-3 text-sm font-semibold transition ${contactSent
-                      ? "bg-linear-to-br from-emerald-400 to-emerald-600 text-black"
-                      : "bg-linear-to-br from-(--accent) to-[#8a6a32] text-black hover:translate-y-[-1px]"
+                    ? "bg-linear-to-br from-emerald-400 to-emerald-600 text-black"
+                    : "bg-linear-to-br from-(--accent) to-[#8a6a32] text-black hover:translate-y-[-1px]"
                     } disabled:opacity-80`}
                 >
                   {contactSent ? "✓ Demande envoyée !" : "Envoyer ma demande"}
@@ -601,7 +601,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 md:grid-cols-[1fr_2fr]">
             <div>
-              <div className="text-[15px] font-black tracking-[0.2em] text-white">NEWKOMERS</div>
+              <div className="text-[15px] font-black tracking-[0.2em] text-white">Nk SOFTWARE</div>
               <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-(--text-dim)">
                 La plateforme financière de référence pour les holdings et groupes d&apos;entreprises exigeants.
               </p>
@@ -639,7 +639,7 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-(--text-dim) md:flex-row md:items-center md:justify-between">
-            <span>© {new Date().getFullYear()} Newkomers. Tous droits réservés.</span>
+            <span>© {new Date().getFullYear()} Nk SOFTWARE. Tous droits réservés.</span>
             <div className="flex gap-6">
               <a className="hover:text-(--accent) transition-colors" href="#hero">Mentions légales</a>
               <a className="hover:text-(--accent) transition-colors" href="#hero">Confidentialité</a>
