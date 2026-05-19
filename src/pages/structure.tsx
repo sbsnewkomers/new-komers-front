@@ -4860,6 +4860,19 @@ export default function StructurePage() {
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
+                          Code d&apos;entité
+                        </label>
+                        <Input
+                          value={editBU.entity_code}
+                          onChange={(e) =>
+                            setEditBU((f) => ({ ...f, entity_code: e.target.value }))
+                          }
+                          placeholder="Ex: BU-001"
+                          maxLength={50}
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-(--nebula-muted)">
                           Activité
                         </label>
                         <Input
@@ -4883,6 +4896,12 @@ export default function StructurePage() {
                         label="Code APE"
                         icon={BadgeCheck}
                         value={editBU.code}
+                        mono
+                      />
+                      <ReadField
+                        label="Code d&apos;entité"
+                        icon={Hash}
+                        value={editBU.entity_code}
                         mono
                       />
                       <ReadField
