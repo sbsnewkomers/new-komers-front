@@ -153,7 +153,7 @@ export function AppLayout({
 
                   <div className="flex flex-col">
                     <span className="text-sm font-bold nebula-grad-text uppercase tracking-wide line-clamp-1">
-                      NEWKOMERS
+                      Nk SOFTWARE
                     </span>
 
                     <span className="text-[10px] font-medium text-(--nebula-muted) uppercase tracking-wider line-clamp-1">
@@ -325,7 +325,7 @@ export function AppLayout({
                   </div>
 
                   <span className="text-sm font-bold text-white uppercase tracking-wide truncate">
-                    NEWKOMERS
+                    Nk SOFTWARE
                   </span>
                 </Link>
 

@@ -79,21 +79,15 @@ body {
     var(--nebula-bg); */
 
   background:
-    radial-gradient(
-      80% 60% at 20% 0px,
+    radial-gradient(80% 60% at 20% 0px,
       rgba(184, 146, 74, 0.22),
-      rgba(0, 0, 0, 0) 60%
-    ),
-    radial-gradient(
-      70% 50% at 90% 20%,
+      rgba(0, 0, 0, 0) 60%),
+    radial-gradient(70% 50% at 90% 20%,
       rgba(212, 176, 106, 0.18),
-      rgba(0, 0, 0, 0) 60%
-    ),
-    radial-gradient(
-      60% 60% at 50% 100%,
+      rgba(0, 0, 0, 0) 60%),
+    radial-gradient(60% 60% at 50% 100%,
       rgba(138, 106, 50, 0.18),
-      rgba(0, 0, 0, 0) 60%
-    ),
+      rgba(0, 0, 0, 0) 60%),
     var(--nebula-bg);
   min-height: 100vh;
   overflow-x: hidden;
@@ -110,11 +104,9 @@ body {
 
 .nebula-glass {
   background:
-    linear-gradient(
-      135deg,
+    linear-gradient(135deg,
       rgba(255, 255, 255, 0.09),
-      rgba(255, 255, 255, 0.03)
-    ),
+      rgba(255, 255, 255, 0.03)),
     rgba(10, 10, 10, 0.56);
   border: 1px solid rgba(245, 236, 215, 0.12);
   border-radius: 20px;
@@ -129,11 +121,9 @@ body {
 /* Modal surfaces need higher opacity for readability */
 .nebula-glass-modal {
   background:
-    linear-gradient(
-      135deg,
+    linear-gradient(135deg,
       rgba(255, 255, 255, 0.11),
-      rgba(255, 255, 255, 0.05)
-    ),
+      rgba(255, 255, 255, 0.05)),
     rgba(10, 10, 10, 0.72);
   border: 1px solid rgba(245, 236, 215, 0.14);
   border-radius: 20px;
@@ -195,12 +185,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .nebula-grad-text {
-  background-image: linear-gradient(
-    135deg,
-    var(--nebula-gold-light) 0%,
-    var(--nebula-gold) 50%,
-    var(--nebula-gold-deep) 100%
-  );
+  background-image: linear-gradient(135deg,
+      var(--nebula-gold-light) 0%,
+      var(--nebula-gold) 50%,
+      var(--nebula-gold-deep) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -273,21 +261,15 @@ input:disabled {
 .nebula-light body,
 body.nebula-light {
   background:
-    radial-gradient(
-      ellipse 80% 60% at 20% 0%,
+    radial-gradient(ellipse 80% 60% at 20% 0%,
       rgba(184, 146, 74, 0.18),
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse 70% 50% at 90% 20%,
+      transparent 60%),
+    radial-gradient(ellipse 70% 50% at 90% 20%,
       rgba(212, 176, 106, 0.16),
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse 60% 60% at 50% 100%,
+      transparent 60%),
+    radial-gradient(ellipse 60% 60% at 50% 100%,
       rgba(138, 106, 50, 0.12),
-      transparent 60%
-    ),
+      transparent 60%),
     var(--nebula-bg);
 }
 
@@ -413,7 +395,7 @@ body.nebula-light {
   filter: blur(48px);
 }
 
-.nebula-blob > * {
+.nebula-blob>* {
   position: relative;
   z-index: 1;
 }
@@ -503,19 +485,22 @@ body.nebula-light {
 ::-webkit-scrollbar {
   width: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: #d4b16a4b;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--nebula-gold-light);
   border-radius: 10px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--nebula-gold);
 }
 
 /* =============================================================================
-   Landing page (NEWKOMERS marketing) – scoped
+   Landing page (Nk SOFTWARE marketing) – scoped
    ============================================================================= */
 .landing {
   --primary: #080808;
@@ -663,13 +648,13 @@ body.nebula-light .force-dark {
 }
 
 .force-dark nav {
-  background-color: rgba(0, 0, 0, 0.9) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
 }
 
 .force-dark footer {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
 }
 
 .force-dark .glass-panel {

@@ -45,13 +45,13 @@ export default function ForgotPasswordPage() {
   return (
     <>
       <Head>
-        <title>Mot de passe oublié - NewKomers</title>
+        <title>Mot de passe oublié - Nk SOFTWARE</title>
       </Head>
       <div className="min-h-screen nebula-grid-bg flex flex-col items-center justify-center px-4 py-10">
         {/* Logo */}
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold leading-[1.05] tracking-tight">
-            <span className="nebula-grad-text">NEWKOMERS</span>
+            <span className="nebula-grad-text">Nk SOFTWARE</span>
           </h1>
         </div>
 
