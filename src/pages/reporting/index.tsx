@@ -83,10 +83,6 @@ export default function ReportingPage() {
     "Charges de personnel": 35,
   });
 
-  useEffect(() => {
-    companies.fetchList();
-  }, []);
-
   const companyList = companies.list ?? [];
 
   const toggleExpand = (id: string) => {

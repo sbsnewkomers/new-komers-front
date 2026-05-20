@@ -155,7 +155,9 @@ export default function UsersPage() {
 
   const groupsHook = useGroups();
   const companiesHook = useCompanies();
-  const busHook = useBusinessUnits(companyIdForBU || null);
+  const busHook = useBusinessUnits(companyIdForBU || null, {
+    enabled: !!companyIdForBU && permOpen,
+  });
   const workspacesHook = useWorkspaces();
   const [structureTree, setStructureTree] = useState<StructureTree | null>(null);
 
@@ -179,7 +181,9 @@ export default function UsersPage() {
   const [perimNodeType, setPerimNodeType] = useState<NodeType>("GROUP");
   const [perimNodeId, setPerimNodeId] = useState("");
   const [perimCompanyId, setPerimCompanyId] = useState("");
-  const perimBusHook = useBusinessUnits(perimCompanyId || null);
+  const perimBusHook = useBusinessUnits(perimCompanyId || null, {
+    enabled: !!perimCompanyId && inviteOpen,
+  });
   const { canImpersonateUser, impersonate } = useImpersonation();
   const [impersonateLoadingId, setImpersonateLoadingId] = useState<string | null>(null);
   const handleImpersonate = async (targetUser: UserItem) => {
@@ -211,8 +215,6 @@ export default function UsersPage() {
   // and reload when switching to the invitations tab to ensure freshness.
   useEffect(() => { void Promise.resolve().then(loadInvitations); }, [loadInvitations]);
   useEffect(() => { if (activeTab === "invitations") void Promise.resolve().then(loadInvitations); }, [activeTab, loadInvitations]);
-  useEffect(() => { if (companyIdForBU && permOpen) busHook.fetchList(); }, [companyIdForBU, permOpen, busHook]);
-  useEffect(() => { if (perimCompanyId && inviteOpen) perimBusHook.fetchList(); }, [perimCompanyId, inviteOpen, perimBusHook]);
   useEffect(() => {
     if (inviteOpen) {
       // Load structure tree for workspaces and standalone companies
@@ -269,8 +271,6 @@ export default function UsersPage() {
     setPerimNodeType(defaultNodeType);
     setPerimNodeId("");
     setPerimCompanyId("");
-    groupsHook.fetchList();
-    companiesHook.fetchList();
     setInviteOpen(true);
   };
 
@@ -425,7 +425,6 @@ export default function UsersPage() {
     // Pour HEAD_MANAGER, le type par défaut est WORKSPACE
     const defaultNodeType = u.role === "HEAD_MANAGER" ? "WORKSPACE" : "GROUP";
     setAddNodeType(defaultNodeType); setAddNodeId(""); setAddActions([]); setCompanyIdForBU("");
-    groupsHook.fetchList(); companiesHook.fetchList();
     try { setPermDetail(await fetchUserPermissionDetail(u.id)); } catch { setPermDetail(null); } finally { setPermLoading(false); }
   };
 

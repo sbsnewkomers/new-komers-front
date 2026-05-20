@@ -152,7 +152,6 @@ export default function ImportPage() {
   
 
   useEffect(() => {
-    companies.fetchList();
     fetchHistory();
   }, []);
 

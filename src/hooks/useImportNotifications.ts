@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { apiFetch } from '@/lib/apiClient';
+import { queryClient } from '@/lib/queryClient';
+import { queryKeys } from '@/queries/queryKeys';
 
 export interface ImportNotificationPayload {
   id: string;
@@ -34,7 +36,12 @@ export function useImportNotifications(
 
         if (newOnes.length > 0) {
           lastSeenIdRef.current = newOnes[0].id;
-          // On rafraîchit juste l'historique, pas de modale
+          void queryClient.invalidateQueries({
+            queryKey: queryKeys.notifications.all,
+          });
+          void queryClient.invalidateQueries({
+            queryKey: queryKeys.import.all,
+          });
           newOnes.forEach((n) => onNotification(n));
         }
       } catch {

@@ -19,12 +19,16 @@ const getCountryName = (code: string) => {
   return country ? country.label : code;
 };
 import {
-  fetchStructureTree,
   type StructureTree,
   type TreeCompany,
   type TreeGroup,
   type Treeworkspace,
 } from "@/lib/structureApi";
+import {
+  useStructureTree,
+  useInvalidateStructure,
+  fetchBusinessUnitsForCompany,
+} from "@/queries/structure";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useRouter } from "next/router";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
@@ -684,11 +688,29 @@ export default function StructurePage() {
     user?.role === "MANAGER";
   const canCreateCompany = can("companies", CRUD_ACTION.CREATE);
 
+  const treeQuery = useStructureTree({ enabled: isAuthReady && !!user });
+  const invalidateStructure = useInvalidateStructure();
+  const tree = treeQuery.data ?? null;
+  const treeLoading = treeQuery.isLoading || treeQuery.isFetching;
+  const treeError = (() => {
+    const e = treeQuery.error;
+    if (!e) return null;
+    if (e instanceof Error) {
+      try {
+        const parsed = JSON.parse(e.message) as
+          | { message?: string | string[] }
+          | undefined;
+        const m = parsed?.message;
+        const msg = Array.isArray(m) ? m.join(", ") : m;
+        return msg || e.message || "Erreur";
+      } catch {
+        return e.message || "Erreur";
+      }
+    }
+    return "Erreur";
+  })();
+
   // Move ALL hooks here before any conditional returns
-  const [tree, setTree] = useState<StructureTree | null>(null);
-  const [treeLoading, setTreeLoading] = useState(false);
-  const [treeError, setTreeError] = useState<string | null>(null);
-  const [isTreeLoaded, setIsTreeLoaded] = useState(false);
   const [busByCompany, setBusByCompany] = useState<
     Record<string, BusinessUnitApi[]>
   >({});
@@ -1053,40 +1075,10 @@ export default function StructurePage() {
   );
 
   const loadTree = useCallback(async () => {
-    // Éviter les rechargements multiples
-    if (treeLoading) return;
+    invalidateStructure();
+    await treeQuery.refetch();
+  }, [invalidateStructure, treeQuery]);
 
-    setTreeLoading(true);
-    setTreeError(null);
-    try {
-      const data = await fetchStructureTree();
-      setTree(data);
-      setIsTreeLoaded(true);
-    } catch (e) {
-      if (e instanceof Error) {
-        try {
-          const parsed = JSON.parse(e.message) as
-            | { message?: string | string[] }
-            | undefined;
-          const m = parsed?.message;
-          const msg = Array.isArray(m) ? m.join(", ") : m;
-          setTreeError(msg || e.message || "Erreur");
-        } catch {
-          setTreeError(e.message || "Erreur");
-        }
-      } else {
-        setTreeError("Erreur");
-      }
-    } finally {
-      setTreeLoading(false);
-    }
-  }, [treeLoading]);
-
-  // Only load the structure tree once auth bootstrap is done and we have a user.
-  useEffect(() => {
-    if (!isAuthReady || !user || isTreeLoaded) return;
-    void loadTree();
-  }, [isAuthReady, user, isTreeLoaded, loadTree]);
 
   // Keep structure in sync when returning to the tab/page (e.g. after imports or other changes).
   // useEffect(() => {
@@ -1108,10 +1100,7 @@ export default function StructurePage() {
 
   const loadBUsForCompany = useCallback(async (companyId: string) => {
     try {
-      const data = await apiFetch<BusinessUnitApi[]>(
-        `/companies/${companyId}/business-units`,
-        { snackbar: { showSuccess: false, showError: true } },
-      );
+      const data = await fetchBusinessUnitsForCompany(companyId);
       setBusByCompany((prev) => ({ ...prev, [companyId]: data }));
       return data;
     } catch {

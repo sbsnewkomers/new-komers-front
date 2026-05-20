@@ -1,155 +1,64 @@
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
+import { queryClient } from "@/lib/queryClient";
+import {
+  useGroupsList,
+  useCreateGroup,
+  useUpdateGroup,
+  useDeleteGroup,
+} from "@/queries/groups";
+import { queryKeys } from "@/queries/queryKeys";
+import { readSnackbar } from "@/queries/snackbarDefaults";
+import type { CreateGroupDto, Group, UpdateGroupDto } from "@/types/group";
 
-type Group = {
-  id: string;
-  name: string;
-  fiscal_year_start: string;
-  last_closed_fiscal_year?: number | null;
-  siret: string;
-  mainActivity?: string;
-  workspace_id: string;
-  createdAt?: string;
-  updatedAt?: string;
-};
-
-type CreateGroupDto = {
-  name: string;
-  fiscal_year_start: string;
-  last_closed_fiscal_year?: number | null;
-  siret: string;
-  mainActivity?: string;
-};
-
-type UpdateGroupDto = Partial<CreateGroupDto>;
-
-const defaultSnackbar = {
-  showSuccess: true,
-  showError: true,
-};
+export type { Group, CreateGroupDto, UpdateGroupDto };
 
 export function useGroups() {
-  const [list, setList] = useState<Group[] | null>(null);
   const [one, setOne] = useState<Group | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const listQuery = useGroupsList();
+  const createMut = useCreateGroup();
+  const updateMut = useUpdateGroup();
+  const removeMut = useDeleteGroup();
+
+  const loading =
+    listQuery.isLoading ||
+    listQuery.isFetching ||
+    createMut.isPending ||
+    updateMut.isPending ||
+    removeMut.isPending;
+
+  const error =
+    listQuery.error instanceof Error
+      ? listQuery.error.message
+      : listQuery.error
+        ? "Erreur"
+        : null;
 
   const fetchList = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await apiFetch<Group[]>("/groups", {
-        snackbar: { ...defaultSnackbar, showSuccess: false },
-      });
-      setList(data);
-      return data;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erreur";
-      setError(msg);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    const result = await listQuery.refetch();
+    return result.data ?? [];
+  }, [listQuery]);
 
   const fetchOne = useCallback(async (id: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await apiFetch<Group>(`/groups/${id}`, {
-        snackbar: { ...defaultSnackbar, showSuccess: false },
-      });
-      setOne(data);
-      return data;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erreur";
-      setError(msg);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
+    const data = await queryClient.fetchQuery({
+      queryKey: queryKeys.groups.detail(id),
+      queryFn: () =>
+        apiFetch<Group>(`/groups/${id}`, { snackbar: readSnackbar }),
+    });
+    setOne(data);
+    return data;
   }, []);
 
-  const create = useCallback(
-    async (dto: CreateGroupDto) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const created = await apiFetch<Group>("/groups", {
-          method: "POST",
-          body: JSON.stringify(dto),
-          snackbar: { ...defaultSnackbar, successMessage: "Groupe créé" },
-        });
-        setList((prev) => (prev ? [...prev, created] : [created]));
-        return created;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Erreur";
-        setError(msg);
-        throw e;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
-
-  const update = useCallback(
-    async (id: string, dto: UpdateGroupDto) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const updated = await apiFetch<Group>(`/groups/${id}`, {
-          method: "PUT",
-          body: JSON.stringify(dto),
-          snackbar: { ...defaultSnackbar, successMessage: "Groupe mis à jour" },
-        });
-        setList((prev) =>
-          prev ? prev.map((g) => (g.id === id ? updated : g)) : prev,
-        );
-        if (one?.id === id) setOne(updated);
-        return updated;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Erreur";
-        setError(msg);
-        throw e;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [one?.id],
-  );
-
-  const remove = useCallback(
-    async (id: string) => {
-      setLoading(true);
-      setError(null);
-      try {
-        await apiFetch(`/groups/${id}`, {
-          method: "DELETE",
-          snackbar: { ...defaultSnackbar, successMessage: "Groupe supprimé" },
-        });
-        setList((prev) => (prev ? prev.filter((g) => g.id !== id) : prev));
-        if (one?.id === id) setOne(null);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Erreur";
-        setError(msg);
-        throw e;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [one?.id],
-  );
-
   return {
-    list,
+    list: listQuery.data ?? null,
     one,
     loading,
     error,
     fetchList,
     fetchOne,
-    create,
-    update,
-    remove,
+    create: (dto: CreateGroupDto) => createMut.mutateAsync(dto),
+    update: (id: string, dto: UpdateGroupDto) =>
+      updateMut.mutateAsync({ id, dto }),
+    remove: (id: string) => removeMut.mutateAsync(id),
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 import Head from "next/head";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
@@ -14,19 +14,17 @@ import {
   DialogFooter,
 } from "@/components/ui/Dialog";
 import {
-  fetchShareholders,
-  createShareholder,
-  updateShareholder,
-  deleteShareholder,
-  toCreateShareholderInput,
-  toUpdateShareholderInput,
   getShareholderDisplayLabel,
   getShareholderSearchText,
   type ShareholderDto,
   shareholderKindLabel,
 } from "@/lib/shareholdersApi";
-import { fetchUsers, type UserItem } from "@/lib/usersApi";
-import { useCompanies } from "@/hooks";
+import { useCompaniesList } from "@/queries/companies";
+import {
+  useShareholdersList,
+  useShareholderMutations,
+} from "@/queries/shareholders";
+import { useUsersList } from "@/queries/users";
 import { usePermissionsContext } from "@/permissions/PermissionsProvider";
 import {
   ShareholderFormDialog,
@@ -36,60 +34,39 @@ import { Users, Building2, Plus, Pencil, Trash2, Search } from "lucide-react";
 
 export default function ShareholdersPage() {
   const { user } = usePermissionsContext();
-  const [shareholders, setShareholders] = useState<ShareholderDto[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const shareholdersQuery = useShareholdersList();
+  const companiesQuery = useCompaniesList();
+  const usersQuery = useUsersList({ enabled: false });
+  const { createMut, updateMut, deleteMut } = useShareholderMutations();
+
   const [search, setSearch] = useState("");
-
-  const [users, setUsers] = useState<UserItem[]>([]);
-  const [formMetaLoaded, setFormMetaLoaded] = useState(false);
-  const { list: companiesList, fetchList: fetchCompaniesList } = useCompanies();
-
   const [formOpen, setFormOpen] = useState(false);
   const [formInitial, setFormInitial] = useState<Partial<ShareholderFormValues> | undefined>();
-  const [formSaving, setFormSaving] = useState(false);
-
   const [deleteTarget, setDeleteTarget] = useState<ShareholderDto | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const shareholders = shareholdersQuery.data ?? [];
+  const loading = shareholdersQuery.isLoading;
+  const error =
+    shareholdersQuery.error instanceof Error
+      ? shareholdersQuery.error.message
+      : shareholdersQuery.error
+        ? "Impossible de charger les actionnaires."
+        : null;
+
+  const companiesList = companiesQuery.data ?? [];
+  const users = usersQuery.data ?? [];
+  const formSaving = createMut.isPending || updateMut.isPending;
+  const deleteLoading = deleteMut.isPending;
 
   const canManageShareholders =
     user?.role && (user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "MANAGER");
 
-  const loadShareholdersOnly = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const sh = await fetchShareholders();
-      setShareholders(sh);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Impossible de charger les actionnaires.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadShareholdersOnly();
-  }, [loadShareholdersOnly]);
-
-  /** Listes utilisateurs / entreprises pour le formulaire (lazy, une seule fois). */
-  useEffect(() => {
-    if (!formOpen || formMetaLoaded) return;
-
-    void (async () => {
-      try {
-        const [us] = await Promise.all([fetchUsers(), fetchCompaniesList()]);
-        setUsers(us);
-      } catch {
-        /* snackbar / erreur globale */
-      } finally {
-        setFormMetaLoaded(true);
-      }
-    })();
-  }, [formOpen, formMetaLoaded, fetchCompaniesList]);
+  const ensureFormMeta = () => {
+    if (!usersQuery.data) void usersQuery.refetch();
+  };
 
   const companyOptions = useMemo(
-    () => (companiesList ?? []).map((c) => ({ id: c.id, name: c.name })),
+    () => companiesList.map((c) => ({ id: c.id, name: c.name })),
     [companiesList],
   );
 
@@ -112,6 +89,7 @@ export default function ShareholdersPage() {
   const openCreate = () => {
     setFormInitial(undefined);
     setFormOpen(true);
+    ensureFormMeta();
   };
 
   const openEdit = (s: ShareholderDto) => {
@@ -180,33 +158,29 @@ export default function ShareholdersPage() {
       });
     }
     setFormOpen(true);
+    ensureFormMeta();
   };
 
   const handleSubmitForm = async (values: ShareholderFormValues) => {
-    setFormSaving(true);
     try {
       if (values.id) {
-        const updated = await updateShareholder(values.id, toUpdateShareholderInput(values));
-        setShareholders((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+        await updateMut.mutateAsync(values);
       } else {
-        const created = await createShareholder(toCreateShareholderInput(values));
-        setShareholders((prev) => [created, ...prev]);
+        await createMut.mutateAsync(values);
       }
       setFormOpen(false);
-    } finally {
-      setFormSaving(false);
+    } catch {
+      /* snackbar */
     }
   };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
-    setDeleteLoading(true);
     try {
-      await deleteShareholder(deleteTarget.id);
-      setShareholders((prev) => prev.filter((s) => s.id !== deleteTarget.id));
+      await deleteMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-    } finally {
-      setDeleteLoading(false);
+    } catch {
+      /* snackbar */
     }
   };
 

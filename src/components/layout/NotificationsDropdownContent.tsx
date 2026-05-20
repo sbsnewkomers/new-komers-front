@@ -5,6 +5,12 @@ import * as React from "react";
 import { apiFetch } from "@/lib/apiClient";
 import type { ImportNotificationPayload } from "@/hooks/useImportNotifications";
 import {
+  useImportNotificationsList,
+  useMarkNotificationRead,
+} from "@/queries/notifications";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/queries/queryKeys";
+import {
   AlertCircle,
   Check,
   CheckCheck,
@@ -40,48 +46,24 @@ function formatWhen(iso: string) {
 }
 
 export function NotificationsDropdownContent() {
-  const [items, setItems] = React.useState<ImportNotificationPayload[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const listQuery = useImportNotificationsList();
+  const markReadMut = useMarkNotificationRead();
   const [markingAll, setMarkingAll] = React.useState(false);
   const [markingId, setMarkingId] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const list = await apiFetch<ImportNotificationPayload[]>("/notifications", {
-          method: "GET",
-          snackbar: { showError: false, showSuccess: false },
-        });
-        if (!cancelled) {
-          const sorted = [...list].sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          );
-          setItems(sorted);
-        }
-      } catch {
-        if (!cancelled) setError("Impossible de charger les notifications.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const items = listQuery.data ?? [];
+  const loading = listQuery.isLoading;
+  const error =
+    listQuery.error != null
+      ? "Impossible de charger les notifications."
+      : null;
 
   const markRead = async (n: ImportNotificationPayload) => {
     if (n.isRead) return;
     setMarkingId(n.id);
     try {
-      await apiFetch(`/notifications/${n.id}/read`, {
-        method: "PATCH",
-        snackbar: { showError: false, showSuccess: false },
-      });
-      setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)));
+      await markReadMut.mutateAsync(n.id);
     } catch {
       // keep UI unchanged
     } finally {
@@ -96,7 +78,7 @@ export function NotificationsDropdownContent() {
     if (unread.length === 0) return;
     setMarkingAll(true);
     try {
-      const results = await Promise.allSettled(
+      await Promise.allSettled(
         unread.map((n) =>
           apiFetch(`/notifications/${n.id}/read`, {
             method: "PATCH",
@@ -104,12 +86,9 @@ export function NotificationsDropdownContent() {
           }),
         ),
       );
-      const okIds = new Set(
-        results
-          .map((r, i) => (r.status === "fulfilled" ? unread[i].id : null))
-          .filter((id): id is string => id !== null),
-      );
-      setItems((prev) => prev.map((x) => (okIds.has(x.id) ? { ...x, isRead: true } : x)));
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.notifications.all,
+      });
     } finally {
       setMarkingAll(false);
     }
