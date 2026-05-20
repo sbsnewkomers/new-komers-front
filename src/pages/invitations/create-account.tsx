@@ -95,7 +95,7 @@ export default function CreateAccountPage() {
   return (
     <>
       <Head>
-        <title>Créer mon compte - NewKomers</title>
+        <title>Créer mon compte - Nk SOFTWARE</title>
       </Head>
       <div className="min-h-screen nebula-grid-bg flex flex-col items-center justify-center px-4 py-10">
 

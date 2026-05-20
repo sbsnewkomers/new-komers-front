@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Check, Search } from 'lucide-react';
-import { COUNTRIES } from '@/lib/countriesData';
+import { locationService, CountryOption } from '@/lib/locationService';
 import { Input } from '@/components/ui/Input';
 import {
   Dialog,
@@ -29,21 +29,19 @@ export function CountrySelectModal({
 }: CountrySelectModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredCountries = useMemo(() => {
-    if (!searchTerm) return COUNTRIES;
+  const countries = useMemo(() => locationService.getCountries(), []);
 
-    const term = searchTerm.toLowerCase();
-    return COUNTRIES.filter(country =>
-      country.label.toLowerCase().includes(term) ||
-      country.code.toLowerCase().includes(term)
-    );
-  }, [searchTerm]);
+  const filteredCountries = useMemo(() => {
+    if (!searchTerm) return countries;
+
+    return locationService.searchCountries(searchTerm);
+  }, [searchTerm, countries]);
 
   const selectedCountry = useMemo(() => {
-    return COUNTRIES.find(country =>
+    return countries.find(country =>
       country.value === value || country.label === value
     );
-  }, [value]);
+  }, [value, countries]);
 
   const handleSelect = useCallback((countryValue: string) => {
     onChange(countryValue);
@@ -103,7 +101,7 @@ export function CountrySelectModal({
               </div>
             ) : (
               <div className="space-y-1 p-2">
-                {filteredCountries.map((country) => {
+                {filteredCountries.map((country: CountryOption) => {
                   const isSelected = value === country.value || value === country.label;
                   return (
                     <button
