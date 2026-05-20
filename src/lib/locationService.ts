@@ -111,10 +111,9 @@ class LocationService {
         countryCode: city.countryCode
       }));
 
-      // Trier par nom et limiter à 1000 villes pour la performance
+      // Trier par nom sans limite pour inclure toutes les villes
       const sortedCities = cityOptions
-        .sort((a, b) => a.label.localeCompare(b.label, 'fr'))
-        .slice(0, 1000);
+        .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
 
       this.citiesCache.set(cacheKey, sortedCities);
       return sortedCities;
