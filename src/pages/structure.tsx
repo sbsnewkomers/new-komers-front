@@ -104,6 +104,7 @@ import {
   Trash2,
   ExternalLink,
   BadgeCheck,
+  Eraser,
 } from "lucide-react";
 import {
   fetchShareholdersByCompany,
@@ -243,6 +244,69 @@ function createEmptyEditBUForm(): EditBUFormState {
     contact_email: "",
     entity_code: "",
     ...defaultBUManagerFormFields(),
+  };
+}
+
+function createEmptyAddGroupForm(workspaceId = "") {
+  return {
+    name: "",
+    description: "",
+    fiscal_year_start: "",
+    last_closed_fiscal_year: "",
+    country: "",
+    street: "",
+    postal_code: "",
+    city: "",
+    phone_landline: "",
+    phone_mobile: "",
+    contact_email: "",
+    workspaceId,
+    entity_code: "",
+    logo: undefined as string | undefined,
+  };
+}
+
+function createEmptyAddCompanyForm(overrides?: {
+  groupId?: string;
+  workspaceId?: string;
+}) {
+  return {
+    name: "",
+    description: "",
+    siret: "",
+    fiscal_year_start: "",
+    last_closed_fiscal_year: "",
+    street: "",
+    postal_code: "",
+    city: "",
+    country: "",
+    phone_landline: "",
+    phone_mobile: "",
+    contact_email: "",
+    ape_code: "",
+    main_activity: "",
+    size: "SMALL",
+    model: "SUBSIDIARY",
+    groupId: overrides?.groupId ?? "",
+    workspaceId: overrides?.workspaceId ?? "",
+    entity_code: "",
+    logo: undefined as string | undefined,
+  };
+}
+
+function createEmptyAddworkspaceForm() {
+  return {
+    name: "",
+    description: "",
+    logo: undefined as string | undefined,
+    street: "",
+    postal_code: "",
+    city: "",
+    country: "",
+    contact_email: "",
+    phone_mobile: "",
+    phone_landline: "",
+    manager_id: "",
   };
 }
 
@@ -2097,6 +2161,44 @@ export default function StructurePage() {
     void setIsTreeLoaded(false);
   };
 
+  const clearAddGroupForm = useCallback(() => {
+    setAddGroupForm(createEmptyAddGroupForm(addGroupForm.workspaceId));
+    setAddGroupLogoFile(null);
+    setAddGroupErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
+  }, [addGroupForm.workspaceId]);
+
+  const clearAddCompanyForm = useCallback(() => {
+    const group = addCompanyGroupId
+      ? groupList.find((g) => g.id === addCompanyGroupId)
+      : null;
+    setAddCompanyForm(
+      createEmptyAddCompanyForm({
+        groupId: addCompanyGroupId ?? "",
+        workspaceId: group?.workspaceId ?? "",
+      }),
+    );
+    setAddCompanyLogoFile(null);
+    setCompanyErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
+  }, [addCompanyGroupId, groupList]);
+
+  const clearAddBUForm = useCallback(() => {
+    setAddBUForm(createEmptyAddBUForm());
+    setAddBULogoFile(null);
+    setAddBUErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
+  }, []);
+
+  const clearAddBUStandaloneForm = useCallback(() => {
+    setAddBUStandaloneForm(createEmptyStandaloneBUForm());
+    setAddBUStandaloneErrors({ contact_email: "", phone_landline: "", phone_mobile: "" });
+  }, []);
+
+  const clearAddworkspaceForm = useCallback(() => {
+    setAddworkspaceForm(createEmptyAddworkspaceForm());
+    setLogoFile(null);
+    setLogoPreview("");
+    setWorkspaceErrors({ contact_email: "", phone_mobile: "", phone_landline: "" });
+  }, []);
+
   const handleCreateworkspace = async () => {
     if (!addworkspaceForm.name.trim()) return;
 
@@ -3007,28 +3109,6 @@ export default function StructurePage() {
                           <DropdownMenuItem
                             onClick={() => {
                               setAddCompanyGroupId(null);
-                              setAddCompanyForm({
-                                name: "",
-                                description: "",
-                                siret: "",
-                                fiscal_year_start: "",
-                                last_closed_fiscal_year: "",
-                                street: "",
-                                postal_code: "",
-                                city: "",
-                                country: "",
-                                phone_landline: "",
-                                phone_mobile: "",
-                                contact_email: "",
-                                ape_code: "",
-                                main_activity: "",
-                                size: "SMALL",
-                                model: "SUBSIDIARY",
-                                groupId: "",
-                                workspaceId: "",
-                                entity_code: "",
-                                logo: undefined as string | undefined,
-                              });
                               setAddCompanyOpen(true);
                             }}
                             disabled={
@@ -3373,23 +3453,10 @@ export default function StructurePage() {
                                     <DropdownMenuItem
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setAddGroupForm({
-                                          name: "",
-                                          description: "",
-                                          street: "",
-                                          postal_code: "",
-                                          city: "",
-                                          phone_landline: "",
-                                          phone_mobile: "",
-                                          country: "",
-                                          contact_email: "",
-                                          fiscal_year_start: "",
-                                          last_closed_fiscal_year: "",
+                                        setAddGroupForm((f) => ({
+                                          ...f,
                                           workspaceId: node.id,
-                                          entity_code: "",
-                                          logo: undefined as string | undefined,
-                                        });
-                                        setAddGroupLogoFile(null);
+                                        }));
                                         setAddGroupOpen(true);
                                       }}
                                     >
@@ -3414,30 +3481,15 @@ export default function StructurePage() {
                                             console.error('Group node ID is undefined:', node);
                                             return;
                                           }
-                                          console.log('Setting addCompanyGroupId to:', node.id);
                                           setAddCompanyGroupId(node.id);
-                                          setAddCompanyForm({
-                                            name: "",
-                                            description: "",
-                                            siret: "",
-                                            fiscal_year_start: "",
-                                            last_closed_fiscal_year: "",
-                                            street: "",
-                                            postal_code: "",
-                                            city: "",
-                                            phone_landline: "",
-                                            phone_mobile: "",
-                                            contact_email: "",
-                                            country: "",
-                                            ape_code: "",
-                                            main_activity: "",
-                                            size: "SMALL",
-                                            model: "SUBSIDIARY",
-                                            groupId: "",
-                                            workspaceId: "",
-                                            entity_code: "",
-                                            logo: undefined as string | undefined,
-                                          });
+                                          const groupWorkspaceId = groupList.find(
+                                            (g) => g.id === node.id,
+                                          )?.workspaceId;
+                                          setAddCompanyForm((f) => ({
+                                            ...f,
+                                            groupId: node.id,
+                                            workspaceId: groupWorkspaceId ?? f.workspaceId,
+                                          }));
                                           setAddCompanyOpen(true);
                                         }}
                                       >
@@ -3460,8 +3512,6 @@ export default function StructurePage() {
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setAddBUCompanyId(node.id);
-                                          setAddBUForm(createEmptyAddBUForm());
-                                          setAddBULogoFile(null);
                                           setAddBUOpen(true);
                                         }}
                                       >
@@ -6105,7 +6155,18 @@ export default function StructurePage() {
             </div>
           </DialogBody>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={clearAddGroupForm}
+              disabled={addGroupLoading}
+              className="w-full sm:mr-auto sm:w-auto"
+            >
+              <Eraser className="mr-2 h-4 w-4" aria-hidden />
+              Effacer
+            </Button>
+            <div className="flex w-full flex-col-reverse gap-2 sm:ml-auto sm:w-auto sm:flex-row">
             <Button variant="outline" onClick={() => setAddGroupOpen(false)}>
               Annuler
             </Button>
@@ -6121,6 +6182,7 @@ export default function StructurePage() {
             >
               {addGroupLoading ? "Création..." : "Créer"}
             </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -6404,7 +6466,18 @@ export default function StructurePage() {
               userOptions={buUserOptionsForManager}
             />
           </DialogBody>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={clearAddBUStandaloneForm}
+              disabled={addBUStandaloneLoading}
+              className="w-full sm:mr-auto sm:w-auto"
+            >
+              <Eraser className="mr-2 h-4 w-4" aria-hidden />
+              Effacer
+            </Button>
+            <div className="flex w-full flex-col-reverse gap-2 sm:ml-auto sm:w-auto sm:flex-row">
             <Button
               variant="outline"
               onClick={() => setAddBUStandaloneOpen(false)}
@@ -6425,6 +6498,7 @@ export default function StructurePage() {
             >
               {addBUStandaloneLoading ? "Création..." : "Créer"}
             </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -6782,7 +6856,18 @@ export default function StructurePage() {
               />
             </div>
           </DialogBody>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={clearAddCompanyForm}
+              disabled={addCompanyLoading}
+              className="w-full sm:mr-auto sm:w-auto"
+            >
+              <Eraser className="mr-2 h-4 w-4" aria-hidden />
+              Effacer
+            </Button>
+            <div className="flex w-full flex-col-reverse gap-2 sm:ml-auto sm:w-auto sm:flex-row">
             <Button variant="outline" onClick={() => setAddCompanyOpen(false)}>
               Annuler
             </Button>
@@ -6807,6 +6892,7 @@ export default function StructurePage() {
             >
               {addCompanyLoading ? "Création..." : "Créer"}
             </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -7074,7 +7160,18 @@ export default function StructurePage() {
               />
             </div>
           </DialogBody>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={clearAddBUForm}
+              disabled={addBULoading}
+              className="w-full sm:mr-auto sm:w-auto"
+            >
+              <Eraser className="mr-2 h-4 w-4" aria-hidden />
+              Effacer
+            </Button>
+            <div className="flex w-full flex-col-reverse gap-2 sm:ml-auto sm:w-auto sm:flex-row">
             <Button variant="outline" onClick={() => setAddBUOpen(false)}>
               Annuler
             </Button>
@@ -7093,6 +7190,7 @@ export default function StructurePage() {
             >
               {addBULoading ? "Création..." : "Créer"}
             </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -7269,7 +7367,18 @@ export default function StructurePage() {
               </div>
             </div>
           </DialogBody>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={clearAddworkspaceForm}
+              disabled={addworkspaceLoading}
+              className="w-full sm:mr-auto sm:w-auto"
+            >
+              <Eraser className="mr-2 h-4 w-4" aria-hidden />
+              Effacer
+            </Button>
+            <div className="flex w-full flex-col-reverse gap-2 sm:ml-auto sm:w-auto sm:flex-row">
             <Button
               variant="outline"
               onClick={() => {
@@ -7294,6 +7403,7 @@ export default function StructurePage() {
             >
               {addworkspaceLoading ? "Création..." : "Créer"}
             </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

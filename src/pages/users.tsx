@@ -261,14 +261,16 @@ export default function UsersPage() {
   }, [invitableRoles]);
 
   // ── Invite handlers ──
-  const openInviteModal = () => {
+  const resetInviteForm = useCallback(() => {
     setInviteForm({ email: "", firstName: "", lastName: "", role: defaultInviteRole });
     setInvitePerimeter([]);
-    // Pour HEAD_MANAGER, le type par défaut est WORKSPACE
     const defaultNodeType = defaultInviteRole === "HEAD_MANAGER" ? "WORKSPACE" : "GROUP";
     setPerimNodeType(defaultNodeType);
     setPerimNodeId("");
     setPerimCompanyId("");
+  }, [defaultInviteRole]);
+
+  const openInviteModal = () => {
     groupsHook.fetchList();
     companiesHook.fetchList();
     setInviteOpen(true);
@@ -355,6 +357,7 @@ export default function UsersPage() {
       setInviteConfirmOpen(false);
       setInviteExistingUser(null);
       setInviteOpen(false);
+      resetInviteForm();
       loadInvitations();
       loadUsers();
     } catch { /* snackbar */ } finally {
@@ -1114,7 +1117,17 @@ export default function UsersPage() {
               </div>
             )}
           </DialogBody>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetInviteForm}
+              disabled={inviteLoading}
+              className="w-full sm:mr-auto sm:w-auto"
+            >
+              Effacer
+            </Button>
+            <div className="flex w-full flex-col-reverse gap-2 sm:ml-auto sm:w-auto sm:flex-row">
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Annuler</Button>
             <Button
               onClick={handleInvite}
@@ -1129,6 +1142,7 @@ export default function UsersPage() {
             >
               {inviteLoading ? "Envoi\u2026" : "Envoyer l\u2019invitation"}
             </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
