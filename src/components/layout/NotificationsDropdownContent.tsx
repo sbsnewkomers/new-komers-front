@@ -5,6 +5,8 @@ import * as React from "react";
 import { apiFetch } from "@/lib/apiClient";
 import type { ImportNotificationPayload } from "@/hooks/useImportNotifications";
 import {
+  isNotificationUnread,
+  setAllNotificationsReadInCache,
   useImportNotificationsList,
   useMarkNotificationRead,
 } from "@/queries/notifications";
@@ -60,7 +62,7 @@ export function NotificationsDropdownContent() {
       : null;
 
   const markRead = async (n: ImportNotificationPayload) => {
-    if (n.isRead) return;
+    if (!isNotificationUnread(n)) return;
     setMarkingId(n.id);
     try {
       await markReadMut.mutateAsync(n.id);
@@ -71,12 +73,17 @@ export function NotificationsDropdownContent() {
     }
   };
 
-  const unreadCount = items.filter((x) => !x.isRead).length;
+  const unreadCount = items.filter(isNotificationUnread).length;
 
   const markAllRead = async () => {
-    const unread = items.filter((x) => !x.isRead);
+    const unread = items.filter(isNotificationUnread);
     if (unread.length === 0) return;
     setMarkingAll(true);
+    const queryKey = queryKeys.notifications.import();
+    const previous = queryClient.getQueryData<ImportNotificationPayload[]>(
+      queryKey,
+    );
+    setAllNotificationsReadInCache(queryClient);
     try {
       await Promise.allSettled(
         unread.map((n) =>
@@ -86,9 +93,13 @@ export function NotificationsDropdownContent() {
           }),
         ),
       );
-      void queryClient.invalidateQueries({
+      await queryClient.refetchQueries({
         queryKey: queryKeys.notifications.all,
       });
+    } catch {
+      if (previous != null) {
+        queryClient.setQueryData(queryKey, previous);
+      }
     } finally {
       setMarkingAll(false);
     }
@@ -132,16 +143,18 @@ export function NotificationsDropdownContent() {
               <li key={n.id}>
                 <div
                   className={`flex gap-1 px-2 py-2.5 text-sm ${
-                    n.isRead ? "opacity-75" : "bg-white/3"
+                    isNotificationUnread(n) ? "bg-white/3" : "opacity-75"
                   }`}
                 >
-                  {!n.isRead && (
+                  {isNotificationUnread(n) && (
                     <span
                       className="mt-1.5 h-1.5 w-1.5 shrink-0 self-start rounded-full bg-(--nebula-gold-light)"
                       aria-hidden
                     />
                   )}
-                  {n.isRead && <span className="w-1.5 shrink-0 self-start" aria-hidden />}
+                  {!isNotificationUnread(n) && (
+                    <span className="w-1.5 shrink-0 self-start" aria-hidden />
+                  )}
                   <span className="mt-0.5 shrink-0">{severityIcon(n.severity)}</span>
                   <div className="min-w-0 flex-1 text-left">
                     <span className="block font-medium text-white">{n.title}</span>
@@ -154,7 +167,7 @@ export function NotificationsDropdownContent() {
                       {formatWhen(n.createdAt)}
                     </span>
                   </div>
-                  {!n.isRead ? (
+                  {isNotificationUnread(n) ? (
                     <button
                       type="button"
                       title="Marquer comme lu"
