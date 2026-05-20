@@ -5,8 +5,9 @@ import { Search } from "lucide-react";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { Input } from "@/components/ui/Input";
-import { CountrySelectModal } from "@/components/structure/CountrySelectModal";
-import { COUNTRIES } from "@/lib/countriesData";
+import { CountrySelectModal } from "@/components/City-Country/CountrySelectModal";
+import { CitySelectModal } from "@/components/City-Country/CitySelectModal";
+import { locationService } from "@/lib/locationService";
 import type { ExternalContactFields } from "@/lib/shareholdersApi";
 
 type Props = {
@@ -17,8 +18,8 @@ type Props = {
 
 function countryLabel(code: string): string {
   if (!code) return "";
-  const c = COUNTRIES.find((x) => x.value === code || x.label === code);
-  return c ? `${c.label} (${c.code})` : code;
+  const country = locationService.getCountryByCode(code);
+  return country ? `${country.label} (${country.code})` : code;
 }
 
 /** Adresse (rue, CP, ville, pays) + téléphones fixe / mobile — actionnaires externes. */
@@ -28,6 +29,7 @@ export function ExternalPartyContactFields({
   countryModalTitle = "Sélectionner un pays",
 }: Props) {
   const [countryModalOpen, setCountryModalOpen] = useState(false);
+  const [cityModalOpen, setCityModalOpen] = useState(false);
 
   const patch = (partial: Partial<ExternalContactFields>) =>
     onChange({ ...value, ...partial });
@@ -43,22 +45,13 @@ export function ExternalPartyContactFields({
           autoComplete="street-address"
         />
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 sm:col-span-2">
         <label className="text-sm font-medium text-foreground">Code postal</label>
         <Input
           value={value.postalCode ?? ""}
           onChange={(e) => patch({ postalCode: e.target.value })}
           placeholder="Code postal"
           autoComplete="postal-code"
-        />
-      </div>
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-foreground">Ville</label>
-        <Input
-          value={value.city ?? ""}
-          onChange={(e) => patch({ city: e.target.value })}
-          placeholder="Ville"
-          autoComplete="address-level2"
         />
       </div>
       <div className="space-y-1.5 sm:col-span-2">
@@ -74,8 +67,22 @@ export function ExternalPartyContactFields({
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
         </button>
       </div>
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-foreground">Téléphone fixe</label>
+      <div className="space-y-1.5 sm:col-span-2">
+        <label className="text-sm font-medium text-foreground">Ville</label>
+        <button
+          type="button"
+          onClick={() => setCityModalOpen(true)}
+          className="min-h-10 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-muted transition-colors"
+        >
+          <span className={value.city ? "text-foreground" : "text-muted-foreground"}>
+            {value.city || "Sélectionner une ville"}
+          </span>
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+        </button>
+      </div>
+
+      <div>
+        <label className="space-y-1.5 sm:col-span-2">Téléphone fixe</label>
         <PhoneInput
           international
           countryCallingCodeEditable={false}
@@ -88,8 +95,9 @@ export function ExternalPartyContactFields({
           }}
         />
       </div>
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-foreground">Téléphone mobile</label>
+      <div>
+
+        <label className="space-y-1.5 sm:col-span-2">Téléphone mobile</label>
         <PhoneInput
           international
           countryCallingCodeEditable={false}
@@ -108,6 +116,14 @@ export function ExternalPartyContactFields({
         value={value.country ?? ""}
         onChange={(country) => patch({ country })}
         title={countryModalTitle}
+      />
+      <CitySelectModal
+        countryCode={value.country ?? ""}
+        open={cityModalOpen}
+        onOpenChange={setCityModalOpen}
+        value={value.city ?? ""}
+        onChange={(city) => patch({ city })}
+        title="Sélectionner une ville"
       />
     </>
   );

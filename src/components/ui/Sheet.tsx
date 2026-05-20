@@ -87,11 +87,7 @@ export function SheetContent({
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-40 bg-black/80"
-        onClick={() => ctx.setOpen(false)}
-        aria-hidden
-      />
+      <div className="fixed inset-0 z-40 bg-black/80" aria-hidden />
       <div
         className={`fixed z-50 h-full w-full max-w-sm border-border bg-background shadow-lg sm:max-w-md ${sideClass} ${className ?? ""}`}
         role="dialog"

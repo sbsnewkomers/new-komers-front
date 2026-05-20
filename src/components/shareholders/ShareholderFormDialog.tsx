@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Users, Building2, X, Check } from "lucide-react";
+import { Users, Building2, X, Check, Eraser } from "lucide-react";
 import type {
   ShareholderFormValues,
   ShareholderOwnerKind,
@@ -209,7 +209,7 @@ export function ShareholderFormDialog({
   const initialCompanyIdsKey = (initial?.companyIds ?? []).join(",");
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !initialId) return;
     setOwnerKind(initialOwnerKind ?? "USER_LINKED");
     setOwnerId(initialOwnerId ?? "");
     setExternal({ ...emptyExternal, ...initial?.externalPerson });
@@ -219,7 +219,7 @@ export function ShareholderFormDialog({
       initial?.companyIds ?? (lockedCompanyId ? [lockedCompanyId] : []),
     );
     setCompanySearch("");
-    // Reset form when dialog opens or when editing a different shareholder — not on every parent re-render.
+    // Sync from server only when editing; create drafts persist until Effacer or success.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- external person/company blobs keyed via initialId
   }, [open, initialId, initialOwnerKind, initialOwnerId, initialPercentage, initialCompanyIdsKey, lockedCompanyId]);
 
@@ -238,8 +238,11 @@ export function ShareholderFormDialog({
   const isEditing = !!initial?.id;
   const pctNum = Number(percentage);
   const pctOk = percentage !== "" && !Number.isNaN(pctNum);
+  const companiesOk =
+    !!lockedCompanyId || selectedCompanyIds.length > 0;
+
   const isValid = useMemo(() => {
-    if (!pctOk) return false;
+    if (!pctOk || !companiesOk) return false;
     switch (ownerKind) {
       case "USER_LINKED":
         return !!ownerId;
@@ -254,7 +257,30 @@ export function ShareholderFormDialog({
       default:
         return false;
     }
-  }, [ownerKind, ownerId, external.lastName, external.firstName, externalCompany.companyName, pctOk]);
+  }, [
+    ownerKind,
+    ownerId,
+    external.lastName,
+    external.firstName,
+    externalCompany.companyName,
+    pctOk,
+    companiesOk,
+  ]);
+
+  const resetCreateForm = useCallback(() => {
+    setOwnerKind("USER_LINKED");
+    setOwnerId("");
+    setExternal({ ...emptyExternal });
+    setExternalCompany({ ...emptyExternalCompany });
+    setPercentage("");
+    setSelectedCompanyIds(lockedCompanyId ? [lockedCompanyId] : []);
+    setCompanySearch("");
+  }, [lockedCompanyId]);
+
+  const clearForm = useCallback(() => {
+    if (saving || isEditing) return;
+    resetCreateForm();
+  }, [saving, isEditing, resetCreateForm]);
 
   const handleSubmit = async () => {
     if (!isValid) return;
@@ -267,6 +293,9 @@ export function ShareholderFormDialog({
       externalPerson: ownerKind === "USER_EXTERNAL" ? { ...external } : null,
       externalCompany: ownerKind === "COMPANY_EXTERNAL" ? { ...externalCompany } : null,
     });
+    if (!isEditing) {
+      resetCreateForm();
+    }
   };
 
   const userAsOwnerOptions: OwnerOption[] = useMemo(
@@ -575,7 +604,7 @@ export function ShareholderFormDialog({
           {!lockedCompanyId && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
-                Entreprises liées
+                Entreprises liées <span className="text-red-500">*</span>
                 {selectedCompanyIds.length > 0 && (
                   <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                     {selectedCompanyIds.length}
@@ -591,7 +620,9 @@ export function ShareholderFormDialog({
                   onChange={(e) => setCompanySearch(e.target.value)}
                 />
               )}
-              <div className="max-h-40 overflow-auto rounded-lg border border-border bg-card">
+              <div
+                className={`max-h-40 overflow-auto rounded-lg border bg-card ${selectedCompanyIds.length === 0 ? "border-red-300" : "border-border"}`}
+              >
                 {filteredCompanies.length === 0 && (
                   <div className="px-3 py-4 text-center text-xs text-slate-400">
                     Aucune entreprise disponible.
@@ -623,11 +654,27 @@ export function ShareholderFormDialog({
                   );
                 })}
               </div>
+              {selectedCompanyIds.length === 0 && (
+                <p className="text-xs text-red-500">Sélectionnez au moins une entreprise.</p>
+              )}
             </div>
           )}
         </DialogBody>
 
-        <DialogFooter>
+        <DialogFooter className="gap-2 sm:justify-between">
+          {!isEditing && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={clearForm}
+              disabled={saving}
+              className="w-full sm:mr-auto sm:w-auto"
+            >
+              <Eraser className="mr-2 h-4 w-4" aria-hidden />
+              Effacer
+            </Button>
+          )}
+          <div className="flex w-full flex-col-reverse gap-2 sm:ml-auto sm:w-auto sm:flex-row">
           <Button
             type="button"
             variant="ghost"
@@ -648,6 +695,7 @@ export function ShareholderFormDialog({
                 ? "Enregistrer"
                 : "Créer"}
           </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
