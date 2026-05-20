@@ -111,7 +111,6 @@ type DialogContentProps = React.HTMLAttributes<HTMLDivElement> & {
   onClose?: () => void;
   size?: DialogSize;
   showClose?: boolean;
-  preventOverlayClose?: boolean;
 };
 
 export function DialogContent({
@@ -120,7 +119,6 @@ export function DialogContent({
   onClose,
   size = "lg",
   showClose = true,
-  preventOverlayClose = false,
 }: DialogContentProps) {
   const ctx = React.useContext(DialogContext);
   const ref = React.useRef<HTMLDivElement>(null);
@@ -151,14 +149,7 @@ export function DialogContent({
 
   return (
     <DialogPortal>
-      <div
-        className="fixed inset-0 z-50 flex items-end justify-center p-2 sm:items-center sm:p-4 animate-in fade-in-0 duration-150"
-        onClick={() => {
-          if (preventOverlayClose) return;
-          ctx.setOpen(false);
-          onClose?.();
-        }}
-      >
+      <div className="fixed inset-0 z-50 flex items-end justify-center p-2 sm:items-center sm:p-4 animate-in fade-in-0 duration-150">
         <DialogOverlay />
         <div
           ref={ref}

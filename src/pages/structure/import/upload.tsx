@@ -567,10 +567,7 @@ export default function StructureImportUploadPage() {
         )}
         {/* ── Modal aperçu template ── */}
         {showTemplatePreview && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-            onClick={() => setShowTemplatePreview(false)}
-          >
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div
               className="bg-background rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-border"
               onClick={(e) => e.stopPropagation()}
