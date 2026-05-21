@@ -21,8 +21,8 @@ export function withPermissions<P>(Page: NextPage<P>, options: WithPermissionsOp
     useEffect(() => {
       if (isLoading) return;
       if (allowed) return;
-      void router.replace(redirectUrl);
-    }, [allowed, isLoading, redirectUrl, router]);
+      void router.replace(redirectUrl || '/403');
+    }, [allowed, isLoading, router]);
 
     if (!allowed) return null;
     // @ts-expect-error - Page is a valid React component

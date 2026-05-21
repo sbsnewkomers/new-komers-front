@@ -87,6 +87,9 @@ import {
 import { useRouter } from "next/navigation";
 import { useImpersonation } from "@/hooks/useImpersonation";
 import { UserCheck } from "lucide-react";
+import { PermissionAction as PermissionActionEnum } from "@/permissions/actions";
+import { withPermissions } from "@/permissions/withPermissions";
+import { Entity } from "@/permissions/types";
 
 /** Actions grantable in the permissions modal for END_USER (read-only). Staff roles see all actions. */
 const END_USER_PERMISSION_MODAL_ACTIONS: PermissionAction[] = ALL_ACTIONS.filter(
@@ -115,16 +118,16 @@ const statusVariant: Record<UserStatus, BadgeVariant> = {
 
 type ActiveTab = "users" | "invitations";
 
-export default function UsersPage() {
+function UsersPage() {
   const router = useRouter();
   const { user: currentUser } = usePermissionsContext();
   // check user role
-  const isAdmin = currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "ADMIN" || currentUser?.role === "HEAD_MANAGER" || currentUser?.role === "MANAGER";
-  if (!isAdmin) {
-    router.replace("/403");
-    // return null
-    return null;
-  }
+  // const isAdmin = currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "ADMIN" || currentUser?.role === "HEAD_MANAGER" || currentUser?.role === "MANAGER";
+  // if (!isAdmin) {
+  //   router.replace("/403");
+  //   // return null
+  //   return null;
+  // }
   const [activeTab, setActiveTab] = useState<ActiveTab>("users");
 
   // ── Users state ──
@@ -1379,3 +1382,11 @@ export default function UsersPage() {
     </AppLayout>
   );
 }
+
+export default withPermissions(UsersPage, {
+  requiredPermissions: {
+    entity: Entity.USERS,
+    action: PermissionActionEnum.READ_ALL,
+  },
+  redirectUrl: '/403',
+});

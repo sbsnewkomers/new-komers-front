@@ -1,8 +1,9 @@
 🔐 In front‑end development, managing permissions is key to ensuring users can access only the features they are allowed to.
 
-This project exposes **two main tools**:
+This project exposes **three main tools**:
 
-- **`withPermissions` HOC** – to protect **pages/components**
+- **`withAuth` HOC** – require a logged-in session (authentication)
+- **`withPermissions` HOC** – require specific grants (authorization)
 - **`usePermissions` hook** – to check permissions **inside components**
 
 Everything lives under:
@@ -13,7 +14,8 @@ Everything lives under:
   - `evaluator.ts` – logic for `and / or / not`
   - `PermissionsProvider.tsx` – React context (already wired in `_app.tsx`)
   - `usePermissions.ts` – React hook
-  - `withPermissions.tsx` – HOC
+  - `withAuth.tsx` – authentication HOC
+  - `withPermissions.tsx` – authorization HOC
 
 The provider is already registered globally in `src/pages/_app.tsx`, so you can use the hook/HOC directly.
 
@@ -45,7 +47,121 @@ The provider is already registered globally in `src/pages/_app.tsx`, so you can 
 
 ---
 
-## 2. `withPermissions` HOC (protecting pages/components)
+## 2. `withAuth` HOC (authentication)
+
+**What it does**
+
+- Wraps a page and ensures the user is **logged in** (`user` from `/auth/me` after bootstrap).
+- If not authenticated, redirects to **login** (default `/login`) and saves the current path for post-login redirect (`nk-return-to` in `localStorage` + `returnTo` query param).
+- Optional **`guestOnly`** mode for public auth pages (login, forgot-password): redirects authenticated users away (default `/dashboard`).
+
+**Difference vs `withPermissions`**
+
+| | `withAuth` | `withPermissions` |
+| --- | --- | --- |
+| Question | Is the user logged in? | Does the user have the required grants? |
+| Denied redirect | `/login?returnTo=...` | `/403` |
+
+Use **both** on sensitive pages: wrap `withAuth` **outside** `withPermissions` so anonymous users go to login, not 403.
+
+**Signature**
+
+```ts
+withAuth(Page, {
+  redirectUrl?: string;              // default: "/login"
+  saveReturnTo?: boolean;            // default: true
+  guestOnly?: boolean;               // default: false
+  redirectIfAuthenticated?: string;  // default: "/dashboard" (when guestOnly)
+});
+```
+
+**Protected page example**
+
+```tsx
+import { withAuth } from "@/permissions/withAuth";
+
+function DashboardPage() {
+  return <div>Dashboard</div>;
+}
+
+export default withAuth(DashboardPage);
+```
+
+**Stacked with `withPermissions`**
+
+```tsx
+import { withAuth } from "@/permissions/withAuth";
+import { withPermissions } from "@/permissions/withPermissions";
+import { PermissionAction as PermissionActionEnum } from "@/permissions/actions";
+import { Entity } from "@/permissions/types";
+
+function UsersPage() {
+  return <div>Users</div>;
+}
+
+export default withAuth(
+  withPermissions(UsersPage, {
+    requiredPermissions: {
+      entity: Entity.USERS,
+      action: PermissionActionEnum.READ_ALL,
+    },
+    redirectUrl: "/403",
+  }),
+);
+```
+
+Or with `composePageGuards` (same order: auth first, then permissions):
+
+```tsx
+import { withAuth, composePageGuards } from "@/permissions/withAuth";
+import { withPermissions } from "@/permissions/withPermissions";
+import { PermissionAction as PermissionActionEnum } from "@/permissions/actions";
+import { Entity } from "@/permissions/types";
+
+export default composePageGuards(
+  UsersPage,
+  (page) => withAuth(page),
+  (page) =>
+    withPermissions(page, {
+      requiredPermissions: { entity: Entity.USERS, action: PermissionActionEnum.READ_ALL },
+    }),
+);
+```
+
+**Guest-only pages (login, forgot-password)**
+
+```tsx
+import { withAuth } from "@/permissions/withAuth";
+
+function LoginPage() {
+  return <div>Login form</div>;
+}
+
+export default withAuth(LoginPage, { guestOnly: true });
+```
+
+**Queries inside authenticated pages**
+
+Use `useAuthEnabled()` from `src/queries/useAuthEnabled.ts` so React Query only runs when `isAuthReady && accessToken`:
+
+```tsx
+const enabled = useAuthEnabled();
+const { data } = useQuery({ queryKey: ["x"], queryFn: fetchX, enabled });
+```
+
+> Pages that use **only** `withPermissions` should also add `withAuth` outside, or unauthenticated visitors may be sent to `/403` instead of `/login`.
+
+### Impersonation (“login as”)
+
+`withAuth` checks `!!user` from `PermissionsProvider`. Impersonation swaps tokens and reloads `/auth/me`, so `user` is the **target** account (with `impersonatorId` when applicable).
+
+- Impersonated sessions are **authenticated** → `withAuth` pages render normally.
+- Stacked `withPermissions` evaluates the **target** grants and role (admin bypass applies only if the target is `SUPER_ADMIN` / `ADMIN`).
+- After `impersonate()`, always `await` it before navigation so grants match the new session.
+
+---
+
+## 3. `withPermissions` HOC (protecting pages/components)
 
 **What it does**
 
@@ -127,7 +243,7 @@ Interpretation:
 
 ---
 
-## 3. `usePermissions` hook (inside components)
+## 4. `usePermissions` hook (inside components)
 
 **What it does**
 
@@ -196,7 +312,7 @@ const SensitivePanel = () => {
 
 ---
 
-## 4. Where do permissions (`grants`) come from?
+## 5. Where do permissions (`grants`) come from?
 
 Right now, the frontend **does not automatically fetch** all node permissions. Instead:
 
@@ -227,7 +343,7 @@ You have two common options:
 
 ---
 
-## 5. Environment / API base URL
+## 6. Environment / API base URL
 
 - API calls from the permissions layer use `src/lib/apiClient.ts`.
 - It reads an **optional** `NEXT_PUBLIC_API_BASE_URL` environment variable for the backend base URL.
@@ -239,16 +355,19 @@ You have two common options:
 
 ---
 
-## 6. Quick recipe for beginners
+## 7. Quick recipe for beginners
 
-1. **Protect a page**
-   - Import `withPermissions` and wrap the page export.
-   - Describe what permissions you require with `entity` + `CRUD_ACTION`.
+1. **Require login on a page**
+   - Import `withAuth` and wrap the page export.
 
-2. **Show/hide UI pieces**
+2. **Require specific permissions**
+   - Stack `withAuth(withPermissions(Page, { requiredPermissions: ... }))`.
+   - Describe requirements with `entity` + `CRUD_ACTION` (or backend `PermissionAction`).
+
+3. **Show/hide UI pieces**
    - Use `usePermissions()` inside components.
    - Check `can()` / `cannot()` before rendering sensitive actions (buttons, links, sections).
 
-3. **Hook up real data later**
+4. **Hook up real data later**
    - Once the backend returns actual permissions, map them into `PermissionGrant[]`.
    - Call `setGrants()` once (e.g. in a layout or after login) so everything uses real data.
